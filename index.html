@@ -311,34 +311,37 @@
     </div>
 
     <script type="module">
-        // 파이어베이스 핵심 라이브러리 연동망 로드 (CORS 차단 없음)
+        // 파이어베이스 핵심 라이브러리 연동망 로드
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // ⚠️ [필수 조치 사항] 팀장님의 파이어베이스 웹 앱 콘솔에서 복사한 고유 키 값을 아래에 붙여넣으세요!
+        // 팀장님의 파이어베이스 프로젝트 키셋
         const firebaseConfig = {
-  apiKey: "AIzaSyA1GU9E5WuFUPIyT4Ma4_crArdANpCMQfs",
-  authDomain: "gaon-f3399.firebaseapp.com",
-  projectId: "gaon-f3399",
-  storageBucket: "gaon-f3399.firebasestorage.app",
-  messagingSenderId: "870111782359",
-  appId: "1:870111782359:web:d6d3eeb441d1ac06169792",
-  measurementId: "G-JCW1K0YNZ3"
-};
+            apiKey: "AIzaSyA1GU9E5WuFUPIyT4Ma4_crArdANpCMQfs",
+            authDomain: "gaon-f3399.firebaseapp.com",
+            projectId: "gaon-f3399",
+            storageBucket: "gaon-f3399.firebasestorage.app",
+            messagingSenderId: "870111782359",
+            appId: "1:870111782359:web:d6d3eeb441d1ac06169792",
+            measurementId: "G-JCW1K0YNZ3"
+        };
 
-        // 파이어베이스 구동 가동
+        // 파이어베이스 가동
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
         let authMode = 'login';
 
-        // 탭 전환 시스템
+        // [수정] 외부 onclick에서 인식 가능하도록 window 객체에 직접 등록
         window.toggleAuthTab = function(mode) {
             authMode = mode;
             const loginBtn = document.getElementById('tab-login-btn');
             const regBtn = document.getElementById('tab-register-btn');
             const title = document.getElementById('auth-title');
             const submitBtn = document.getElementById('auth-submit-btn');
+            const errorMsg = document.getElementById('auth-error-msg');
+            
+            errorMsg.style.display = 'none';
             
             if(mode === 'login') {
                 loginBtn.classList.add('active'); regBtn.classList.remove('active');
@@ -347,18 +350,20 @@
                 regBtn.classList.add('active'); loginBtn.classList.remove('active');
                 title.innerText = "신규 멤버 회원가입"; submitBtn.innerText = "가입 및 로그인";
             }
-            document.getElementById('auth-error-msg').style.display = 'none';
         }
 
-        // 로그인 / 회원가입 실행 제어 장치
+        // [수정] 회원가입/로그인 예외 처리 완벽 보강
         window.handleAuthSubmit = function() {
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value;
             const errorMsg = document.getElementById('auth-error-msg');
 
+            errorMsg.style.display = "none";
+
             if(!email || !password) {
                 errorMsg.innerText = "❌ 이메일과 비밀번호를 모두 입력하세요.";
-                errorMsg.style.display = "block"; return;
+                errorMsg.style.display = "block"; 
+                return;
             }
 
             if(authMode === 'login') {
@@ -368,6 +373,7 @@
                         document.getElementById('auth-overlay').style.display = 'none';
                     })
                     .catch((error) => {
+                        console.error(error);
                         errorMsg.innerText = "❌ 로그인 실패: 계정 정보나 비밀번호를 다시 확인하세요.";
                         errorMsg.style.display = "block";
                     });
@@ -375,33 +381,44 @@
                 // 회원가입 시도
                 createUserWithEmailAndPassword(auth, email, password)
                     .then((userCredential) => {
-                        alert("🎉 회원가입이 완료되어 포탈에 접속합니다!");
+                        alert("🎉 가온사업단 포탈 회원가입이 완료되었습니다!");
                         document.getElementById('auth-overlay').style.display = 'none';
                     })
                     .catch((error) => {
-                        if(error.code === 'auth/email-already-in-use') { errorMsg.innerText = "❌ 이미 가입된 이메일 주소입니다."; }
-                        else if(error.code === 'auth/weak-password') { errorMsg.innerText = "❌ 비밀번호는 최소 6자리 이상이어야 합니다."; }
-                        else { errorMsg.innerText = "❌ 회원가입 오류가 발생했습니다. 입력 형식을 확인하세요."; }
+                        console.error(error);
+                        if(error.code === 'auth/email-already-in-use') { 
+                            errorMsg.innerText = "❌ 이미 가입된 이메일 주소입니다."; 
+                        } else if(error.code === 'auth/weak-password') { 
+                            errorMsg.innerText = "❌ 비밀번호가 너무 취약합니다. (최소 6자리 이상)"; 
+                        } else if(error.code === 'auth/invalid-email') {
+                            errorMsg.innerText = "❌ 올바른 이메일 형식이 아닙니다.";
+                        } else { 
+                            errorMsg.innerText = "❌ 오류: " + error.message; 
+                        }
                         errorMsg.style.display = "block";
                     });
             }
         }
 
-        // 로그인 세션 상태 실시간 추적 감지기
+        // 로그인 상태 실시간 모니터링
         onAuthStateChanged(auth, (user) => {
+            const overlay = document.getElementById('auth-overlay');
+            const displayEmail = document.getElementById('user-display-email');
             if (user) {
-                document.getElementById('auth-overlay').style.display = 'none';
-                document.getElementById('user-display-email').innerText = user.email;
+                if(overlay) overlay.style.display = 'none';
+                if(displayEmail) displayEmail.innerText = user.email;
             } else {
-                document.getElementById('auth-overlay').style.display = 'flex';
+                if(overlay) overlay.style.display = 'flex';
             }
         });
 
-        // 로그아웃 제어 소스
+        // 로그아웃 시스템 window 바인딩
         window.handleLogout = function() {
             if(confirm("포탈에서 로그아웃 하시겠습니까?")) {
                 signOut(auth).then(() => {
                     location.reload();
+                }).catch((error) => {
+                    alert("로그아웃 중 오류가 발생했습니다.");
                 });
             }
         }
