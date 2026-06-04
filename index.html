@@ -302,7 +302,7 @@
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#F0FDF4; color:#16A34A; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">엣지 권장</span>
                     <img src="./samsung.png" style="max-width:85%; max-height:40px; object-fit:contain;" alt="삼성화재">
                 </div>
-                <div onclick="window.open('https://portal.hwgeneralins.com/3rdParty/loginFormPage_v2.jsp?NONCE=iwmKuN0CUA%2Be9S3zIn4WzShJvbqEpDaiGYgQbkuYULVCWnFwGDlI37sAMYCCoH82mUV6NkYAA14Ehyn8ITphPw%3D%3D&UURL=https%3A%2F%2Fportal.hwgeneralins.com%2Fnls3%2Ffcs')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
+                <div onclick="window.open('https://portal.hwgeneralins.com/3rdParty/loginFormPage.jsp?NONCE=iwmKuN0CUA%2Be9S3zIn4WzShJvbqEpDaiGYgQbkuYULVCWnFwGDlI37sAMYCCoH82mUV6NkYAA14Ehyn8ITphPw%3D%3D&UURL=https%3A%2F%2Fportal.hwgeneralins.com%2Fnls3%2Ffcs')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Edge">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#F0FDF4; color:#16A34A; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">엣지 권장</span>
                     <img src="./hanwha.png" style="max-width:85%; max-height:45px; object-fit:contain;" alt="한화손해보험">
@@ -547,7 +547,7 @@
             currentUserEmail = email;
             document.getElementById('user-private-title').innerText = email + " 전용 제어실";
             
-            const docRef = doc(db, "users_portal_integrated_v2", email);
+            const docRef = doc(db, "users_portal_integrated", email);
             const docSnap = await getDoc(docRef);
 
             if (docSnap.exists()) {
@@ -571,7 +571,7 @@
 
         async function syncRegistryToDatabase() {
             if(!currentUserEmail) return;
-            const docRef = doc(db, "users_portal_integrated_v2", currentUserEmail);
+            const docRef = doc(db, "users_portal_integrated", currentUserEmail);
             await setDoc(docRef, {
                 clientRegistry: window.globalClientRegistry,
                 schedules: window.currentUserSchedules,
