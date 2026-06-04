@@ -150,7 +150,7 @@
         .footer-link { text-decoration: none; color: inherit; display: flex; align-items: center; gap: 6px; margin: 0 20px; }
         .footer-link:hover { color: var(--main-blue); }
 
-        /* 우측 하단 고정형 카카오톡 / 인스타그램 플로팅 문의 레이아웃 */
+        /* 우측 하단 고정형 SNS/카톡 플로팅 문의 레이아웃 */
         .floating-contact-wrap { position: fixed; bottom: 75px; right: 25px; display: flex; flex-direction: column; gap: 12px; z-index: 9999; }
         .float-btn { display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; border-radius: 50%; color: white; font-size: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); transition: all 0.2s ease; text-decoration: none; }
         .float-btn:hover { transform: scale(1.1); }
@@ -159,6 +159,132 @@
     </style>
 </head>
 <body>
+
+    <script>
+        window.globalClientRegistry = {};
+        window.currentUserSchedules = [];
+        let currentModalTargetName = "";
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA1GU9E5WuFUPIyT4Ma4_crArdANpCMQfs",
+            authDomain: "gaon-f3399.firebaseapp.com",
+            projectId: "gaon-f3399",
+            storageBucket: "gaon-f3399.firebasestorage.app",
+            messagingSenderId: "870111782359",
+            appId: "1:870111782359:web:d6d3eeb441d1ac06169792",
+            measurementId: "G-JCW1K0YNZ3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUserEmail = "";
+        const MASTER_INVITE_CODE = "gaon2026";
+
+        async function loadUserIntegratedData(email) {
+            currentUserEmail = email;
+            document.getElementById('user-private-title').innerText = email + " 전용 제어실";
+            
+            const docRef = doc(db, "users_portal", email);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                window.globalClientRegistry = data.clientRegistry || {};
+                window.currentUserSchedules = data.schedules || [];
+                document.getElementById('memo-txt').value = data.memo || "";
+            } else {
+                window.globalClientRegistry = {};
+                window.currentUserSchedules = ["로그인을 환영합니다. 일정을 등록해 보세요."];
+                document.getElementById('memo-txt').value = "";
+            }
+            
+            if (typeof window.renderCombinedCrmList === 'function') window.renderCombinedCrmList();
+            if (typeof window.renderSchedule === 'function') window.renderSchedule();
+        }
+
+        async function syncRegistryToDatabase() {
+            if(!currentUserEmail) return;
+            const docRef = doc(db, "users_portal", currentUserEmail);
+            await setDoc(docRef, {
+                clientRegistry: window.globalClientRegistry,
+                schedules: window.currentUserSchedules,
+                memo: document.getElementById('memo-txt').value
+            }, { merge: true });
+        }
+
+        window.toggleAuthTab = function(mode) {
+            const loginBtn = document.getElementById('tab-login-btn');
+            const regBtn = document.getElementById('tab-register-btn');
+            const title = document.getElementById('auth-title');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const inviteGroup = document.getElementById('invite-code-group');
+            document.getElementById('auth-error-msg').style.display = 'none';
+            
+            if(mode === 'login') {
+                loginBtn.classList.add('active'); regBtn.classList.remove('active');
+                title.innerText = "보험가온포탈 로그인"; submitBtn.innerText = "포탈 접속하기";
+                inviteGroup.style.display = 'none';
+            } else {
+                regBtn.classList.add('active'); loginBtn.classList.remove('active');
+                title.innerText = "신규 멤버 회원가입"; submitBtn.innerText = "가입 및 로그인";
+                inviteGroup.style.display = 'block';
+            }
+        }
+
+        window.handleAuthSubmit = function() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            const errorMsg = document.getElementById('auth-error-msg');
+            errorMsg.style.display = "none";
+
+            if(!email || !password) {
+                errorMsg.innerText = "❌ 이메일과 비밀번호를 모두 입력하세요.";
+                errorMsg.style.display = "block"; return;
+            }
+
+            if(document.getElementById('tab-login-btn').classList.contains('active')) {
+                signInWithEmailAndPassword(auth, email, password)
+                    .then(() => { document.getElementById('auth-overlay').style.display = 'none'; })
+                    .catch(() => {
+                        errorMsg.innerText = "❌ 계정 정보나 비밀번호를 다시 확인하세요.";
+                        errorMsg.style.display = "block";
+                    });
+            } else {
+                const inviteCode = document.getElementById('auth-invite-code').value.trim();
+                if(inviteCode !== MASTER_INVITE_CODE) {
+                    errorMsg.innerText = "❌ 추천인 코드가 올바르지 않습니다.";
+                    errorMsg.style.display = "block"; return;
+                }
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then(() => { document.getElementById('auth-overlay').style.display = 'none'; })
+                    .catch(() => { errorMsg.innerText = "❌ 가입 처리를 진행할 수 없습니다."; errorMsg.style.display="block"; });
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('user-display-email').innerText = user.email;
+                loadUserIntegratedData(user.email);
+            } else {
+                document.getElementById('auth-overlay').style.display = 'flex';
+            }
+        });
+
+        window.handleLogout = function() {
+            if(confirm("로그아웃 하시겠습니까?")) { signOut(auth).then(() => { location.reload(); }); }
+        }
+
+        window.executeRegistrySync = syncRegistryToDatabase;
+    </script>
 
     <div id="auth-overlay">
         <div class="auth-box">
@@ -296,12 +422,10 @@
         <div id="page-insure" class="sub-page" style="background: #F8FAFC; padding: 20px;">
             <button class="btn-back" onclick="goBack()" style="margin-bottom: 15px; background:none; border:none; color:var(--main-blue); cursor:pointer; font-weight:700;">⬅️ 메인으로 돌아가기</button>
             <div class="section-title">🏢 보험사 전산 바로가기</div>
-            
             <div style="display: flex; background: #E2E8F0; padding: 4px; border-radius: 8px; margin-bottom: 25px; box-shadow: var(--card-shadow);">
                 <button id="tab-nonlife" onclick="switchInsTab('nonlife')" style="flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; background: white; color: #2563EB; transition: all 0.2s;">손해보험</button>
                 <button id="tab-life" onclick="switchInsTab('life')" style="flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; background: transparent; color: #64748B; transition: all 0.2s;">생명보험</button>
             </div>
-
             <div id="grid-nonlife" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;">
                 <div onclick="window.open('https://www.mdbins.com/chrome.html?ver=202512040353')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Chrome">
@@ -375,8 +499,10 @@
                 </div>
             </div>
         </div>
+
         <div id="page-call" class="sub-page"><button class="btn-back" onclick="goBack()" style="background:none; border:none; color:var(--main-blue); cursor:pointer; font-weight:700;">⬅️ 메인으로 돌아가기</button><div class="section-title">📞 고객센터</div></div>
         <div id="page-docs" class="sub-page"><button class="btn-back" onclick="goBack()" style="background:none; border:none; color:var(--main-blue); cursor:pointer; font-weight:700;">⬅️ 메인으로 돌아가기</button><div class="section-title">📄 청구서류 양식</div></div>
+        
         <div id="page-silbi" class="sub-page">
             <button class="btn-back" onclick="goBack()" style="background:none; border:none; color:var(--main-blue); cursor:pointer; font-weight:700;">⬅️ 메인으로 돌아가기</button>
             <div class="section-title">🔢 세대별 실비 계산기</div>
@@ -540,136 +666,6 @@
         <a href="#" class="footer-link"><i class="bi bi-shield-lock"></i> 가온 보안전산</a>
         <a href="#" class="footer-link"><i class="bi bi-cpu"></i> AI 엔진 가동중</a>
     </div>
-
-    <script>
-        window.globalClientRegistry = {};
-        window.currentUserSchedules = [];
-        let currentModalTargetName = "";
-    </script>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyA1GU9E5WuFUPIyT4Ma4_crArdANpCMQfs",
-            authDomain: "gaon-f3399.firebaseapp.com",
-            projectId: "gaon-f3399",
-            storageBucket: "gaon-f3399.firebasestorage.app",
-            messagingSenderId: "870111782359",
-            appId: "1:870111782359:web:d6d3eeb441d1ac06169792",
-            measurementId: "G-JCW1K0YNZ3"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        let currentUserEmail = "";
-        const MASTER_INVITE_CODE = "gaon2026";
-
-        // 데이터베이스에서 연동셋 로드 완료 후 리스트 재배열 완결 강제 트리거
-        async function loadUserIntegratedData(email) {
-            currentUserEmail = email;
-            document.getElementById('user-private-title').innerText = email + " 전용 제어실";
-            
-            const docRef = doc(db, "users_portal", email);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                window.globalClientRegistry = data.clientRegistry || {};
-                window.currentUserSchedules = data.schedules || [];
-                document.getElementById('memo-txt').value = data.memo || "";
-            } else {
-                window.globalClientRegistry = {};
-                window.currentUserSchedules = ["로그인을 환영합니다. 일정을 등록해 보세요."];
-                document.getElementById('memo-txt').value = "";
-            }
-            
-            // 전역 동기화 뷰 렌더링 호출
-            if (typeof window.renderCombinedCrmList === 'function') window.renderCombinedCrmList();
-            if (typeof window.renderSchedule === 'function') window.renderSchedule();
-        }
-
-        async function syncRegistryToDatabase() {
-            if(!currentUserEmail) return;
-            const docRef = doc(db, "users_portal", currentUserEmail);
-            await setDoc(docRef, {
-                clientRegistry: window.globalClientRegistry,
-                schedules: window.currentUserSchedules,
-                memo: document.getElementById('memo-txt').value
-            }, { merge: true });
-        }
-
-        // [인증 버그 긴급수정] 인증 탭 토글 및 전산 연동 전역 바인딩
-        window.toggleAuthTab = function(mode) {
-            const loginBtn = document.getElementById('tab-login-btn');
-            const regBtn = document.getElementById('tab-register-btn');
-            const title = document.getElementById('auth-title');
-            const submitBtn = document.getElementById('auth-submit-btn');
-            const inviteGroup = document.getElementById('invite-code-group');
-            document.getElementById('auth-error-msg').style.display = 'none';
-            
-            if(mode === 'login') {
-                loginBtn.classList.add('active'); regBtn.classList.remove('active');
-                title.innerText = "보험가온포탈 로그인"; submitBtn.innerText = "포탈 접속하기";
-                inviteGroup.style.display = 'none';
-            } else {
-                regBtn.classList.add('active'); loginBtn.classList.remove('active');
-                title.innerText = "신규 멤버 회원가입"; submitBtn.innerText = "가입 및 로그인";
-                inviteGroup.style.display = 'block';
-            }
-        }
-
-        // [인증 버그 긴급수정] 인증 제출 단자 전역 범위 확장 연동
-        window.handleAuthSubmit = function() {
-            const email = document.getElementById('auth-email').value.trim();
-            const password = document.getElementById('auth-password').value;
-            const errorMsg = document.getElementById('auth-error-msg');
-            errorMsg.style.display = "none";
-
-            if(!email || !password) {
-                errorMsg.innerText = "❌ 이메일과 비밀번호를 모두 입력하세요.";
-                errorMsg.style.display = "block"; return;
-            }
-
-            if(document.getElementById('tab-login-btn').classList.contains('active')) {
-                signInWithEmailAndPassword(auth, email, password)
-                    .then(() => { document.getElementById('auth-overlay').style.display = 'none'; })
-                    .catch(() => {
-                        errorMsg.innerText = "❌ 계정 정보나 비밀번호를 다시 확인하세요.";
-                        errorMsg.style.display = "block";
-                    });
-            } else {
-                const inviteCode = document.getElementById('auth-invite-code').value.trim();
-                if(inviteCode !== MASTER_INVITE_CODE) {
-                    errorMsg.innerText = "❌ 추천인 코드가 올바르지 않습니다.";
-                    errorMsg.style.display = "block"; return;
-                }
-                createUserWithEmailAndPassword(auth, email, password)
-                    .then(() => { document.getElementById('auth-overlay').style.display = 'none'; })
-                    .catch(() => { errorMsg.innerText = "❌ 가입 처리를 진행할 수 없습니다."; errorMsg.style.display="block"; });
-            }
-        }
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('auth-overlay').style.display = 'none';
-                document.getElementById('user-display-email').innerText = user.email;
-                loadUserIntegratedData(user.email);
-            } else {
-                document.getElementById('auth-overlay').style.display = 'flex';
-            }
-        });
-
-        window.handleLogout = function() {
-            if(confirm("로그아웃 하시겠습니까?")) { signOut(auth).then(() => { location.reload(); }); }
-        }
-
-        window.executeRegistrySync = syncRegistryToDatabase;
-    </script>
 
     <script>
         function switchOfficeSubTab(target) {
@@ -938,12 +934,6 @@ ${d.medical || ''}`;
                 textarea.value = baseTemplateHead + `▶ 핵심 요약: 보장 내역 실시간 모니터링 및 유지율 관리 안부\n\n불필요하게 누수되고 있는 보험료 점검 주간입니다. 청구 누락된 진료비 서류가 있는지 점검을 원하시면 가온 창구로 접수해 주세요.`;
             } else {
                 textarea.value = '';
-            }
-        }
-
-        function saveMemo() {
-            if(window.executeRegistrySync) {
-                window.executeRegistrySync().then(() => { alert('원격 클라우드 저장 완료.'); });
             }
         }
 
