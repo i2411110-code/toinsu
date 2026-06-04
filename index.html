@@ -502,7 +502,7 @@
 
         // 구글 엑셀 격자 파싱기 및 토스 스타일 캘린더 생성 엔진
         function loadCalendarSheet() {
-            if(!GOOGLE_SHEET_CALENDAR_URL || GOOGLE_SHEET_CALENDAR_URL.includes("여기에")) return;
+            if(!GOOGLE_SHEET_CALENDAR_URL || GOOGLE_SHEET_CALENDAR_URL.includes("https://docs.google.com/spreadsheets/d/1IGdzBY2q3AkEb25qpvwm_pw7EERLdEGtA_BYTySosBQ/pub?output=csv")) return;
 
             fetch(GOOGLE_SHEET_CALENDAR_URL)
                 .then(response => response.text())
