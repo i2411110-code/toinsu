@@ -153,7 +153,7 @@
             border-radius: 24px;
             padding: 40px;
             box-shadow: var(--card-shadow);
-            max-width: 800px;
+            max-width: 1100px; /* 달력 가독성을 위해 확장 */
             margin: 0 auto;
         }
 
@@ -186,6 +186,20 @@
             border-bottom: 2px solid var(--main-blue);
             padding-bottom: 12px;
         }
+
+        /* 구글 시트 연동 달력 뷰어 그리드 디자인 스타일 */
+        .calendar-wrapper { margin-top: 10px; }
+        .calendar-month-title { font-size: 22px; font-weight: 700; color: var(--main-blue); margin: 30px 0 15px 0; display: flex; align-items: center; gap: 8px; }
+        .calendar-grid-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 700; background: #F8FAFC; padding: 12px 0; border-radius: 12px; font-size: 14px; margin-bottom: 10px; border: 1px solid #E2E8F0; }
+        .calendar-grid-header div:first-child { color: #EF4444; } 
+        .calendar-grid-header div:last-child { color: var(--main-blue); } 
+        
+        .calendar-grid-body { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+        .calendar-cell { background: #F8FAFC; border-radius: 16px; min-height: 105px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #E2E8F0; }
+        .calendar-cell .day-num { font-weight: 700; font-size: 14px; color: #475569; }
+        .calendar-cell.sun .day-num { color: #EF4444; }
+        .calendar-cell.sat .day-num { color: var(--main-blue); }
+        .calendar-cell .event-text { font-size: 12px; font-weight: 500; background: #E0F2FE; color: #0369A1; padding: 5px 8px; border-radius: 8px; margin-top: 8px; line-height: 1.4; word-break: break-all; text-align: left; }
 
         /* 폼 내부 레이아웃 */
         .form-group { margin-bottom: 20px; }
@@ -228,7 +242,7 @@
 
     <!-- 상단 대시보드 헤더 -->
     <div class="header">
-        <div class="user-badge">토스인슈어런스 심현진 팀장</div>
+        <div class="user-badge">토스인슈어런스 심현진 팀장</div>[cite: 1]
         <h1>보험가온포탈</h1>
         <div class="subtitle">보험설계사 업무 통합 플랫폼</div>
         
@@ -290,11 +304,14 @@
                     <h3>가온 전용 폴더</h3>
                     <p>보험 영업 자료 모음</p>
                 </div>
-                <div class="menu-card" onclick="navigateTo('page-schedule')">
+                
+                <!-- 강의일정 카드에 구글 캘린더 구동 스크립트 결합 완료 -->
+                <div class="menu-card" onclick="navigateTo('page-schedule'); loadCalendarSheet();">
                     <div class="card-icon">📅</div>
                     <h3>강의일정</h3>
                     <p>보험업계 강의 일정 공유 플랫폼</p>
                 </div>
+                
                 <div class="menu-card" onclick="navigateTo('page-recruit')">
                     <div class="card-icon">🧳</div>
                     <h3>이직 컨설팅</h3>
@@ -442,11 +459,15 @@
             <p style="font-size:15px;">5세대 개정 실손 전환 화법 세트 가이드북 준비 중입니다.[cite: 1]</p>
         </div>
 
-        <!-- 10. 강의 일정 페이지 -->
+        <!-- [완전 이식] 10. 구글 시트 달력 뷰어 전용 캘린더 페이지 -->
         <div id="page-schedule" class="sub-page">
             <button class="btn-back" onclick="goBack()">⬅️ 메인으로 돌아가기</button>
-            <div class="section-title">📅 가온사업단 교육 및 세미나 일정</div>
-            <p style="font-size:15px;">2026년도 정기 교육 컨설팅 스케줄이 준비되는 대로 업데이트됩니다.</p>
+            <div class="section-title">📅 가온사업단 공식 캘린더 스케줄표</div>
+            <p style="font-size:14px; color:var(--text-muted); margin-bottom: 20px;">※ 관리자 엑셀 문서와 연동되어 매달 일정이 달력 격자에 실시간 업데이트됩니다.</p>
+            
+            <div id="calendar-render-zone" class="calendar-wrapper">
+                <div style="text-align:center; color:var(--text-muted); padding:50px;">구글 달력 데이터를 매핑하는 중입니다...</div>
+            </div>
         </div>
 
         <!-- 11. 이직 컨설팅 페이지 -->
@@ -476,6 +497,95 @@
 
     <!-- 기능 및 시스템 연동 로직 -->
     <script>
+        // [구글 시트 연동 주소 설정] 쉼표로 구분된 값(.csv) 주소를 아래 넣어주세요!
+        const GOOGLE_SHEET_CALENDAR_URL = "https://docs.google.com/spreadsheets/d/1IGdzBY2q3AkEb25qpvwm_pw7EERLdEGtA_BYTySosBQ/edit?usp=sharing";
+
+        // 구글 엑셀 격자 파싱기 및 토스 스타일 캘린더 생성 엔진
+        function loadCalendarSheet() {
+            if(!GOOGLE_SHEET_CALENDAR_URL || GOOGLE_SHEET_CALENDAR_URL.includes("여기에")) return;
+
+            fetch(GOOGLE_SHEET_CALENDAR_URL)
+                .then(response => response.text())
+                .then(data => {
+                    const lines = data.split('\n');
+                    let zone = document.getElementById('calendar-render-zone');
+                    zone.innerHTML = ''; // 기존 대기 문구 삭제
+
+                    let currentMonth = '';
+                    let bodyHtml = '';
+
+                    for (let i = 0; i < lines.length; i++) {
+                        let line = lines[i].trim();
+                        if (!line) continue;
+
+                        let cols = line.split(',');
+
+                        // 월 타이틀 감지 영역 (예: 2026년 6월)
+                        if (line.includes('2026년') && cols[1] === '') {
+                            if (currentMonth !== '') {
+                                renderMonthBlock(zone, currentMonth, bodyHtml);
+                            }
+                            currentMonth = cols[1] || line.replace(/,/g, '').trim();
+                            bodyHtml = '';
+                            continue;
+                        }
+
+                        // 요일 표시 헤더 행 건너뛰기
+                        if (line.includes('일') && line.includes('월') && line.includes('화')) {
+                            continue;
+                        }
+
+                        // 날짜 및 일정 구조 파싱 (날짜숫자 행 + 바로 아랫줄 일정내용 행 조합)
+                        if (currentMonth !== '' && i + 1 < lines.length) {
+                            let nextLine = lines[i+1].trim();
+                            let nextCols = nextLine.split(',');
+
+                            if (!line.includes('Monthly') && !isNaN(parseInt(cols[1] || cols[2] || cols[3]))) {
+                                for (let j = 1; j <= 7; j++) {
+                                    let dayNum = cols[j] ? cols[j].trim() : '';
+                                    let eventText = nextCols[j] ? nextCols[j].trim() : '';
+                                    
+                                    if(dayNum === 'undefined') dayNum = '';
+                                    if(eventText === 'undefined') eventText = '';
+
+                                    let dayClass = 'calendar-cell';
+                                    if (j === 1) dayClass += ' sun';
+                                    if (j === 7) dayClass += ' sat';
+
+                                    bodyHtml += `<div class="${dayClass}">
+                                        <div class="day-num">${dayNum}</div>
+                                        ${eventText ? `<div class="event-text">${eventText}</div>` : ''}
+                                    </div>`;
+                                }
+                                i++; // 하단 일정 문구 행 패스
+                            }
+                        }
+                    }
+                    if (currentMonth !== '') {
+                        renderMonthBlock(zone, currentMonth, bodyHtml);
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('calendar-render-zone').innerHTML = '<div style="color:red; text-align:center; padding:30px;">엑셀 연동 로드 오류 발생. 구글 웹 게시 주소를 재확인해 주세요.</div>';
+                });
+        }
+
+        // 월별 독립형 캘린더 카드 블록 구조화 모듈
+        function renderMonthBlock(parentZone, monthTitle, bodyContent) {
+            let monthBlock = document.createElement('div');
+            monthBlock.style.marginBottom = '40px';
+            monthBlock.innerHTML = `
+                <div class="calendar-month-title">🗓️ ${monthTitle} 일정표</div>
+                <div class="calendar-grid-header">
+                    <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+                </div>
+                <div class="calendar-grid-body">
+                    ${bodyContent}
+                </div>
+            `;
+            parentZone.appendChild(monthBlock);
+        }
+
         // 페이지 전환 시스템
         function navigateTo(pageId) {
             document.getElementById('main-dashboard').style.display = 'none';
