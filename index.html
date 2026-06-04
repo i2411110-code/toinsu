@@ -991,13 +991,26 @@ ${d.medical || ''}`;
             document.getElementById('silbi-res').innerHTML = `치료비 총액: ${fmt(cost)}<br><b>📊 예상 본인부담금: ${fmt(self)}</b>`;
             document.getElementById('silbi-res').style.display = 'block';
         }
+window.renderCombinedCrmList = renderCombinedCrmList;
+window.renderSchedule = renderSchedule;
+window.submitCrmData = submitCrmData;
+window.switchOfficeSubTab = switchOfficeSubTab;
 window.toggleAuthTab = toggleAuthTab;
-        window.handleAuthSubmit = handleAuthSubmit;
-        window.submitCrmData = submitCrmData;
-        window.renderCombinedCrmList = renderCombinedCrmList;
-        window.renderSchedule = renderSchedule;
-        window.switchOfficeSubTab = switchOfficeSubTab;
-        window.handleLogout = handleLogout;
+window.handleAuthSubmit = handleAuthSubmit;
+window.handleLogout = handleLogout;
+window.executeRegistrySync = syncRegistryToDatabase;
+
+// 2. 가장 중요한 부분: 모든 함수 정의 후 초기화 호출
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        document.getElementById('auth-overlay').style.display = 'none';
+        document.getElementById('user-display-email').innerText = user.email;
+        // 데이터 로드 호출
+        loadUserIntegratedData(user.email);
+    } else {
+        document.getElementById('auth-overlay').style.display = 'flex';
+    }
+});
         
     </script>
 </body>
