@@ -258,22 +258,31 @@
             errorMsg.style.display = "block"; return;
         }
 
+        // 로그인 모드
         if(document.getElementById('tab-login-btn').classList.contains('active')) {
             signInWithEmailAndPassword(auth, email, password)
                 .then(() => { document.getElementById('auth-overlay').style.display = 'none'; })
-                .catch(() => {
-                    errorMsg.innerText = "❌ 계정 정보나 비밀번호를 다시 확인하세요.";
+                .catch((error) => {
+                    errorMsg.innerText = "❌ 로그인 실패: " + error.message;
                     errorMsg.style.display = "block";
                 });
-        } else {
+        } 
+        // 회원가입 모드
+        else {
             const inviteCode = document.getElementById('auth-invite-code').value.trim();
             if(inviteCode !== MASTER_INVITE_CODE) {
                 errorMsg.innerText = "❌ 추천인 코드가 올바르지 않습니다.";
                 errorMsg.style.display = "block"; return;
             }
             createUserWithEmailAndPassword(auth, email, password)
-                .then(() => { document.getElementById('auth-overlay').style.display = 'none'; })
-                .catch(() => { errorMsg.innerText = "❌ 가입 처리를 진행할 수 없습니다."; errorMsg.style.display="block"; });
+                .then(() => { 
+                    alert("가입이 완료되었습니다!");
+                    document.getElementById('auth-overlay').style.display = 'none'; 
+                })
+                .catch((error) => { 
+                    errorMsg.innerText = "❌ 가입 실패: " + error.message; 
+                    errorMsg.style.display = "block"; 
+                });
         }
     }
 
