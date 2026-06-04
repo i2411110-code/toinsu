@@ -495,11 +495,16 @@
                 const data = docSnap.data();
                 window.globalClientRegistry = data.clientRegistry || {};
                 window.currentUserSchedules = data.schedules || [];
-                document.getElementById('memo-txt').value = data.memo || "";
+                // 새로고침 시 원격 서버의 메시지 가안 데이터를 입력창에 그대로 주입합니다.
+                if(document.getElementById('memo-txt')) {
+                    document.getElementById('memo-txt').value = data.memo || "";
+                }
             } else {
                 window.globalClientRegistry = {};
                 window.currentUserSchedules = ["로그인을 환영합니다. 일정을 등록해 보세요."];
-                document.getElementById('memo-txt').value = "";
+                if(document.getElementById('memo-txt')) {
+                    document.getElementById('memo-txt').value = "";
+                }
             }
             window.renderCombinedCrmList();
             window.renderSchedule();
@@ -657,6 +662,7 @@
                 window.executeRegistrySync().then(() => {
                     alert("데이터베이스 안전 보관 동기화 완료.");
                     resetCrmInputForm();
+                    renderCombinedCrmList(); // 이 부분을 추가하여 새로고침 없이도 즉시 목록을 갱신합니다.
                     switchOfficeSubTab('list');
                 });
             }
@@ -858,7 +864,11 @@ ${d.medical || ''}`;
 
         function saveMemo() {
             if(window.executeRegistrySync) {
-                window.executeRegistrySync().then(() => { alert('원격 클라우드 저장 완료.'); });
+                window.executeRegistrySync().then(() => { 
+                    alert('원격 클라우드 저장 완료.'); 
+                    // 동기화 후 유저가 작성 중이던 목록 화면의 흐름을 그대로 유지합니다.
+                    renderCombinedCrmList();
+                });
             }
         }
 
