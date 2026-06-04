@@ -331,13 +331,25 @@
         <div id="page-insure" class="sub-page">
             <button class="btn-back" onclick="goBack()">⬅️ 메인으로 돌아가기</button>
             <div class="section-title">🏢 보험사 전산 바로가기</div>
-            <p style="margin-bottom: 20px; font-size:14px; color:var(--text-muted);">원하시는 보험사를 선택하면 전산 로그인망으로 안전하게 연결됩니다.</p>
-            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:15px;">
-                <button class="btn-action" onclick="window.open('https://www.hwgeneralins.com/')">한화손해보험 전산</button>
-                <button class="btn-action" onclick="window.open('https://www.samsungfire.com/')">삼성화재 멤버스</button>
-                <button class="btn-action" onclick="window.open('https://www.idb.co.kr/')">DB손해보험 포탈</button>
-                <button class="btn-action" onclick="window.open('https://www.hi.co.kr/')">현대해상 하이포탈</button>
+            <p style="margin-bottom: 25px; font-size:14px; color:var(--text-muted);">원하시는 계열사를 선택한 후 보험사를 클릭하시면 전산망으로 연결됩니다.</p>
+            
+            <div style="display: flex; background: #E2E8F0; padding: 5px; border-radius: 12px; margin-bottom: 25px;">
+                <button id="tab-nonlife" onclick="switchInsTab('nonlife')" style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; background: white; color: #2563EB; transition: all 0.2s;">손해보험</button>
+                <button id="tab-life" onclick="switchInsTab('life')" style="flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; background: transparent; color: #64748B; transition: all 0.2s;">생명보험</button>
             </div>
+
+            <div id="grid-nonlife" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+                <button class="btn-action" onclick="window.open('https://www.mdbins.com/chrome.html?ver=202512040353')">DB손해보험 (크롬)</button>
+                <button class="btn-action" onclick="window.open('https://www.samsungfire.com/')">삼성화재 멤버스</button>
+                <button class="btn-action" onclick="window.open('https://www.hwgeneralins.com/')">한화손해보험</button>
+                <button class="btn-action" onclick="window.open('https://www.hi.co.kr/')">현대해상 하이포탈</button>
+                </div>
+
+            <div id="grid-life" style="display: none; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+                <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px;">
+                    생명보험사 링크가 곧 업데이트될 예정입니다.
+                </div>
+                </div>
         </div>
 
         <!-- 2. 고객센터 페이지 -->
