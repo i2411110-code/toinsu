@@ -23,7 +23,7 @@
             font-family: 'Noto Sans KR', sans-serif;
             background: linear-gradient(135deg, #ECEFF8 0%, #F4F7FB 50%, #EBF1FC 100%);
             color: var(--text-dark);
-            padding-bottom: 100px;
+            padding-bottom: 120px;
             min-height: 100vh;
         }
 
@@ -145,9 +145,146 @@
         .portal-modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 2000; padding: 20px; }
         .modal-body { background: white; border-radius: 24px; padding: 30px; width: 100%; max-width: 500px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
         .modal-text-view { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 15px; border-radius: 12px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; max-height: 380px; overflow-y: auto; color: #334155; margin-bottom: 20px; }
+
+        .footer-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); border-top: 1px solid #E2E8F0; padding: 18px 0; display: flex; justify-content: center; gap: 6px; font-size: 14px; font-weight: 500; z-index: 1000; }
+        .footer-link { text-decoration: none; color: inherit; display: flex; align-items: center; gap: 6px; margin: 0 20px; }
+        .footer-link:hover { color: var(--main-blue); }
+
+        /* 우측 하단 고정형 SNS/카톡 플로팅 문의 레이아웃 */
+        .floating-contact-wrap { position: fixed; bottom: 75px; right: 25px; display: flex; flex-direction: column; gap: 12px; z-index: 9999; }
+        .float-btn { display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; border-radius: 50%; color: white; font-size: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); transition: all 0.2s ease; text-decoration: none; }
+        .float-btn:hover { transform: scale(1.1); }
+        .float-kakao { background: #FEE500; color: #181600; }
+        .float-instagram { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
     </style>
 </head>
 <body>
+
+    <script>
+        window.globalClientRegistry = {};
+        window.currentUserSchedules = [];
+        let currentModalTargetName = "";
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA1GU9E5WuFUPIyT4Ma4_crArdANpCMQfs",
+            authDomain: "gaon-f3399.firebaseapp.com",
+            projectId: "gaon-f3399",
+            storageBucket: "gaon-f3399.firebasestorage.app",
+            messagingSenderId: "870111782359",
+            appId: "1:870111782359:web:d6d3eeb441d1ac06169792",
+            measurementId: "G-JCW1K0YNZ3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUserEmail = "";
+        const MASTER_INVITE_CODE = "gaon2026";
+
+        async function loadUserIntegratedData(email) {
+            currentUserEmail = email;
+            document.getElementById('user-private-title').innerText = email + " 전용 제어실";
+            
+            const docRef = doc(db, "users_portal", email);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                window.globalClientRegistry = data.clientRegistry || {};
+                window.currentUserSchedules = data.schedules || [];
+                document.getElementById('memo-txt').value = data.memo || "";
+            } else {
+                window.globalClientRegistry = {};
+                window.currentUserSchedules = ["로그인을 환영합니다. 일정을 등록해 보세요."];
+                document.getElementById('memo-txt').value = "";
+            }
+            
+            if (typeof window.renderCombinedCrmList === 'function') window.renderCombinedCrmList();
+            if (typeof window.renderSchedule === 'function') window.renderSchedule();
+        }
+
+        async function syncRegistryToDatabase() {
+            if(!currentUserEmail) return;
+            const docRef = doc(db, "users_portal", currentUserEmail);
+            await setDoc(docRef, {
+                clientRegistry: window.globalClientRegistry,
+                schedules: window.currentUserSchedules,
+                memo: document.getElementById('memo-txt').value
+            }, { merge: true });
+        }
+
+        window.toggleAuthTab = function(mode) {
+            const loginBtn = document.getElementById('tab-login-btn');
+            const regBtn = document.getElementById('tab-register-btn');
+            const title = document.getElementById('auth-title');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const inviteGroup = document.getElementById('invite-code-group');
+            document.getElementById('auth-error-msg').style.display = 'none';
+            
+            if(mode === 'login') {
+                loginBtn.classList.add('active'); regBtn.classList.remove('active');
+                title.innerText = "보험가온포탈 로그인"; submitBtn.innerText = "포탈 접속하기";
+                inviteGroup.style.display = 'none';
+            } else {
+                regBtn.classList.add('active'); loginBtn.classList.remove('active');
+                title.innerText = "신규 멤버 회원가입"; submitBtn.innerText = "가입 및 로그인";
+                inviteGroup.style.display = 'block';
+            }
+        }
+
+        window.handleAuthSubmit = function() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            const errorMsg = document.getElementById('auth-error-msg');
+            errorMsg.style.display = "none";
+
+            if(!email || !password) {
+                errorMsg.innerText = "❌ 이메일과 비밀번호를 모두 입력하세요.";
+                errorMsg.style.display = "block"; return;
+            }
+
+            if(document.getElementById('tab-login-btn').classList.contains('active')) {
+                signInWithEmailAndPassword(auth, email, password)
+                    .then(() => { document.getElementById('auth-overlay').style.display = 'none'; })
+                    .catch(() => {
+                        errorMsg.innerText = "❌ 계정 정보나 비밀번호를 다시 확인하세요.";
+                        errorMsg.style.display = "block";
+                    });
+            } else {
+                const inviteCode = document.getElementById('auth-invite-code').value.trim();
+                if(inviteCode !== MASTER_INVITE_CODE) {
+                    errorMsg.innerText = "❌ 추천인 코드가 올바르지 않습니다.";
+                    errorMsg.style.display = "block"; return;
+                }
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then(() => { document.getElementById('auth-overlay').style.display = 'none'; })
+                    .catch(() => { errorMsg.innerText = "❌ 가입 처리를 진행할 수 없습니다."; errorMsg.style.display="block"; });
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('user-display-email').innerText = user.email;
+                loadUserIntegratedData(user.email);
+            } else {
+                document.getElementById('auth-overlay').style.display = 'flex';
+            }
+        });
+
+        window.handleLogout = function() {
+            if(confirm("로그아웃 하시겠습니까?")) { signOut(auth).then(() => { location.reload(); }); }
+        }
+
+        window.executeRegistrySync = syncRegistryToDatabase;
+    </script>
 
     <div id="auth-overlay">
         <div class="auth-box">
@@ -155,8 +292,8 @@
             <h2 id="auth-title" style="font-size:22px; font-weight:700; margin:15px 0 25px 0;">보험가온포탈 로그인</h2>
             
             <div class="auth-tab">
-                <button id="tab-login-btn" class="active" onclick="toggleAuthTab('login')">로그인</button>
-                <button id="tab-register-btn" onclick="toggleAuthTab('register')">회원가입</button>
+                <button id="tab-login-btn" class="active" onclick="window.toggleAuthTab('login')">로그인</button>
+                <button id="tab-register-btn" onclick="window.toggleAuthTab('register')">회원가입</button>
             </div>
             
             <div class="form-group" style="text-align:left;">
@@ -172,7 +309,7 @@
                 <input type="text" id="auth-invite-code" class="form-control" placeholder="추천인 코드 입력">
             </div>
             
-            <button id="auth-submit-btn" class="btn-action" style="margin-top:10px;" onclick="handleAuthSubmit()">포탈 접속하기</button>
+            <button id="auth-submit-btn" class="btn-action" style="margin-top:10px;" onclick="window.handleAuthSubmit()">포탈 접속하기</button>
             <p id="auth-error-msg" style="color:#EF4444; font-size:13px; margin-top:15px; display:none; font-weight:500;"></p>
         </div>
     </div>
@@ -184,8 +321,8 @@
         <div class="nav-right">
             <div class="user-badge user-pill"><i class="bi bi-person-badge-fill"></i> <span id="user-display-email">인증 확인 중...</span></div>
             <button class="logout-btn" onclick="handleLogout()"><i class="bi bi-box-arrow-right"></i> 로그아웃</button>
-            <div class="counter-pill">TODAY <span id="count-today">0</span></div>
-            <div class="counter-pill">TOTAL <span id="count-total">0</span></div>
+            <div class="counter-pill">TODAY <span id="count-today">1</span></div>
+            <div class="counter-pill">TOTAL <span id="count-total">1</span></div>
         </div>
     </div>
 
@@ -285,12 +422,10 @@
         <div id="page-insure" class="sub-page" style="background: #F8FAFC; padding: 20px;">
             <button class="btn-back" onclick="goBack()" style="margin-bottom: 15px; background:none; border:none; color:var(--main-blue); cursor:pointer; font-weight:700;">⬅️ 메인으로 돌아가기</button>
             <div class="section-title">🏢 보험사 전산 바로가기</div>
-            
             <div style="display: flex; background: #E2E8F0; padding: 4px; border-radius: 8px; margin-bottom: 25px; box-shadow: var(--card-shadow);">
                 <button id="tab-nonlife" onclick="switchInsTab('nonlife')" style="flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; background: white; color: #2563EB; transition: all 0.2s;">손해보험</button>
                 <button id="tab-life" onclick="switchInsTab('life')" style="flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; background: transparent; color: #64748B; transition: all 0.2s;">생명보험</button>
             </div>
-
             <div id="grid-nonlife" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;">
                 <div onclick="window.open('https://www.mdbins.com/chrome.html?ver=202512040353')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Chrome">
@@ -302,7 +437,7 @@
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#F0FDF4; color:#16A34A; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">엣지 권장</span>
                     <img src="./samsung.png" style="max-width:85%; max-height:40px; object-fit:contain;" alt="삼성화재">
                 </div>
-                <div onclick="window.open('https://portal.hwgeneralins.com/3rdParty/loginFormPage.jsp?NONCE=iwmKuN0CUA%2Be9S3zIn4WzShJvbqEpDaiGYgQbkuYULVCWnFwGDlI37sAMYCCoH82mUV6NkYAA14Ehyn8ITphPw%3D%3D&UURL=https%3A%2F%2Fportal.hwgeneralins.com%2Fnls3%2Ffcs')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
+                <div onclick="window.open('https://portal.hwgeneralins.com/3rdParty/loginFormPage_v2.jsp?NONCE=iwmKuN0CUA%2Be9S3zIn4WzShJvbqEpDaiGYgQbkuYULVCWnFwGDlI37sAMYCCoH82mUV6NkYAA14Ehyn8ITphPw%3D%3D&UURL=https%3A%2F%2Fportal.hwgeneralins.com%2Fnls3%2Ffcs')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Edge">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#F0FDF4; color:#16A34A; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">엣지 권장</span>
                     <img src="./hanwha.png" style="max-width:85%; max-height:45px; object-fit:contain;" alt="한화손해보험">
@@ -367,6 +502,7 @@
 
         <div id="page-call" class="sub-page"><button class="btn-back" onclick="goBack()" style="background:none; border:none; color:var(--main-blue); cursor:pointer; font-weight:700;">⬅️ 메인으로 돌아가기</button><div class="section-title">📞 고객센터</div></div>
         <div id="page-docs" class="sub-page"><button class="btn-back" onclick="goBack()" style="background:none; border:none; color:var(--main-blue); cursor:pointer; font-weight:700;">⬅️ 메인으로 돌아가기</button><div class="section-title">📄 청구서류 양식</div></div>
+        
         <div id="page-silbi" class="sub-page">
             <button class="btn-back" onclick="goBack()" style="background:none; border:none; color:var(--main-blue); cursor:pointer; font-weight:700;">⬅️ 메인으로 돌아가기</button>
             <div class="section-title">🔢 세대별 실비 계산기</div>
@@ -399,7 +535,7 @@
                 <div class="office-box" style="background:#EFF6FF; border:1px dashed #2563EB; margin-bottom:25px; padding:20px;">
                     <h4 style="color:#2563EB;"><i class="bi bi-magic"></i> 카톡 원문 통복사 붙여넣기 AI 정렬 장치</h4>
                     <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">상담이나 카톡방에서 전달받은 고객 원문 스크립트를 그대로 입력하세요.</p>
-                    <textarea id="ai-raw-textarea" class="form-control" style="height:120px; background:white; margin-bottom:10px; font-size:13px;" placeholder="여기에 양식을 붙여넣으세요. &#10;1. 성명 : 김가온&#10;2. 주민번호 : 960814 - 1..."></textarea>
+                    <textarea id="ai-raw-textarea" class="form-control" style="height:120px; background:white; margin-bottom:10px; font-size:13px;" placeholder="여기에 양식을 붙여넣으세요. &#10;1. 성명 : 김영숙&#10;2. 주민번호 : 520604 - 2395211..."></textarea>
                     <button class="btn-action" style="background:#2563EB;" onclick="runAiTextParser()">📋 AI 텍스트 자동 분류 적용</button>
                 </div>
 
@@ -513,6 +649,11 @@
         </div>
     </div>
 
+    <div class="floating-contact-wrap">
+        <a href="https://pf.kakao.com" target="_blank" class="float-btn float-kakao" title="카카오톡 문의"><i class="bi bi-chat-fill"></i></a>
+        <a href="https://instagram.com" target="_blank" class="float-btn float-instagram" title="인스타그램"><i class="bi bi-instagram"></i></a>
+    </div>
+
     <div id="portal-global-modal" class="portal-modal" onclick="closePortalModal()">
         <div class="modal-body" onclick="event.stopPropagation()">
             <h3 style="font-size:18px; font-weight:700; margin-bottom:15px;" id="modal-title-area">종합 정보 열람</h3>
@@ -521,135 +662,12 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyA1GU9E5WuFUPIyT4Ma4_crArdANpCMQfs",
-            authDomain: "gaon-f3399.firebaseapp.com",
-            projectId: "gaon-f3399",
-            storageBucket: "gaon-f3399.firebasestorage.app",
-            messagingSenderId: "870111782359",
-            appId: "1:870111782359:web:d6d3eeb441d1ac06169792",
-            measurementId: "G-JCW1K0YNZ3"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        let currentUserEmail = "";
-        const MASTER_INVITE_CODE = "gaon2026";
-
-        async function loadUserIntegratedData(email) {
-            currentUserEmail = email;
-            document.getElementById('user-private-title').innerText = email + " 전용 제어실";
-            
-            const docRef = doc(db, "users_portal_integrated", email);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                window.globalClientRegistry = data.clientRegistry || {};
-                window.currentUserSchedules = data.schedules || [];
-                // 새로고침 시 원격 서버의 메시지 가안 데이터를 입력창에 그대로 주입합니다.
-                if(document.getElementById('memo-txt')) {
-                    document.getElementById('memo-txt').value = data.memo || "";
-                }
-            } else {
-                window.globalClientRegistry = {};
-                window.currentUserSchedules = ["로그인을 환영합니다. 일정을 등록해 보세요."];
-                if(document.getElementById('memo-txt')) {
-                    document.getElementById('memo-txt').value = "";
-                }
-            }
-            window.renderCombinedCrmList();
-            window.renderSchedule();
-        }
-
-        async function syncRegistryToDatabase() {
-            if(!currentUserEmail) return;
-            const docRef = doc(db, "users_portal_integrated", currentUserEmail);
-            await setDoc(docRef, {
-                clientRegistry: window.globalClientRegistry,
-                schedules: window.currentUserSchedules,
-                memo: document.getElementById('memo-txt').value
-            }, { merge: true });
-        }
-
-        window.toggleAuthTab = function(mode) {
-            const loginBtn = document.getElementById('tab-login-btn');
-            const regBtn = document.getElementById('tab-register-btn');
-            const title = document.getElementById('auth-title');
-            const submitBtn = document.getElementById('auth-submit-btn');
-            const inviteGroup = document.getElementById('invite-code-group');
-            document.getElementById('auth-error-msg').style.display = 'none';
-            
-            if(mode === 'login') {
-                loginBtn.classList.add('active'); regBtn.classList.remove('active');
-                title.innerText = "보험가온포탈 로그인"; submitBtn.innerText = "포탈 접속하기";
-                inviteGroup.style.display = 'none';
-            } else {
-                regBtn.classList.add('active'); loginBtn.classList.remove('active');
-                title.innerText = "신규 멤버 회원가입"; submitBtn.innerText = "가입 및 로그인";
-                inviteGroup.style.display = 'block';
-            }
-        }
-
-        window.handleAuthSubmit = function() {
-            const email = document.getElementById('auth-email').value.trim();
-            const password = document.getElementById('auth-password').value;
-            const errorMsg = document.getElementById('auth-error-msg');
-            errorMsg.style.display = "none";
-
-            if(!email || !password) {
-                errorMsg.innerText = "❌ 이메일과 비밀번호를 모두 입력하세요.";
-                errorMsg.style.display = "block"; return;
-            }
-
-            if(document.getElementById('tab-login-btn').classList.contains('active')) {
-                signInWithEmailAndPassword(auth, email, password)
-                    .then(() => { document.getElementById('auth-overlay').style.display = 'none'; })
-                    .catch(() => {
-                        errorMsg.innerText = "❌ 계정 정보나 비밀번호를 다시 확인하세요.";
-                        errorMsg.style.display = "block";
-                    });
-            } else {
-                const inviteCode = document.getElementById('auth-invite-code').value.trim();
-                if(inviteCode !== MASTER_INVITE_CODE) {
-                    errorMsg.innerText = "❌ 추천인 코드가 올바르지 않습니다.";
-                    errorMsg.style.display = "block"; return;
-                }
-                createUserWithEmailAndPassword(auth, email, password)
-                    .then(() => { document.getElementById('auth-overlay').style.display = 'none'; })
-                    .catch(() => { errorMsg.innerText = "❌ 가입 처리를 진행할 수 없습니다."; errorMsg.style.display="block"; });
-            }
-        }
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('auth-overlay').style.display = 'none';
-                document.getElementById('user-display-email').innerText = user.email;
-                loadUserIntegratedData(user.email);
-            } else {
-                document.getElementById('auth-overlay').style.display = 'flex';
-            }
-        });
-
-        window.handleLogout = function() {
-            if(confirm("로그아웃 하시겠습니까?")) { signOut(auth).then(() => { location.reload(); }); }
-        }
-
-        window.executeRegistrySync = syncRegistryToDatabase;
-    </script>
+    <div class="footer-bar">
+        <a href="#" class="footer-link"><i class="bi bi-shield-lock"></i> 가온 보안전산</a>
+        <a href="#" class="footer-link"><i class="bi bi-cpu"></i> AI 엔진 가동중</a>
+    </div>
 
     <script>
-        window.globalClientRegistry = {};
-        window.currentUserSchedules = [];
-        let currentModalTargetName = "";
-
         function switchOfficeSubTab(target) {
             const btnInput = document.getElementById('btn-tab-input');
             const btnList = document.getElementById('btn-tab-list');
@@ -666,7 +684,6 @@
             }
         }
 
-        // 복사 붙여넣기 데이터 실시간 변환 파싱 엔진
         function runAiTextParser() {
             const rawText = document.getElementById('ai-raw-textarea').value;
             if(!rawText.trim()) {
@@ -721,7 +738,6 @@
                 window.executeRegistrySync().then(() => {
                     alert("데이터베이스 안전 보관 동기화 완료.");
                     resetCrmInputForm();
-                    renderCombinedCrmList(); // 이 부분을 추가하여 새로고침 없이도 즉시 목록을 갱신합니다.
                     switchOfficeSubTab('list');
                 });
             }
@@ -736,13 +752,14 @@
 
         function renderCombinedCrmList() {
             const tbody = document.getElementById('combined-crm-tbody');
+            if(!tbody) return;
             tbody.innerHTML = "";
 
             const filterContract = document.getElementById('f_contract').value;
             const filterDoc = document.getElementById('f_doc').value;
             const searchKeyword = document.getElementById('f_search').value.trim();
 
-            Object.entries(window.globalClientRegistry).forEach(([name, d]) => {
+            Object.entries(window.globalClientRegistry || {}).forEach(([name, d]) => {
                 if(filterContract !== 'all' && d.contract !== filterContract) return;
                 if(filterDoc !== 'all' && d.document !== filterDoc) return;
                 if(searchKeyword && !name.includes(searchKeyword) && !(d.phone && d.phone.includes(searchKeyword))) return;
@@ -766,7 +783,7 @@
         }
 
         function sortCombinedCrm(criteria) {
-            let entries = Object.entries(window.globalClientRegistry);
+            let entries = Object.entries(window.globalClientRegistry || {});
             if(criteria === 'name') entries.sort((a,b) => a[0].localeCompare(b[0], 'ko'));
             else entries.sort((a,b) => (b[1].savedAt || 0) - (a[1].savedAt || 0));
             const sortedObj = {};
@@ -859,7 +876,6 @@ ${d.medical || ''}`;
 
         function closePortalModal() { document.getElementById('portal-global-modal').style.display = 'none'; }
 
-        // 로컬 백업 내보내기/불러오기
         function exportClientDB() {
             const blob = new Blob([JSON.stringify(window.globalClientRegistry)], { type: "application/json" });
             const a = document.createElement("a");
@@ -886,7 +902,6 @@ ${d.medical || ''}`;
             reader.readAsText(file);
         }
 
-        // 스케줄 및 메모장 연동 제어 단원
         function addSchedule() {
             const val = document.getElementById('todo-input').value.trim();
             if(!val) return;
@@ -897,7 +912,8 @@ ${d.medical || ''}`;
 
         function renderSchedule() {
             const ul = document.getElementById('todo-list');
-            ul.innerHTML = window.currentUserSchedules.map((item, idx) => `<li><i class="bi bi-clock-history"></i> ${item} <span style="color:#EF4444; cursor:pointer; margin-left:8px;" onclick="deleteSchedule(${idx})">×</span></li>`).join('');
+            if(!ul) return;
+            ul.innerHTML = (window.currentUserSchedules || []).map((item, idx) => `<li><i class="bi bi-clock-history"></i> ${item} <span style="color:#EF4444; cursor:pointer; margin-left:8px;" onclick="deleteSchedule(${idx})">×</span></li>`).join('');
         }
 
         function deleteSchedule(idx) {
@@ -921,17 +937,6 @@ ${d.medical || ''}`;
             }
         }
 
-        function saveMemo() {
-            if(window.executeRegistrySync) {
-                window.executeRegistrySync().then(() => { 
-                    alert('원격 클라우드 저장 완료.'); 
-                    // 동기화 후 유저가 작성 중이던 목록 화면의 흐름을 그대로 유지합니다.
-                    renderCombinedCrmList();
-                });
-            }
-        }
-
-        // 공통 베이스 라우터 조작 장치
         function navigateTo(pageId) {
             document.getElementById('main-dashboard').style.display = 'none';
             const subPages = document.querySelectorAll('.sub-page');
