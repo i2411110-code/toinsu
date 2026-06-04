@@ -23,7 +23,7 @@
             font-family: 'Noto Sans KR', sans-serif;
             background: linear-gradient(135deg, #ECEFF8 0%, #F4F7FB 50%, #EBF1FC 100%);
             color: var(--text-dark);
-            padding-bottom: 100px;
+            padding-bottom: 120px;
             min-height: 100vh;
         }
 
@@ -149,6 +149,13 @@
         .footer-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); border-top: 1px solid #E2E8F0; padding: 18px 0; display: flex; justify-content: center; gap: 6px; font-size: 14px; font-weight: 500; z-index: 1000; }
         .footer-link { text-decoration: none; color: inherit; display: flex; align-items: center; gap: 6px; margin: 0 20px; }
         .footer-link:hover { color: var(--main-blue); }
+
+        /* 우측 하단 고정형 카카오톡 / 인스타그램 플로팅 문의 레이아웃 */
+        .floating-contact-wrap { position: fixed; bottom: 75px; right: 25px; display: flex; flex-direction: column; gap: 12px; z-index: 9999; }
+        .float-btn { display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; border-radius: 50%; color: white; font-size: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); transition: all 0.2s ease; text-decoration: none; }
+        .float-btn:hover { transform: scale(1.1); }
+        .float-kakao { background: #FEE500; color: #181600; }
+        .float-instagram { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
     </style>
 </head>
 <body>
@@ -159,8 +166,8 @@
             <h2 id="auth-title" style="font-size:22px; font-weight:700; margin:15px 0 25px 0;">보험가온포탈 로그인</h2>
             
             <div class="auth-tab">
-                <button id="tab-login-btn" class="active" onclick="toggleAuthTab('login')">로그인</button>
-                <button id="tab-register-btn" onclick="toggleAuthTab('register')">회원가입</button>
+                <button id="tab-login-btn" class="active" onclick="window.toggleAuthTab('login')">로그인</button>
+                <button id="tab-register-btn" onclick="window.toggleAuthTab('register')">회원가입</button>
             </div>
             
             <div class="form-group" style="text-align:left;">
@@ -176,7 +183,7 @@
                 <input type="text" id="auth-invite-code" class="form-control" placeholder="추천인 코드 입력">
             </div>
             
-            <button id="auth-submit-btn" class="btn-action" style="margin-top:10px;" onclick="handleAuthSubmit()">포탈 접속하기</button>
+            <button id="auth-submit-btn" class="btn-action" style="margin-top:10px;" onclick="window.handleAuthSubmit()">포탈 접속하기</button>
             <p id="auth-error-msg" style="color:#EF4444; font-size:13px; margin-top:15px; display:none; font-weight:500;"></p>
         </div>
     </div>
@@ -188,8 +195,8 @@
         <div class="nav-right">
             <div class="user-badge user-pill"><i class="bi bi-person-badge-fill"></i> <span id="user-display-email">인증 확인 중...</span></div>
             <button class="logout-btn" onclick="handleLogout()"><i class="bi bi-box-arrow-right"></i> 로그아웃</button>
-            <div class="counter-pill">TODAY <span id="count-today">0</span></div>
-            <div class="counter-pill">TOTAL <span id="count-total">0</span></div>
+            <div class="counter-pill">TODAY <span id="count-today">1</span></div>
+            <div class="counter-pill">TOTAL <span id="count-total">1</span></div>
         </div>
     </div>
 
@@ -516,6 +523,11 @@
         </div>
     </div>
 
+    <div class="floating-contact-wrap">
+        <a href="https://pf.kakao.com" target="_blank" class="float-btn float-kakao" title="카카오톡 문의"><i class="bi bi-chat-fill"></i></a>
+        <a href="https://instagram.com" target="_blank" class="float-btn float-instagram" title="인스타그램"><i class="bi bi-instagram"></i></a>
+    </div>
+
     <div id="portal-global-modal" class="portal-modal" onclick="closePortalModal()">
         <div class="modal-body" onclick="event.stopPropagation()">
             <h3 style="font-size:18px; font-weight:700; margin-bottom:15px;" id="modal-title-area">종합 정보 열람</h3>
@@ -523,6 +535,17 @@
             <div style="display:flex; gap:10px;" id="modal-action-btn-layout"></div>
         </div>
     </div>
+
+    <div class="footer-bar">
+        <a href="#" class="footer-link"><i class="bi bi-shield-lock"></i> 가온 보안전산</a>
+        <a href="#" class="footer-link"><i class="bi bi-cpu"></i> AI 엔진 가동중</a>
+    </div>
+
+    <script>
+        window.globalClientRegistry = {};
+        window.currentUserSchedules = [];
+        let currentModalTargetName = "";
+    </script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -546,7 +569,7 @@
         let currentUserEmail = "";
         const MASTER_INVITE_CODE = "gaon2026";
 
-        // 단일 컬렉션(users_portal) 구조로 통합 로드 처리 연동
+        // 데이터베이스에서 연동셋 로드 완료 후 리스트 재배열 완결 강제 트리거
         async function loadUserIntegratedData(email) {
             currentUserEmail = email;
             document.getElementById('user-private-title').innerText = email + " 전용 제어실";
@@ -564,11 +587,12 @@
                 window.currentUserSchedules = ["로그인을 환영합니다. 일정을 등록해 보세요."];
                 document.getElementById('memo-txt').value = "";
             }
-            window.renderCombinedCrmList();
-            window.renderSchedule();
+            
+            // 전역 동기화 뷰 렌더링 호출
+            if (typeof window.renderCombinedCrmList === 'function') window.renderCombinedCrmList();
+            if (typeof window.renderSchedule === 'function') window.renderSchedule();
         }
 
-        // 실시간 클라우드 상호 백업 엔진 일원화 
         async function syncRegistryToDatabase() {
             if(!currentUserEmail) return;
             const docRef = doc(db, "users_portal", currentUserEmail);
@@ -579,6 +603,7 @@
             }, { merge: true });
         }
 
+        // [인증 버그 긴급수정] 인증 탭 토글 및 전산 연동 전역 바인딩
         window.toggleAuthTab = function(mode) {
             const loginBtn = document.getElementById('tab-login-btn');
             const regBtn = document.getElementById('tab-register-btn');
@@ -598,6 +623,7 @@
             }
         }
 
+        // [인증 버그 긴급수정] 인증 제출 단자 전역 범위 확장 연동
         window.handleAuthSubmit = function() {
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value;
@@ -646,10 +672,6 @@
     </script>
 
     <script>
-        window.globalClientRegistry = {};
-        window.currentUserSchedules = [];
-        let currentModalTargetName = "";
-
         function switchOfficeSubTab(target) {
             const btnInput = document.getElementById('btn-tab-input');
             const btnList = document.getElementById('btn-tab-list');
@@ -734,13 +756,14 @@
 
         function renderCombinedCrmList() {
             const tbody = document.getElementById('combined-crm-tbody');
+            if(!tbody) return;
             tbody.innerHTML = "";
 
             const filterContract = document.getElementById('f_contract').value;
             const filterDoc = document.getElementById('f_doc').value;
             const searchKeyword = document.getElementById('f_search').value.trim();
 
-            Object.entries(window.globalClientRegistry).forEach(([name, d]) => {
+            Object.entries(window.globalClientRegistry || {}).forEach(([name, d]) => {
                 if(filterContract !== 'all' && d.contract !== filterContract) return;
                 if(filterDoc !== 'all' && d.document !== filterDoc) return;
                 if(searchKeyword && !name.includes(searchKeyword) && !(d.phone && d.phone.includes(searchKeyword))) return;
@@ -764,7 +787,7 @@
         }
 
         function sortCombinedCrm(criteria) {
-            let entries = Object.entries(window.globalClientRegistry);
+            let entries = Object.entries(window.globalClientRegistry || {});
             if(criteria === 'name') entries.sort((a,b) => a[0].localeCompare(b[0], 'ko'));
             else entries.sort((a,b) => (b[1].savedAt || 0) - (a[1].savedAt || 0));
             const sortedObj = {};
@@ -893,7 +916,8 @@ ${d.medical || ''}`;
 
         function renderSchedule() {
             const ul = document.getElementById('todo-list');
-            ul.innerHTML = window.currentUserSchedules.map((item, idx) => `<li><i class="bi bi-clock-history"></i> ${item} <span style="color:#EF4444; cursor:pointer; margin-left:8px;" onclick="deleteSchedule(${idx})">×</span></li>`).join('');
+            if(!ul) return;
+            ul.innerHTML = (window.currentUserSchedules || []).map((item, idx) => `<li><i class="bi bi-clock-history"></i> ${item} <span style="color:#EF4444; cursor:pointer; margin-left:8px;" onclick="deleteSchedule(${idx})">×</span></li>`).join('');
         }
 
         function deleteSchedule(idx) {
