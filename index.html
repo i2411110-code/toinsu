@@ -188,27 +188,33 @@
         let currentUserEmail = "";
         const MASTER_INVITE_CODE = "gaon2026";
 
-        async function loadUserIntegratedData(email) {
-            currentUserEmail = email;
-            document.getElementById('user-private-title').innerText = email + " 전용 제어실";
-            
-            const docRef = doc(db, "users_portal", email);
-            const docSnap = await getDoc(docRef);
+        // 기존 loadUserIntegratedData를 아래 내용으로 교체
+async function loadUserIntegratedData(email) {
+    currentUserEmail = email;
+    document.getElementById('user-private-title').innerText = email + " 전용 제어실";
+    
+    const docRef = doc(db, "users_portal", email);
+    const docSnap = await getDoc(docRef);
 
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                window.globalClientRegistry = data.clientRegistry || {};
-                window.currentUserSchedules = data.schedules || [];
-                document.getElementById('memo-txt').value = data.memo || "";
-            } else {
-                window.globalClientRegistry = {};
-                window.currentUserSchedules = ["로그인을 환영합니다. 일정을 등록해 보세요."];
-                document.getElementById('memo-txt').value = "";
-            }
-            
-            if (typeof window.renderCombinedCrmList === 'function') window.renderCombinedCrmList();
-            if (typeof window.renderSchedule === 'function') window.renderSchedule();
-        }
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+        window.globalClientRegistry = data.clientRegistry || {};
+        window.currentUserSchedules = data.schedules || [];
+        document.getElementById('memo-txt').value = data.memo || "";
+    } else {
+        window.globalClientRegistry = {};
+        window.currentUserSchedules = [];
+        document.getElementById('memo-txt').value = "";
+    }
+    
+    // 핵심 수정: 데이터 로드가 끝난 후 반드시 리스트 렌더링 함수를 실행
+    if (typeof window.renderCombinedCrmList === 'function') {
+        window.renderCombinedCrmList();
+    }
+    if (typeof window.renderSchedule === 'function') {
+        window.renderSchedule();
+    }
+}
 
         async function syncRegistryToDatabase() {
             if(!currentUserEmail) return;
@@ -714,34 +720,36 @@
             alert("✨ AI 변환 완료: 항목에 맞춰 입력 필드 연동이 완료되었습니다.");
         }
 
-        function submitCrmData() {
-            const name = document.getElementById('c_name').value.trim();
-            if(!name) { alert("식별 데이터인 '성함'은 필수 필드입니다."); return; }
+        // 기존 submitCrmData를 아래 내용으로 교체
+window.submitCrmData = async function() {
+    const name = document.getElementById('c_name').value.trim();
+    if(!name) { alert("식별 데이터인 '성함'은 필수 필드입니다."); return; }
 
-            window.globalClientRegistry[name] = {
-                savedAt: Date.now(),
-                relation: document.getElementById('c_relation').value,
-                contract: document.getElementById('c_contract').value,
-                document: document.getElementById('c_document').value,
-                phone: document.getElementById('c_phone').value,
-                idnum: document.getElementById('c_idnum').value,
-                address: document.getElementById('c_address').value,
-                job: document.getElementById('c_job').value,
-                drive: document.getElementById('c_drive').value,
-                body: document.getElementById('c_body').value,
-                account: document.getElementById('c_account').value,
-                medical: document.getElementById('c_medical').value,
-                progress: document.getElementById('c_progress').value
-            };
+    window.globalClientRegistry[name] = {
+        savedAt: Date.now(),
+        relation: document.getElementById('c_relation').value,
+        contract: document.getElementById('c_contract').value,
+        document: document.getElementById('c_document').value,
+        phone: document.getElementById('c_phone').value,
+        idnum: document.getElementById('c_idnum').value,
+        address: document.getElementById('c_address').value,
+        job: document.getElementById('c_job').value,
+        drive: document.getElementById('c_drive').value,
+        body: document.getElementById('c_body').value,
+        account: document.getElementById('c_account').value,
+        medical: document.getElementById('c_medical').value,
+        progress: document.getElementById('c_progress').value
+    };
 
-            if(window.executeRegistrySync) {
-                window.executeRegistrySync().then(() => {
-                    alert("데이터베이스 안전 보관 동기화 완료.");
-                    resetCrmInputForm();
-                    switchOfficeSubTab('list');
-                });
-            }
-        }
+    // Firebase에 저장
+    if(window.executeRegistrySync) {
+        await window.executeRegistrySync();
+        alert("데이터베이스 안전 보관 동기화 완료.");
+        resetCrmInputForm();
+        // 핵심 수정: 저장 직후 리스트 뷰로 전환하고 리스트를 다시 그림
+        switchOfficeSubTab('list');
+    }
+}
 
         function resetCrmInputForm() {
             const ids = ['c_name','c_relation','c_phone','c_idnum','c_address','c_job','c_drive','c_body','c_account','c_medical','c_progress','ai-raw-textarea'];
