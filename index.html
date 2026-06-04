@@ -183,8 +183,8 @@
                     <div class="banner-info">
                         <div class="banner-icon">👤</div>
                         <div class="banner-title">
-                            <h3>팀장님 전산 관리실</h3>
-                            <p>일정 등록 · 고객 종합 CRM · AI 안내 메시지 가동</p>
+                            <h3>나의 전산 관리실</h3>
+                            <p>개인 일정 · 고객 CRM · 개인 맞춤 메시지 데이터베이스 보관</p>
                         </div>
                     </div>
                     <div class="arrow-circle"><i class="bi bi-arrow-right-short" style="font-size:24px;"></i></div>
@@ -357,26 +357,25 @@
         
         <div id="page-private" class="sub-page">
             <button class="btn-back" onclick="goBack()" style="background:none; border:none; color:var(--main-blue); cursor:pointer; font-weight:700; margin-bottom:15px;">⬅️ 메인으로 돌아가기</button>
-            <div class="section-title">👤 팀장님 전산 관리실 (개인공간)</div>
+            <div class="section-title">👤 개인공간 전산실 (<span id="user-private-title">조회중...</span>)</div>
             
             <div class="office-grid">
                 <div class="office-box">
-                    <h4><i class="bi bi-calendar-event-fill" style="color:#7C3AED;"></i> 팀장님 캘린더 (일정)</h4>
+                    <h4><i class="bi bi-calendar-event-fill" style="color:#7C3AED;"></i> 개인 전용 캘린더</h4>
                     <div class="form-group">
-                        <input type="text" id="todo-input" class="form-control" placeholder="오늘 해결할 주요 보험 상담 일정을 적으세요.">
+                        <input type="text" id="todo-input" class="form-control" placeholder="등록할 일정을 입력하세요.">
                     </div>
-                    <button class="btn-action" style="background:#7C3AED;" onclick="addSchedule()">일정 등록</button>
-                    <ul id="todo-list" style="margin-top:15px; list-style-type: none; padding-left:0; font-size:14px; line-height:2.0;">
-                        </ul>
+                    <button class="btn-action" style="background:#7C3AED;" onclick="addSchedule()">클라우드 일정 등록</button>
+                    <ul id="todo-list" style="margin-top:15px; list-style-type: none; padding-left:0; font-size:14px; line-height:2.0;"></ul>
                 </div>
                 
                 <div class="office-box">
-                    <h4><i class="bi bi-people-fill" style="color:#2563EB;"></i> 심현진 팀장 집중 CRM 고객 목록</h4>
+                    <h4><i class="bi bi-people-fill" style="color:#2563EB;"></i> 집중 전담 CRM 리스트</h4>
                     <div style="display:flex; gap:10px; margin-bottom:10px;">
                         <input type="text" id="customer-name" class="form-control" placeholder="고객명" style="flex:1;">
-                        <input type="text" id="customer-state" class="form-control" placeholder="계약 상태 (예: 설계중/보완필요)" style="flex:2;">
+                        <input type="text" id="customer-state" class="form-control" placeholder="계약 현황 배정 사항" style="flex:2;">
                     </div>
-                    <button class="btn-action" style="background:#2563EB;" onclick="addCustomer()">고객 등록</button>
+                    <button class="btn-action" style="background:#2563EB;" onclick="addCustomer()">클라우드 고객 등록</button>
                     <table style="width:100%; border-collapse:collapse; margin-top:15px; font-size:13px; text-align:left;">
                         <thead>
                             <tr style="border-bottom:2px solid #E2E8F0; color:var(--text-muted);">
@@ -384,14 +383,13 @@
                                 <th style="padding:6px 0;">진행 상태</th>
                             </tr>
                         </thead>
-                        <tbody id="crm-table-body">
-                            </tbody>
+                        <tbody id="crm-table-body"></tbody>
                     </table>
                 </div>
             </div>
 
             <div class="office-box" style="margin-bottom:20px;">
-                <h4><i class="bi bi-chat-heart-fill" style="color:#E11D48;"></i> AI 연동 메시지 생성 오피스</h4>
+                <h4><i class="bi bi-chat-heart-fill" style="color:#E11D48;"></i> AI 메시지 임시 저장고</h4>
                 <div class="form-group">
                     <label style="font-size:13px; color:var(--text-muted);">안내 목적 선택</label>
                     <select id="msg-purpose" class="form-control" onchange="generateAiMessage()">
@@ -401,8 +399,8 @@
                         <option value="care">기존 가입 보험 유지율 관리 안부 전송</option>
                     </select>
                 </div>
-                <textarea id="memo-txt" class="form-control" style="height:180px; font-family:monospace; font-size:14px;" placeholder="선택하거나 직접 작성한 고객 발송용 안내 메시지가 여기에 보관됩니다."></textarea>
-                <button class="btn-action" style="margin-top:10px; background:#E11D48;" onclick="saveMemo()">변동데이터 클라우드(로컬) 즉시저장</button>
+                <textarea id="memo-txt" class="form-control" style="height:180px; font-family:monospace; font-size:14px;" placeholder="고객 발송용 가안을 작성 또는 불러오기 하세요."></textarea>
+                <button class="btn-action" style="margin-top:10px; background:#E11D48;" onclick="saveMemo()">아이디별 고유 메모 원격 보관</button>
             </div>
         </div>
     </div>
@@ -415,6 +413,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        // [중요] 아이디별 데이터베이스 제어를 위한 Firestore 엔진 로드
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA1GU9E5WuFUPIyT4Ma4_crArdANpCMQfs",
@@ -428,9 +428,45 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app); // 데이터베이스 활성화
 
         let authMode = 'login';
+        let currentUserEmail = ""; 
         const MASTER_INVITE_CODE = "gaon2026"; 
+
+        // 데이터베이스 아이디별 조회 및 실시간 마이그레이션 장치
+        async function loadUserData(email) {
+            currentUserEmail = email;
+            document.getElementById('user-private-title').innerText = email + " 전용실";
+            
+            const docRef = doc(db, "users_portal", email);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                window.currentUserSchedules = data.schedules || [];
+                window.currentUserCrm = data.crm || [];
+                document.getElementById('memo-txt').value = data.memo || "";
+            } else {
+                // 데이터가 없는 신규 아이디일 경우 초기값 할당
+                window.currentUserSchedules = ["로그인을 환영합니다. 일정을 등록해 보세요."];
+                window.currentUserCrm = [{"name":"예시 고객","state":"신규 배정 완료"}];
+                document.getElementById('memo-txt').value = "";
+            }
+            window.renderSchedule();
+            window.renderCrm();
+        }
+
+        // 데이터베이스 백업 코어 엔진
+        async function syncToDatabase() {
+            if(!currentUserEmail) return;
+            const docRef = doc(db, "users_portal", currentUserEmail);
+            await setDoc(docRef, {
+                schedules: window.currentUserSchedules,
+                crm: window.currentUserCrm,
+                memo: document.getElementById('memo-txt').value
+            }, { merge: true });
+        }
 
         window.toggleAuthTab = function(mode) {
             authMode = mode;
@@ -440,7 +476,6 @@
             const submitBtn = document.getElementById('auth-submit-btn');
             const inviteGroup = document.getElementById('invite-code-group');
             const errorMsg = document.getElementById('auth-error-msg');
-            
             errorMsg.style.display = 'none';
             
             if(mode === 'login') {
@@ -458,7 +493,6 @@
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value;
             const errorMsg = document.getElementById('auth-error-msg');
-
             errorMsg.style.display = "none";
 
             if(!email || !password) {
@@ -501,6 +535,7 @@
             if (user) {
                 if(overlay) overlay.style.display = 'none';
                 if(displayEmail) displayEmail.innerText = user.email;
+                loadUserData(user.email); // 인증 확인 시 전용 DB 데이터 호출
             } else {
                 if(overlay) overlay.style.display = 'flex';
             }
@@ -511,9 +546,16 @@
                 signOut(auth).then(() => { location.reload(); });
             }
         }
+
+        // 글로벌 브릿지 함수 바인딩
+        window.syncPrivateOffice = syncToDatabase;
     </script>
 
     <script>
+        // 글로벌 메모리 배열 초기값 브릿지
+        window.currentUserSchedules = [];
+        window.currentUserCrm = [];
+
         function navigateTo(pageId) {
             document.getElementById('main-dashboard').style.display = 'none';
             const subPages = document.querySelectorAll('.sub-page');
@@ -551,11 +593,9 @@
             document.getElementById('silbi-res').style.display = 'block';
         }
         
-        // 개인메모 및 AI 목적별 메세지 생성 제어장치
         function generateAiMessage() {
             const purpose = document.getElementById('msg-purpose').value;
             const textarea = document.getElementById('memo-txt');
-            
             const baseTemplateHead = `[토스인슈어런스 가온사업단 심현진 팀장]\n안녕하세요 고객님, 소중한 자산과 건강을 지키는 전담 매니저 심현진입니다.\n\n`;
             
             if(purpose === 'silbi') {
@@ -570,67 +610,64 @@
         }
 
         function saveMemo() { 
-            localStorage.setItem('shin_page_memo', document.getElementById('memo-txt').value); 
-            alert('팀장님 전산실에 메시지 및 메모 기록이 안전하게 보관되었습니다.'); 
+            if(window.syncPrivateOffice) {
+                window.syncPrivateOffice().then(() => {
+                    alert('성공: 해당 아이디 계정에 메시지 및 메모가 동기화 저장되었습니다.');
+                });
+            }
         }
 
-        // 컴포넌트 데이터 제어 스크립트 (일정 및 CRM)
         function addSchedule() {
             const val = document.getElementById('todo-input').value.trim();
             if(!val) return;
-            let current = JSON.parse(localStorage.getItem('shin_schedule') || '[]');
-            current.push(val);
-            localStorage.setItem('shin_schedule', JSON.stringify(current));
+            window.currentUserSchedules.push(val);
             document.getElementById('todo-input').value = '';
-            renderSchedule();
+            if(window.syncPrivateOffice) {
+                window.syncPrivateOffice().then(() => { renderSchedule(); });
+            }
         }
 
         function renderSchedule() {
-            let current = JSON.parse(localStorage.getItem('shin_schedule') || '["연세병원 인하우스 출장 건 확인","기존 유지율 관리 대상 메시지 전송"]');
             const ul = document.getElementById('todo-list');
-            ul.innerHTML = current.map((item, idx) => `<li><i class="bi bi-clock-history"></i> ${item} <span style="color:#EF4444; cursor:pointer; margin-left:8px;" onclick="deleteSchedule(${idx})">×</span></li>`).join('');
+            ul.innerHTML = window.currentUserSchedules.map((item, idx) => `<li><i class="bi bi-clock-history"></i> ${item} <span style="color:#EF4444; cursor:pointer; margin-left:8px;" onclick="deleteSchedule(${idx})">×</span></li>`).join('');
         }
 
-        window.deleteSchedule = function(idx) {
-            let current = JSON.parse(localStorage.getItem('shin_schedule') || '[]');
-            current.splice(idx, 1);
-            localStorage.setItem('shin_schedule', JSON.stringify(current));
-            renderSchedule();
+        function deleteSchedule(idx) {
+            window.currentUserSchedules.splice(idx, 1);
+            if(window.syncPrivateOffice) {
+                window.syncPrivateOffice().then(() => { renderSchedule(); });
+            }
         }
 
         function addCustomer() {
             const name = document.getElementById('customer-name').value.trim();
             const state = document.getElementById('customer-state').value.trim();
             if(!name || !state) return;
-            let current = JSON.parse(localStorage.getItem('shin_crm') || '[]');
-            current.push({name, state});
-            localStorage.setItem('shin_crm', JSON.stringify(current));
+            window.currentUserCrm.push({name, state});
             document.getElementById('customer-name').value = '';
             document.getElementById('customer-state').value = '';
-            renderCrm();
+            if(window.syncPrivateOffice) {
+                window.syncPrivateOffice().then(() => { renderCrm(); });
+            }
         }
 
         function renderCrm() {
-            let current = JSON.parse(localStorage.getItem('shin_crm') || '[{"name":"이영채 고객님","state":"5세대 실비 전환 상담 배정"},{"name":"김범래 고객님","state":"태아 특약 설계안 보완 요청"}]');
             const tbody = document.getElementById('crm-table-body');
-            tbody.innerHTML = current.map((c, idx) => `<tr style="border-bottom:1px solid #F1F5F9;"><td style="padding:8px 0; font-weight:700;">${c.name}</td><td style="padding:8px 0; color:var(--main-blue);">${c.state} <span style="color:#EF4444; cursor:pointer; margin-left:10px;" onclick="deleteCrm(${idx})">삭제</span></td></tr>`).join('');
+            tbody.innerHTML = window.currentUserCrm.map((c, idx) => `<tr style="border-bottom:1px solid #F1F5F9;"><td style="padding:8px 0; font-weight:700;">${c.name}</td><td style="padding:8px 0; color:var(--main-blue);">${c.state} <span style="color:#EF4444; cursor:pointer; margin-left:10px;" onclick="deleteCrm(${idx})">삭제</span></td></tr>`).join('');
         }
 
-        window.deleteCrm = function(idx) {
-            let current = JSON.parse(localStorage.getItem('shin_crm') || '[]');
-            current.splice(idx, 1);
-            localStorage.setItem('shin_crm', JSON.stringify(current));
-            renderCrm();
+        function deleteCrm(idx) {
+            window.currentUserCrm.splice(idx, 1);
+            if(window.syncPrivateOffice) {
+                window.syncPrivateOffice().then(() => { renderCrm(); });
+            }
         }
         
         window.onload = function() {
-            const saved = localStorage.getItem('shin_page_memo'); if(saved) document.getElementById('memo-txt').value = saved;
             let totalCount = parseInt(localStorage.getItem('insure_total_visits')) || 128;
             let todayCount = parseInt(localStorage.getItem('insure_today_visits')) || 4;
             document.getElementById('count-today').innerText = todayCount;
             document.getElementById('count-total').innerText = totalCount;
-            renderSchedule();
-            renderCrm();
         }
     </script>
 </body>
