@@ -262,76 +262,99 @@
                 <button id="tab-life" onclick="switchInsTab('life')" style="flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; background: transparent; color: #64748B; transition: all 0.2s;">생명보험</button>
             </div>
 
+            <div id="page-insure" class="sub-page" style="background: #F8FAFC; padding: 20px;">
+            <button class="btn-back" onclick="goBack()" style="margin-bottom: 15px;">⬅️ 메인으로 돌아가기</button>
+            
+            <div style="display: flex; background: #E2E8F0; padding: 4px; border-radius: 8px; margin-bottom: 25px; box-shadow: var(--card-shadow);">
+                <button id="tab-nonlife" onclick="switchInsTab('nonlife')" style="flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; background: white; color: #2563EB; transition: all 0.2s;">손해보험</button>
+                <button id="tab-life" onclick="switchInsTab('life')" style="flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; background: transparent; color: #64748B; transition: all 0.2s;">생명보험</button>
+            </div>
+
             <div id="grid-nonlife" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;">
+                
                 <div onclick="window.open('https://www.mdbins.com/chrome.html?ver=202512040353')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Chrome">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#EFF6FF; color:#2563EB; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">크롬 권장</span>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/ad/DB_Insurance_logo.svg" style="max-width:85%; max-height:45px; object-fit:contain;" alt="DB손해보험">
+                    <img src="./db.png" style="max-width:85%; max-height:50px; object-fit:contain;" alt="DB손해보험">
                 </div>
+
                 <div onclick="window.open('https://login.samsungfire.com/nl/p/login/ui/SPGENLP00000')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Edge">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#F0FDF4; color:#16A34A; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">엣지 권장</span>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/Samsung_Fire_%26_Marine_Insurance_logo.svg" style="max-width:85%; max-height:40px; object-fit:contain;" alt="삼성화재">
+                    <img src="./samsung.png" style="max-width:85%; max-height:40px; object-fit:contain;" alt="삼성화재">
                 </div>
+
                 <div onclick="window.open('https://portal.hwgeneralins.com/3rdParty/loginFormPage_v2.jsp?NONCE=iwmKuN0CUA%2Be9S3zIn4WzShJvbqEpDaiGYgQbkuYULVCWnFwGDlI37sAMYCCoH82mUV6NkYAA14Ehyn8ITphPw%3D%3D&UURL=https%3A%2F%2Fportal.hwgeneralins.com%2Fnls3%2Ffcs')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Edge">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#F0FDF4; color:#16A34A; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">엣지 권장</span>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/52/Hanwha_General_Insurance_logo.svg" style="max-width:85%; max-height:45px; object-fit:contain;" alt="한화손해보험">
+                    <img src="./hanwha.png" style="max-width:85%; max-height:45px; object-fit:contain;" alt="한화손해보험">
                 </div>
+
                 <div onclick="window.open('https://sp.hi.co.kr/websquare/websquare.html?w2xPath=/common/xml/Login.xml')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Chrome">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#EFF6FF; color:#2563EB; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">크롬 권장</span>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Hyundai_Marine_%26_Fire_Insurance_logo.svg" style="max-width:85%; max-height:45px; object-fit:contain;" alt="현대해상">
+                    <img src="./hyundai.png" style="max-width:85%; max-height:45px; object-fit:contain;" alt="현대해상">
                 </div>
+
                 <div onclick="window.open('https://nsso.meritzfire.com/LoginServer/loginFormPageMulti.jsp?InitechEamNoCacheNonce=uY7zsJiF8iacBw6j2o0O8Q%3D%3D')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Edge">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#F0FDF4; color:#16A34A; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">엣지 권장</span>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f6/Meritz_Fire_%26_Marine_Insurance_logo.svg" style="max-width:85%; max-height:40px; object-fit:contain;" alt="메리츠화재">
+                    <img src="./meritz.png" style="max-width:85%; max-height:40px; object-fit:contain;" alt="메리츠화재">
                 </div>
+
                 <div onclick="window.open('https://lottero.lotteins.co.kr/ncrmwebroot/webfw/html/nawlogon.jsp')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Edge">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#F0FDF4; color:#16A34A; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">엣지 권장</span>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/0/09/Lotte_Insurance_logo.svg" style="max-width:85%; max-height:45px; object-fit:contain;" alt="롯데손해보험">
+                    <img src="./lotte.png" style="max-width:85%; max-height:45px; object-fit:contain;" alt="롯데손해보험">
                 </div>
+
                 <div onclick="window.open('https://nsales.kbinsure.co.kr/eus/ch/ch_index.jsp')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Chrome">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#EFF6FF; color:#2563EB; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">크롬 권장</span>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/52/KB_Insurance_logo.svg" style="max-width:85%; max-height:45px; object-fit:contain;" alt="KB손해보험">
+                    <img src="./kb.png" style="max-width:85%; max-height:45px; object-fit:contain;" alt="KB손해보험">
                 </div>
+
                 <div onclick="window.open('https://mganet.mggeneralins.com/jsp/browserGuide.jsp')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Edge">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#F0FDF4; color:#16A34A; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">엣지 권장</span>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/e/e4/MG_Saemaul_Geumgo_logo.svg" style="max-width:85%; max-height:45px; object-fit:contain;" alt="MG새마을금고">
+                    <img src="./mg.png" style="max-width:85%; max-height:45px; object-fit:contain;" alt="MG새마을금고">
                 </div>
+
                 <div onclick="window.open('https://ss.nhfire.co.kr/smartweb_prj/index_t.jsp')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Chrome">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#EFF6FF; color:#2563EB; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">크롬 권장</span>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/NH_Nonghyup_Financial_Group_logo.svg" style="max-width:85%; max-height:45px; object-fit:contain;" alt="NH농협손해">
+                    <img src="./nh.png" style="max-width:85%; max-height:45px; object-fit:contain;" alt="NH농협손해">
                 </div>
+
                 <div onclick="window.open('https://sfa.saleshana.com/wq/login')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Chrome">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%2Transforms%28February_2022%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Chrome">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#EFF6FF; color:#2563EB; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">크롬 권장</span>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Hana_Financial_Group_logo.svg" style="max-width:85%; max-height:45px; object-fit:contain;" alt="하나손해보험">
+                    <img src="./hana.png" style="max-width:85%; max-height:45px; object-fit:contain;" alt="하나손해보험">
                 </div>
+
                 <div onclick="window.open('https://sales.heungkukfire.co.kr/#/login')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Edge">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#F0FDF4; color:#16A34A; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">엣지 권장</span>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/af/Heungkuk_Financial_Group_logo.svg" style="max-width:85%; max-height:45px; object-fit:contain;" alt="흥국화재">
+                    <img src="./heungkuk.png" style="max-width:85%; max-height:45px; object-fit:contain;" alt="흥국화재">
                 </div>
+
                 <div onclick="window.open('https://sso.aig.co.kr/gaLogin/gaLogin.jsp')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Edge">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#F0FDF4; color:#16A34A; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">엣지 권장</span>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c2/AIG_logo.svg" style="max-width:85%; max-height:40px; object-fit:contain;" alt="AIG손해보험">
+                    <img src="./aig.png" style="max-width:85%; max-height:40px; object-fit:contain;" alt="AIG손해보험">
                 </div>
+
                 <div onclick="window.open('https://ga.linagi.com/html/gap/GA/GAZ911M0.html')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg" style="position:absolute; top:15px; left:15px; width:22px; height:22px;" alt="Edge">
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#F0FDF4; color:#16A34A; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">엣지 권장</span>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Lina_Life_Insurance_logo.svg" style="max-width:85%; max-height:45px; object-fit:contain;" alt="라이나손해보험">
+                    <img src="./lina.png" style="max-width:85%; max-height:45px; object-fit:contain;" alt="라이나손해보험">
                 </div>
+
             </div>
+
             <div id="grid-life" style="display: none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;">
                 <div style="grid-column: 1/-1; text-align: center; padding: 50px; background: white; border-radius: 16px; color: var(--text-muted); font-size: 14px; box-shadow: var(--card-shadow);">
-                    생명보험사 전산망 링크를 준비 중입니다.
+                    생명보험사 전산망 링크를 준비 중입니다. 주소를 알려주시면 동일하게 연동해 드립니다.
                 </div>
             </div>
         </div>
