@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>보험인사이트 - 토스인슈어런스 가온사업단 심현진 팀장</title>
+    <title>보험가온포탈 - 토스인슈어런스 가온사업단 심현진 팀장</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -229,12 +229,12 @@
     <!-- 상단 대시보드 헤더 -->
     <div class="header">
         <div class="user-badge">토스인슈어런스 심현진 팀장</div>[cite: 1]
-        <h1>보험인사이트</h1>
+        <h1>보험가온포탈</h1>
         <div class="subtitle">보험설계사 업무 통합 플랫폼</div>
         
         <div class="counter-group">
-            <div class="counter-item">TODAY <span>113</span></div>
-            <div class="counter-item">TOTAL <span>7,697</span></div>
+            <div class="counter-item">TODAY <span id="count-today">0</span></div>
+            <div class="counter-item">TOTAL <span id="count-total">0</span></div>
         </div>
     </div>
 
@@ -267,7 +267,7 @@
                 <div class="menu-card" onclick="navigateTo('page-silbi')">
                     <div class="card-icon">🔢</div>
                     <h3>실비계산기</h3>
-                    <p>세대별 실실손의료보험 계산기</p>
+                    <p>세대별 실손의료보험 계산기</p>
                 </div>
                 <div class="menu-card" onclick="navigateTo('page-value')">
                     <div class="card-icon">💲</div>
@@ -287,7 +287,7 @@
 
                 <div class="menu-card" onclick="navigateTo('page-folder')">
                     <div class="card-icon">📁</div>
-                    <h3>보험인사이트 폴더</h3>
+                    <h3>가온 전용 폴더</h3>
                     <p>보험 영업 자료 모음</p>
                 </div>
                 <div class="menu-card" onclick="navigateTo('page-schedule')">
@@ -438,7 +438,7 @@
         <!-- 9. 자료 모음 폴더 페이지 -->
         <div id="page-folder" class="sub-page">
             <button class="btn-back" onclick="goBack()">⬅️ 메인으로 돌아가기</button>
-            <div class="section-title">📁 보험인사이트 영업 전용 자료 폴더</div>
+            <div class="section-title">📁 가온 전용 영업 핵심 자료 폴더</div>
             <p style="font-size:15px;">5세대 개정 실손 전환 화법 세트 가이드북 준비 중입니다.[cite: 1]</p>
         </div>
 
@@ -470,41 +470,33 @@
     <!-- 하단 고정 링크바 -->
     <div class="footer-bar">
         <a href="#" class="footer-link">📰 보험사별 소식지</a>
-        <a href="#" class="footer-link">💬 보험인사이트 카카오톡</a>
-        <a href="#" class="footer-link">📸 보험나무 인스타그램</a>
+        <a href="https://open.kakao.com/o/sZoxSRGh" target="_blank" class="footer-link">💬 가온 카카오톡 상담센터</a>
+        <a href="https://www.instagram.com/insu_coco?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" class="footer-link">📸 보험나무 인스타그램</a>
     </div>
 
-    <!-- 페이지 전환 처리 로직 -->
+    <!-- 기능 및 시스템 연동 로직 -->
     <script>
-        // 해당 아이디를 가진 페이지로 화면 전환
+        // 페이지 전환 시스템
         function navigateTo(pageId) {
-            // 1. 메인 대시보드 화면 숨김
             document.getElementById('main-dashboard').style.display = 'none';
-            
-            // 2. 모든 서브 페이지 화면 숨김
             const subPages = document.querySelectorAll('.sub-page');
             subPages.forEach(page => page.style.display = 'none');
             
-            // 3. 선택한 독립 페이지를 오픈하고 최상단으로 스크롤 이동
             const targetPage = document.getElementById(pageId);
             targetPage.style.display = 'block';
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // 메인으로 다시 돌아오는 원터치 버튼 기능
         function goBack() {
-            // 모든 서브 페이지 감추기
             const subPages = document.querySelectorAll('.sub-page');
             subPages.forEach(page => page.style.display = 'none');
-            
-            // 메인 대시보드 그리드 컴백
             document.getElementById('main-dashboard').style.display = 'block';
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function fmt(num) { return Math.floor(num).toLocaleString('ko-KR') + '원'; }
 
-        // 계산 시스템 함수
+        // 계산기 작동 로직들
         function runSilbi() {
             const gen = document.getElementById('silbi-gen').value;
             const cost = parseFloat(document.getElementById('silbi-cost').value) || 0;
@@ -557,6 +549,26 @@
         window.onload = function() {
             const saved = localStorage.getItem('shin_page_memo');
             if(saved) document.getElementById('memo-txt').value = saved;
+
+            let totalCount = parseInt(localStorage.getItem('insure_total_visits')) || 0;
+            let todayCount = parseInt(localStorage.getItem('insure_today_visits')) || 0;
+            let lastVisitDate = localStorage.getItem('insure_last_visit_date') || "";
+
+            const todayStr = new Date().toISOString().slice(0, 10);
+
+            if (lastVisitDate !== todayStr) {
+                todayCount = 0;
+                localStorage.setItem('insure_last_visit_date', todayStr);
+            }
+
+            totalCount += 1;
+            todayCount += 1;
+
+            localStorage.setItem('insure_total_visits', totalCount);
+            localStorage.setItem('insure_today_visits', todayCount);
+
+            document.getElementById('count-today').innerText = todayCount.toLocaleString();
+            document.getElementById('count-total').innerText = totalCount.toLocaleString();
         }
     </script>
 </body>
