@@ -770,7 +770,7 @@
             if(medicalMatch) medicalContent = medicalMatch[1].replace(/^[:：\s-]+/, '').trim();
 
             if(nameMatch) document.getElementById('c_name').value = nameMatch[1].trim();
-            if(idnumMatch) document.getElementById('c_idnum').value = '[RRN Omitted]';
+            if(idnumMatch) document.getElementById('c_idnum').value = idnumMatch[1].trim();
             if(phoneMatch) document.getElementById('c_phone').value = phoneMatch[1].trim();
             if(addressMatch) document.getElementById('c_address').value = addressMatch[1].trim();
             if(jobMatch) document.getElementById('c_job').value = jobMatch[1].trim();
