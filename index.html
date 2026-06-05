@@ -480,12 +480,14 @@
             </div>
         </div>
 
-        <div id="page-insure" class="sub-page">
+        !-- 실제 사용할 전산 바로가기 페이지 -->
+<div id="page-insure" class="sub-page" style="display: block;">
     <div class="section-title">🏢 보험사 전산 바로가기</div>
     
+    <!-- 탭 버튼 -->
     <div style="display: flex; background: #E2E8F0; padding: 4px; border-radius: 8px; margin-bottom: 25px;">
-        <button id="tab-nonlife" onclick="switchInsTab('nonlife')" class="btn-tab" style="background: white; color: #2563EB;">손해보험</button>
-        <button id="tab-life" onclick="switchInsTab('life')" class="btn-tab" style="background: transparent; color: #64748B;">생명보험</button>
+        <button id="tab-nonlife" onclick="switchInsTab('nonlife')" style="flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; background: white; color: #2563EB;">손해보험</button>
+        <button id="tab-life" onclick="switchInsTab('life')" style="flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; background: transparent; color: #64748B;">생명보험</button>
     </div>
             <div id="grid-nonlife" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;">
                 <div onclick="window.open('https://www.mdbins.com/chrome.html?ver=202512040353')" style="position:relative; background:white; border-radius:20px; height:130px; display:flex; align-items:center; justify-content:center; padding:20px; box-shadow:var(--card-shadow); cursor:pointer; border:1px solid #E2E8F0; transition:all 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.querySelector('.browser-tooltip').style.opacity='1';" onmouseout="this.style.transform='translateY(0)'; this.querySelector('.browser-tooltip').style.opacity='0';">
@@ -553,32 +555,30 @@
                     <span class="browser-tooltip" style="position:absolute; top:14px; left:42px; font-size:11px; background:#F0FDF4; color:#16A34A; padding:2px 6px; border-radius:4px; font-weight:700; opacity:0; transition:opacity 0.2s; pointer-events:none;">엣지 권장</span>
                     <img src="./lina.png" style="max-width:85%; max-height:45px; object-fit:contain;" alt="라이나손해보험">
                 </div>
-                <div id="grid-life" class="grid-container" style="display: none;">
-        <div class="comp-card" onclick="window.open('https://sso.kyobo.com:5443/3rdParty/certLoginFormPage.jsp?NONCE=gHk6ZGplEtsGtgsWoWcsZiwKOusJ92LVIE5EwYXVwOhoZxPrj252WxrKKoSxo6HUgCeo5B4colEB6NCbweS2Qw%3D%3D&UURL=https%3A%2F%2Fsso.kyobo.com%3A5443%2Fnls3%2Ffcs')"><span class="browser-tooltip">엣지</span><img src="./kyobo.png" style="max-width:85%;" alt="교보생명"></div>
-        <div class="comp-card" onclick="window.open('https://ga.shinhanlife.co.kr:11043/colomga010m.msv')"><span class="browser-tooltip">엣지</span><img src="./shinhanlife.png" style="max-width:85%;" alt="신한라이프"></div>
-        <div class="comp-card" onclick="window.open('https://metplus.metlife.co.kr/WebCubeSetup.html')"><span class="browser-tooltip">크롬</span><img src="./metlife.png" style="max-width:85%;" alt="메트라이프"></div>
-        <div class="comp-card" onclick="window.open('https://connectplus.samsunglife.com:10443/gasso/login?contextType=external')"><span class="browser-tooltip">크롬</span><img src="./samsunglife.png" style="max-width:85%;" alt="삼성생명"></div>
-        <div class="comp-card" onclick="window.open('https://kss.kdblife.co.kr/Install/x_installAX.html')"><span class="browser-tooltip">크롬</span><img src="./kdblife.png" style="max-width:85%;" alt="KDB생명"></div>
-        <div class="comp-card" onclick="window.open('https://sfa.kblife.co.kr/scr/m/sfa-login?request=sfaLogin')"><span class="browser-tooltip">엣지</span><img src="./kblife.png" style="max-width:85%;" alt="KB라이프"></div>
-        <div class="comp-card" onclick="window.open('https://sales.heungkuklife.co.kr/')"><span class="browser-tooltip">엣지</span><img src="./heungkuklife.png" style="max-width:85%;" alt="흥국생명"></div>
-        <div class="comp-card" onclick="window.open('https://etopia.idblife.com/')"><span class="browser-tooltip">엣지</span><img src="./dblife.png" style="max-width:85%;" alt="DB생명"></div>
-        <div class="comp-card" onclick="window.open('https://1004.myangel.co.kr/colgnsf001m.wqv')"><span class="browser-tooltip">크롬</span><img src="./dongyanglife.png" style="max-width:85%;" alt="동양생명"></div>
-        <div class="comp-card" onclick="window.open('https://ga.abllife.co.kr/ui2/login/login.jsp')"><span class="browser-tooltip">엣지</span><img src="./abl.png" style="max-width:85%;" alt="ABL생명"></div>
-        <div class="comp-card" onclick="window.open('https://sf.ibki.co.kr/websquare/websquare.html?w2xPath=/ui/SF/CO/SFCO100M01.xml')"><span class="browser-tooltip">엣지</span><img src="./ibk.png" style="max-width:85%;" alt="IBK연금"></div>
-        <div class="comp-card" onclick="window.open('https://ga.lina.co.kr/html/gap/GA/GAZ911M0.html')"><span class="browser-tooltip">엣지</span><img src="./lina.png" style="max-width:85%;" alt="라이나생명"></div>
-        <div class="comp-card" onclick="window.open('https://hmp.hanwhalife.com/online/solutions/websquare/websquare.html?w2xPath=/online/ui/uv/gmn/uvgmn010mvw.xml')"><span class="browser-tooltip">크롬</span><img src="./hanwhalife.png" style="max-width:85%;" alt="한화생명"></div>
-        <div class="comp-card" onclick="window.open('https://ga.hanalife.co.kr/solutions/pluginfree/jsp/nppfs.install.jsp')"><span class="browser-tooltip">크롬</span><img src="./hanalife.png" style="max-width:85%;" alt="하나생명"></div>
-        <div class="comp-card" onclick="window.open('https://www.loveageplan.com/websquare/websquare.jsp?w2xPath=/view/lap/ui/lg/lga/PLGA010M00.xml')"><span class="browser-tooltip">엣지</span><img src="./miraeasset.png" style="max-width:85%;" alt="미래에셋"></div>
-        <div class="comp-card" onclick="window.open('https://sfa.nhlife.co.kr:8443/websquare/websquare.jsp')"><span class="browser-tooltip">엣지</span><img src="./nhlife.png" style="max-width:85%;" alt="농협생명"></div>
-        <div class="comp-card" onclick="window.open('https://imap.aia.co.kr/NBSE/aiaone/')"><span class="browser-tooltip">엣지</span><img src="./aia.png" style="max-width:85%;" alt="AIA생명"></div>
-        <div class="comp-card" onclick="window.open('https://esmart.chubblife.co.kr/index.do')"><span class="browser-tooltip">엣지</span><img src="./chubb.png" style="max-width:85%;" alt="처브생명"></div>
-        <div class="comp-card" onclick="window.open('https://ga.cardif.co.kr/login/loginForm.do')"><span class="browser-tooltip">엣지</span><img src="./cardif.png" style="max-width:85%;" alt="카디프생명"></div>
-        <div class="comp-card" onclick="window.open('https://ez.fubonhyundai.com/wsOnl/index.jsp')"><span class="browser-tooltip">엣지</span><img src="./fubon.png" style="max-width:85%;" alt="푸본현대"></div>
-        <div class="comp-card" onclick="window.open('https://fgs.dgbfnlife.com:8443/')"><span class="browser-tooltip">엣지</span><img src="./imlife.png" style="max-width:85%;" alt="iM라이프"></div>
+            <div id="grid-life" class="grid-container" style="display: none;">
+        <div class="comp-card" onclick="window.open('https://sso.kyobo.com:5443/3rdParty/certLoginFormPage.jsp?NONCE=gHk6ZGplEtsGtgsWoWcsZiwKOusJ92LVIE5EwYXVwOhoZxPrj252WxrKKoSxo6HUgCeo5B4colEB6NCbweS2Qw%3D%3D&UURL=https%3A%2F%2Fsso.kyobo.com%3A5443%2Fnls3%2Ffcs')"><span class="browser-tooltip">엣지</span><img src="./kyobo.png" alt="교보생명" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://ga.shinhanlife.co.kr:11043/colomga010m.msv')"><span class="browser-tooltip">엣지</span><img src="./shinhanlife.png" alt="신한라이프" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://metplus.metlife.co.kr/WebCubeSetup.html')"><span class="browser-tooltip">크롬</span><img src="./metlife.png" alt="메트라이프" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://connectplus.samsunglife.com:10443/gasso/login?contextType=external')"><span class="browser-tooltip">크롬</span><img src="./samsunglife.png" alt="삼성생명" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://kss.kdblife.co.kr/Install/x_installAX.html')"><span class="browser-tooltip">크롬</span><img src="./kdblife.png" alt="KDB생명" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://sfa.kblife.co.kr/scr/m/sfa-login?request=sfaLogin')"><span class="browser-tooltip">엣지</span><img src="./kblife.png" alt="KB라이프" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://sales.heungkuklife.co.kr/')"><span class="browser-tooltip">엣지</span><img src="./heungkuklife.png" alt="흥국생명" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://etopia.idblife.com/')"><span class="browser-tooltip">엣지</span><img src="./dblife.png" alt="DB생명" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://1004.myangel.co.kr/colgnsf001m.wqv')"><span class="browser-tooltip">크롬</span><img src="./dongyanglife.png" alt="동양생명" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://ga.abllife.co.kr/ui2/login/login.jsp')"><span class="browser-tooltip">엣지</span><img src="./abl.png" alt="ABL생명" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://sf.ibki.co.kr/websquare/websquare.html?w2xPath=/ui/SF/CO/SFCO100M01.xml')"><span class="browser-tooltip">엣지</span><img src="./ibk.png" alt="IBK연금" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://ga.lina.co.kr/html/gap/GA/GAZ911M0.html')"><span class="browser-tooltip">엣지</span><img src="./lina.png" alt="라이나생명" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://hmp.hanwhalife.com/online/solutions/websquare/websquare.html?w2xPath=/online/ui/uv/gmn/uvgmn010mvw.xml')"><span class="browser-tooltip">크롬</span><img src="./hanwhalife.png" alt="한화생명" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://ga.hanalife.co.kr/solutions/pluginfree/jsp/nppfs.install.jsp')"><span class="browser-tooltip">크롬</span><img src="./hanalife.png" alt="하나생명" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://www.loveageplan.com/websquare/websquare.jsp?w2xPath=/view/lap/ui/lg/lga/PLGA010M00.xml')"><span class="browser-tooltip">엣지</span><img src="./miraeasset.png" alt="미래에셋" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://sfa.nhlife.co.kr:8443/websquare/websquare.jsp')"><span class="browser-tooltip">엣지</span><img src="./nhlife.png" alt="농협생명" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://imap.aia.co.kr/NBSE/aiaone/')"><span class="browser-tooltip">엣지</span><img src="./aia.png" alt="AIA생명" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://esmart.chubblife.co.kr/index.do')"><span class="browser-tooltip">엣지</span><img src="./chubb.png" alt="처브생명" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://ga.cardif.co.kr/login/loginForm.do')"><span class="browser-tooltip">엣지</span><img src="./cardif.png" alt="카디프생명" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://ez.fubonhyundai.com/wsOnl/index.jsp')"><span class="browser-tooltip">엣지</span><img src="./fubon.png" alt="푸본현대" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
+        <div class="comp-card" onclick="window.open('https://fgs.dgbfnlife.com:8443/')"><span class="browser-tooltip">엣지</span><img src="./imlife.png" alt="iM라이프" style="max-width:85%; max-height:45px; object-fit:contain;"></div>
     </div>
 </div>
-                
-            
 
         <div id="page-call" class="sub-page"><div class="section-title">📞 고객센터</div></div>
         <div id="page-docs" class="sub-page"><div class="section-title">📄 청구서류 양식</div></div>
@@ -1041,7 +1041,8 @@ ${d.medical || ''}`;
             document.querySelector('.float-home-btn').style.display = 'none';
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        window.switchInsTab = function(type) {
+        // 탭 전환 함수 (이 함수가 반드시 있어야 버튼이 작동합니다)
+    window.switchInsTab = function(type) {
         const tabNon = document.getElementById('tab-nonlife');
         const tabLife = document.getElementById('tab-life');
         const gridNon = document.getElementById('grid-nonlife');
