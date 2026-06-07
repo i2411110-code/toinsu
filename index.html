@@ -27,34 +27,6 @@
             min-height: 100vh;
         }
 
-        /* [새로 추가된 스마트 가온이 애니메이션 로고 CSS] */
-        .logo-container {
-            width: 45px;
-            height: 45px;
-            position: relative;
-            cursor: pointer;
-            overflow: visible; /* 튀어나올 수 있도록 설정 */
-            display: inline-block;
-        }
-        .gaon-face-logo {
-            width: 100%;
-            height: 100%;
-            /* 통통 튀는 부드러운 애니메이션 (cubic-bezier 활용) */
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.3s;
-            /* 💡 다운로드 받으신 투명 이미지 파일명으로 변경해주세요 */
-            background-image: url('main.png'); 
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            background-color: transparent;
-        }
-        /* 마우스 호버 시 튀어나오는 효과 */
-        .logo-container:hover .gaon-face-logo {
-            transform: scale(1.25) translateY(-8px);
-            filter: drop-shadow(0px 10px 15px rgba(37, 99, 235, 0.4));
-        }
-
-        /* (이하 기존 CSS 동일) */
         .float-home-btn {
             position: fixed; top: 160px; left: 180px;
             width: 50px; height: 50px; border-radius: 50%;
@@ -85,7 +57,7 @@
             padding: 15px 40px; display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid rgba(226, 232, 240, 0.8); position: sticky; top: 0; z-index: 1001;
         }
-        .nav-logo { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 700; }
+        .nav-logo { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 700; }
         .nav-logo span { color: var(--main-blue); }
         .nav-right { display: flex; align-items: center; gap: 15px; }
         .user-pill { background: #E6F0EC; color: #04432A; padding: 8px 16px; border-radius: 30px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
@@ -101,7 +73,7 @@
         .banner-info { display: flex; align-items: center; gap: 20px; }
         .banner-icon { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; }
         .banner-blue .banner-icon { background: #EFF6FF; color: #2563EB; }
-        .banner-purple .banner-icon { background: transparent; } /* 로고가 들어가는 보라색 배너는 투명 배경으로 변경 */
+        .banner-purple .banner-icon { background: #F3E8FF; color: #7C3AED; }
         .banner-title h3 { font-size: 20px; font-weight: 700; color: #0F172A; margin-bottom: 4px; }
         .banner-title p { font-size: 13px; color: var(--text-muted); }
         .arrow-circle { width: 36px; height: 36px; border-radius: 50%; background: #F1F5F9; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
@@ -201,6 +173,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        /* ✅ 수정1: setDocm → setDoc 오타 수정, updateDoc·increment 추가 */
         import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -255,12 +228,14 @@
             }, { merge: true });
         }
 
+        /* ✅ 수정2: 방문자 카운터 함수 추가 */
         async function updateVisitCounter() {
-            const today = new Date().toISOString().slice(0, 10);
+            const today = new Date().toISOString().slice(0, 10); // "2026-06-08"
             const statsRef = doc(db, "site_stats", "visit_counter");
             try {
                 const snap = await getDoc(statsRef);
                 if (!snap.exists()) {
+                    // 최초 생성
                     await setDoc(statsRef, { total: 1, lastDate: today, todayCount: 1 });
                     document.getElementById('count-today').innerText = 1;
                     document.getElementById('count-total').innerText = 1;
@@ -335,6 +310,7 @@
             }
         }
 
+        /* ✅ 수정3: onAuthStateChanged에 updateVisitCounter() 호출 추가 */
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 document.getElementById('auth-overlay').style.display = 'none';
@@ -386,9 +362,7 @@
 
     <div id="auth-overlay">
         <div class="auth-box">
-            <div class="logo-container" style="width: 70px; height: 70px; margin: 0 auto 10px auto;">
-                <div class="gaon-face-logo"></div>
-            </div>
+            <i class="bi bi-grid-1x2-fill" style="font-size:40px; color:var(--main-blue);"></i>
             <h2 id="auth-title" style="font-size:22px; font-weight:700; margin:15px 0 25px 0;">보험가온포탈 로그인</h2>
             
             <div class="auth-tab">
@@ -416,10 +390,7 @@
 
     <div class="navbar">
         <div class="nav-logo">
-            <div class="logo-container">
-                <div class="gaon-face-logo"></div>
-            </div>
-            <b>보험<span>가온</span>포탈</b>
+            <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue)"></i> <b>보험<span>가온</span>포탈</b>
         </div>
         <div class="nav-right">
             <div class="user-badge user-pill"><i class="bi bi-person-badge-fill"></i> <span id="user-display-email">인증 확인 중...</span></div>
@@ -444,11 +415,7 @@
                 </div>
                 <div class="wide-banner banner-purple" onclick="navigateTo('page-private');">
                     <div class="banner-info">
-                        <div class="banner-icon" style="overflow: visible; background: transparent;">
-                            <div class="logo-container" style="width: 55px; height: 55px;">
-                                <div class="gaon-face-logo"></div>
-                            </div>
-                        </div>
+                        <div class="banner-icon"><img src="여기에_내_로고_이미지_주소.png" style="width: 40px; height: 40px; object-fit: contain;"></div>
                         <div class="banner-title">
                             <h3>나의 전산 관리실</h3>
                             <p>복사+붙여넣기 AI 고객 추출 분석기 및 데이터베이스 연동</p>
@@ -528,7 +495,7 @@
 
         <div id="page-insure" class="sub-page" style="background: #F8FAFC; padding: 20px;">
             <div class="section-title">🏢 보험사 전산 바로가기</div>
-            <<div style="display: flex; background: #E2E8F0; padding: 4px; border-radius: 8px; margin-bottom: 25px; box-shadow: var(--card-shadow);">
+            <div style="display: flex; background: #E2E8F0; padding: 4px; border-radius: 8px; margin-bottom: 25px; box-shadow: var(--card-shadow);">
                 <button id="tab-nonlife" onclick="switchInsTab('nonlife')" style="flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; background: white; color: #2563EB; transition: all 0.2s;">손해보험</button>
                 <button id="tab-life" onclick="switchInsTab('life')" style="flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; background: transparent; color: #64748B; transition: all 0.2s;">생명보험</button>
             </div>
@@ -917,14 +884,11 @@
                 progress: document.getElementById('c_progress').value
             };
 
-            try {
-                await syncRegistryToDatabase(); 
-                alert("저장 성공: 클라우드 데이터셋과 동기화되었습니다.");
+            if(window.executeRegistrySync) {
+                await window.executeRegistrySync();
+                alert("데이터베이스 안전 보관 동기화 완료.");
                 resetCrmInputForm();
                 window.switchOfficeSubTab('list');
-            } catch (error) {
-                console.error("저장 중 오류 발생:", error);
-                alert("저장에 실패했습니다. 다시 시도해주세요.");
             }
         }
 
