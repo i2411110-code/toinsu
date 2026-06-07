@@ -325,7 +325,7 @@
                 contract: document.getElementById('c_contract').value,
                 document: document.getElementById('c_document').value,
                 phone: document.getElementById('c_phone').value,
-                idnum: '[RRN Omitted]',
+                idnum: document.getElementById('c_idnum').value,
                 address: document.getElementById('c_address').value,
                 job: document.getElementById('c_job').value,
                 drive: document.getElementById('c_drive').value,
@@ -982,7 +982,7 @@ ${d.progress || ''}`;
             document.getElementById('portal-modal-content-area').innerText = 
 `성함: ${name}
 전화번호: ${d.phone || ''}
-주민번호: [RRN Omitted]
+주민번호: ${d.idnum || ''}
 주소: ${d.address || ''}
 직업명: ${d.job || ''}
 운전여부: ${d.drive || ''}
