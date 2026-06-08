@@ -178,28 +178,29 @@
 오후 2:17 2026-06-08
 /* 광고 배너 스타일 */
 .banner-wrapper {
-    width: 100%;
-    max-width: 1000px;
-    margin: 30px auto 0;
-    padding: 0 30px;
+    width: 90%;            /* 전체 너비를 90%로 줄여 양옆에 공백 확보 */
+    max-width: 1000px;     /* 최대 너비를 1000px로 제한하여 너무 커지지 않게 설정 */
+    margin: 30px auto 0;   /* 상단 여백 30px, 좌우 자동 정렬 */
+    padding: 0;            /* 내부 패딩 제거 */
 }
+
 .banner-box {
     cursor: pointer;
     overflow: hidden;
-    border-radius: 24px;
+    border-radius: 20px;   /* 모서리를 조금 더 부드럽게 */
     transition: transform 0.3s ease;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08); /* 약간의 그림자 추가로 입체감 */
 }
+
 .banner-box:hover {
     transform: translateY(-5px);
 }
+
 .banner-img {
     width: 100%;
     display: block;
-}
-/* 가운데 배너를 위한 추가 설정 */
-.center-banner {
-    max-width: 800px;
-    margin: 40px auto;
+    height: auto;          /* 비율 유지 */
+    object-fit: cover;     /* 이미지 잘림 방지 */
 }
 
 
