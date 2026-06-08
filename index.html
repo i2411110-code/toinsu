@@ -178,24 +178,21 @@
 오후 2:17 2026-06-08
 /* 광고 배너 스타일 */
 .banner-outer-wrapper {
-    max-width: 1440px;      /* 전체 레이아웃 너비와 동일 */
-    margin: 30px auto;      /* 상하 여백, 좌우 중앙 정렬 */
-    padding: 0 30px;        /* container와 동일한 여백 유지 */
+    width: 100%;
+    margin: 0 auto 30px auto; /* 상하 여백 및 중앙 정렬 */
+    padding: 0 20px;          /* 양옆에 20px 공백 강제 추가 */
+    max-width: 1440px;
 }
 
 .banner-item {
-    width: 100%;            /* 부모 안에서 100% 사용 */
-    max-width: 800px;       /* 최대 크기 제한 */
-    margin: 0 auto 20px auto; /* 좌우 auto로 중앙 정렬, 하단 간격 20px */
+    width: 100%;
+    max-width: 800px;         /* 배너 최대 크기 */
+    margin: 0 auto;           /* 중앙 정렬 */
     cursor: pointer;
     overflow: hidden;
     border-radius: 20px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.1);
     transition: transform 0.3s ease;
-}
-
-.banner-item:hover {
-    transform: translateY(-5px);
 }
 
 .banner-img {
@@ -433,17 +430,18 @@
         </div>
     </div>
 
-    <div class="navbar">
-        <div class="nav-logo">
-            <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue)"></i> <b>보험<span>가온</span>포탈</b>
+   <div class="container">
+    <div id="main-dashboard">
+        <div class="banner-outer-wrapper">
+            <div class="banner-item" onclick="window.open('https://open.kakao.com/o/sZoxSRGh')">
+                <img src="광고.png" alt="상단배너" class="banner-img">
+            </div>
         </div>
-        <div class="nav-right">
-            <div class="user-badge user-pill"><i class="bi bi-person-badge-fill"></i> <span id="user-display-email">인증 확인 중...</span></div>
-            <button class="logout-btn" onclick="handleLogout()"><i class="bi bi-box-arrow-right"></i> 로그아웃</button>
-            <div class="counter-pill">TODAY <span id="count-today">-</span></div>
-            <div class="counter-pill">TOTAL <span id="count-total">-</span></div>
+
+        <div class="top-banner-row">
+            <div class="wide-banner banner-purple" onclick="navigateTo('page-insure'); switchInsTab('nonlife');">...</div>
+            <div class="wide-banner banner-purple" onclick="navigateTo('page-private');">...</div>
         </div>
-    </div>
 
 
    <div class="banner-wrapper">
