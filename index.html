@@ -177,29 +177,29 @@
 
 오후 2:17 2026-06-08
 /* 광고 배너 스타일 */
-.banner-outer-wrapper {
+.banner-wrapper {
     width: 100%;
-    margin: 0 auto 30px auto; /* 상하 여백 및 중앙 정렬 */
-    padding: 0 20px;          /* 양옆에 20px 공백 강제 추가 */
     max-width: 1440px;
+    margin: 30px auto 0;
+    padding: 0 30px;
 }
-
-.banner-item {
-    width: 100%;
-    max-width: 800px;         /* 배너 최대 크기 */
-    margin: 0 auto;           /* 중앙 정렬 */
+.banner-box {
     cursor: pointer;
     overflow: hidden;
-    border-radius: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    border-radius: 24px;
     transition: transform 0.3s ease;
 }
-
+.banner-box:hover {
+    transform: translateY(-5px);
+}
 .banner-img {
     width: 100%;
     display: block;
-    height: 150px;
-    object-fit: cover;
+}
+/* 가운데 배너를 위한 추가 설정 */
+.center-banner {
+    max-width: 800px;
+    margin: 40px auto;
 }
 
 
@@ -430,23 +430,22 @@
         </div>
     </div>
 
-   <div class="container">
-    <div id="main-dashboard">
-        <div class="banner-outer-wrapper">
-            <div class="banner-item" onclick="window.open('https://open.kakao.com/o/sZoxSRGh')">
-                <img src="광고.png" alt="상단배너" class="banner-img">
-            </div>
+    <div class="navbar">
+        <div class="nav-logo">
+            <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue)"></i> <b>보험<span>가온</span>포탈</b>
         </div>
-
-        <div class="top-banner-row">
-            <div class="wide-banner banner-purple" onclick="navigateTo('page-insure'); switchInsTab('nonlife');">...</div>
-            <div class="wide-banner banner-purple" onclick="navigateTo('page-private');">...</div>
+        <div class="nav-right">
+            <div class="user-badge user-pill"><i class="bi bi-person-badge-fill"></i> <span id="user-display-email">인증 확인 중...</span></div>
+            <button class="logout-btn" onclick="handleLogout()"><i class="bi bi-box-arrow-right"></i> 로그아웃</button>
+            <div class="counter-pill">TODAY <span id="count-today">-</span></div>
+            <div class="counter-pill">TOTAL <span id="count-total">-</span></div>
         </div>
+    </div>
 
 
    <div class="banner-wrapper">
     <div class="banner-box" onclick="window.open('여기에_클릭시_이동할_링크_주소')">
-        <img src="광고.png" alt="상단배너" class="banner-img">
+        <img src="이미지_파일_경로.png" alt="상단배너" class="banner-img">
     </div>
 </div>
 
