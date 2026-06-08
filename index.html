@@ -178,30 +178,25 @@
 오후 2:17 2026-06-08
 /* 광고 배너 스타일 */
 .banner-wrapper {
-    width: 90%;            /* 화면 전체가 아닌 90%만 차지 */
-    max-width: 600px;      /* 최대 너비를 800px로 제한 (이게 핵심입니다) */
-    margin: 20px auto;     /* 위아래 간격 20px, 좌우 중앙 정렬 */
-    padding: 0;
+    width: 100%;           /* 전체 영역은 100% */
+    max-width: 800px;      /* 배너가 커질 수 있는 최대 크기를 800px로 제한 */
+    margin: 30px auto;     /* auto를 사용해 화면 중앙에 배치 */
+    padding: 0 40px;       /* 좌우에 40px씩 공백을 강제로 만듦 */
 }
 
 .banner-box {
     cursor: pointer;
     overflow: hidden;
-    border-radius: 20px;   /* 모서리 둥글게 */
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
     transition: transform 0.3s ease;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1); /* 너무 튀지 않는 부드러운 그림자 */
-}
-
-.banner-box:hover {
-    transform: translateY(-3px); /* 호버 시 살짝 떠오르는 효과 */
 }
 
 .banner-img {
     width: 100%;
     display: block;
-    height: auto;          /* 비율 유지 */
-    max-height: 150px;     /* 배너 높이를 150px로 고정하여 너무 크지 않게 조절 */
-    object-fit: cover;     /* 이미지가 왜곡되지 않게 함 */
+    height: 120px;         /* 높이를 더 낮게 설정하여 콤팩트하게 */
+    object-fit: cover;     /* 비율 깨짐 방지 */
 }
 
 
