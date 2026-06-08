@@ -174,50 +174,35 @@
         .float-kakao { background: #FEE500; color: #181600; }
         .float-instagram { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
 
-/* 1. 모바일 뷰포트 개선 */
 body {
-    overflow-x: hidden; /* 가로 스크롤 방지 */
-    -webkit-text-size-adjust: 100%; /* 아이폰 텍스트 크기 자동 조절 방지 */
+    overflow-x: hidden;
+    width: 100vw;
 }
 
-/* 2. 카드 및 그리드 모바일 최적화 */
-.main-track-grid, .office-grid {
-    display: grid;
-    grid-template-columns: 1fr !important; /* 모바일은 무조건 한 줄 */
+.container {
+    width: 100%;
+    padding: 0 10px !important; /* 모바일 좌우 여백 확보 */
+    box-sizing: border-box;
+}
+
+/* 배너가 깨지지 않게 수정 */
+.top-banner-row {
+    display: flex;
+    flex-direction: column; /* 모바일에서는 세로로 쌓기 */
     gap: 15px;
 }
 
-/* 3. 버튼 및 터치 영역 확대 (최소 높이 44px 권장) */
-.track-btn, .btn-action {
-    padding: 18px !important;
-    min-height: 52px;
-    font-size: 16px !important;
+.wide-banner {
+    width: 100%;
+    padding: 20px !important;
 }
 
-/* 4. 보험사 전산 아이콘 격자 조정 */
-#grid-nonlife, #grid-life {
-    grid-template-columns: repeat(2, 1fr) !important; /* 2열로 배치 */
-    gap: 10px !important;
+/* 표(Table)가 화면을 뚫고 나가는 경우 */
+.portal-table {
+    display: block;
+    overflow-x: auto; /* 표만 가로 스크롤 가능하게 */
+    white-space: nowrap;
 }
-
-/* 5. 텍스트 영역 모바일 조정 */
-.form-control {
-    font-size: 16px !important; /* 모바일에서 인풋 클릭 시 줌인 방지 */
-    padding: 12px;
-}
-
-/* 6. 모바일 대응 네비게이션 및 여백 */
-.container {
-    padding: 0 15px !important;
-    margin: 20px auto !important;
-}
-
-@media (max-width: 480px) {
-    .navbar { padding: 10px 15px; }
-    .float-home-btn { left: 20px; }
-    .banner-title h3 { font-size: 18px; }
-}
-
 
 
         
@@ -975,6 +960,16 @@ body {
             const filterContract = document.getElementById('f_contract').value;
             const filterDoc      = document.getElementById('f_doc').value;
             const searchKeyword  = document.getElementById('f_search').value.trim();
+
+            <td style="display: flex; flex-direction: column; text-align: left; padding: 10px;">
+        <div style="font-weight:700; font-size:16px;">${name}</div>
+        <div style="font-size:12px; color:#64748B;">${d.phone || '-'}</div>
+        <div style="margin-top:5px;">
+            <span class="badge ${d.contract === '완료' ? 'badge-green' : 'badge-orange'}">${d.contract}</span>
+            <span class="badge ${docBadgeClass}">${d.document}</span>
+        </div>
+    </td>
+`;
 
             Object.entries(window.globalClientRegistry || {}).forEach(([name, d]) => {
                 if(filterContract !== 'all' && d.contract !== filterContract) return;
