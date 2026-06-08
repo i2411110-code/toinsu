@@ -173,39 +173,6 @@
         .float-btn:hover { transform: scale(1.1); }
         .float-kakao { background: #FEE500; color: #181600; }
         .float-instagram { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
-
-body {
-    overflow-x: hidden;
-    width: 100vw;
-}
-
-.container {
-    width: 100%;
-    padding: 0 10px !important; /* 모바일 좌우 여백 확보 */
-    box-sizing: border-box;
-}
-
-/* 배너가 깨지지 않게 수정 */
-.top-banner-row {
-    display: flex;
-    flex-direction: column; /* 모바일에서는 세로로 쌓기 */
-    gap: 15px;
-}
-
-.wide-banner {
-    width: 100%;
-    padding: 20px !important;
-}
-
-/* 표(Table)가 화면을 뚫고 나가는 경우 */
-.portal-table {
-    display: block;
-    overflow-x: auto; /* 표만 가로 스크롤 가능하게 */
-    white-space: nowrap;
-}
-
-
-        
     </style>
 </head>
 <body>
@@ -960,16 +927,6 @@ body {
             const filterContract = document.getElementById('f_contract').value;
             const filterDoc      = document.getElementById('f_doc').value;
             const searchKeyword  = document.getElementById('f_search').value.trim();
-
-            <td style="display: flex; flex-direction: column; text-align: left; padding: 10px;">
-        <div style="font-weight:700; font-size:16px;">${name}</div>
-        <div style="font-size:12px; color:#64748B;">${d.phone || '-'}</div>
-        <div style="margin-top:5px;">
-            <span class="badge ${d.contract === '완료' ? 'badge-green' : 'badge-orange'}">${d.contract}</span>
-            <span class="badge ${docBadgeClass}">${d.document}</span>
-        </div>
-    </td>
-`;
 
             Object.entries(window.globalClientRegistry || {}).forEach(([name, d]) => {
                 if(filterContract !== 'all' && d.contract !== filterContract) return;
