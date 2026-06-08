@@ -178,13 +178,15 @@
 오후 2:17 2026-06-08
 /* 광고 배너 스타일 */
 .banner-wrapper {
-    width: 100%;           /* 전체 영역은 100% */
-    max-width: 600px;      /* 배너가 커질 수 있는 최대 크기를 800px로 제한 */
-    margin: 30px auto;     /* auto를 사용해 화면 중앙에 배치 */
-    padding: 0 100x;       /* 좌우에 40px씩 공백을 강제로 만듦 */
+    width: 100%;            /* 전체 너비를 차지 */
+    text-align: center;     /* 내부 요소 중앙 정렬 */
+    margin: 30px 0;         /* 상하 여백 */
 }
 
 .banner-box {
+    display: inline-block;  /* 텍스트처럼 취급되어 중앙 정렬됨 */
+    width: 80%;             /* 전체 화면의 80%만 사용 (양옆에 10%씩 공백) */
+    max-width: 800px;       /* 최대 크기를 제한하여 너무 커지지 않게 함 */
     cursor: pointer;
     overflow: hidden;
     border-radius: 20px;
@@ -192,11 +194,15 @@
     transition: transform 0.3s ease;
 }
 
+.banner-box:hover {
+    transform: translateY(-5px);
+}
+
 .banner-img {
     width: 100%;
     display: block;
-    height: 120px;         /* 높이를 더 낮게 설정하여 콤팩트하게 */
-    object-fit: cover;     /* 비율 깨짐 방지 */
+    height: 150px;          /* 배너 높이 */
+    object-fit: cover;
 }
 
 
