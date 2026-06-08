@@ -177,18 +177,16 @@
 
 오후 2:17 2026-06-08
 /* 광고 배너 스타일 */
-.banner-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* 가로 중앙 정렬 */
-    width: 100%;
-    margin: 20px 0;
+.banner-outer-wrapper {
+    max-width: 1440px;      /* 전체 레이아웃 너비와 동일 */
+    margin: 30px auto;      /* 상하 여백, 좌우 중앙 정렬 */
+    padding: 0 30px;        /* container와 동일한 여백 유지 */
 }
 
 .banner-item {
-    width: 80%;           /* 화면의 80% 사용 (양옆 10% 공백) */
-    max-width: 800px;     /* 최대 800px까지만 늘어남 */
-    margin-bottom: 20px;  /* 배너 간 간격 */
+    width: 100%;            /* 부모 안에서 100% 사용 */
+    max-width: 800px;       /* 최대 크기 제한 */
+    margin: 0 auto 20px auto; /* 좌우 auto로 중앙 정렬, 하단 간격 20px */
     cursor: pointer;
     overflow: hidden;
     border-radius: 20px;
@@ -203,7 +201,7 @@
 .banner-img {
     width: 100%;
     display: block;
-    height: 150px;        /* 배너 높이 */
+    height: 150px;
     object-fit: cover;
 }
 
@@ -436,22 +434,27 @@
     </div>
 
    <div class="navbar">
-        <div class="nav-logo">
-            <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue)"></i> <b>보험<span>가온</span>포탈</b>
-        </div>
-        <div class="nav-right">
-            <div class="user-badge user-pill"><i class="bi bi-person-badge-fill"></i> <span id="user-display-email">인증 확인 중...</span></div>
-            <button class="logout-btn" onclick="handleLogout()"><i class="bi bi-box-arrow-right"></i> 로그아웃</button>
-            <div class="counter-pill">TODAY <span id="count-today">-</span></div>
-            <div class="counter-pill">TOTAL <span id="count-total">-</span></div>
-        </div>
+    <div class="nav-logo">
+        <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue)"></i> <b>보험<span>가온</span>포탈</b>
     </div>
+    <div class="nav-right">
+        <div class="user-badge user-pill"><i class="bi bi-person-badge-fill"></i> <span id="user-display-email">인증 확인 중...</span></div>
+        <button class="logout-btn" onclick="handleLogout()"><i class="bi bi-box-arrow-right"></i> 로그아웃</button>
+        <div class="counter-pill">TODAY <span id="count-today">-</span></div>
+        <div class="counter-pill">TOTAL <span id="count-total">-</span></div>
+    </div>
+</div>
 
-    <div class="banner-section">
-        <div class="banner-item" onclick="window.open('https://open.kakao.com/o/sZoxSRGh')">
-            <img src="광고.png" alt="상단배너" class="banner-img">
+<div class="banner-outer-wrapper">
+    <div class="banner-item" onclick="window.open('https://open.kakao.com/o/sZoxSRGh')">
+        <img src="광고.png" alt="상단배너" class="banner-img">
+    </div>
+</div>
+
+<div class="container">
+    <div id="main-dashboard">
         </div>
-        </div>
+</div>
 
 
 
