@@ -177,16 +177,18 @@
 
 오후 2:17 2026-06-08
 /* 광고 배너 스타일 */
-.banner-wrapper {
-    width: 100%;            
-    display: flex;          /* 플렉스 박스 사용 */
-    justify-content: center; /* 가로 중앙 정렬 핵심 */
-    margin: 30px 0;         /* 상하 여백 */
+.banner-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* 가로 중앙 정렬 */
+    width: 100%;
+    margin: 20px 0;
 }
 
-.banner-box {
-    width: 80%;             /* 전체의 80%만 사용 (좌우 10%씩 공백) */
-    max-width: 800px;       /* 너무 커지지 않게 제한 */
+.banner-item {
+    width: 80%;           /* 화면의 80% 사용 (양옆 10% 공백) */
+    max-width: 800px;     /* 최대 800px까지만 늘어남 */
+    margin-bottom: 20px;  /* 배너 간 간격 */
     cursor: pointer;
     overflow: hidden;
     border-radius: 20px;
@@ -194,14 +196,14 @@
     transition: transform 0.3s ease;
 }
 
-.banner-box:hover {
+.banner-item:hover {
     transform: translateY(-5px);
 }
 
 .banner-img {
     width: 100%;
     display: block;
-    height: 150px;
+    height: 150px;        /* 배너 높이 */
     object-fit: cover;
 }
 
