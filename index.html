@@ -173,6 +173,54 @@
         .float-btn:hover { transform: scale(1.1); }
         .float-kakao { background: #FEE500; color: #181600; }
         .float-instagram { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+
+/* 1. 모바일 뷰포트 개선 */
+body {
+    overflow-x: hidden; /* 가로 스크롤 방지 */
+    -webkit-text-size-adjust: 100%; /* 아이폰 텍스트 크기 자동 조절 방지 */
+}
+
+/* 2. 카드 및 그리드 모바일 최적화 */
+.main-track-grid, .office-grid {
+    display: grid;
+    grid-template-columns: 1fr !important; /* 모바일은 무조건 한 줄 */
+    gap: 15px;
+}
+
+/* 3. 버튼 및 터치 영역 확대 (최소 높이 44px 권장) */
+.track-btn, .btn-action {
+    padding: 18px !important;
+    min-height: 52px;
+    font-size: 16px !important;
+}
+
+/* 4. 보험사 전산 아이콘 격자 조정 */
+#grid-nonlife, #grid-life {
+    grid-template-columns: repeat(2, 1fr) !important; /* 2열로 배치 */
+    gap: 10px !important;
+}
+
+/* 5. 텍스트 영역 모바일 조정 */
+.form-control {
+    font-size: 16px !important; /* 모바일에서 인풋 클릭 시 줌인 방지 */
+    padding: 12px;
+}
+
+/* 6. 모바일 대응 네비게이션 및 여백 */
+.container {
+    padding: 0 15px !important;
+    margin: 20px auto !important;
+}
+
+@media (max-width: 480px) {
+    .navbar { padding: 10px 15px; }
+    .float-home-btn { left: 20px; }
+    .banner-title h3 { font-size: 18px; }
+}
+
+
+
+        
     </style>
 </head>
 <body>
