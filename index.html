@@ -27,17 +27,6 @@
             min-height: 100vh;
         }
 
-        .float-home-btn {
-            position: fixed; top: 160px; left: 180px;
-            width: 50px; height: 50px; border-radius: 50%;
-            background: var(--main-blue); color: white;
-            display: none; align-items: center; justify-content: center;
-            font-size: 20px; box-shadow: 0 4px 12px rgba(37,99,235,0.3);
-            cursor: pointer; z-index: 2000; border: none;
-            transition: all 0.2s;
-        }
-        .float-home-btn:hover { transform: scale(1.1); background: #1D4ED8; }
-
         #auth-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #ECEFF8 0%, #F4F7FB 50%, #EBF1FC 100%);
@@ -66,36 +55,25 @@
         .counter-pill { background: white; border: 1px solid #E2E8F0; padding: 6px 14px; border-radius: 30px; font-size: 11px; color: var(--text-muted); font-weight: 500; }
 
         .container { max-width: 1440px; margin: 40px auto; padding: 0 30px; }
-        .top-banner-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-bottom: 30px; } /* 마진 하단 약간 축소 */
+        .top-banner-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-bottom: 30px; }
         @media (max-width: 768px) { .top-banner-row { grid-template-columns: 1fr; } }
         .wide-banner { background: white; border-radius: 24px; padding: 30px 40px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: var(--card-shadow); border: 1px solid rgba(255,255,255,0.7); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; overflow: hidden; }
         .wide-banner:hover { transform: translateY(-5px); box-shadow: 0 20px 35px -10px rgba(37, 99, 235, 0.15); border-color: var(--main-blue); }
         .banner-info { display: flex; align-items: center; gap: 20px; }
         
-        /* ✅ 배너 로고 애니메이션 설정 */
         .banner-icon { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; overflow: visible; }
         .banner-blue .banner-icon { background: #EFF6FF; color: #2563EB; }
-        .banner-purple .banner-icon { background: transparent; } /* 보라색 배너 아이콘 배경 투명 처리 */
+        .banner-purple .banner-icon { background: transparent; }
         
-        .banner-anim-img {
-            width: 48px;
-            height: 48px;
-            object-fit: contain;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s;
-        }
-        
-        /* 💡 배너 전체 영역에 마우스를 올렸을 때 로고가 튀어나오도록 설정 */
-        .wide-banner:hover .banner-anim-img {
-            transform: scale(1.35) translateY(-8px);
-            filter: drop-shadow(0px 10px 15px rgba(0, 0, 0, 0.15));
-        }
+        .banner-anim-img { width: 48px; height: 48px; object-fit: contain; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s; }
+        .wide-banner:hover .banner-anim-img { transform: scale(1.35) translateY(-8px); filter: drop-shadow(0px 10px 15px rgba(0, 0, 0, 0.15)); }
 
         .banner-title h3 { font-size: 20px; font-weight: 700; color: #0F172A; margin-bottom: 4px; }
         .banner-title p { font-size: 13px; color: var(--text-muted); }
         .arrow-circle { width: 36px; height: 36px; border-radius: 50%; background: #F1F5F9; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
         .wide-banner:hover .arrow-circle { background: var(--main-blue); color: white; }
 
-        .main-track-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; margin-top: 40px; } /* 마진 상단 추가 */
+        .main-track-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; margin-top: 40px; }
         @media (max-width: 1200px) { .main-track-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 640px) { .main-track-grid { grid-template-columns: 1fr; } }
         .track-card { background: white; border-radius: 32px; padding: 40px 30px 35px 30px; box-shadow: var(--card-shadow); border: 1px solid rgba(255,255,255,0.8); position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 480px; transition: all 0.3s ease; }
@@ -127,6 +105,27 @@
 
         .sub-page { display: none; background: white; border-radius: 32px; padding: 45px; box-shadow: var(--card-shadow); max-width: 1200px; margin: 0 auto; }
         .section-title { font-size: 26px; font-weight: 700; color: var(--text-dark); margin-bottom: 25px; border-bottom: 2px solid var(--main-blue); padding-bottom: 15px; }
+
+        .inline-home-btn {
+            background: #F1F5F9;
+            color: var(--text-dark);
+            border: 1px solid #E2E8F0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .inline-home-btn:hover {
+            background: #E2E8F0;
+            color: var(--main-blue);
+            transform: translateY(-2px);
+        }
 
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; }
@@ -174,39 +173,14 @@
         .float-kakao { background: #FEE500; color: #181600; }
         .float-instagram { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
 
-        /* 광고 배너 스타일 */
-        .banner-wrapper {
-            width: 100%;
-            /* max-width: 1440px; 제거하여 넓이에 자연스럽게 맞춤 */
-        }
-        .banner-box {
-            cursor: pointer;
-            overflow: hidden;
-            border-radius: 24px;
-            transition: transform 0.3s ease;
-            box-shadow: var(--card-shadow);
-        }
-        .banner-box:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 25px 40px -10px rgba(0,0,0,0.1);
-        }
-        .banner-img {
-            width: 100%;
-            display: block;
-            border-radius: 24px;
-        }
-        /* 가운데 배너를 위한 추가 설정 */
-        .center-banner {
-            max-width: 100%;
-            margin: 0 auto;
-        }
+        .banner-wrapper { width: 100%; }
+        .banner-box { cursor: pointer; overflow: hidden; border-radius: 24px; transition: transform 0.3s ease; box-shadow: var(--card-shadow); }
+        .banner-box:hover { transform: translateY(-5px); box-shadow: 0 25px 40px -10px rgba(0,0,0,0.1); }
+        .banner-img { width: 100%; display: block; border-radius: 24px; }
+        .center-banner { max-width: 100%; margin: 0 auto; }
     </style>
 </head>
 <body>
-    <button class="float-home-btn" onclick="goBack()" title="메인 대시보드로 이동">
-        <i class="bi bi-house-door-fill"></i>
-    </button>
-
     <script>
         window.globalClientRegistry = {};
         window.currentUserSchedules = [];
@@ -295,6 +269,14 @@
             }
         }
 
+        // 공지사항 팝업 노출 여부 확인 함수
+        window.checkAndShowNotice = function() {
+            const hideUntil = localStorage.getItem('hideNoticeGaon');
+            if (!hideUntil || new Date().getTime() > parseInt(hideUntil)) {
+                document.getElementById('notice-modal').style.display = 'flex';
+            }
+        };
+
         window.toggleAuthTab = function(mode) {
             const loginBtn = document.getElementById('tab-login-btn');
             const regBtn = document.getElementById('tab-register-btn');
@@ -356,6 +338,9 @@
                 document.getElementById('user-display-email').innerText = user.email;
                 loadUserIntegratedData(user.email);
                 updateVisitCounter();
+                
+                // 로그인 완료 시 공지사항 체크 및 노출
+                window.checkAndShowNotice();
             } else {
                 document.getElementById('auth-overlay').style.display = 'flex';
             }
@@ -366,37 +351,6 @@
         }
 
         window.executeRegistrySync = syncRegistryToDatabase;
-
-        window.submitCrmData = async function() {
-            const name = document.getElementById('c_name').value.trim();
-            if(!name) { alert("식별 데이터인 '성함'은 필수 필드입니다."); return; }
-
-            window.globalClientRegistry[name] = {
-                savedAt: Date.now(),
-                relation: document.getElementById('c_relation').value,
-                contract: document.getElementById('c_contract').value,
-                document: document.getElementById('c_document').value,
-                phone: document.getElementById('c_phone').value,
-                idnum: document.getElementById('c_idnum').value,
-                address: document.getElementById('c_address').value,
-                job: document.getElementById('c_job').value,
-                drive: document.getElementById('c_drive').value,
-                body: document.getElementById('c_body').value,
-                account: document.getElementById('c_account').value,
-                medical: document.getElementById('c_medical').value,
-                progress: document.getElementById('c_progress').value
-            };
-
-            try {
-                await syncRegistryToDatabase(); 
-                alert("저장 성공: 클라우드 데이터셋과 동기화되었습니다.");
-                resetCrmInputForm();
-                window.switchOfficeSubTab('list');
-            } catch (error) {
-                console.error("저장 중 오류 발생:", error);
-                alert("저장에 실패했습니다. 다시 시도해주세요.");
-            }
-        }
     </script>
 
     <div id="auth-overlay">
@@ -471,7 +425,7 @@
 
             <div class="banner-wrapper center-banner">
                 <div class="banner-box" onclick="window.open('여기에_클릭시_이동할_링크_주소')">
-                    <img src="광고.png" alt="상단배너" class="banner-img">
+                    <img src="이미지_파일_경로.png" alt="상단배너" class="banner-img">
                 </div>
             </div>
 
@@ -544,7 +498,11 @@
         </div>
 
         <div id="page-insure" class="sub-page" style="background: #F8FAFC; padding: 20px;">
-            <div class="section-title">🏢 보험사 전산 바로가기</div>
+            <div class="section-title" style="display:flex; align-items:center; gap:15px;">
+                <div>🏢 보험사 전산 바로가기</div>
+                <button class="inline-home-btn" onclick="goBack()"><i class="bi bi-house-door-fill"></i> 메인화면</button>
+            </div>
+            
             <div style="display: flex; background: #E2E8F0; padding: 4px; border-radius: 8px; margin-bottom: 25px; box-shadow: var(--card-shadow);">
                 <button id="tab-nonlife" onclick="switchInsTab('nonlife')" style="flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; background: white; color: #2563EB; transition: all 0.2s;">손해보험</button>
                 <button id="tab-life" onclick="switchInsTab('life')" style="flex: 1; padding: 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; background: transparent; color: #64748B; transition: all 0.2s;">생명보험</button>
@@ -705,18 +663,45 @@
             </div>
         </div>
 
-        <div id="page-call" class="sub-page"><div class="section-title">📞 고객센터</div></div>
-        <div id="page-docs" class="sub-page"><div class="section-title">📄 청구서류 양식</div></div>
+        <div id="page-call" class="sub-page">
+            <div class="section-title" style="display:flex; align-items:center; gap:15px;">
+                <div>📞 고객센터</div>
+                <button class="inline-home-btn" onclick="goBack()"><i class="bi bi-house-door-fill"></i> 메인화면</button>
+            </div>
+        </div>
+        
+        <div id="page-docs" class="sub-page">
+            <div class="section-title" style="display:flex; align-items:center; gap:15px;">
+                <div>📄 청구서류 양식</div>
+                <button class="inline-home-btn" onclick="goBack()"><i class="bi bi-house-door-fill"></i> 메인화면</button>
+            </div>
+        </div>
         
         <div id="page-silbi" class="sub-page">
-            <div class="section-title">🔢 세대별 실비 계산기</div>
+            <div class="section-title" style="display:flex; align-items:center; gap:15px;">
+                <div>🔢 세대별 실비 계산기</div>
+                <button class="inline-home-btn" onclick="goBack()"><i class="bi bi-house-door-fill"></i> 메인화면</button>
+            </div>
+            
             <div class="form-group"><label>실비 세대 지정</label><select id="silbi-gen" class="form-control"><option value="4">4세대 / 5세대 의료 개정 실비</option></select></div>
             <div class="form-group"><label>치료 비용 (원)</label><input type="number" id="silbi-cost" class="form-control" value="1000000"></div>
             <button class="btn-action" onclick="runSilbi()">결과 산출</button>
             <div id="silbi-res" class="result-box" style="display:none;"></div>
         </div>
-        <div id="page-folder" class="sub-page"><div class="section-title">📁 가온 자료폴더</div></div>
-        <div id="page-recruit" class="sub-page"><div class="section-title">💼 이직 컨설팅</div></div>
+        
+        <div id="page-folder" class="sub-page">
+            <div class="section-title" style="display:flex; align-items:center; gap:15px;">
+                <div>📁 가온 자료폴더</div>
+                <button class="inline-home-btn" onclick="goBack()"><i class="bi bi-house-door-fill"></i> 메인화면</button>
+            </div>
+        </div>
+        
+        <div id="page-recruit" class="sub-page">
+            <div class="section-title" style="display:flex; align-items:center; gap:15px;">
+                <div>💼 이직 컨설팅</div>
+                <button class="inline-home-btn" onclick="goBack()"><i class="bi bi-house-door-fill"></i> 메인화면</button>
+            </div>
+        </div>
         
         <div id="page-private" class="sub-page">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -728,7 +713,10 @@
             </div>
 
             <div class="section-title" style="display: flex; align-items: center; justify-content: space-between;">
-                <div>👤 개인공간 전산실 (<span id="user-private-title">조회중...</span>)</div>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <div>👤 개인공간 전산실 (<span id="user-private-title">조회중...</span>)</div>
+                    <button class="inline-home-btn" onclick="goBack()"><i class="bi bi-house-door-fill"></i> 메인화면</button>
+                </div>
                 <button onclick="document.getElementById('help-modal').style.display='flex'" style="background:var(--main-blue); color:white; border:none; padding:8px 16px; border-radius:20px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px;">
                     <i class="bi bi-question-circle-fill"></i> 양식 도움말
                 </button>
@@ -856,6 +844,7 @@
         <a href="https://www.instagram.com/insu_coco?igsh=OWhuc2VlYWs4M3Zi" target="_blank" class="float-btn float-instagram" title="인스타그램"><i class="bi bi-instagram"></i></a>
     </div>
 
+    <!-- 정보 열람 모달 -->
     <div id="portal-global-modal" class="portal-modal" onclick="closePortalModal()">
         <div class="modal-body" onclick="event.stopPropagation()">
             <h3 style="font-size:18px; font-weight:700; margin-bottom:15px;" id="modal-title-area">종합 정보 열람</h3>
@@ -864,6 +853,7 @@
         </div>
     </div>
 
+    <!-- 양식 도움말 모달 -->
     <div id="help-modal" class="portal-modal" onclick="document.getElementById('help-modal').style.display='none'">
         <div class="modal-body" onclick="event.stopPropagation()">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
@@ -887,6 +877,32 @@
 -암, 백혈병, 고혈압, 협심증, 심근경색, 심장판막증, 간경화증, 뇌졸중증(뇌출혈, 뇌경색), 당뇨, 에이즈, 항문 관련 질환 
 7. 운전여부 :</textarea>
             <button class="btn-action" style="margin-top:15px;" onclick="copyHelpTemplate()"><i class="bi bi-clipboard-check"></i> 양식 복사하기</button>
+        </div>
+    </div>
+
+    <!-- 신규 추가: 공지사항 팝업 모달 -->
+    <div id="notice-modal" class="portal-modal" style="z-index: 3000;">
+        <div class="modal-body" style="max-width: 400px; padding: 25px;" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 2px solid var(--main-blue); padding-bottom:10px;">
+                <h3 style="font-size:18px; font-weight:700; color:var(--text-dark); margin:0;"><i class="bi bi-megaphone-fill" style="color:var(--main-blue);"></i> 보험가온포탈 공지사항</h3>
+            </div>
+            
+            <div class="modal-text-view" style="max-height: 1000px; background:#fff; border:none; padding:0; margin-bottom:15px; font-size:14px; color:#334155; line-height:1.6;">
+<b>[업데이트 안내]</b><br>
+- 각 페이지별 [메인화면] 홈 버튼이 추가되었습니다.<br>
+- 고객등록 양식 도움말 및 복사 기능이 신설되었습니다.<br>
+- 메인 대시보드 중앙에 광고 배너 영역이 추가되었습니다.<br><br>
+           추가 건의사항은 언제든 문의주세요. 
+                   오늘도 화이팅입니다! 😊
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#F8FAFC; padding:10px 15px; border-radius:8px; border:1px solid #E2E8F0;">
+                <label style="font-size:13px; color:var(--text-muted); display:flex; align-items:center; gap:6px; cursor:pointer; margin:0;">
+                    <input type="checkbox" id="hide-notice-chk" style="width:16px; height:16px; cursor:pointer;">
+                    하루 동안 보지 않기
+                </label>
+                <button class="btn-action" style="width:auto; padding:6px 16px; font-size:13px; background:#64748B;" onclick="closeNotice()">닫기</button>
+            </div>
         </div>
     </div>
 
@@ -1169,14 +1185,12 @@ ${d.medical || ''}`;
             document.getElementById('main-dashboard').style.display = 'none';
             document.querySelectorAll('.sub-page').forEach(p => p.style.display = 'none');
             document.getElementById(pageId).style.display = 'block';
-            document.querySelector('.float-home-btn').style.display = 'flex';
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function goBack() {
             document.querySelectorAll('.sub-page').forEach(p => p.style.display = 'none');
             document.getElementById('main-dashboard').style.display = 'block';
-            document.querySelector('.float-home-btn').style.display = 'none';
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -1196,7 +1210,6 @@ ${d.medical || ''}`;
             }
         }
 
-        // 신규 추가: 양식 복사 스크립트
         window.copyHelpTemplate = function() {
             const text = document.getElementById('help-template-text').value;
             navigator.clipboard.writeText(text).then(() => {
@@ -1205,6 +1218,16 @@ ${d.medical || ''}`;
             }).catch(err => {
                 alert('복사에 실패했습니다. 수동으로 복사해주세요.');
             });
+        }
+
+        // 신규 추가: 공지사항 팝업 닫기 및 로컬 스토리지 제어 기능
+        window.closeNotice = function() {
+            if (document.getElementById('hide-notice-chk').checked) {
+                const now = new Date().getTime();
+                const tomorrow = now + (24 * 60 * 60 * 1000); // 24시간 뒤
+                localStorage.setItem('hideNoticeGaon', tomorrow);
+            }
+            document.getElementById('notice-modal').style.display = 'none';
         }
     </script>
 </body>
