@@ -66,7 +66,7 @@
         .counter-pill { background: white; border: 1px solid #E2E8F0; padding: 6px 14px; border-radius: 30px; font-size: 11px; color: var(--text-muted); font-weight: 500; }
 
         .container { max-width: 1440px; margin: 40px auto; padding: 0 30px; }
-        .top-banner-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-bottom: 40px; }
+        .top-banner-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-bottom: 30px; } /* 마진 하단 약간 축소 */
         @media (max-width: 768px) { .top-banner-row { grid-template-columns: 1fr; } }
         .wide-banner { background: white; border-radius: 24px; padding: 30px 40px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: var(--card-shadow); border: 1px solid rgba(255,255,255,0.7); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; overflow: hidden; }
         .wide-banner:hover { transform: translateY(-5px); box-shadow: 0 20px 35px -10px rgba(37, 99, 235, 0.15); border-color: var(--main-blue); }
@@ -95,7 +95,7 @@
         .arrow-circle { width: 36px; height: 36px; border-radius: 50%; background: #F1F5F9; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
         .wide-banner:hover .arrow-circle { background: var(--main-blue); color: white; }
 
-        .main-track-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; }
+        .main-track-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; margin-top: 40px; } /* 마진 상단 추가 */
         @media (max-width: 1200px) { .main-track-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 640px) { .main-track-grid { grid-template-columns: 1fr; } }
         .track-card { background: white; border-radius: 32px; padding: 40px 30px 35px 30px; box-shadow: var(--card-shadow); border: 1px solid rgba(255,255,255,0.8); position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 480px; transition: all 0.3s ease; }
@@ -173,6 +173,33 @@
         .float-btn:hover { transform: scale(1.1); }
         .float-kakao { background: #FEE500; color: #181600; }
         .float-instagram { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+
+        /* 광고 배너 스타일 */
+        .banner-wrapper {
+            width: 100%;
+            /* max-width: 1440px; 제거하여 넓이에 자연스럽게 맞춤 */
+        }
+        .banner-box {
+            cursor: pointer;
+            overflow: hidden;
+            border-radius: 24px;
+            transition: transform 0.3s ease;
+            box-shadow: var(--card-shadow);
+        }
+        .banner-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 40px -10px rgba(0,0,0,0.1);
+        }
+        .banner-img {
+            width: 100%;
+            display: block;
+            border-radius: 24px;
+        }
+        /* 가운데 배너를 위한 추가 설정 */
+        .center-banner {
+            max-width: 100%;
+            margin: 0 auto;
+        }
     </style>
 </head>
 <body>
@@ -442,6 +469,12 @@
                 </div>
             </div>
 
+            <div class="banner-wrapper center-banner">
+                <div class="banner-box" onclick="window.open('여기에_클릭시_이동할_링크_주소')">
+                    <img src="이미지_파일_경로.png" alt="상단배너" class="banner-img">
+                </div>
+            </div>
+
             <div class="main-track-grid">
                 <div class="track-card track-pink">
                     <div>
@@ -694,7 +727,12 @@
                 </div>
             </div>
 
-            <div class="section-title">👤 개인공간 전산실 (<span id="user-private-title">조회중...</span>)</div>
+            <div class="section-title" style="display: flex; align-items: center; justify-content: space-between;">
+                <div>👤 개인공간 전산실 (<span id="user-private-title">조회중...</span>)</div>
+                <button onclick="document.getElementById('help-modal').style.display='flex'" style="background:var(--main-blue); color:white; border:none; padding:8px 16px; border-radius:20px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                    <i class="bi bi-question-circle-fill"></i> 양식 도움말
+                </button>
+            </div>
             
             <div class="office-nav">
                 <button id="btn-tab-input" class="active" onclick="switchOfficeSubTab('input')">고객 정보 입력 및 AI 자동정리</button>
@@ -823,6 +861,32 @@
             <h3 style="font-size:18px; font-weight:700; margin-bottom:15px;" id="modal-title-area">종합 정보 열람</h3>
             <div id="portal-modal-content-area" class="modal-text-view"></div>
             <div style="display:flex; gap:10px;" id="modal-action-btn-layout"></div>
+        </div>
+    </div>
+
+    <div id="help-modal" class="portal-modal" onclick="document.getElementById('help-modal').style.display='none'">
+        <div class="modal-body" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <h3 style="font-size:18px; font-weight:700;"><i class="bi bi-question-circle-fill" style="color:var(--main-blue);"></i> 도움말</h3>
+                <button onclick="document.getElementById('help-modal').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted);">&times;</button>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">고객 정보 입력 시 붙여넣기 양식</p>
+            <textarea id="help-template-text" class="form-control" style="height:350px; font-size:13px; line-height:1.6; resize:none; background:#F8FAFC;" readonly>보험료 산출을 위한 개인정보
+1. 성명 :  
+2. 주민번호 : 
+3. 휴대폰번호 : 
+4. 주소 : 
+5. 직업(회사명) : 
+6. 5년간의 병원치료내용
+-병력고지-
+3개월 이내 의료 행위를 받은적이 있습니까 ?
+1년 이내 마약, 정신과 질환 약물을 복용한 사실이 있습니까 ? 
+최근 1년 기존 병력에 대한 추가 검사를 받은 사실이 있습니까? 
+최근 5년 입원, 수술, 7일이상치료, 30일이상 투약 한 사실이 있습니까?
+최근 5년 아래 질병으로 진단 받은적 있습니까?
+-암, 백혈병, 고혈압, 협심증, 심근경색, 심장판막증, 간경화증, 뇌졸중증(뇌출혈, 뇌경색), 당뇨, 에이즈, 항문 관련 질환 
+7. 운전여부 :</textarea>
+            <button class="btn-action" style="margin-top:15px;" onclick="copyHelpTemplate()"><i class="bi bi-clipboard-check"></i> 양식 복사하기</button>
         </div>
     </div>
 
@@ -1130,6 +1194,17 @@ ${d.medical || ''}`;
                 nonlifeTab.style.background = 'transparent'; nonlifeTab.style.color = '#64748B';
                 gridNon.style.display = 'none'; gridLife.style.display = 'grid';
             }
+        }
+
+        // 신규 추가: 양식 복사 스크립트
+        window.copyHelpTemplate = function() {
+            const text = document.getElementById('help-template-text').value;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('입력 양식이 클립보드에 복사되었습니다. 카톡이나 메모장에 붙여넣으세요!');
+                document.getElementById('help-modal').style.display = 'none';
+            }).catch(err => {
+                alert('복사에 실패했습니다. 수동으로 복사해주세요.');
+            });
         }
     </script>
 </body>
