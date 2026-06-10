@@ -186,7 +186,7 @@ window.loadComponent = async function(pageId, extraAction) {
 
          // 👇 여기에 추가
         if (pageId === 'page-silson') {
-            window.initSilsonPage();
+            setTimeout(() => window.initSilsonPage(), 0);  
         }
         
         // 탭 전환 등 예약된 액션이 있으면 실행
