@@ -227,3 +227,56 @@
   .reject-buttons { flex-direction: column; }
   .toggle-btn { width: 100%; }
 }
+
+
+/* =========================================
+   [실손 계산기]
+========================================= */
+
+.silson-wrap { padding: 10px 0 30px; }
+.silson-box { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+.silson-header { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.silson-title-wrap { display: flex; align-items: center; gap: 8px; }
+.silson-title { font-size: 20px; font-weight: 700; color: var(--text-dark); margin: 0; }
+
+.silson-card { background: white; border-radius: 20px; padding: 22px 24px; box-shadow: var(--card-shadow); border: 1px solid rgba(255,255,255,0.8); }
+.silson-card-title { font-size: 15px; font-weight: 700; color: var(--text-dark); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #F0F2FA; }
+
+.silson-gen-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (min-width: 500px) { .silson-gen-grid { grid-template-columns: repeat(4, 1fr); } }
+.silson-gen-btn { background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 10px 8px; text-align: left; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 3px; }
+.silson-gen-btn:hover { border-color: var(--main-blue); }
+.silson-gen-btn.active { background: #EFF6FF; border-color: var(--main-blue); }
+.silson-gen-btn .gen-label { font-size: 13px; font-weight: 700; color: var(--text-dark); }
+.silson-gen-btn.active .gen-label { color: var(--main-blue); }
+.silson-gen-btn .gen-period { font-size: 10px; color: var(--text-muted); }
+
+.silson-type-toggle { display: grid; grid-template-columns: 1fr 1fr; background: #E2E8F0; border-radius: 12px; padding: 4px; gap: 4px; }
+.silson-type-btn { border: none; border-radius: 9px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; background: transparent; color: var(--text-muted); transition: all 0.2s; font-family: 'Noto Sans KR', sans-serif; }
+.silson-type-btn.active { background: white; color: var(--main-blue); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+
+.silson-group { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
+.silson-group label { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+.silson-hint { font-size: 11px; font-weight: 500; color: #2563EB; margin-left: 6px; }
+.silson-select, .silson-input { width: 100%; padding: 11px 14px; border: 1.5px solid #E2E8F0; border-radius: 10px; font-size: 14px; font-family: 'Noto Sans KR', sans-serif; outline: none; background: white; transition: border-color 0.2s; }
+.silson-select:focus, .silson-input:focus { border-color: var(--main-blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+.silson-readonly { background: #F8FAFC; color: var(--text-muted); cursor: default; }
+
+.silson-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.silson-grade-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.silson-grade-btn { flex: 1; min-width: 70px; padding: 10px 6px; border: 1.5px solid #E2E8F0; border-radius: 10px; background: white; font-size: 13px; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: all 0.2s; font-family: 'Noto Sans KR', sans-serif; }
+.silson-grade-btn.active { background: #EFF6FF; border-color: var(--main-blue); color: var(--main-blue); }
+
+.silson-result-mini { margin-top: 14px; background: #F8FAFC; border-radius: 12px; border: 1px solid #E8EDF5; overflow: hidden; }
+.silson-result-mini table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.silson-result-mini td { padding: 9px 14px; border-bottom: 1px solid #EEF1F8; }
+.silson-result-mini td:last-child { text-align: right; font-weight: 700; }
+.silson-result-mini tr:last-child td { border-bottom: none; background: #EFF6FF; color: var(--main-blue); font-weight: 900; font-size: 14px; }
+.silson-result-mini tr:last-child td:first-child { color: var(--main-blue); }
+
+.silson-total { background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%); border-radius: 20px; padding: 28px 24px; color: white; text-align: center; box-shadow: 0 12px 30px -8px rgba(37,99,235,0.35); }
+.silson-total-label { font-size: 13px; opacity: 0.85; margin-bottom: 8px; }
+.silson-total-amount { font-size: 34px; font-weight: 900; letter-spacing: -1px; margin-bottom: 12px; }
+.silson-total-notice { font-size: 11px; opacity: 0.7; line-height: 1.5; }
