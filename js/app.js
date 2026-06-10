@@ -929,5 +929,3 @@ window.copyKakaoMsg = function() {
     });
   };
 
-})();
-  </div>
