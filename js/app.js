@@ -635,15 +635,9 @@ window.copyKakaoMsg = function() {
 
 
   // =====================================================
-  // 실손 계산기
-  // =====================================================
-
-
-
+// 실손 계산기
+// =====================================================
 (function() {
-  // =====================================================
-  // 세대 데이터 (원본 로직 그대로)
-  // =====================================================
   const GENERATIONS = [
     {
       id: "1gen", label: "1세대", period: "~2009.09",
@@ -686,9 +680,7 @@ window.copyKakaoMsg = function() {
     {
       id: "4gen", label: "4세대", period: "2021.07~2026.04",
       coverGubun: 80, coverNonGubun: 70, inpatientLimit: 5e7, has3Types: true, type3SelfRate: 30, is4gen: true,
-      limitOptions: [
-        { label: "20만원(외래+약제)", outpatientLimit: 2e5, prescriptionLimit: 0 }
-      ],
+      limitOptions: [{ label: "20만원(외래+약제)", outpatientLimit: 2e5, prescriptionLimit: 0 }],
       deductible: { clinic: 10000, hospital: 15000, general: 20000 },
       type3Deductible: { injection: 30000, manual: 30000, mri: 30000 }
     },
@@ -704,22 +696,13 @@ window.copyKakaoMsg = function() {
     }
   ];
 
-  // 상태
-  window.silsonState = {
-    genId: '4gen',
-    type: 'outpatient',
-    grade: 'clinic',
-    limitIdx: 0
-  };
+  window.silsonState = { genId: '4gen', type: 'outpatient', grade: 'clinic', limitIdx: 0 };
 
   const n = (v) => Number(v) || 0;
   const fmt = (v) => Math.round(Math.max(0, v)).toLocaleString();
-  const floor100 = (v) => Math.floor(Math.max(0, v) / 100) * 100;
 
-  // =====================================================
-  // 세대 버튼 렌더링
-  // =====================================================
-  function renderGenGrid() {
+  // 이 두 함수를 window에 직접 등록 (클로저 탈출)
+  window._silson_renderGenGrid = function() {
     const grid = document.getElementById('silson-gen-grid');
     if (!grid) return;
     grid.innerHTML = GENERATIONS.map(g => `
@@ -729,22 +712,46 @@ window.copyKakaoMsg = function() {
         ${g.period ? `<span class="gen-period">${g.period}</span>` : ''}
       </button>
     `).join('');
-  }
+  };
 
-  // =====================================================
-  // 세대 선택
-  // =====================================================
+  window._silson_updateUI = function() {
+    const g = GENERATIONS.find(x => x.id === window.silsonState.genId);
+    if (!g) return;
+
+    const limitSel = document.getElementById('silson-limit-select');
+    const limitGroup = document.getElementById('silson-limit-group');
+    if (g.limitOptions && limitGroup && limitSel) {
+      limitGroup.style.display = '';
+      limitSel.innerHTML = g.limitOptions.map((opt, i) =>
+        `<option value="${i}">${opt.label}</option>`
+      ).join('');
+      limitSel.value = window.silsonState.limitIdx;
+    } else if (limitGroup) {
+      limitGroup.style.display = 'none';
+    }
+
+    const hint = document.getElementById('silson-nongubun-hint');
+    if (hint) hint.style.display = g.is4gen ? '' : 'none';
+
+    const showPresc = !g.is4gen && !g.is5gen && g.id !== 'sick' && g.limitOptions && g.limitOptions[0]?.prescriptionLimit > 0;
+    const prescCard = document.getElementById('silson-prescription-card');
+    if (prescCard) prescCard.style.display = showPresc ? '' : 'none';
+
+    const show3 = g.has3Types && !g.is5gen;
+    const t3Card = document.getElementById('silson-type3-card');
+    const t3InpCard = document.getElementById('silson-inp-type3-card');
+    if (t3Card) t3Card.style.display = show3 ? '' : 'none';
+    if (t3InpCard) t3InpCard.style.display = show3 ? '' : 'none';
+  };
+
   window.selectSilsonGen = function(id) {
     window.silsonState.genId = id;
     window.silsonState.limitIdx = 0;
-    renderGenGrid();
-    updateSilsonUI();
+    window._silson_renderGenGrid();
+    window._silson_updateUI();
     window.renderSilsonResult();
   };
 
-  // =====================================================
-  // 병원 등급 선택
-  // =====================================================
   window.selectSilsonGrade = function(grade) {
     window.silsonState.grade = grade;
     document.querySelectorAll('.silson-grade-btn').forEach(b => {
@@ -753,9 +760,6 @@ window.copyKakaoMsg = function() {
     window.renderSilsonResult();
   };
 
-  // =====================================================
-  // 통원/입원 전환
-  // =====================================================
   window.switchSilsonType = function(type) {
     window.silsonState.type = type;
     document.getElementById('btn-outpatient').classList.toggle('active', type === 'outpatient');
@@ -766,201 +770,111 @@ window.copyKakaoMsg = function() {
     window.renderSilsonResult();
   };
 
-  // =====================================================
-  // UI 업데이트 (세대 바뀔 때)
-  // =====================================================
-  function updateSilsonUI() {
-    const g = GENERATIONS.find(x => x.id === window.silsonState.genId);
-    if (!g) return;
-
-    // 한도 select
-    const limitSel = document.getElementById('silson-limit-select');
-    const limitGroup = document.getElementById('silson-limit-group');
-    if (g.limitOptions) {
-      limitGroup.style.display = '';
-      limitSel.innerHTML = g.limitOptions.map((opt, i) =>
-        `<option value="${i}">${opt.label}</option>`
-      ).join('');
-      limitSel.value = window.silsonState.limitIdx;
-    } else {
-      limitGroup.style.display = 'none';
-    }
-
-    // 4세대 비급여 힌트
-    document.getElementById('silson-nongubun-hint').style.display = g.is4gen ? '' : 'none';
-
-    // 약제비 카드 (4세대·1세대·유병자 숨김)
-    const showPresc = !g.is4gen && !g.is5gen && g.id !== 'sick' && g.limitOptions && g.limitOptions[0]?.prescriptionLimit > 0;
-    document.getElementById('silson-prescription-card').style.display = showPresc ? '' : 'none';
-
-    // 비급여3종 카드
-    const show3 = g.has3Types && !g.is5gen;
-    document.getElementById('silson-type3-card').style.display = show3 ? '' : 'none';
-    document.getElementById('silson-inp-type3-card').style.display = show3 ? '' : 'none';
-
-    // 상급병실 차액 입력
-    document.getElementById('silson-room').addEventListener('change', function() {
-      document.getElementById('silson-room-extra').style.display = this.value === 'premium' ? '' : 'none';
-    });
-  }
-
-  // =====================================================
-  // 외래 계산 (원본 nt() 함수)
-  // =====================================================
   function calcOutpatient(g, grade, limitIdx) {
     if (g.is5gen) return { total: 0, deduct: 0, result: 0 };
-
     const limitOpt = g.limitOptions ? (g.limitOptions[limitIdx] || g.limitOptions[0]) : null;
     const outLimit = limitOpt ? limitOpt.outpatientLimit : 0;
-
     const covered = n(document.getElementById('silson-gubun')?.value);
     const nonCovered = n(document.getElementById('silson-nongubun')?.value);
     const total = covered + nonCovered;
     const deductAmt = g.deductible[grade] || 0;
-
     if (g.is4gen) {
-      // 4세대: 급여/비급여 각각 공제 후 합산, 한도는 절반씩
       const coveredDeduct = covered > 0 ? Math.max(deductAmt, covered * (1 - g.coverGubun / 100)) : 0;
       const nonCoveredDeduct = nonCovered > 0 ? Math.max(30000, nonCovered * (1 - g.coverNonGubun / 100)) : 0;
       const coveredPay = Math.max(0, Math.min(covered - coveredDeduct, outLimit / 2));
       const nonCoveredPay = Math.max(0, Math.min(nonCovered - nonCoveredDeduct, outLimit / 2));
-      const totalDeduct = coveredDeduct + nonCoveredDeduct;
-      return { total, deduct: totalDeduct, result: coveredPay + nonCoveredPay };
+      return { total, deduct: coveredDeduct + nonCoveredDeduct, result: coveredPay + nonCoveredPay };
     }
-
-    // 1~3세대, 유병자
     const selfPay = covered * (1 - g.coverGubun / 100) + nonCovered * (1 - g.coverNonGubun / 100);
     const finalDeduct = Math.max(deductAmt, selfPay);
-    const result = Math.max(0, Math.min(total - finalDeduct, outLimit));
-    return { total, deduct: finalDeduct, result };
+    return { total, deduct: finalDeduct, result: Math.max(0, Math.min(total - finalDeduct, outLimit)) };
   }
 
-  // =====================================================
-  // 약제비 계산 (원본 ft() 함수)
-  // =====================================================
   function calcPrescription(g, limitIdx) {
     if (g.is5gen || g.is4gen || g.id === 'sick') return null;
     const limitOpt = g.limitOptions ? (g.limitOptions[limitIdx] || g.limitOptions[0]) : null;
     const prescLimit = limitOpt ? limitOpt.prescriptionLimit : 0;
     if (!prescLimit) return null;
-
     const covered = n(document.getElementById('silson-presc-gubun')?.value);
     const nonCovered = n(document.getElementById('silson-presc-nongubun')?.value);
     const total = covered + nonCovered;
     const deductAmt = g.deductible.prescription || 0;
-    const result = Math.max(0, Math.min(total - deductAmt, prescLimit));
-    return { total, deduct: deductAmt, result };
+    return { total, deduct: deductAmt, result: Math.max(0, Math.min(total - deductAmt, prescLimit)) };
   }
 
-  // =====================================================
-  // 비급여 3종 계산 (원본 tr() 함수)
-  // =====================================================
   function calcType3(g, isInpatient) {
     if (!g.has3Types || g.is5gen) return null;
     const selfRate = g.type3SelfRate / 100;
     const d = g.type3Deductible;
-
     const prefix = isInpatient ? 'silson-inp-' : 'silson-';
     const injection = n(document.getElementById(`${prefix}injection`)?.value);
     const manual    = n(document.getElementById(`${prefix}manual`)?.value);
     const mri       = n(document.getElementById(`${prefix}mri`)?.value);
-
-    const injDeduct  = Math.max(d.injection, injection * selfRate);
-    const manDeduct  = Math.max(d.manual, manual * selfRate);
-    const mriDeduct  = Math.max(d.mri, mri * selfRate);
-    const injResult  = Math.max(0, injection - injDeduct);
-    const manResult  = Math.max(0, manual - manDeduct);
-    const mriResult  = Math.max(0, mri - mriDeduct);
-
-    return {
-      injDeduct, manDeduct, mriDeduct,
-      injResult, manResult, mriResult,
-      total: injResult + manResult + mriResult
-    };
+    const injDeduct = Math.max(d.injection, injection * selfRate);
+    const manDeduct = Math.max(d.manual, manual * selfRate);
+    const mriDeduct = Math.max(d.mri, mri * selfRate);
+    const injResult = Math.max(0, injection - injDeduct);
+    const manResult = Math.max(0, manual - manDeduct);
+    const mriResult = Math.max(0, mri - mriDeduct);
+    return { injDeduct, manDeduct, mriDeduct, injResult, manResult, mriResult, total: injResult + manResult + mriResult };
   }
 
-  // =====================================================
-  // 입원 계산 (원본 yt() 함수)
-  // =====================================================
   function calcInpatient(g) {
     if (g.is5gen) return { total: 0, gubunPay: 0, nonGubunPay: 0, roomPay: 0, result: 0 };
-
     const covered    = n(document.getElementById('silson-inp-gubun')?.value);
     const nonCovered = n(document.getElementById('silson-inp-nongubun')?.value);
     const days       = Math.max(1, n(document.getElementById('silson-days')?.value));
     const room       = document.getElementById('silson-room')?.value;
     const roomDiff   = room === 'premium' ? n(document.getElementById('silson-room-diff')?.value) : 0;
-
     const gubunPay    = covered * (g.coverGubun / 100);
     const nonGubunPay = nonCovered * (g.coverNonGubun / 100);
     const roomPerDay  = roomDiff * 0.5 / days;
     const roomPay     = (g.id === '1gen' ? roomPerDay : Math.min(roomPerDay, 100000)) * days;
-    const result      = Math.min(gubunPay + nonGubunPay + roomPay, g.inpatientLimit);
-
-    return { total: covered + nonCovered, gubunPay, nonGubunPay, roomPay, result };
+    return { total: covered + nonCovered, gubunPay, nonGubunPay, roomPay, result: Math.min(gubunPay + nonGubunPay + roomPay, g.inpatientLimit) };
   }
 
-  // =====================================================
-  // 결과 렌더링
-  // =====================================================
   window.renderSilsonResult = function() {
     const g = GENERATIONS.find(x => x.id === window.silsonState.genId);
     if (!g) return;
-
-    const limitIdx = window.silsonState.limitIdx;
-    const grade    = window.silsonState.grade;
-    const type     = window.silsonState.type;
+    const { limitIdx, grade, type } = window.silsonState;
 
     if (type === 'outpatient') {
-      // 외래
-      const out  = calcOutpatient(g, grade, limitIdx);
+      const out   = calcOutpatient(g, grade, limitIdx);
       const presc = calcPrescription(g, limitIdx);
-      const t3   = calcType3(g, false);
+      const t3    = calcType3(g, false);
 
-      // 외래 결과 표
       const outEl = document.getElementById('silson-outpatient-result');
-      if (outEl) {
-        outEl.innerHTML = `<table>
-          <tr><td>병원비</td><td>${fmt(out.total)}원</td></tr>
-          <tr><td>공제액</td><td>${fmt(out.deduct)}원</td></tr>
-          <tr><td>추산보험금</td><td>${fmt(out.result)}원</td></tr>
-        </table>`;
-      }
+      if (outEl) outEl.innerHTML = `<table>
+        <tr><td>병원비</td><td>${fmt(out.total)}원</td></tr>
+        <tr><td>공제액</td><td>${fmt(out.deduct)}원</td></tr>
+        <tr><td>추산보험금</td><td>${fmt(out.result)}원</td></tr>
+      </table>`;
 
-      // 약제비 결과 표
       const prescEl = document.getElementById('silson-prescription-result');
-      if (prescEl && presc) {
-        prescEl.innerHTML = `<table>
-          <tr><td>약제비</td><td>${fmt(presc.total)}원</td></tr>
-          <tr><td>공제액</td><td>${fmt(presc.deduct)}원</td></tr>
-          <tr><td>추산보험금</td><td>${fmt(presc.result)}원</td></tr>
+      if (prescEl && presc) prescEl.innerHTML = `<table>
+        <tr><td>약제비</td><td>${fmt(presc.total)}원</td></tr>
+        <tr><td>공제액</td><td>${fmt(presc.deduct)}원</td></tr>
+        <tr><td>추산보험금</td><td>${fmt(presc.result)}원</td></tr>
+      </table>`;
+
+      if (t3) {
+        const sv = (id, v) => { const el = document.getElementById(id); if(el) el.value = `${fmt(v)}원`; };
+        sv('silson-injection-deduct', t3.injDeduct);
+        sv('silson-manual-deduct',    t3.manDeduct);
+        sv('silson-mri-deduct',       t3.mriDeduct);
+        const t3El = document.getElementById('silson-type3-result');
+        if (t3El) t3El.innerHTML = `<table>
+          <tr><td>주사제</td><td>${fmt(t3.injResult)}원</td></tr>
+          <tr><td>도수/체외충격파</td><td>${fmt(t3.manResult)}원</td></tr>
+          <tr><td>MRI/MRA</td><td>${fmt(t3.mriResult)}원</td></tr>
+          <tr><td>비급여3종 합계</td><td>${fmt(t3.total)}원</td></tr>
         </table>`;
       }
 
-      // 비급여 3종 공제 표시 + 결과
-      if (t3) {
-        const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = `${fmt(val)}원`; };
-        setVal('silson-injection-deduct', t3.injDeduct);
-        setVal('silson-manual-deduct',    t3.manDeduct);
-        setVal('silson-mri-deduct',       t3.mriDeduct);
-
-        const t3El = document.getElementById('silson-type3-result');
-        if (t3El) {
-          t3El.innerHTML = `<table>
-            <tr><td>주사제</td><td>${fmt(t3.injResult)}원</td></tr>
-            <tr><td>도수/체외충격파</td><td>${fmt(t3.manResult)}원</td></tr>
-            <tr><td>MRI/MRA</td><td>${fmt(t3.mriResult)}원</td></tr>
-            <tr><td>비급여3종 합계</td><td>${fmt(t3.total)}원</td></tr>
-          </table>`;
-        }
-      }
-
-      // 최종 합산
-      const total = out.result + (presc?.result || 0) + (t3?.total || 0);
-      document.getElementById('silson-total-amount').textContent = `${fmt(total)}원`;
+      const totalEl = document.getElementById('silson-total-amount');
+      if (totalEl) totalEl.textContent = `${fmt(out.result + (presc?.result||0) + (t3?.total||0))}원`;
 
     } else {
-      // 입원
       const inp = calcInpatient(g);
       const t3  = calcType3(g, true);
 
@@ -977,67 +891,42 @@ window.copyKakaoMsg = function() {
       }
 
       if (t3) {
-        const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = `${fmt(val)}원`; };
-        setVal('silson-inp-injection-deduct', t3.injDeduct);
-        setVal('silson-inp-manual-deduct',    t3.manDeduct);
-        setVal('silson-inp-mri-deduct',       t3.mriDeduct);
-
+        const sv = (id, v) => { const el = document.getElementById(id); if(el) el.value = `${fmt(v)}원`; };
+        sv('silson-inp-injection-deduct', t3.injDeduct);
+        sv('silson-inp-manual-deduct',    t3.manDeduct);
+        sv('silson-inp-mri-deduct',       t3.mriDeduct);
         const t3El = document.getElementById('silson-inp-type3-result');
-        if (t3El) {
-          t3El.innerHTML = `<table>
-            <tr><td>주사제</td><td>${fmt(t3.injResult)}원</td></tr>
-            <tr><td>도수/체외충격파</td><td>${fmt(t3.manResult)}원</td></tr>
-            <tr><td>MRI/MRA</td><td>${fmt(t3.mriResult)}원</td></tr>
-            <tr><td>비급여3종 합계</td><td>${fmt(t3.total)}원</td></tr>
-          </table>`;
-        }
+        if (t3El) t3El.innerHTML = `<table>
+          <tr><td>주사제</td><td>${fmt(t3.injResult)}원</td></tr>
+          <tr><td>도수/체외충격파</td><td>${fmt(t3.manResult)}원</td></tr>
+          <tr><td>MRI/MRA</td><td>${fmt(t3.mriResult)}원</td></tr>
+          <tr><td>비급여3종 합계</td><td>${fmt(t3.total)}원</td></tr>
+        </table>`;
       }
 
-      const total = inp.result + (t3?.total || 0);
-      document.getElementById('silson-total-amount').textContent = `${fmt(total)}원`;
+      const totalEl = document.getElementById('silson-total-amount');
+      if (totalEl) totalEl.textContent = `${fmt(inp.result + (t3?.total||0))}원`;
     }
   };
 
- // =====================================================
-  // 초기 실행 - loadComponent 후 호출용
-  // =====================================================
+  // loadComponent('page-silson') 호출 후 실행되는 초기화 함수
   window.initSilsonPage = function() {
-    renderGenGrid();
-    updateSilsonUI();
+    window.silsonState = { genId: '4gen', type: 'outpatient', grade: 'clinic', limitIdx: 0 };
+    window._silson_renderGenGrid();
+    window._silson_updateUI();
     window.renderSilsonResult();
 
     const roomSel = document.getElementById('silson-room');
-    if (roomSel) {
-      roomSel.addEventListener('change', function() {
-        document.getElementById('silson-room-extra').style.display = this.value === 'premium' ? '' : 'none';
-        window.renderSilsonResult();
-      });
-    }
-    const limitSel = document.getElementById('silson-limit-select');
-    if (limitSel) {
-      limitSel.addEventListener('change', function() {
-        window.silsonState.limitIdx = Number(this.value);
-        window.renderSilsonResult();
-      });
-    }
-  };
-
-  // 상급병실 change 이벤트
-  const roomSel = document.getElementById('silson-room');
-  if (roomSel) {
-    roomSel.addEventListener('change', function() {
+    if (roomSel) roomSel.addEventListener('change', function() {
       document.getElementById('silson-room-extra').style.display = this.value === 'premium' ? '' : 'none';
       window.renderSilsonResult();
     });
-  }
 
-  // 한도 select change
-  const limitSel = document.getElementById('silson-limit-select');
-  if (limitSel) {
-    limitSel.addEventListener('change', function() {
+    const limitSel = document.getElementById('silson-limit-select');
+    if (limitSel) limitSel.addEventListener('change', function() {
       window.silsonState.limitIdx = Number(this.value);
       window.renderSilsonResult();
     });
-  }
+  };
 
 })();
