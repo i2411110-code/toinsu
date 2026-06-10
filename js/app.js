@@ -183,6 +183,11 @@ window.loadComponent = async function(pageId, extraAction) {
             window.renderCombinedCrmList();
             window.renderSchedule();
         }
+
+         // 👇 여기에 추가
+        if (pageId === 'page-silson') {
+            window.initSilsonPage();
+        }
         
         // 탭 전환 등 예약된 액션이 있으면 실행
         if (typeof extraAction === 'function') {
@@ -993,12 +998,29 @@ window.copyKakaoMsg = function() {
     }
   };
 
+ // =====================================================
+  // 초기 실행 - loadComponent 후 호출용
   // =====================================================
-  // 초기 실행
-  // =====================================================
-  renderGenGrid();
-  updateSilsonUI();
-  window.renderSilsonResult();
+  window.initSilsonPage = function() {
+    renderGenGrid();
+    updateSilsonUI();
+    window.renderSilsonResult();
+
+    const roomSel = document.getElementById('silson-room');
+    if (roomSel) {
+      roomSel.addEventListener('change', function() {
+        document.getElementById('silson-room-extra').style.display = this.value === 'premium' ? '' : 'none';
+        window.renderSilsonResult();
+      });
+    }
+    const limitSel = document.getElementById('silson-limit-select');
+    if (limitSel) {
+      limitSel.addEventListener('change', function() {
+        window.silsonState.limitIdx = Number(this.value);
+        window.renderSilsonResult();
+      });
+    }
+  };
 
   // 상급병실 change 이벤트
   const roomSel = document.getElementById('silson-room');
