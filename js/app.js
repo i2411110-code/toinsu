@@ -185,7 +185,7 @@ window.loadComponent = async function(pageId, extraAction) {
         }
 
          // 👇 여기에 추가
-        if (pageId === 'page-silson') {
+        if (pageId === 'page-silbi') {
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             window.initSilsonPage();
