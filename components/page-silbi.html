@@ -1,10 +1,82 @@
-<div class="sub-page" style="display:block;">
-    <div class="section-title" style="display:flex; align-items:center; gap:15px;">
-        <div>🔢 세대별 실비 계산기</div>
-        <button class="inline-home-btn" onclick="window.goBack()"><i class="bi bi-house-door-fill"></i> 메인화면</button>
+<div id="calculator-app">
+    <div class="container">
+        <h1>🏥 세대별 실손보험 계산기</h1>
+        
+        <div class="tab-container">
+            <button id="btnOutpatient" style="background:#2563eb; color:white;">외래(통원)</button>
+            <button id="btnInpatient" style="background:#e2e8f0; color:#333;">수술·입원</button>
+        </div>
+
+        <div id="commonInputs">
+            <label>가입 시기 (세대)</label>
+            <select id="generation" onchange="updateUI()">
+                <option value="1세대">1세대 (~2009.07)</option>
+                <option value="2세대">2세대 (2009.08~2015.08)</option>
+                <option value="2-1세대">2세대 - 1차개정 (2015.09~2015.12)</option>
+                <option value="2-2세대">2세대 - 2차개정 (2016.01~2017.03)</option>
+                <option value="3세대">3세대 (2017.04~2021.06)</option>
+                <option value="4세대">4세대 (2021.07~)</option>
+            </select>
+
+            <div id="div1GenLimit" style="display:none;">
+                <label>1세대 통원 한도 선택</label>
+                <select id="limit1Gen">
+                    <option value="100000">10만원</option>
+                    <option value="200000">20만원</option>
+                    <option value="300000">30만원</option>
+                    <option value="500000">50만원</option>
+                </select>
+            </div>
+
+            <div id="divOption" style="display:none;">
+                <label>표준/선택형 옵션</label>
+                <select id="policyOption">
+                    <option value="choice">선택형 (급여 10% / 비급여 20% 등)</option>
+                    <option value="standard">표준형 (급여 20% / 비급여 20%)</option>
+                </select>
+            </div>
+
+            <div id="divHospital">
+                <label>병원 급 구분</label>
+                <select id="hospitalType">
+                    <option value="10000">의원 (1만)</option>
+                    <option value="15000">병원 (1.5만)</option>
+                    <option value="20000">종합병원/상급종합 (2만)</option>
+                </select>
+            </div>
+
+            <label>급여 청구금액 (원)</label>
+            <input type="number" id="amtCovered" placeholder="0">
+
+            <label>비급여 청구금액 (원)</label>
+            <input type="number" id="amtNonCovered" placeholder="0">
+
+            <div id="divSpecial3" style="display:none;">
+                <label>비급여 3종 (도수·주사·MRI) 합계</label>
+                <input type="number" id="amtSpecial" placeholder="0">
+            </div>
+        </div>
+
+        <button class="calc-btn" onclick="calculate()">결과 산출하기</button>
+        <div id="result" class="result-box" style="display:none;"></div>
+
+        <div class="table-section">
+            <div class="table-title">세대별 공제 및 한도 요약</div>
+            <table id="infoTable">
+                <thead>
+                    <tr>
+                        <th>세대</th><th>계산 방식</th><th>공제 기준</th><th>통원 한도</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="row-1세대"><td>1세대</td><td>합산 공제</td><td>5천원</td><td>가입별 한도</td></tr>
+                    <tr id="row-2세대"><td>2세대</td><td>합산 공제</td><td>병원급별</td><td>25만</td></tr>
+                    <tr id="row-2-1세대"><td>2-1세대</td><td>합산 공제</td><td>병원급/총액 10~20%</td><td>25만</td></tr>
+                    <tr id="row-2-2세대"><td>2-2세대</td><td>항목별 합산</td><td>급여/비급여 10~20%</td><td>25만</td></tr>
+                    <tr id="row-3세대"><td>3세대</td><td>항목별 합산</td><td>급여/비급여/특약</td><td>25만</td></tr>
+                    <tr id="row-4세대"><td>4세대</td><td>완전 분리</td><td>급여 20%/비급여 30%</td><td>급여20만/비급여20만</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-    <div class="form-group"><label>실비 세대 지정</label><select id="silbi-gen" class="form-control"><option value="4">4세대 / 5세대 의료 개정 실비</option></select></div>
-    <div class="form-group"><label>치료 비용 (원)</label><input type="number" id="silbi-cost" class="form-control" value="1000000"></div>
-    <button class="btn-action" onclick="window.runSilbi()">결과 산출</button>
-    <div id="silbi-res" class="result-box" style="display:none;"></div>
 </div>
