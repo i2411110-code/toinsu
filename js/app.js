@@ -212,6 +212,7 @@ window.navigateTo = function(pageId, tabType) {
     }
 }
 
+
 window.goBack = function() {
     window.loadComponent('main-dashboard');
 }
@@ -822,3 +823,19 @@ window.copyKakaoMsg = function() {
   };
 
 })();
+
+window.switchGongsilTab = function(type) {
+    const nonlifeTab = document.getElementById('gongsil-tab-nonlife');
+    const lifeTab    = document.getElementById('gongsil-tab-life');
+    const gridNon    = document.getElementById('gongsil-grid-nonlife');
+    const gridLife   = document.getElementById('gongsil-grid-life');
+    if (type === 'nonlife') {
+        nonlifeTab.style.background = 'white'; nonlifeTab.style.color = '#2563EB';
+        lifeTab.style.background = 'transparent'; lifeTab.style.color = '#64748B';
+        gridNon.style.display = 'grid'; gridLife.style.display = 'none';
+    } else {
+        lifeTab.style.background = 'white'; lifeTab.style.color = '#2563EB';
+        nonlifeTab.style.background = 'transparent'; nonlifeTab.style.color = '#64748B';
+        gridNon.style.display = 'none'; gridLife.style.display = 'grid';
+    }
+};
