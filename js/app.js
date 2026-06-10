@@ -513,3 +513,114 @@ window.closeNotice = function() {
     }
     document.getElementById('notice-modal').style.display = 'none';
 }
+
+// ==========================================
+// [비밀 메모 오피스 전용 로직]
+// ==========================================
+
+// 1. 비밀번호 확인 로직
+window.unlockPrivate = function() {
+    const pwd = document.getElementById('privatePwd').value;
+    if(pwd === 'gaon1004') {
+        document.getElementById('privateAuthScreen').style.display = 'none';
+        document.getElementById('privateMainContent').style.display = 'block';
+    } else {
+        alert('비밀번호가 일치하지 않습니다.');
+    }
+};
+
+// 2. 내부 탭 (대시보드 vs 체크리스트) 전환
+window.switchPrivateTab = function(target) {
+    document.getElementById('btn-db-dash').classList.remove('active');
+    document.getElementById('btn-chk-list').classList.remove('active');
+    document.getElementById('dashboard-app').style.display = 'none';
+    document.getElementById('checklist-app').style.display = 'none';
+
+    if(target === 'db') {
+        document.getElementById('btn-db-dash').classList.add('active');
+        document.getElementById('dashboard-app').style.display = 'grid'; // 데스크탑 grid 유지
+    } else {
+        document.getElementById('btn-chk-list').classList.add('active');
+        document.getElementById('checklist-app').style.display = 'block';
+    }
+};
+
+// 3. 사이드바 메뉴 클릭 시 화면 전환
+window.switchSidebarTab = function(tabId, btnElem) {
+    document.querySelectorAll('.sidebar .tab-btn').forEach(b => b.classList.remove('active'));
+    btnElem.classList.add('active');
+    document.querySelectorAll('.main .tab-content').forEach(tc => tc.style.display = 'none');
+    document.getElementById(tabId).style.display = 'block';
+};
+
+// 4. 거절 극복 등 아코디언 버튼 열기/닫기
+window.toggleAccordion = function(contentId, btnElem) {
+    const content = document.getElementById(contentId);
+    if(content.classList.contains('show')) {
+        content.classList.remove('show');
+        btnElem.classList.remove('active');
+    } else {
+        // 같은 그룹 내 다른 창 닫기
+        const parent = btnElem.closest('.card');
+        parent.querySelectorAll('.content.show, .tab2-content.show').forEach(c => c.classList.remove('show'));
+        parent.querySelectorAll('.toggle-btn.active, .tab2-btn.active').forEach(b => b.classList.remove('active'));
+        
+        // 클릭한 창 열기
+        content.classList.add('show');
+        btnElem.classList.add('active');
+    }
+};
+
+// 5. 체크리스트 탭 작동
+window.switchChkTab = function(targetId, btnElem) {
+    document.querySelectorAll('.chk-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.chk-section').forEach(s => s.classList.remove('active'));
+    btnElem.classList.add('active');
+    document.getElementById(targetId).classList.add('active');
+};
+window.switchChkSubtab = function(targetId, btnElem) {
+    const parent = btnElem.closest('.chk-section');
+    parent.querySelectorAll('.chk-subtab').forEach(t => t.classList.remove('active'));
+    parent.querySelectorAll('.chk-subsection').forEach(s => s.classList.remove('active'));
+    btnElem.classList.add('active');
+    document.getElementById(targetId).classList.add('active');
+};
+
+// 6. 카톡 모달 및 문구 생성
+window.toggleKakaoModal = function() {
+    document.getElementById('kakao-modal').classList.toggle('active');
+};
+window.generateKakaoMsg = function(type) {
+    const checks = document.querySelectorAll('.analysis-panel input[type="checkbox"]:checked');
+    let issues = Array.from(checks).map(c => c.value);
+    let msg = "";
+
+    if (type === "default") {
+        msg += `안녕하세요, OOO님.\n토스 보험서비스 담당자 심현진 팀장입니다.\n\n고객님의 가입 현황을 확인한 결과,\n`;
+        if (issues.length > 0) msg += issues.map((i, idx) => `${idx+1}. ${i}`).join("\n") + "\n\n";
+        else msg += "특별히 큰 문제는 확인되지 않았습니다.\n\n";
+        msg += `따라서, 불필요한 보험료 지출은 줄이고 꼭 필요한 보장은 강화할 수 있도록 상담을 도와드리고자 합니다.\n\n편하신 시간에 추가 안내 원하시면 말씀 부탁드립니다 🙂`;
+    } else if (type === "absent") {
+        msg += `안녕하세요, OOO님.\n토스 보험서비스 담당자 심현진 팀장입니다.\n\n토스 앱을 통해 상담 요청 주셔서 연락드렸으나,\n통화 연결이 어려우신 것 같아 카카오톡으로 연락드립니다.\n\n안심하시고 상담 받으실 수 있도록 당사 명함 첨부드립니다.\n\n익일 다시 연락드릴 예정이며, 원하시는 시간이 있으시다면 그 시간에 맞춰 전화드리겠습니다 🙂\n\n`;
+    } else if (type === "reject") {
+        msg += `안녕하세요, OOO님.\n조금 전 전화드린 토스 보험서비스 담당자 심현진 입니다.\n\n상담 여부와 관계없이 분석은 완료되어, 핵심 내용만 간단히 전달드립니다.\n\n`;
+        if (issues.length > 0) msg += issues.map((i, idx) => `${idx+1}. ${i}`).join("\n") + "\n\n";
+        msg += `필요하실 때 언제든 편하게 말씀 주시면, 짧게라도 추가 설명 도와드리겠습니다 🙂`;
+    }
+    
+    document.getElementById("outputMsg").value = msg;
+    const copyBtn = document.getElementById("copyBtn");
+    copyBtn.innerText = "📋 문구 복사하기";
+    copyBtn.classList.remove("copied");
+};
+window.copyKakaoMsg = function() {
+    const textarea = document.getElementById("outputMsg");
+    if(!textarea.value) return alert("먼저 문구를 생성해주세요.");
+    textarea.select();
+    navigator.clipboard.writeText(textarea.value).then(() => {
+        const copyBtn = document.getElementById("copyBtn");
+        copyBtn.innerText = "✅ 복사 완료!";
+        copyBtn.classList.add("copied");
+        setTimeout(() => { copyBtn.innerText = "📋 문구 복사하기"; copyBtn.classList.remove("copied"); }, 2000);
+    });
+};

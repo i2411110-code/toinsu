@@ -1,12 +1,233 @@
-<div class="sub-page" style="display:block;">
-    <div class="section-title" style="display:flex; align-items:center; gap:15px;">
-        <div>👤 비밀 메모 오피스</div>
-        <button class="inline-home-btn" onclick="window.goBack()"><i class="bi bi-house-door-fill"></i> 메인화면</button>
-    </div>
+<div class="sub-page" style="display:block; padding: 20px;">
     
-    <div class="office-box" style="background:#EFF6FF; border:1px solid #2563EB; padding:20px;">
-        <h4 style="color:#2563EB; margin-bottom: 10px;"><i class="bi bi-lock-fill"></i> 나만의 시크릿 메모장</h4>
-        <textarea class="form-control" style="height:300px; font-size:14px; background:white;" placeholder="여기에 중요한 업무 메모나 아이디어를 자유롭게 기록하세요..."></textarea>
-        <button class="btn-action" style="background:#2563EB; margin-top:15px;">메모 저장하기</button>
+    <div id="privateAuthScreen" style="text-align:center; padding: 80px 20px;">
+        <i class="bi bi-shield-lock-fill" style="font-size: 60px; color: var(--main-blue);"></i>
+        <h3 style="margin: 20px 0; font-weight:700;">가온사업단 전용 오피스</h3>
+        <p style="color: var(--text-muted); font-size:14px; margin-bottom:25px;">인가된 담당자만 접근할 수 있는 보안 영역입니다.<br>부여받은 비밀번호를 입력해주세요.</p>
+        <input type="password" id="privatePwd" class="form-control" style="max-width:300px; margin:0 auto; text-align:center;" placeholder="비밀번호 입력" onkeypress="if(event.key==='Enter') window.unlockPrivate()">
+        <button class="btn-action" style="max-width:300px; margin-top:15px;" onclick="window.unlockPrivate()">접근 허가 요청</button>
+        <button class="inline-home-btn" style="margin-top:20px;" onclick="window.goBack()"><i class="bi bi-arrow-left"></i> 메인으로 돌아가기</button>
     </div>
+
+    <div id="privateMainContent" style="display:none;">
+        <div class="section-title" style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px;">
+            <div style="font-size:20px;"><i class="bi bi-incognito" style="color:#2563EB;"></i> 심현진 팀장님 전용 룸</div>
+            <button class="inline-home-btn" onclick="window.goBack()"><i class="bi bi-house-door-fill"></i> 메인화면</button>
+        </div>
+
+        <div class="office-nav" style="margin-bottom: 20px;">
+            <button id="btn-db-dash" class="active" onclick="window.switchPrivateTab('db')">📊 DB 영업 스크립트</button>
+            <button id="btn-chk-list" onclick="window.switchPrivateTab('chk')">📝 상담 체크리스트</button>
+        </div>
+
+        <div id="dashboard-app" style="display: grid;">
+            <div class="sidebar">
+                <h2>DB 영업 스크립트</h2>
+                <button class="tab-btn active" onclick="window.switchSidebarTab('tab1', this)">📍 첫 통화 인사</button>
+                <button class="tab-btn" onclick="window.switchSidebarTab('tab2', this)">📍 거절 극복</button>
+                <button class="tab-btn" onclick="window.switchSidebarTab('tab3', this)">📍 대면 상담 유도</button>
+                <button class="tab-btn" onclick="window.switchSidebarTab('tab4', this)">📍 미청구 보험금</button>
+                <button class="tab-btn" onclick="window.switchSidebarTab('tab5', this)">📍 생보·연금 세일즈</button>
+                
+                <div class="sidebar-checklist" style="margin-top:20px;">
+                    <h3 style="color:#FFD700;">✓ 필수 체크</h3>
+                    <p><b>고객 정보 확인:</b> 이름, 연락처, 가입상품</p>
+                    <p><b>문제점 1개:</b> 불리한 부분 핵심 1가지</p>
+                    <p><b>가입 목적:</b> 건강, 상속, 저축 등</p> 
+                    <p><b>갱신·만기:</b> 갱신 시기와 만기 여부</p>
+                </div>
+            </div>
+
+            <div class="top-bar">
+                <span>✅ DB 미루지 않기</span>
+                <span>✅ 당일 무조건 전화하기</span>
+                <span>✅ 월전/금저 TA 금지</span>
+            </div>
+
+            <div class="main">
+                <div class="tab-content" id="tab1" style="display:block;">
+                    <div class="card">
+                        <h2>첫 통화 인사<span style="color:#64748b; font-size:14px;"> (이름 확인으로 안정감 제공)</span></h2>
+                        <div style="background:#FEE2E2; color:#B91C1C; padding:10px; border-radius:8px; margin-bottom:15px; font-weight:bold;">
+                            금지 사항: 통화 가능하실까요? ❌
+                        </div>
+                        <p style="font-size:18px; color:#2563EB; font-weight:bold;">"OOO 님 맞으시죠? 네, 맞으실까요?"</p>
+                        <p>• 토스에서 전화 드렸습니다.<br>
+                        • 어플을 통해 [내용]으로 상담 요청 주셔서 전화드렸습니다.<br>
+                        • 이 부분 관련하여 궁금하셨던 점 있으실까요?</p>
+
+                        <h3 style="margin-top:25px;">거절 대응 예시</h3>
+                        <div class="reject-buttons">
+                            <button class="toggle-btn" onclick="window.toggleAccordion('tab1-g1', this)">🤷🏻‍ 잘못눌렀어요</button>
+                            <button class="toggle-btn" onclick="window.toggleAccordion('tab1-g2', this)">📞 지금 바빠요</button>
+                            <button class="toggle-btn" onclick="window.toggleAccordion('tab1-g3', this)">🙅 이미 다 가입했어요</button>
+                            <button class="toggle-btn" onclick="window.toggleAccordion('tab1-g4', this)">😐 필요 없어요</button>
+                        </div>
+
+                        <div class="content" id="tab1-g1">
+                            <p>1️⃣ 혹시 최근에 보험료가 오르거나 실손 관련해서 불편하셨던 건 없으셨나요?</p>
+                            <p>2️⃣ 잘못 누르셨더라도 고객님 정보가 접수돼 있어서 제가 한 번만 확인해도 될까요?</p>
+                            <p><b style="color:blue;">[정보 요청]</b> 정확한 비교를 위해 알림톡으로 간단히 입력해주실 수 있을까요?</p>
+                        </div>
+                        <div class="content" id="tab1-g2">
+                            <p>1️⃣ 보니까 꼭 확인해보셔야 할 부분이 보여서요. 짧게 1분만 말씀드려도 괜찮으실까요?</p>
+                            <p>2️⃣ 오늘 확인 한 번으로 보험료 2~3만 원 줄일 수도 있으셔서 짧게라도 들이시면 도움 되실 거예요.</p>
+                        </div>
+                        <div class="content" id="tab1-g3">
+                            <p>1️⃣ 다 가입하셨으면 오히려 좋습니다. 고정 지출을 줄일 수 있는 부분이 있는지 확인해드리는 거예요.</p>
+                            <p>2️⃣ 시간이 지나면서 보험료가 오르거나 보장이 축소되는 경우가 많거든요.</p>
+                        </div>
+                        <div class="content" id="tab1-g4">
+                            <p>1️⃣ 필요 없으실 수도 있지만, 잠깐 확인만 하셔도 불필요한 보험료 줄이실 수 있습니다.</p>
+                            <p>2️⃣ 딱 커피 한 잔 마시는 시간만 투자해주시면, 편하게 자료로 안내드릴게요. ☕</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab2" style="display:none;">
+                    <div class="card">
+                        <h2>거절 극복 마스터</h2>
+                        <button class="tab2-btn" onclick="window.toggleAccordion('tab2-1', this)">💸 보험료 부담</button>
+                        <div class="tab2-content" id="tab2-1"><p>불필요한 부분만 줄이면 실제로 지출을 크게 줄이실 수 있습니다.</p></div>
+                        <button class="tab2-btn" onclick="window.toggleAccordion('tab2-2', this)">⏳ 시간 부족</button>
+                        <div class="tab2-content" id="tab2-2"><p>딱 5분만 투자하시면, 불필요한 보험료는 줄이고 꼭 필요한 보장만 지켜드릴게요.</p></div>
+                        <button class="tab2-btn" onclick="window.toggleAccordion('tab2-3', this)">📝 미청구/누락</button>
+                        <div class="tab2-content" id="tab2-3"><p>누락된 부분이 있을 수 있습니다. 확인만 하셔도 실제 금액을 찾으실 수 있습니다.</p></div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab3" style="display:none;">
+                    <div class="card">
+                        <h2>대면 상담 유도법</h2>
+                        <p style="font-weight:bold; color:#2563EB;">1. 방어기제 풀기</p>
+                        <div class="content show"><p>• 자료를 보면서 설명드리면 이해가 훨씬 수월하실거 같아서요 ~</p></div>
+                        <p style="font-weight:bold; color:#2563EB; margin-top:15px;">2. 방문 일정 안내 (거절 유발 질문 금지)</p>
+                        <div class="content show"><p>• 평일과 주말, 오전과 오후 중 언제가 가장 편하신가요?</p></div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab4" style="display:none;">
+                    <div class="card">
+                        <h2>미청구 보험금 안내</h2>
+                        <p>💡 <span style="background:#FEF08A;">고객님께서 가입하신 보험 중, 아직 청구되지 않은 환급금이나 의료비가 있을 수 있어 안내드립니다.</span></p>
+                        <p>👉 진행 방법: 상담 중 전화번호만 입력해서 <b>카카오톡 알림톡</b> 발송</p>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab5" style="display:none;">
+                    <div class="card">
+                        <h2>생명보험 & 연금 세일즈 핵심 화법</h2>
+                        <button class="toggle-btn" onclick="window.toggleAccordion('tab5-1', this)">👨‍👩‍👧 종신보험 (가족사랑 & 상속세 재원)</button>
+                        <div class="content" id="tab5-1">
+                            <p><b>가족 사랑:</b> 남겨진 가족을 위한 '마지막 월급'입니다.<br>
+                            <b>상속 재원:</b> '가장 완벽한 상속세 현금창출원'입니다.</p>
+                        </div>
+                        <button class="toggle-btn" onclick="window.toggleAccordion('tab5-2', this)">💰 연금저축보험 (세액공제)</button>
+                        <div class="content" id="tab5-2">
+                            <p><b>수익률:</b> 납입 즉시 나라에서 16.5% 보너스를 붙여줍니다.</p>
+                        </div>
+                        <button class="toggle-btn" onclick="window.toggleAccordion('tab5-3', this)">🏖️ 연금보험 (비과세 평생 월급)</button>
+                        <div class="content" id="tab5-3">
+                            <p><b>건보료:</b> 국가가 건보료로 손대지 못하는 비과세 통장입니다.</p>
+                        </div>
+                        <button class="toggle-btn" onclick="window.toggleAccordion('tab5-4', this)">💔 CI 보험 팩트 폭격</button>
+                        <div class="content" id="tab5-4">
+                            <p>고객센터 연결 유도: "주계약 선지급이라 별도 특약 없고, 최초 1회만 지급됩니다."</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="fab-btn" style="display:block;" onclick="window.toggleKakaoModal()">💬 카톡 생성기</button>
+        </div>
+
+        <div id="checklist-app" style="display: none;">
+            <div class="chk-header" style="border-radius:16px;">
+                토스인슈어런스 · 가온사업단<br>상담 체크리스트
+            </div>
+
+            <div class="chk-container" style="padding:0; margin-top:20px;">
+                <div class="chk-tabs">
+                    <button class="chk-tab active" onclick="window.switchChkTab('checklist-sec', this)">상담 전 체크</button>
+                    <button class="chk-tab" onclick="window.switchChkTab('introTab-sec', this)">도입부 멘트</button>
+                    <button class="chk-tab" onclick="window.switchChkTab('examples-sec', this)">니즈별 상담</button>
+                    <button class="chk-tab" onclick="window.switchChkTab('closingTab-sec', this)">클로징 멘트</button>
+                </div>
+
+                <div id="checklist-sec" class="chk-section active">
+                    <div class="chk-card">현재 보유한 금융상품과 보장 내역을 확인했는가?</div>
+                    <div class="chk-card">향후 5년 내 예상되는 큰 지출이 있는가?</div>
+                    <div class="chk-card">건강 상태, 가족력(유전질환 등)을 점검했는가?</div>
+                    <div class="chk-card">보험은 ‘투자’가 아닌 ‘위험 대비’라는 점을 이해시켰는가?</div>
+                </div>
+
+                <div id="introTab-sec" class="chk-section">
+                    <div class="chk-subtabs">
+                        <button class="chk-subtab active" onclick="window.switchChkSubtab('who', this)">해결책 제시</button>
+                        <button class="chk-subtab" onclick="window.switchChkSubtab('help', this)">공감 유도</button>
+                    </div>
+                    <div id="who" class="chk-subsection active">
+                        <div class="chk-card" style="background:#e0f2fe; border:1px solid #60a5fa;">
+                            보험료는 어떻게 내고 계시는지, <b>보험으로 피해보지 않는 방법</b>을 알려드리기 위해 왔습니다.
+                        </div>
+                    </div>
+                    <div id="help" class="chk-subsection">
+                        <div class="chk-card" style="background:#e0f2fe; border:1px solid #60a5fa;">
+                            마트에서 술, 담배 사는 건 안 아까운데 보험은 눈에 보이지 않아서 아깝죠? 오늘 아깝지 않게 도와드리겠습니다.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="examples-sec" class="chk-section">
+                    <div class="chk-subtabs">
+                        <button class="chk-subtab active" onclick="window.switchChkSubtab('ex1', this)">보험 없음</button>
+                        <button class="chk-subtab" onclick="window.switchChkSubtab('ex3', this)">환급형 선호</button>
+                        <button class="chk-subtab" onclick="window.switchChkSubtab('ex7', this)">돈 아깝다</button>
+                    </div>
+                    <div id="ex1" class="chk-subsection active">
+                        <div class="chk-card">“적금으로 모은 3천만 원, 아프면 전부 날아갑니다. 모은 돈 + 보험금 = 내 자산 방패입니다.”</div>
+                    </div>
+                    <div id="ex3" class="chk-subsection">
+                        <div class="chk-card">“소화기 안 썼다고 환급 안 해주잖아요? 본질은 위험 대비입니다.”</div>
+                    </div>
+                    <div id="ex7" class="chk-subsection">
+                        <div class="chk-card">“큰 사고가 안 나서 보험금을 못 받은 게 오히려 이득입니다.”</div>
+                    </div>
+                </div>
+
+                <div id="closingTab-sec" class="chk-section">
+                    <div class="chk-card" style="background:#fef3c7; border:1px solid #facc15;">
+                        "대한민국 60만 설계사 중 감히 1등이라 말하긴 어렵지만, <b>적어도 고객님 앞에서는 언제나 1등이 되겠습니다!</b>"
+                    </div>
+                </div>
+
+                <div class="chk-impact-view">
+                    ✅ 핵심 메시지: 보험은 ‘투자’가 아닌 ‘위험 대비’입니다.<br>
+                    오늘의 작은 준비가 내일의 큰 자산을 지킵니다!
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="kakao-modal">
+        <div class="analysis-panel">
+            <button class="close-modal" onclick="window.toggleKakaoModal()">&times;</button>
+            <h2 style="color:#2563EB;">안내 카톡 생성기</h2>
+            <div style="max-height: 200px; overflow-y:auto; margin-bottom:10px;">
+                <label><input type="checkbox" value="동 연령대 평균 대비 보험료가 높은 편입니다."> 보험료 부담 ↑</label>
+                <label><input type="checkbox" value="갱신 시 보험료가 크게 오를 수 있습니다."> 갱신형 위주</label>
+                <label><input type="checkbox" value="3대 진단비(암/뇌/심) 보장이 부족합니다."> 3대 진단비 부족</label>
+                <label><input type="checkbox" value="중복 보장이 확인됩니다."> 중복 보장</label>
+            </div>
+            <div class="msg-buttons">
+                <button onclick="window.generateKakaoMsg('default')">📋 기본 문구</button>
+                <button onclick="window.generateKakaoMsg('absent')" style="background:#475569;">📋 부재중</button>
+                <button onclick="window.generateKakaoMsg('reject')" style="background:#dc2626;">📋 거절 고객</button>
+            </div>
+            <textarea id="outputMsg" placeholder="버튼을 누르면 문구가 생성됩니다."></textarea>
+            <button class="copy-btn" id="copyBtn" onclick="window.copyKakaoMsg()">📋 문구 복사하기</button>
+        </div>
+    </div>
+
 </div>
