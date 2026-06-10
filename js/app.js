@@ -1041,5 +1041,3 @@ window.copyKakaoMsg = function() {
   }
 
 })();
-
-};
