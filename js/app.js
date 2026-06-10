@@ -256,7 +256,7 @@ window.runAiTextParser = function() {
     if(driveMatch)   document.getElementById('c_drive').value   = driveMatch[1].trim();
     if(medicalContent) document.getElementById('c_medical').value = medicalContent;
 
-    alert("✨ AI 변환 완료: 항목에 맞춰 입력 필드 연동이 완료되었습니다.");
+    alert("✨ AI 변환 완료: 항목에 맞춰 입력 완료되었습니다.");
 }
 
 window.submitCrmData = async function() {
