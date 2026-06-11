@@ -16,6 +16,10 @@
         <p style="font-size:11px; color:#8B95A1; margin-bottom:15px;"><span style="color:#FF6B6B;">●</span> 가상팩스 등록이 필요한 보험사</p>
 
         <div id="grid-nonlife" class="ins-grid-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+             <div class="ins-select-card" onclick="window.selectClaimCompany(this, '현대해상')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <img src="보험사 로고/hyundai.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="현대해상" onerror="this.style.display='none'">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">현대해상</div>
+            </div>
             <div class="ins-select-card" onclick="window.selectClaimCompany(this, 'AIG손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <img src="보험사 로고/aig.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="AIG" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">AIG손해보험</div>
@@ -90,10 +94,7 @@
                 <img src="보험사 로고/hanwha.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="한화" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">한화손해보험</div>
             </div>
-            <div class="ins-select-card" onclick="window.selectClaimCompany(this, '현대해상')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/hyundai.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="현대해상" onerror="this.style.display='none'">
-                <div style="font-size:12px; font-weight:700; color:#4E5968;">현대해상</div>
-            </div>
+           
             <div class="ins-select-card" onclick="window.selectClaimCompany(this, '흥국화재')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
                 <img src="보험사 로고/heungkuk.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="흥국화재" onerror="this.style.display='none'">
