@@ -1140,3 +1140,80 @@ window.deleteCurrentNotice = async function() {
         alert('삭제 실패: ' + e.message);
     }
 };
+
+
+// ==========================================
+// [청구하기 - 보험사 선택 화면 전역 로직]
+// ==========================================
+window.selectedClaimInsurance = "";
+
+window.switchClaimTab = function(clickedBtn, targetGridId) {
+    const parent = clickedBtn.parentElement;
+    parent.querySelectorAll('button').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = 'transparent';
+        btn.style.color = '#8B95A1';
+        btn.style.border = 'none';
+        btn.style.boxShadow = 'none';
+    });
+    
+    clickedBtn.classList.add('active');
+    clickedBtn.style.background = 'white';
+    clickedBtn.style.color = '#3182F6';
+    clickedBtn.style.border = '1px solid #3182F6';
+    clickedBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+    
+    document.querySelectorAll('.ins-grid-container').forEach(grid => {
+        grid.style.display = 'none';
+    });
+    
+    const targetGrid = document.getElementById(targetGridId);
+    if(targetGrid) {
+        if(targetGridId === 'grid-liability') {
+            targetGrid.style.display = 'block'; 
+        } else {
+            targetGrid.style.display = 'grid'; 
+        }
+    }
+    window.resetClaimSelection();
+};
+
+window.resetClaimSelection = function() {
+    window.selectedClaimInsurance = "";
+    document.querySelectorAll('.ins-select-card').forEach(card => {
+        card.style.borderColor = '#E5E8EB';
+        card.style.background = 'white';
+    });
+    const nextBtn = document.getElementById('next-step-btn');
+    if(nextBtn) {
+        nextBtn.disabled = true;
+        nextBtn.style.background = '#E5E8EB';
+        nextBtn.style.color = '#8B95A1';
+        nextBtn.style.cursor = 'not-allowed';
+        nextBtn.innerText = '보험사를 선택해주세요';
+    }
+};
+
+window.selectClaimCompany = function(cardElement, companyName) {
+    document.querySelectorAll('.ins-select-card').forEach(card => {
+        card.style.borderColor = '#E5E8EB';
+        card.style.background = 'white';
+    });
+
+    cardElement.style.borderColor = '#3182F6';
+    cardElement.style.background = '#EFF6FF';
+    window.selectedClaimInsurance = companyName;
+
+    const nextBtn = document.getElementById('next-step-btn');
+    if(nextBtn) {
+        nextBtn.disabled = false;
+        nextBtn.style.background = '#3182F6';
+        nextBtn.style.color = 'white';
+        nextBtn.style.cursor = 'pointer';
+        nextBtn.innerText = companyName + ' 청구 진행하기';
+        
+        nextBtn.onclick = function() {
+            alert(companyName + " 청구 폼으로 이동합니다.");
+        };
+    }
+};
