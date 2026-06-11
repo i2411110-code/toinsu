@@ -251,13 +251,13 @@ window.generateHyundai5PagePDF = async function() {
         pages[4].drawText(name, { x: 350, y: 220, ...txtOpt });
         if (signImage) pages[4].drawImage(signImage, { x: 430, y: 210, ...signOpt });
 
-        // 완성된 PDF 다운로드
+        // 완성된 PDF 미리보기 (새 탭에서 열기)
         const pdfResultBytes = await pdfDoc.save();
         const blob = new Blob([pdfResultBytes], { type: 'application/pdf' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `현대해상_청구서_${name}.pdf`;
-        link.click();
+        const pdfUrl = URL.createObjectURL(blob);
+        
+        // 브라우저의 새 창/새 탭에서 PDF를 바로 띄워줍니다.
+        window.open(pdfUrl, '_blank');
 
     } catch (error) {
         console.error("PDF 생성 오류:", error);
