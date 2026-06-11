@@ -4,13 +4,13 @@
     <p class="toss-hero-sub" id="current-date"></p>
     <h1 class="toss-hero-title">안녕하세요 👋<br><span id="main-user-name">설계사님</span></h1>
     <div style="display:flex; gap:10px; margin-top:20px; flex-wrap:wrap;">
-        <div onclick="window.navigateTo('page-insure', 'nonlife')" style="background:rgba(255,255,255,0.15); border-radius:14px; padding:12px 18px; cursor:pointer; flex:1; min-width:140px; transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-            <div style="font-size:20px; margin-bottom:6px;">🏢</div>
+        <div class="hero-banner-btn" onclick="window.navigateTo('page-insure', 'nonlife')">
+            <img src="아이콘/main.png" class="hero-banner-img" alt="보험사 전산">
             <div style="font-size:13px; font-weight:800; color:white;">보험사 전산</div>
             <div style="font-size:11px; color:rgba(255,255,255,0.7); margin-top:2px;">손해·생명보험 시스템</div>
         </div>
-        <div onclick="window.navigateTo('page-private')" style="background:rgba(255,255,255,0.15); border-radius:14px; padding:12px 18px; cursor:pointer; flex:1; min-width:140px; transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-            <div style="font-size:20px; margin-bottom:6px;">🔒</div>
+        <div class="hero-banner-btn" onclick="window.navigateTo('page-private')">
+            <img src="아이콘/main2.png" class="hero-banner-img" alt="전산 관리실">
             <div style="font-size:13px; font-weight:800; color:white;">전산 관리실</div>
             <div style="font-size:11px; color:rgba(255,255,255,0.7); margin-top:2px;">AI 분석기 · DB 연동</div>
         </div>
@@ -103,6 +103,32 @@
 .toss-hero-tag { font-size:14px; font-weight:700; opacity:0.85; margin-bottom:4px; }
 .toss-hero-sub { font-size:13px; opacity:0.7; margin-bottom:16px; }
 .toss-hero-title { font-size:26px; font-weight:800; line-height:1.4; letter-spacing:-0.5px; }
+
+
+.hero-banner-btn {
+    background: rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+    flex: 1;
+    min-width: 140px;
+    transition: background 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+.hero-banner-btn:hover { background: rgba(255,255,255,0.25); }
+.hero-banner-img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s;
+}
+.hero-banner-btn:hover .hero-banner-img {
+    transform: scale(1.35) translateY(-8px);
+    filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.2));
+}
 </style>
 
 <script>
