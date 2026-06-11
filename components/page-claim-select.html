@@ -8,11 +8,11 @@
     </div>
 
     <div style="padding: 15px 20px;">
-        <!-- 상단 탭 -->
+        <!-- 상단 탭 (window 전역 함수로 수정) -->
         <div style="display: flex; background: #F2F4F6; padding: 4px; border-radius: 12px; margin-bottom: 15px;">
-            <button class="form-toggle-btn active" onclick="switchInsTab(this, 'grid-nonlife')" style="flex: 1; padding: 12px; border:1px solid #3182F6; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; background:white; color:#3182F6; box-shadow:0 2px 4px rgba(0,0,0,0.05);">손해보험</button>
-            <button class="form-toggle-btn" onclick="switchInsTab(this, 'grid-life')" style="flex: 1; padding: 12px; border:none; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; background:transparent; color:#8B95A1;">생명보험</button>
-            <button class="form-toggle-btn" onclick="switchInsTab(this, 'grid-liability')" style="flex: 1; padding: 12px; border:none; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; background:transparent; color:#8B95A1;">배상책임</button>
+            <button class="form-toggle-btn active" onclick="window.switchInsTab(this, 'grid-nonlife')" style="flex: 1; padding: 12px; border:1px solid #3182F6; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; background:white; color:#3182F6; box-shadow:0 2px 4px rgba(0,0,0,0.05);">손해보험</button>
+            <button class="form-toggle-btn" onclick="window.switchInsTab(this, 'grid-life')" style="flex: 1; padding: 12px; border:none; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; background:transparent; color:#8B95A1;">생명보험</button>
+            <button class="form-toggle-btn" onclick="window.switchInsTab(this, 'grid-liability')" style="flex: 1; padding: 12px; border:none; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; background:transparent; color:#8B95A1;">배상책임</button>
         </div>
 
         <p style="font-size:11px; color:#8B95A1; margin-bottom:15px;"><span style="color:#FF6B6B;">●</span> 가상팩스 등록이 필요한 보험사</p>
@@ -21,104 +21,85 @@
              1. 손해보험 그리드
         =============================================== -->
         <div id="grid-nonlife" class="ins-grid-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-            <div class="ins-select-card" onclick="selectCompany(this, 'AIG손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, 'AIG손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <img src="보험사 로고/aig.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="AIG" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">AIG손해보험</div>
             </div>
-            
-            <div class="ins-select-card" onclick="selectCompany(this, 'AXA손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, 'AXA손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
                 <div style="height:24px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; font-weight:900; color:#00008F; font-size:16px;">AXA</div>
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">AXA손해보험</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, 'DB손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, 'DB손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <img src="보험사 로고/db.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="DB" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">DB손해보험</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, 'KB손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, 'KB손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <img src="보험사 로고/kb.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="KB" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">KB손해보험</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, 'NH농협손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, 'NH농협손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <img src="보험사 로고/nh.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="NH" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">NH농협손해보험</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, '교직원공제')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '교직원공제')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <div style="height:24px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; font-weight:900; color:#1E3A8A; font-size:13px;">The-K</div>
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">교직원공제</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, '라이나손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '라이나손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <img src="보험사 로고/lina.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="라이나" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">라이나손해보험</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, '롯데손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '롯데손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <img src="보험사 로고/lotte.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="롯데" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">롯데손해보험</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, '메리츠화재')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '메리츠화재')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <img src="보험사 로고/meritz.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="메리츠" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">메리츠화재</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, '삼성화재')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '삼성화재')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <img src="보험사 로고/samsung.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="삼성" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">삼성화재</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, '새마을금고공제')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '새마을금고공제')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <img src="보험사 로고/mg.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="MG" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">새마을금고공제</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, '수협공제')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '수협공제')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
                 <div style="height:24px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; font-weight:900; color:#0284C7; font-size:14px;">수협</div>
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">수협공제</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, '신한EZ손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '신한EZ손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <div style="height:24px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; font-weight:900; color:#2563EB; font-size:14px;">신한EZ</div>
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">신한EZ손해보험</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, '신협공제')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '신협공제')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <div style="height:24px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; font-weight:900; color:#0F172A; font-size:15px;">신협</div>
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">신협공제</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, '예별손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '예별손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <div style="height:24px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; font-weight:900; color:#E11D48; font-size:14px;">YBI</div>
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">예별손해보험</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, '우체국보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '우체국보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <div style="height:24px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; font-weight:900; color:#EA580C; font-size:14px;">우체국</div>
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">우체국보험</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, '하나손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '하나손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <img src="보험사 로고/hana.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="하나" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">하나손해보험</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, '한화손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '한화손해보험')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <img src="보험사 로고/hanwha.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="한화" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">한화손해보험</div>
             </div>
-
-            <div class="ins-select-card" onclick="selectCompany(this, '현대해상')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '현대해상')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <img src="보험사 로고/hyundai.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="현대해상" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">현대해상</div>
             </div>
-            
-            <div class="ins-select-card" onclick="selectCompany(this, '흥국화재')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+            <div class="ins-select-card" onclick="window.selectCompany(this, '흥국화재')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
                 <img src="보험사 로고/heungkuk.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="흥국화재" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">흥국화재</div>
@@ -126,64 +107,135 @@
         </div>
 
         <!-- ==============================================
-             2. 생명보험 그리드 (초기엔 숨김)
+             2. 생명보험 그리드 (이미지 기준 전체 리스트 반영)
         =============================================== -->
         <div id="grid-life" class="ins-grid-container" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-            <div class="ins-select-card" onclick="selectCompany(this, '교보생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/kyobo.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="교보" onerror="this.style.display='none'">
-                <div style="font-size:12px; font-weight:700; color:#4E5968;">교보생명</div>
-            </div>
-            <div class="ins-select-card" onclick="selectCompany(this, '삼성생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/samsunglife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="삼성" onerror="this.style.display='none'">
-                <div style="font-size:12px; font-weight:700; color:#4E5968;">삼성생명</div>
-            </div>
-            <div class="ins-select-card" onclick="selectCompany(this, '한화생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/hanwhalife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="한화" onerror="this.style.display='none'">
-                <div style="font-size:12px; font-weight:700; color:#4E5968;">한화생명</div>
-            </div>
-            <div class="ins-select-card" onclick="selectCompany(this, '신한라이프')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/shinhanlife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="신한" onerror="this.style.display='none'">
-                <div style="font-size:12px; font-weight:700; color:#4E5968;">신한라이프</div>
-            </div>
-            <div class="ins-select-card" onclick="selectCompany(this, '메트라이프')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/metlife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="메트라이프" onerror="this.style.display='none'">
-                <div style="font-size:12px; font-weight:700; color:#4E5968;">메트라이프</div>
-            </div>
-            <div class="ins-select-card" onclick="selectCompany(this, 'KB라이프')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/kblife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="KB" onerror="this.style.display='none'">
-                <div style="font-size:12px; font-weight:700; color:#4E5968;">KB라이프</div>
-            </div>
-            <div class="ins-select-card" onclick="selectCompany(this, 'KDB생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/kdblife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="KDB" onerror="this.style.display='none'">
-                <div style="font-size:12px; font-weight:700; color:#4E5968;">KDB생명</div>
-            </div>
-            <div class="ins-select-card" onclick="selectCompany(this, 'DB생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/dblife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="DB" onerror="this.style.display='none'">
-                <div style="font-size:12px; font-weight:700; color:#4E5968;">DB생명</div>
-            </div>
-            <div class="ins-select-card" onclick="selectCompany(this, '흥국생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/heungkuklife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="흥국" onerror="this.style.display='none'">
-                <div style="font-size:12px; font-weight:700; color:#4E5968;">흥국생명</div>
-            </div>
-            <div class="ins-select-card" onclick="selectCompany(this, '동양생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/tongyang.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="동양" onerror="this.style.display='none'">
-                <div style="font-size:12px; font-weight:700; color:#4E5968;">동양생명</div>
-            </div>
-            <div class="ins-select-card" onclick="selectCompany(this, 'ABL생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/abl.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="ABL" onerror="this.style.display='none'">
+            <!-- ABL생명 -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, 'ABL생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <img src="보험사 로고/abl.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="ABL">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">ABL생명</div>
             </div>
-            <div class="ins-select-card" onclick="selectCompany(this, '라이나생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/linalife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="라이나" onerror="this.style.display='none'">
+            <!-- AIA생명 -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, 'AIA생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <img src="보험사 로고/aia.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="AIA">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">AIA생명</div>
+            </div>
+            <!-- BNP파리바카디프생명 -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, 'BNP파리바카디프생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <img src="보험사 로고/cardif.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="BNP">
+                <div style="font-size:11px; font-weight:700; color:#4E5968; letter-spacing:-0.5px;">BNP파리바카디프생명</div>
+            </div>
+            <!-- DB생명 -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, 'DB생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <img src="보험사 로고/dblife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="DB">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">DB생명</div>
+            </div>
+            <!-- KB라이프생명 -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, 'KB라이프생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <img src="보험사 로고/kblife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="KB">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">KB라이프생명</div>
+            </div>
+            <!-- KDB생명 -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, 'KDB생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <img src="보험사 로고/kdblife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="KDB">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">KDB생명</div>
+            </div>
+            <!-- NH농협생명 -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, 'NH농협생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <img src="보험사 로고/nhlife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="NH">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">NH농협생명</div>
+            </div>
+            <!-- iM생명 -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, 'iM생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <img src="보험사 로고/imlife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="iM">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">iM생명</div>
+            </div>
+            <!-- 교보라이프플래닛생명 -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '교보라이프플래닛생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <div style="height:24px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; font-weight:900; color:#00B2A9; font-size:13px;">lifeplanet</div>
+                <div style="font-size:10px; font-weight:700; color:#4E5968; letter-spacing:-0.5px;">교보라이프플래닛생명</div>
+            </div>
+            
+            <!-- 교보생명 (점) -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '교보생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
+                <img src="보험사 로고/kyobo.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="교보">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">교보생명</div>
+            </div>
+            <!-- 동양생명 -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '동양생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <img src="보험사 로고/tongyang.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="동양">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">동양생명</div>
+            </div>
+            <!-- 라이나생명 (점) -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '라이나생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
+                <img src="보험사 로고/linalife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="라이나">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">라이나생명</div>
             </div>
-            <div class="ins-select-card" onclick="selectCompany(this, '미래에셋생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/miraeasset.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="미래에셋" onerror="this.style.display='none'">
+            <!-- 메트라이프생명 (점) -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '메트라이프생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
+                <img src="보험사 로고/metlife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="메트라이프">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">메트라이프생명</div>
+            </div>
+            <!-- 미래에셋생명 (점) -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '미래에셋생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
+                <img src="보험사 로고/miraeasset.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="미래에셋">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">미래에셋생명</div>
             </div>
-            <div class="ins-select-card" onclick="selectCompany(this, '농협생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
-                <img src="보험사 로고/nhlife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="농협" onerror="this.style.display='none'">
-                <div style="font-size:12px; font-weight:700; color:#4E5968;">농협생명</div>
+            <!-- 삼성생명 (점) -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '삼성생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
+                <img src="보험사 로고/samsunglife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="삼성">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">삼성생명</div>
+            </div>
+            <!-- 신한라이프 (점) -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '신한라이프')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
+                <img src="보험사 로고/shinhanlife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="신한">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">신한라이프</div>
+            </div>
+            <!-- 오렌지라이프 (점) -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '오렌지라이프')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
+                <div style="height:24px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; font-weight:900; color:#F97316; font-size:14px;">ORANGELIFE</div>
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">오렌지라이프</div>
+            </div>
+            <!-- 처브라이프생명 -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '처브라이프생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <img src="보험사 로고/chubb.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="처브">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">처브라이프생명</div>
+            </div>
+            <!-- 푸르덴셜생명 -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '푸르덴셜생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <div style="height:24px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; font-weight:900; color:#1E3A8A; font-size:12px;">Prudential</div>
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">푸르덴셜생명</div>
+            </div>
+            <!-- 푸본현대생명 (점) -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '푸본현대생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
+                <img src="보험사 로고/fubon.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="푸본현대">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">푸본현대생명</div>
+            </div>
+            <!-- 하나생명 (점) -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '하나생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
+                <img src="보험사 로고/hanalife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="하나">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">하나생명</div>
+            </div>
+            <!-- 한화생명 (점) -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '한화생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
+                <img src="보험사 로고/hanwhalife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="한화">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">한화생명</div>
+            </div>
+            <!-- 흥국생명 (점) -->
+            <div class="ins-select-card" onclick="window.selectCompany(this, '흥국생명')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
+                <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
+                <img src="보험사 로고/heungkuklife.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="흥국">
+                <div style="font-size:12px; font-weight:700; color:#4E5968;">흥국생명</div>
             </div>
         </div>
 
@@ -205,83 +257,95 @@
 </div>
 
 <script>
-let selectedInsurance = "";
+// 전역 변수로 저장 (동적 SPA 로딩 시에도 접근 가능하도록 window 사용)
+window.selectedInsurance = "";
 
-// 탭 및 그리드 전환 함수
-function switchInsTab(clickedBtn, targetGridId) {
-    // 1. 탭 버튼 UI 변경
+// [핵심 해결] 탭 버튼 클릭 이벤트 (전역 함수화)
+window.switchInsTab = function(clickedBtn, targetGridId) {
+    // 1. 탭 버튼 스타일 리셋
     const parent = clickedBtn.parentElement;
     parent.querySelectorAll('button').forEach(btn => {
+        btn.classList.remove('active');
         btn.style.background = 'transparent';
         btn.style.color = '#8B95A1';
         btn.style.border = 'none';
         btn.style.boxShadow = 'none';
     });
+    
+    // 2. 누른 탭 활성화
+    clickedBtn.classList.add('active');
     clickedBtn.style.background = 'white';
     clickedBtn.style.color = '#3182F6';
     clickedBtn.style.border = '1px solid #3182F6';
     clickedBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
     
-    // 2. 전체 그리드 숨기기
+    // 3. 모든 그리드 숨기기
     document.querySelectorAll('.ins-grid-container').forEach(grid => {
         grid.style.display = 'none';
     });
     
-    // 3. 타겟 그리드만 보이기 (grid 속성 유지)
-    if(targetGridId === 'grid-liability') {
-        document.getElementById(targetGridId).style.display = 'block';
-    } else {
-        document.getElementById(targetGridId).style.display = 'grid';
+    // 4. 타겟 그리드만 보이기
+    const targetGrid = document.getElementById(targetGridId);
+    if(targetGrid) {
+        if(targetGridId === 'grid-liability') {
+            targetGrid.style.display = 'block'; // 배상책임은 임시로 block
+        } else {
+            targetGrid.style.display = 'grid'; // 나머지는 grid 속성 유지
+        }
     }
 
-    // 4. 탭 전환 시 선택 초기화 (선택사항)
-    resetSelection();
-}
+    // 5. 탭 전환 시 선택 내역 초기화
+    window.resetSelection();
+};
 
 // 선택 초기화 함수
-function resetSelection() {
-    selectedInsurance = "";
+window.resetSelection = function() {
+    window.selectedInsurance = "";
     document.querySelectorAll('.ins-select-card').forEach(card => {
         card.style.borderColor = '#E5E8EB';
         card.style.background = 'white';
     });
     const nextBtn = document.getElementById('next-step-btn');
-    nextBtn.disabled = true;
-    nextBtn.style.background = '#E5E8EB';
-    nextBtn.style.color = '#8B95A1';
-    nextBtn.style.cursor = 'not-allowed';
-    nextBtn.innerText = '보험사를 선택해주세요';
-}
+    if(nextBtn) {
+        nextBtn.disabled = true;
+        nextBtn.style.background = '#E5E8EB';
+        nextBtn.style.color = '#8B95A1';
+        nextBtn.style.cursor = 'not-allowed';
+        nextBtn.innerText = '보험사를 선택해주세요';
+    }
+};
 
-// 보험사 선택 함수
-function selectCompany(cardElement, companyName) {
+// [핵심 해결] 보험사 선택 이벤트 (전역 함수화)
+window.selectCompany = function(cardElement, companyName) {
     // 1. 모든 카드 활성화 해제
     document.querySelectorAll('.ins-select-card').forEach(card => {
         card.style.borderColor = '#E5E8EB';
         card.style.background = 'white';
     });
 
-    // 2. 선택한 카드 활성화
+    // 2. 누른 카드 활성화
     cardElement.style.borderColor = '#3182F6';
     cardElement.style.background = '#EFF6FF';
     
-    // 3. 변수 저장
-    selectedInsurance = companyName;
+    // 3. 선택된 회사명 저장
+    window.selectedInsurance = companyName;
 
-    // 4. 하단 버튼 활성화
+    // 4. 하단 고정 버튼 활성화
     const nextBtn = document.getElementById('next-step-btn');
-    nextBtn.disabled = false;
-    nextBtn.style.background = '#3182F6';
-    nextBtn.style.color = 'white';
-    nextBtn.style.cursor = 'pointer';
-    nextBtn.innerText = companyName + ' 청구 진행하기';
-    
-    // 5. 다음 단계 연결
-    nextBtn.onclick = function() {
-        console.log("선택된 보험사:", companyName);
-        // app.js의 라우팅 함수를 호출하여 폼 화면으로 이동
-        // window.navigateTo('page-claim-form');
-        alert(companyName + " 청구 폼으로 이동합니다.");
-    };
-}
+    if(nextBtn) {
+        nextBtn.disabled = false;
+        nextBtn.style.background = '#3182F6';
+        nextBtn.style.color = 'white';
+        nextBtn.style.cursor = 'pointer';
+        nextBtn.innerText = companyName + ' 청구 진행하기';
+        
+        // 5. 다음 화면 이동 연결
+        nextBtn.onclick = function() {
+            console.log("선택된 보험사:", companyName);
+            // 실제 프로젝트 연동 시 주석 해제하세요:
+            // window.navigateTo('page-claim-form'); 
+            alert(companyName + " 청구 폼으로 이동합니다.");
+        };
+    }
+};
 </script>
