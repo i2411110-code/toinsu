@@ -168,9 +168,9 @@ window.generateHyundai5PagePDF = async function() {
     btn.disabled = true;
 
     try {
-        const { PDFDocument, rgb } = window.PDFLib; // CDN에서 로드된 pdf-lib 사용
+        const { PDFDocument, rgb } = window.PDFLib; 
 
-        // ⚠️ 여기서 폰트 이름을 팀장님이 가진 otf 파일로 정확히 바꿨습니다!
+        // 폰트와 양식 경로
         const formUrl = './forms/hyundai.pdf'; 
         const fontUrl = './fonts/NotoSansKR-Black.otf'; 
 
@@ -178,7 +178,7 @@ window.generateHyundai5PagePDF = async function() {
         const pdfRes = await fetch(formUrl);
         const fontRes = await fetch(fontUrl);
 
-        // [핵심] 파일이 없으면 뭐가 없는지 정확히 알려줍니다.
+        // 파일이 없을 경우 에러 메시지
         if (!pdfRes.ok) {
             throw new Error(`현대해상 PDF 양식을 찾을 수 없습니다.\n깃허브에 forms 폴더와 hyundai.pdf 파일이 있는지 확인하세요.`);
         }
@@ -186,14 +186,10 @@ window.generateHyundai5PagePDF = async function() {
             throw new Error(`폰트 파일을 찾을 수 없습니다.\n깃허브에 fonts 폴더와 NotoSansKR-Black.otf 파일이 있는지 확인하세요.`);
         }
 
+        // [문제 해결] 중복 선언된 코드를 하나로 깔끔하게 정리했습니다!
         const [pdfBytes, fontBytes] = await Promise.all([
             pdfRes.arrayBuffer(),
             fontRes.arrayBuffer()
-        ]);
-
-        const [pdfBytes, fontBytes] = await Promise.all([
-            fetch(formUrl).then(res => res.arrayBuffer()),
-            fetch(fontUrl).then(res => res.arrayBuffer())
         ]);
 
         const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -240,7 +236,7 @@ window.generateHyundai5PagePDF = async function() {
         pages[0].drawText(name, { x: 350, y: 130, ...txtOpt });
         if (signImage) pages[0].drawImage(signImage, { x: 420, y: 120, ...signOpt });
 
-        // [2~4페이지] 필수 동의 체크박스 (좌표는 실제 PDF에 맞춰 수정 필요)
+        // [2~4페이지] 필수 동의 체크박스
         pages[1].drawText(checkMark, { x: 350, y: 600, ...checkOpt });
         pages[1].drawText(checkMark, { x: 350, y: 450, ...checkOpt });
         pages[1].drawText(checkMark, { x: 350, y: 300, ...checkOpt });
@@ -265,7 +261,6 @@ window.generateHyundai5PagePDF = async function() {
 
     } catch (error) {
         console.error("PDF 생성 오류:", error);
-        // 에러 창에 진짜 원인을 띄워줍니다.
         alert("오류 원인:\n" + error.message);
     } finally {
         btn.innerHTML = originalHTML;
