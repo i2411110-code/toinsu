@@ -25,6 +25,7 @@ const MASTER_INVITE_CODE = "gaon2026";
 
 async function loadUserIntegratedData(email) {
     currentUserEmail = email;
+    window.__currentUserEmail = email;
     if(document.getElementById('user-private-title')) {
         document.getElementById('user-private-title').innerText = email + " 전용 제어실";
     }
@@ -226,6 +227,18 @@ window.loadComponent = async function(pageId, extraAction) {
             requestAnimationFrame(() => {
                 const el = document.getElementById('claim-user-name');
                 if(el) el.innerText = window.currentUserDisplayName || '안녕하세요';
+            });
+        }
+
+        // ✅ 재무 계산기 - 인라인 스크립트 재실행
+        if (pageId === 'page-calculator') {
+            requestAnimationFrame(() => {
+                root.querySelectorAll('script').forEach(old => {
+                    const s = document.createElement('script');
+                    s.textContent = old.textContent;
+                    document.body.appendChild(s);
+                    document.body.removeChild(s);
+                });
             });
         }
 
