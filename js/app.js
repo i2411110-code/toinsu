@@ -1,17 +1,22 @@
-// 외부 JS 파일 불러오기 (부품 조립)
+// ==========================================
+// 1. 모듈 Import (반드시 파일 맨 꼭대기에 뭉쳐 있어야 함!)
+// ==========================================
 import './claim.js'; 
-
-
-window.globalClientRegistry = {};
-window.currentUserSchedules = [];
-let currentModalTargetName = "";
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// ==========================================
+// 2. 전역 변수 세팅 (Import가 모두 끝난 뒤에 와야 함!)
+// ==========================================
+window.globalClientRegistry = {};
+window.currentUserSchedules = [];
+let currentModalTargetName = "";
+
+// 3. 파이어베이스 설정
 const firebaseConfig = {
     apiKey: "AIzaSyA1GU9E5WuFUPIyT4Ma4_crArdANpCMQfs",
+// ... (이 아래 코드는 그대로 두시면 됩니다!) ...
     authDomain: "gaon-f3399.firebaseapp.com",
     projectId: "gaon-f3399",
     storageBucket: "gaon-f3399.firebasestorage.app",
