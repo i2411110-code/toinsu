@@ -192,19 +192,3 @@
 .toss-logo-card img { max-width:80%; max-height:36px; object-fit:contain; }
 .toss-logo-card span { font-size:12px; font-weight:700; color:#4E5968; }
 </style>
-
-<script>
-window.switchTermsTab = function(type) {
-    const nonlifeTab = document.getElementById('terms-tab-nonlife');
-    const lifeTab    = document.getElementById('terms-tab-life');
-    const gridNon    = document.getElementById('terms-grid-nonlife');
-    const gridLife   = document.getElementById('terms-grid-life');
-    if (type === 'nonlife') {
-        nonlifeTab.classList.add('active'); lifeTab.classList.remove('active');
-        gridNon.style.display = 'grid'; gridLife.style.display = 'none';
-    } else {
-        lifeTab.classList.add('active'); nonlifeTab.classList.remove('active');
-        gridNon.style.display = 'none'; gridLife.style.display = 'grid';
-    }
-};
-</script>

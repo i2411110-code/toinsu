@@ -184,15 +184,25 @@ window.loadComponent = async function(pageId, extraAction) {
             window.renderSchedule();
         }
 
-         // 👇 여기에 추가
+         // 실비 계산기 초기화
         if (pageId === 'page-silbi') {
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            window.initSilsonPage();
-        });
-    });
-}
-        
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    window.initSilsonPage();
+                });
+            });
+        }
+
+        // ✅ 약관조회 탭 초기 상태 세팅 (생명보험 탭 버튼 오작동 수정)
+        if (pageId === 'page-terms') {
+            requestAnimationFrame(() => {
+                const gridNon = document.getElementById('terms-grid-nonlife');
+                const gridLife = document.getElementById('terms-grid-life');
+                if (gridNon) gridNon.style.display = 'grid';
+                if (gridLife) gridLife.style.display = 'none';
+            });
+        }
+
         // 탭 전환 등 예약된 액션이 있으면 실행
         if (typeof extraAction === 'function') {
             extraAction();
@@ -836,6 +846,20 @@ window.switchGongsilTab = function(type) {
     } else {
         lifeTab.style.background = 'white'; lifeTab.style.color = '#2563EB';
         nonlifeTab.style.background = 'transparent'; nonlifeTab.style.color = '#64748B';
+        gridNon.style.display = 'none'; gridLife.style.display = 'grid';
+    }
+};
+
+window.switchTermsTab = function(type) {
+    const nonlifeTab = document.getElementById('terms-tab-nonlife');
+    const lifeTab    = document.getElementById('terms-tab-life');
+    const gridNon    = document.getElementById('terms-grid-nonlife');
+    const gridLife   = document.getElementById('terms-grid-life');
+    if (type === 'nonlife') {
+        nonlifeTab.classList.add('active'); lifeTab.classList.remove('active');
+        gridNon.style.display = 'grid'; gridLife.style.display = 'none';
+    } else {
+        lifeTab.classList.add('active'); nonlifeTab.classList.remove('active');
         gridNon.style.display = 'none'; gridLife.style.display = 'grid';
     }
 };
