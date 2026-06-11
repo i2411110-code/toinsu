@@ -112,26 +112,21 @@
 <script>
 // --- [UI 탭 전환 로직] ---
 window.switchCalcTab = function(tabId) {
-    // 탭 버튼 스타일 초기화
     document.querySelectorAll('[id^="tab-calc-"]').forEach(btn => {
         btn.style.background = 'transparent';
         btn.style.color = '#8B95A1';
     });
-    // 콘텐츠 뷰 초기화
     document.querySelectorAll('[id^="view-calc-"]').forEach(view => {
         view.style.display = 'none';
     });
 
-    // 선택된 탭 스타일 적용
     const selectedBtn = document.getElementById('tab-' + tabId);
     selectedBtn.style.background = '#EFF6FF';
     selectedBtn.style.color = '#2563EB';
     
-    // 탭별 고유 컬러 적용
     if(tabId === 'calc-2') { selectedBtn.style.background = '#F0FDF4'; selectedBtn.style.color = '#16A34A'; }
     if(tabId === 'calc-3') { selectedBtn.style.background = '#FEF3C7'; selectedBtn.style.color = '#D97706'; }
 
-    // 선택된 뷰 표시
     document.getElementById('view-' + tabId).style.display = 'block';
 };
 
@@ -143,16 +138,13 @@ window.calcFutureValue = function() {
 
     if(!pv || !years) return alert("현재 금액과 기간을 입력해주세요.");
 
-    // 물가상승을 감안한 현재 화폐의 미래 체감 가치 = PV / (1 + rate)^years
-    // (또는 미래의 목표를 위해 필요한 금액 = PV * (1 + rate)^years)
-    // 고객 안내용이므로 직관적인 '구매력 하락' 수치를 보여주도록 계산 (PV / (1+r)^n)
     const futureValue = pv / Math.pow(1 + rate, years);
     
     document.getElementById('fv_result_val').innerText = Math.round(futureValue).toLocaleString() + "원";
     document.getElementById('fv_result_box').style.display = 'block';
 };
 
-// --- [계산기 2: 예금적금 로직 (단리 기준)] ---
+// --- [계산기 2: 예금적금 로직] ---
 window.calcSavings = function() {
     const type = document.getElementById('sv_type').value;
     const amount = Number(document.getElementById('sv_amount').value);
@@ -165,16 +157,14 @@ window.calcSavings = function() {
     let interest = 0;
 
     if (type === 'deposit') {
-        // 거치식 예금 단리 이자
         principal = amount;
         interest = amount * rate * (months / 12);
     } else {
-        // 적립식 적금 단리 이자: 월납입액 * 이자율 * (월수*(월수+1)/2) / 12
         principal = amount * months;
         interest = amount * rate * (months * (months + 1) / 2) / 12;
     }
 
-    const tax = interest * 0.154; // 이자소득세 15.4%
+    const tax = interest * 0.154; 
     const total = principal + interest - tax;
 
     document.getElementById('sv_principal').innerText = Math.round(principal).toLocaleString() + "원";
@@ -183,7 +173,7 @@ window.calcSavings = function() {
     document.getElementById('sv_result_box').style.display = 'block';
 };
 
-// --- [계산기 3: 연금 로직 (월복리 미래가치)] ---
+// --- [계산기 3: 연금 로직] ---
 window.calcPension = function() {
     const currentAge = Number(document.getElementById('pn_current_age').value);
     const startAge = Number(document.getElementById('pn_start_age').value);
@@ -195,7 +185,6 @@ window.calcPension = function() {
     const months = (startAge - currentAge) * 12;
     const monthlyRate = rate / 12;
     
-    // 월복리 연금 종가(FV) 공식: PMT * (((1 + r)^n - 1) / r) * (1 + r)
     const futureValue = monthly * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate) * (1 + monthlyRate);
 
     document.getElementById('pn_result_total').innerText = Math.round(futureValue).toLocaleString() + "원";
