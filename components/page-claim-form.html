@@ -1,0 +1,61 @@
+<div class="sub-page toss" style="display:block; padding: 0; background:transparent; box-shadow:none; padding-bottom:80px;">
+
+    <img src="dummy" onerror="window.initClaimCanvas(); this.style.display='none';" style="display:none;">
+
+    <div class="toss-hero" style="background:white; color:#191F28; border-bottom:1px solid #F2F4F6; border-radius:0; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <button onclick="window.goBack()" style="background:transparent; border:none; font-size:20px; cursor:pointer; color:#191F28;"><i class="bi bi-chevron-left"></i></button>
+        <h2 id="claim-form-title" style="font-size:18px; font-weight:800; margin:0;">청구서 작성</h2>
+        <div style="width:24px;"></div> </div>
+
+    <div style="padding: 0 20px;">
+        <div class="toss-card">
+            <div class="toss-card-title">피보험자 정보</div>
+            <div class="form-group">
+                <label>이름</label>
+                <input type="text" id="form-name" class="form-control" placeholder="피보험자 이름">
+            </div>
+            <div class="form-group">
+                <label>주민번호</label>
+                <input type="text" id="form-jumin" class="form-control" placeholder="주민번호 13자리 ('-' 제외)">
+            </div>
+            <div class="form-group">
+                <label>연락처</label>
+                <input type="tel" id="form-phone" class="form-control" placeholder="휴대폰 번호 ('-' 제외)">
+            </div>
+        </div>
+
+        <div class="toss-card">
+            <div class="toss-card-title">진료 정보</div>
+            <div class="form-group">
+                <label>진료(사고)일자</label>
+                <input type="date" id="form-date" class="form-control" style="font-family:inherit;">
+            </div>
+            <div class="form-group">
+                <label>질병/사고내용</label>
+                <textarea id="form-content" class="form-control" placeholder="어디가 아파서 병원에 가셨나요?" style="height:80px; resize:none;"></textarea>
+            </div>
+        </div>
+
+        <div class="toss-card">
+            <div class="toss-card-title">서명</div>
+            <div style="border:2px dashed #CBD5E1; border-radius:12px; background:#F8FAFC; position:relative; touch-action:none;">
+                <canvas id="signature-pad" 
+                        onmousedown="window.startSign(event)" 
+                        onmousemove="window.drawSign(event)" 
+                        onmouseup="window.stopSign()" 
+                        onmouseleave="window.stopSign()"
+                        ontouchstart="window.startSign(event)"
+                        ontouchmove="window.drawSign(event)"
+                        ontouchend="window.stopSign()"
+                        style="width:100%; height:200px; cursor:crosshair;"></canvas>
+                <div id="sign-placeholder" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:#94A3B8; font-weight:700; pointer-events:none;">가운데 여기에 서명해주세요</div>
+            </div>
+            <button onclick="window.clearSignature()" style="width:100%; margin-top:10px; padding:12px; background:#F2F4F6; color:#4E5968; border:none; border-radius:8px; font-weight:700;"><i class="bi bi-eraser-fill"></i> 서명 다시하기</button>
+        </div>
+    </div>
+
+    <div style="position:sticky; bottom:75px; background:white; padding:15px 20px; border-top:1px solid #F2F4F6; z-index:100; box-shadow: 0 -4px 12px rgba(0,0,0,0.03);">
+        <button onclick="window.processClaimPDF()" class="btn-action" style="width:100%; background:#3182F6; color:white; font-size:16px; padding:16px; font-weight:800; border:none; border-radius:12px;"><i class="bi bi-file-earmark-pdf"></i> 청구서 PDF 자동 생성</button>
+    </div>
+
+</div>

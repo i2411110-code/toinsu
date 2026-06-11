@@ -1,3 +1,7 @@
+// 외부 JS 파일 불러오기 (부품 조립)
+import './claim.js'; 
+
+
 window.globalClientRegistry = {};
 window.currentUserSchedules = [];
 let currentModalTargetName = "";
@@ -1142,85 +1146,3 @@ window.deleteCurrentNotice = async function() {
 };
 
 
-// ==========================================
-// [청구하기 - 보험사 선택 화면 전역 로직]
-// ==========================================
-window.selectedClaimInsurance = "";
-
-window.switchClaimTab = function(clickedBtn, targetGridId) {
-    const parent = clickedBtn.parentElement;
-    parent.querySelectorAll('button').forEach(btn => {
-        btn.classList.remove('active');
-        btn.style.background = 'transparent';
-        btn.style.color = '#8B95A1';
-        btn.style.border = 'none';
-        btn.style.boxShadow = 'none';
-    });
-    
-    clickedBtn.classList.add('active');
-    clickedBtn.style.background = 'white';
-    clickedBtn.style.color = '#3182F6';
-    clickedBtn.style.border = '1px solid #3182F6';
-    clickedBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-    
-    document.querySelectorAll('.ins-grid-container').forEach(grid => {
-        grid.style.display = 'none';
-    });
-    
-    const targetGrid = document.getElementById(targetGridId);
-    if(targetGrid) {
-        if(targetGridId === 'grid-liability') {
-            targetGrid.style.display = 'block'; 
-        } else {
-            targetGrid.style.display = 'grid'; 
-        }
-    }
-    window.resetClaimSelection();
-};
-
-window.resetClaimSelection = function() {
-    window.selectedClaimInsurance = "";
-    document.querySelectorAll('.ins-select-card').forEach(card => {
-        card.style.borderColor = '#E5E8EB';
-        card.style.background = 'white';
-    });
-    const nextBtn = document.getElementById('next-step-btn');
-    if(nextBtn) {
-        nextBtn.disabled = true;
-        nextBtn.style.background = '#E5E8EB';
-        nextBtn.style.color = '#8B95A1';
-        nextBtn.style.cursor = 'not-allowed';
-        nextBtn.innerText = '보험사를 선택해주세요';
-    }
-};
-
-window.selectClaimCompany = function(cardElement, companyName) {
-    // 1. 모든 카드 활성화 해제 (기본 얇은 회색 테두리)
-    document.querySelectorAll('.ins-select-card').forEach(card => {
-        card.style.border = '1px solid #E5E8EB';
-        card.style.background = 'white';
-    });
-
-    // 2. 누른 카드 활성화 (배경은 하얗게 유지, 파란색 테두리만 2px로 강조)
-    cardElement.style.border = '2px solid #3182F6';
-    cardElement.style.background = 'white';
-    
-    // 3. 선택된 회사명 저장
-    window.selectedClaimInsurance = companyName;
-
-    // 4. 하단 고정 버튼 활성화
-    const nextBtn = document.getElementById('next-step-btn');
-    if(nextBtn) {
-        nextBtn.disabled = false;
-        nextBtn.style.background = '#3182F6';
-        nextBtn.style.color = 'white';
-        nextBtn.style.cursor = 'pointer';
-        nextBtn.innerText = companyName + ' 청구 진행하기';
-        
-        // 5. 다음 화면 이동 연결
-        nextBtn.onclick = function() {
-            // window.navigateTo('page-claim-form');
-            alert(companyName + " 청구 폼으로 이동합니다.");
-        };
-    }
-};
