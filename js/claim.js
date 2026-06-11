@@ -225,31 +225,45 @@ window.generateHyundai5PagePDF = async function() {
         const signOpt = { width: 60, height: 30 };
 
         // [1페이지] 인적사항
-        pages[0].drawText(name, { x: 130, y: 720, ...txtOpt });
-        pages[0].drawText(jumin, { x: 280, y: 720, ...txtOpt });
-        pages[0].drawText(phone, { x: 130, y: 680, ...txtOpt });
-        pages[0].drawText(content, { x: 130, y: 490, maxWidth: 300, lineHeight: 15, ...txtOpt });
-        
-        pages[0].drawText(year, { x: 150, y: 130, ...txtOpt });
-        pages[0].drawText(month, { x: 210, y: 130, ...txtOpt });
-        pages[0].drawText(day, { x: 250, y: 130, ...txtOpt });
-        pages[0].drawText(name, { x: 350, y: 130, ...txtOpt });
-        if (signImage) pages[0].drawImage(signImage, { x: 420, y: 120, ...signOpt });
+        pages[0].drawText(name,    { x: 86,  y: 841.7-225.6-10, ...txtOpt }); // 성명 칸 (라인 자체는 y≈609 근방)
+pages[0].drawText(name,  { x: 130, y: 605, ...txtOpt });   // 피보험자 성명 (라벨 "성 명" y≈616)
+pages[0].drawText(jumin, { x: 280, y: 605, ...txtOpt });   // 주민번호
+pages[0].drawText(phone, { x: 130, y: 538, ...txtOpt });   // 연락처 (라벨 y≈548)
+pages[0].drawText(content, { x: 90, y: 380, maxWidth: 350, lineHeight: 14, ...txtOpt }); // 치료경위 (라벨 영역 y≈387~399)
 
-        // [2~4페이지] 필수 동의 체크박스
-        pages[1].drawText(checkMark, { x: 350, y: 600, ...checkOpt });
-        pages[1].drawText(checkMark, { x: 350, y: 450, ...checkOpt });
-        pages[1].drawText(checkMark, { x: 350, y: 300, ...checkOpt });
-        
-        pages[2].drawText(checkMark, { x: 350, y: 500, ...checkOpt }); 
-        pages[3].drawText(checkMark, { x: 350, y: 650, ...checkOpt });
+// 작성일자 (y≈136 라벨 기준)
+pages[0].drawText(year,  { x: 110, y: 130, ...txtOpt });
+pages[0].drawText(month, { x: 165, y: 130, ...txtOpt });
+pages[0].drawText(day,   { x: 215, y: 130, ...txtOpt });
+pages[0].drawText(name,  { x: 430, y: 130, ...txtOpt });   // 보험금청구인 성명
+if (signImage) pages[0].drawImage(signImage, { x: 500, y: 122, width: 80, height: 25 }); // (서명) 칸 y≈137, x≈506~520
 
-        // [5페이지] 최종 서명
-        pages[4].drawText(year, { x: 180, y: 250, ...txtOpt });
-        pages[4].drawText(month, { x: 230, y: 250, ...txtOpt });
-        pages[4].drawText(day, { x: 280, y: 250, ...txtOpt });
-        pages[4].drawText(name, { x: 350, y: 220, ...txtOpt });
-        if (signImage) pages[4].drawImage(signImage, { x: 430, y: 210, ...signOpt });
+        // 2페이지(원본 pages[1]) - 동의 항목 3개
+pages[1].drawText(checkMark, { x: 513, y: 416, ...checkOpt }); // 고유식별정보
+pages[1].drawText(checkMark, { x: 513, y: 311, ...checkOpt }); // 민감정보
+pages[1].drawText(checkMark, { x: 513, y: 188, ...checkOpt }); // 개인(신용)정보
+
+// 3페이지(원본 pages[2]) - 국내제공 2개
+pages[2].drawText(checkMark, { x: 513, y: 288, ...checkOpt }); // 고유식별정보 제공
+pages[2].drawText(checkMark, { x: 513, y: 188, ...checkOpt }); // 민감정보 제공
+
+// 4페이지(원본 pages[3]) - 일반개인정보/국외이전 4개
+pages[3].drawText(checkMark, { x: 513, y: 645, ...checkOpt }); // 일반개인정보 제공
+pages[3].drawText(checkMark, { x: 513, y: 226, ...checkOpt }); // 민감정보(국외)
+pages[3].drawText(checkMark, { x: 513, y: 134, ...checkOpt }); // 개인(신용)정보(국외)
+// (참고: 4페이지에 항목이 더 있을 수 있으니 페이지 텍스트 재확인 필요)
+
+// 5페이지(원본 pages[4]) - 조회 동의 3개
+pages[4].drawText(checkMark, { x: 513, y: 564, ...checkOpt }); // 고유식별정보 조회
+pages[4].drawText(checkMark, { x: 513, y: 518, ...checkOpt }); // 민감정보 조회
+pages[4].drawText(checkMark, { x: 513, y: 429, ...checkOpt }); // 개인(신용)정보 조회
+
+pages[4].drawText(year,  { x: 230, y: 381, ...txtOpt });  // 동의일자 - 년 (라벨 y≈381, x≈273)
+pages[4].drawText(month, { x: 340, y: 381, ...txtOpt });  // 월 (x≈379)
+pages[4].drawText(day,   { x: 460, y: 381, ...txtOpt });  // 일 (x≈504)
+
+pages[4].drawText(name,  { x: 200, y: 320, ...txtOpt });  // 본인 성명 (행 y≈302~321)
+if (signImage) pages[4].drawImage(signImage, { x: 460, y: 295, width: 70, height: 25 }); // 본인 서명 (x≈474~496, y≈302)
 
         // 완성된 PDF 미리보기 (새 탭에서 열기)
         const pdfResultBytes = await pdfDoc.save();
