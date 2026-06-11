@@ -34,6 +34,8 @@ async function loadUserIntegratedData(email) {
         if (docSnap.exists()) {
             const data = docSnap.data();
             window.globalClientRegistry = data.clientRegistry || {};
+            // ✅ 이름 저장해두기
+window.currentUserDisplayName = data.displayName || email.split('@')[0];
             window.currentUserSchedules = data.schedules || [];
             if(document.getElementById('memo-txt')) document.getElementById('memo-txt').value = data.memo || "";
         } else {
@@ -97,15 +99,18 @@ window.toggleAuthTab = function(mode) {
     const inviteGroup = document.getElementById('invite-code-group');
     document.getElementById('auth-error-msg').style.display = 'none';
     
-    if(mode === 'login') {
-        loginBtn.classList.add('active'); regBtn.classList.remove('active');
-        title.innerText = "보험가온포탈 로그인"; submitBtn.innerText = "포탈 접속하기";
-        inviteGroup.style.display = 'none';
-    } else {
-        regBtn.classList.add('active'); loginBtn.classList.remove('active');
-        title.innerText = "신규 멤버 회원가입"; submitBtn.innerText = "가입 및 로그인";
-        inviteGroup.style.display = 'block';
-    }
+// 수정 후
+const nameGroup = document.getElementById('name-input-group');
+if(mode === 'login') {
+    loginBtn.classList.add('active'); regBtn.classList.remove('active');
+    title.innerText = "보험가온포탈 로그인"; submitBtn.innerText = "포탈 접속하기";
+    inviteGroup.style.display = 'none';
+    if(nameGroup) nameGroup.style.display = 'none';
+} else {
+    regBtn.classList.add('active'); loginBtn.classList.remove('active');
+    title.innerText = "신규 멤버 회원가입"; submitBtn.innerText = "가입 및 로그인";
+    inviteGroup.style.display = 'block';
+    if(nameGroup) nameGroup.style.display = 'block';
 }
 
 window.handleAuthSubmit = function() {
@@ -133,10 +138,15 @@ window.handleAuthSubmit = function() {
             errorMsg.style.display = "block"; return;
         }
         createUserWithEmailAndPassword(auth, email, password)
-            .then(() => { 
-                alert("가입이 완료되었습니다!");
-                document.getElementById('auth-overlay').style.display = 'none'; 
-            })
+            .then(async (userCred) => {
+    const userName = document.getElementById('auth-name')?.value.trim() || '';
+    if(userName) {
+        const userRef = doc(db, "users_portal", userCred.user.email);
+        await setDoc(userRef, { displayName: userName }, { merge: true });
+    }
+    alert("가입이 완료되었습니다!");
+    document.getElementById('auth-overlay').style.display = 'none';
+})
             .catch((error) => { 
                 errorMsg.innerText = "❌ 가입 실패: " + error.message; 
                 errorMsg.style.display = "block"; 
@@ -193,13 +203,29 @@ window.loadComponent = async function(pageId, extraAction) {
             });
         }
 
-        // ✅ 약관조회 탭 초기 상태 세팅 (생명보험 탭 버튼 오작동 수정)
+        // ✅ 약관조회 탭 초기 상태 세팅
         if (pageId === 'page-terms') {
             requestAnimationFrame(() => {
                 const gridNon = document.getElementById('terms-grid-nonlife');
                 const gridLife = document.getElementById('terms-grid-life');
                 if (gridNon) gridNon.style.display = 'grid';
                 if (gridLife) gridLife.style.display = 'none';
+            });
+        }
+
+        // ✅ 메인 대시보드 이름 표시
+        if (pageId === 'main-dashboard') {
+            requestAnimationFrame(() => {
+                const el = document.getElementById('main-user-name');
+                if(el) el.innerText = (window.currentUserDisplayName || '') + '님';
+            });
+        }
+
+        // ✅ 청구의 모든것 이름 표시
+        if (pageId === 'page-claim-main') {
+            requestAnimationFrame(() => {
+                const el = document.getElementById('claim-user-name');
+                if(el) el.innerText = window.currentUserDisplayName || '안녕하세요';
             });
         }
 

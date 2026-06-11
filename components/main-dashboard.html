@@ -1,96 +1,106 @@
-<div class="top-banner-row">
-    <div class="wide-banner banner-purple" onclick="window.navigateTo('page-insure', 'nonlife');">
-        <div class="banner-info">
-            <div class="banner-icon">
-                <img src="아이콘/main.png" class="banner-anim-img" alt="보험사 전산 로고">
-            </div>
-            <div class="banner-title">
-                <h3>보험사 전산 시스템</h3>
-                <p>손해보험 및 생명보험 영업시스템 교차 조회</p>
-            </div>
+<!-- 상단 히어로 -->
+<div class="toss-hero" style="background: linear-gradient(135deg, #1D4ED8 0%, #3182F6 100%); margin-bottom: 20px;">
+    <div class="toss-hero-tag">보험가온포탈</div>
+    <p class="toss-hero-sub">토스인슈어런스 가온사업단</p>
+    <h1 class="toss-hero-title">안녕하세요 👋<br><span id="main-user-name">팀장님</span></h1>
+    <div style="display:flex; gap:10px; margin-top:20px; flex-wrap:wrap;">
+        <div onclick="window.navigateTo('page-insure', 'nonlife')" style="background:rgba(255,255,255,0.15); border-radius:14px; padding:12px 18px; cursor:pointer; flex:1; min-width:140px; transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+            <div style="font-size:20px; margin-bottom:6px;">🏢</div>
+            <div style="font-size:13px; font-weight:800; color:white;">보험사 전산</div>
+            <div style="font-size:11px; color:rgba(255,255,255,0.7); margin-top:2px;">손해·생명보험 시스템</div>
         </div>
-        <div class="arrow-circle"><i class="bi bi-arrow-right-short" style="font-size:24px;"></i></div>
-    </div>
-
-    <div class="wide-banner banner-purple" onclick="window.navigateTo('page-private');">
-        <div class="banner-info">
-            <div class="banner-icon">
-                <img src="아이콘/main2.png" class="banner-anim-img" alt="스마트 가온이 로고">
-            </div>
-            <div class="banner-title">
-                <h3>나의 전산 관리실</h3>
-                <p>복사+붙여넣기 AI 고객 추출 분석기 및 데이터베이스 연동</p>
-            </div>
+        <div onclick="window.navigateTo('page-private')" style="background:rgba(255,255,255,0.15); border-radius:14px; padding:12px 18px; cursor:pointer; flex:1; min-width:140px; transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+            <div style="font-size:20px; margin-bottom:6px;">🔒</div>
+            <div style="font-size:13px; font-weight:800; color:white;">전산 관리실</div>
+            <div style="font-size:11px; color:rgba(255,255,255,0.7); margin-top:2px;">AI 분석기 · DB 연동</div>
         </div>
-        <div class="arrow-circle"><i class="bi bi-arrow-right-short" style="font-size:24px;"></i></div>
     </div>
 </div>
 
-
-<div class="main-track-grid">
-    <div class="track-card track-pink">
-        <div>
-            <div class="tag-pill">— 번거로운 청구를 한 번에 —</div>
-            <h2>청구의<br>모든것</h2>
-            <p class="desc">다종 보험사 청구를 자동전환 일괄처리합니다.</p>
-            <div class="sub-link-group">
-                <div class="sub-link-item" onclick="window.navigateTo('page-docs')"><i class="bi bi-check-circle-fill"></i> 청구서류 자동 양식변환</div>
-                <div class="sub-link-item" onclick="window.navigateTo('page-call')"><i class="bi bi-check-circle-fill"></i> 고객센터 팩스 일괄처리</div>
-                <div class="sub-link-item" onclick="window.navigateTo('page-silbi')"><i class="bi bi-check-circle-fill"></i> 세대별 실비 계산 조회 지원</div>
-            </div>
+<!-- 업무 메뉴 -->
+<div style="background:white; border-radius:20px; padding:22px 20px; border:1px solid #F2F4F6; margin-bottom:16px;">
+    <div style="font-size:17px; font-weight:800; color:#191F28; margin-bottom:16px;">업무 메뉴</div>
+    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;">
+        <div class="toss-menu-item" onclick="window.navigateTo('page-claim-main')">
+            <div class="toss-menu-icon" style="background:#FFF0F0; color:#E11D48;"><i class="bi bi-send-fill"></i></div>
+            <span>청구의 모든것</span>
         </div>
-        <button class="track-btn" onclick="window.navigateTo('page-claim-main')">청구 시작하기 <i class="bi bi-chevron-right"></i></button>
-    </div>
-
-    <div class="track-card track-blue">
-        <div class="lock-overlay"><div class="coming-soon-ribbon"><i class="bi bi-lock-fill"></i> COMING SOON</div></div>
-        <div>
-            <div class="tag-pill">— 설계사의 업무 자동화 —</div>
-            <h2>고등의<br>모든것</h2>
-            <p class="desc">손해·생보 고객등록을 자동화하여 업무효율을 극대화합니다.</p>
-            <div class="sub-link-group">
-                <div class="sub-link-item"><i class="bi bi-circle"></i> 고객등록 자동처리</div>
-                <div class="sub-link-item"><i class="bi bi-circle"></i> 손본 보험사 다중연동</div>
-                <div class="sub-link-item"><i class="bi bi-circle"></i> 업무효율 200% 향상</div>
-            </div>
+        <div class="toss-menu-item" onclick="window.navigateTo('page-folder')">
+            <div class="toss-menu-icon" style="background:#FEF3C7; color:#D97706;"><i class="bi bi-folder-fill"></i></div>
+            <span>자료폴더</span>
         </div>
-        <button class="track-btn">출시 예정</button>
-    </div>
-
-    <div class="track-card track-purple">
-        <div class="lock-overlay"><div class="coming-soon-ribbon"><i class="bi bi-lock-fill"></i> COMING SOON</div></div>
-        <div>
-            <div class="tag-pill">— 진료기록 자동 분석 —</div>
-            <h2>심사의<br>모든것</h2>
-            <p class="desc">HIRA 데이터로 진료·상병·처방 내역을 자동 분석합니다.</p>
-            <div class="sub-link-group">
-                <div class="sub-link-item"><i class="bi bi-circle"></i> 진료·상병·처방 자동 수집</div>
-                <div class="sub-link-item"><i class="bi bi-circle"></i> HIRA 자동 연동</div>
-                <div class="sub-link-item"><i class="bi bi-circle"></i> 상병 자동 분류 시스템</div>
-            </div>
+        <div class="toss-menu-item" onclick="window.navigateTo('page-recruit')">
+            <div class="toss-menu-icon" style="background:#F0FDF4; color:#16A34A;"><i class="bi bi-briefcase-fill"></i></div>
+            <span>이직 컨설팅</span>
         </div>
-        <button class="track-btn">출시 예정</button>
-    </div>
-
-    <div class="track-card track-gold">
-        <div class="lock-overlay"><div class="coming-soon-ribbon"><i class="bi bi-lock-fill"></i> COMING SOON</div></div>
-        <div>
-            <div class="tag-pill">— 보험 설계 자동화 —</div>
-            <h2>설계의<br>모든것</h2>
-            <p class="desc">가온포탈에서 보험사별 설계업무를 더 편리하게 진행할 수 있습니다.</p>
-            <div class="sub-link-group">
-                <div class="sub-link-item"><i class="bi bi-circle"></i> 맞춤 상품 추천 엔진</div>
-                <div class="sub-link-item"><i class="bi bi-circle"></i> 최적화 설계안 제공</div>
-                <div class="sub-link-item"><i class="bi bi-circle"></i> 설계 시간 -80% 단축</div>
-            </div>
+        <div class="toss-menu-item" onclick="window.navigateTo('page-gongsil')">
+            <div class="toss-menu-icon" style="background:#F3E8FF; color:#7C3AED;"><i class="bi bi-clipboard-data-fill"></i></div>
+            <span>보험 공시실</span>
         </div>
-        <button class="track-btn">출시 예정</button>
     </div>
 </div>
 
-<div style="margin-top: 30px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
-    <button class="track-btn" style="background:#fff; color:#475569; border:1px solid #E2E8F0;" onclick="window.navigateTo('page-folder')">📁 보험 자료폴더</button>
-    <button class="track-btn" style="background:#fff; color:#475569; border:1px solid #E2E8F0;" onclick="window.navigateTo('page-recruit')">💼 이직 컨설팅 센터</button>
-    <button class="track-btn" style="background:#fff; color:#475569; border:1px solid #E2E8F0;" onclick="window.navigateTo('page-gongsil')">📋 보험사 공시실</button>
-    <button class="track-btn" style="background:#fff; color:#475569; border:1px solid #E2E8F0;" onclick="window.navigateTo('page-가온 오피스')">🔒가온 사업단 전용 오피스</button>
+<!-- 가온 오피스 -->
+<div onclick="window.navigateTo('page-가온 오피스')" style="background:white; border-radius:20px; padding:20px; border:1px solid #F2F4F6; margin-bottom:16px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:all 0.15s;" onmouseover="this.style.borderColor='#3182F6'" onmouseout="this.style.borderColor='#F2F4F6'">
+    <div style="display:flex; align-items:center; gap:14px;">
+        <div style="width:48px; height:48px; background:#EFF6FF; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px;">🔒</div>
+        <div>
+            <div style="font-size:15px; font-weight:800; color:#191F28;">가온사업단 전용 오피스</div>
+            <div style="font-size:12px; color:#8B95A1; margin-top:2px;">인가된 담당자 전용 보안 영역</div>
+        </div>
+    </div>
+    <i class="bi bi-chevron-right" style="color:#B0B8C1; font-size:18px;"></i>
 </div>
+
+<!-- 서비스 카드 -->
+<div style="background:white; border-radius:20px; padding:22px 20px; border:1px solid #F2F4F6; margin-bottom:16px;">
+    <div style="font-size:17px; font-weight:800; color:#191F28; margin-bottom:16px;">서비스</div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+        <div onclick="window.navigateTo('page-claim-main')" style="background:#EFF6FF; border-radius:16px; padding:20px; cursor:pointer; border:1px solid #DBEAFE; transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size:11px; font-weight:800; color:#3182F6; background:#DBEAFE; display:inline-block; padding:3px 10px; border-radius:20px; margin-bottom:10px;">활성</div>
+            <div style="font-size:18px; font-weight:900; color:#191F28; margin-bottom:6px;">청구의<br>모든것</div>
+            <div style="font-size:12px; color:#8B95A1;">다종 보험사 청구 자동처리</div>
+        </div>
+        <div style="background:#F9FAFB; border-radius:16px; padding:20px; border:1px solid #F2F4F6; position:relative; overflow:hidden;">
+            <div style="font-size:11px; font-weight:800; color:#8B95A1; background:#F2F4F6; display:inline-block; padding:3px 10px; border-radius:20px; margin-bottom:10px;">출시예정</div>
+            <div style="font-size:18px; font-weight:900; color:#C4CBD6; margin-bottom:6px;">고등의<br>모든것</div>
+            <div style="font-size:12px; color:#C4CBD6;">고객등록 자동화</div>
+            <i class="bi bi-lock-fill" style="position:absolute; bottom:16px; right:16px; color:#E2E8F0; font-size:22px;"></i>
+        </div>
+        <div style="background:#F9FAFB; border-radius:16px; padding:20px; border:1px solid #F2F4F6; position:relative; overflow:hidden;">
+            <div style="font-size:11px; font-weight:800; color:#8B95A1; background:#F2F4F6; display:inline-block; padding:3px 10px; border-radius:20px; margin-bottom:10px;">출시예정</div>
+            <div style="font-size:18px; font-weight:900; color:#C4CBD6; margin-bottom:6px;">심사의<br>모든것</div>
+            <div style="font-size:12px; color:#C4CBD6;">HIRA 자동 연동</div>
+            <i class="bi bi-lock-fill" style="position:absolute; bottom:16px; right:16px; color:#E2E8F0; font-size:22px;"></i>
+        </div>
+        <div style="background:#F9FAFB; border-radius:16px; padding:20px; border:1px solid #F2F4F6; position:relative; overflow:hidden;">
+            <div style="font-size:11px; font-weight:800; color:#8B95A1; background:#F2F4F6; display:inline-block; padding:3px 10px; border-radius:20px; margin-bottom:10px;">출시예정</div>
+            <div style="font-size:18px; font-weight:900; color:#C4CBD6; margin-bottom:6px;">설계의<br>모든것</div>
+            <div style="font-size:12px; color:#C4CBD6;">보험 설계 자동화</div>
+            <i class="bi bi-lock-fill" style="position:absolute; bottom:16px; right:16px; color:#E2E8F0; font-size:22px;"></i>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 메인 대시보드용 toss 스타일 */
+.toss-menu-item {
+    background: white; border-radius: 18px; padding: 20px 8px;
+    text-align:center; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    border: 1px solid #F2F4F6; transition: all 0.15s;
+}
+.toss-menu-item:hover { background:#F9FAFB; transform: translateY(-2px); }
+.toss-menu-icon {
+    width:46px; height:46px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+}
+.toss-menu-item span { font-size:13px; font-weight:700; color:#191F28; }
+.toss-hero {
+    border-radius: 24px; padding: 28px 24px 32px;
+    color: white; position: relative; margin-bottom: 16px;
+}
+.toss-hero-tag { font-size:14px; font-weight:700; opacity:0.85; margin-bottom:4px; }
+.toss-hero-sub { font-size:13px; opacity:0.7; margin-bottom:16px; }
+.toss-hero-title { font-size:26px; font-weight:800; line-height:1.4; letter-spacing:-0.5px; }
+</style>

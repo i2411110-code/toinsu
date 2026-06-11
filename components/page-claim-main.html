@@ -2,13 +2,14 @@
 
     <!-- 상단 헤더 -->
     <div class="toss-hero">
-        <button class="toss-home-btn" onclick="window.goBack()">
-            <i class="bi bi-house-fill"></i> 메인화면
+        <button class="toss-home-btn" onclick="window.goBack()" style="z-index:10; pointer-events:auto;">
+    <i class="bi bi-house-fill"></i> 메인화면
+</button>
         </button>
         <div class="toss-hero-tag">청구의 모든 것</div>
         <p class="toss-hero-sub">보험금 청구 자동화 시스템</p>
         <p class="toss-hero-date" id="claim-main-date"></p>
-        <h1 class="toss-hero-title">심현진님,<br>오늘도 좋은 하루 보내세요.</h1>
+        <h1 class="toss-hero-title"><span id="claim-user-name">안녕하세요</span>,<br>오늘도 좋은 하루 보내세요.</h1>
     </div>
 
     <!-- 4개 메뉴 -->
