@@ -1,0 +1,178 @@
+<div class="sub-page toss" style="display:block; padding: 0; background:transparent; box-shadow:none;">
+
+    <!-- 상단 헤더 -->
+    <div class="toss-hero">
+        <button class="toss-home-btn" onclick="window.goBack()">
+            <i class="bi bi-house-fill"></i> 메인화면
+        </button>
+        <div class="toss-hero-tag">청구의 모든 것</div>
+        <p class="toss-hero-sub">보험금 청구 자동화 시스템</p>
+        <p class="toss-hero-date" id="claim-main-date"></p>
+        <h1 class="toss-hero-title">심현진님,<br>오늘도 좋은 하루 보내세요.</h1>
+    </div>
+
+    <!-- 4개 메뉴 -->
+    <div class="toss-menu-grid">
+        <div class="toss-menu-item" onclick="window.navigateTo('page-docs')">
+            <div class="toss-menu-icon" style="background:#EEF2FF; color:#4F46E5;"><i class="bi bi-send-fill"></i></div>
+            <span>청구하기</span>
+        </div>
+        <div class="toss-menu-item" onclick="window.navigateTo('page-terms')">
+            <div class="toss-menu-icon" style="background:#EFF6FF; color:#2563EB;"><i class="bi bi-search-heart"></i></div>
+            <span>약관조회</span>
+        </div>
+        <div class="toss-menu-item" onclick="window.navigateTo('page-precedent')">
+            <div class="toss-menu-icon" style="background:#F0FDF4; color:#16A34A;"><i class="bi bi-bank2"></i></div>
+            <span>보험판례</span>
+        </div>
+        <div class="toss-menu-item" onclick="window.navigateTo('page-silbi')">
+            <div class="toss-menu-icon" style="background:#EFF6FF; color:#2563EB;"><i class="bi bi-calculator-fill"></i></div>
+            <span>실비계산기</span>
+        </div>
+    </div>
+
+    <!-- 공지 -->
+    <div class="toss-notice-bar" onclick="alert('공지사항: DB 손해보험 오류 관련 안내')">
+        <span class="toss-notice-tag">공지</span>
+        <span class="toss-notice-text">DB 손해보험 오류 관련 안내</span>
+        <i class="bi bi-chevron-right" style="color:#B0B8C1;"></i>
+    </div>
+
+    <!-- 광고 배너 -->
+    <div class="banner-wrapper center-banner toss-banner-wrap">
+        <div class="banner-box" onclick="window.open('여기에_클릭시_이동할_링크_주소')">
+            <img src="광고/광고.png" alt="광고배너" class="banner-img" onerror="this.parentElement.style.display='none'">
+        </div>
+    </div>
+
+    <!-- 청구 현황 -->
+    <div class="toss-card">
+        <div class="toss-card-head">
+            <div class="toss-card-title">청구 현황</div>
+            <span class="toss-link" onclick="window.navigateTo('page-docs')">전체보기 <i class="bi bi-chevron-right"></i></span>
+        </div>
+        <div class="toss-status-grid">
+            <div class="toss-status-box">
+                <div class="toss-status-num">0<span>건</span></div>
+                <div class="toss-status-label">전체 청구</div>
+            </div>
+            <div class="toss-status-box">
+                <div class="toss-status-num">0<span>건</span></div>
+                <div class="toss-status-label">임시 저장</div>
+            </div>
+            <div class="toss-status-box">
+                <div class="toss-status-num">0<span>건</span></div>
+                <div class="toss-status-label">발송완료</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 최근 청구 -->
+    <div class="toss-card">
+        <div class="toss-card-title" style="margin-bottom:16px;">최근 청구</div>
+        <div id="claim-recent-list" class="toss-empty">
+            <i class="bi bi-inbox"></i>
+            최근 청구 내역이 없습니다.
+        </div>
+    </div>
+
+</div>
+
+<style>
+/* ============ TOSS STYLE ============ */
+.toss { font-family: 'Noto Sans KR', sans-serif; color:#191F28; padding-bottom: 20px; }
+
+.toss-hero {
+    background: #3182F6;
+    border-radius: 24px;
+    padding: 28px 24px 32px;
+    color: white;
+    position: relative;
+    margin-bottom: 16px;
+}
+.toss-home-btn {
+    position:absolute; top:18px; right:18px;
+    background: rgba(255,255,255,0.18);
+    color:white; border:none;
+    padding: 8px 14px; border-radius: 20px;
+    font-size: 13px; font-weight: 700; cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+    transition: background 0.15s;
+}
+.toss-home-btn:hover { background: rgba(255,255,255,0.28); }
+.toss-hero-tag { font-size: 14px; font-weight: 700; opacity:0.85; margin-bottom:4px; }
+.toss-hero-sub { font-size: 13px; opacity:0.7; margin-bottom: 22px; }
+.toss-hero-date { font-size: 13px; opacity:0.75; margin-bottom: 4px; }
+.toss-hero-title { font-size: 24px; font-weight: 800; line-height:1.4; letter-spacing:-0.5px; }
+
+.toss-menu-grid {
+    display:grid; grid-template-columns: repeat(4, 1fr);
+    gap: 10px; margin-bottom: 16px;
+}
+.toss-menu-item {
+    background: white; border-radius: 18px; padding: 20px 8px;
+    text-align:center; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    border: 1px solid #F2F4F6;
+    transition: all 0.15s;
+}
+.toss-menu-item:hover { background:#F9FAFB; transform: translateY(-2px); }
+.toss-menu-icon {
+    width:46px; height:46px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+}
+.toss-menu-item span { font-size:13px; font-weight:700; color:#191F28; }
+
+.toss-notice-bar {
+    background:white; border-radius:14px; padding:14px 16px;
+    display:flex; align-items:center; gap:10px;
+    border:1px solid #F2F4F6; cursor:pointer; margin-bottom:16px;
+    transition: border-color 0.15s;
+}
+.toss-notice-bar:hover { border-color:#D1D6DB; }
+.toss-notice-tag {
+    background:#EFF6FF; color:#3182F6; font-size:11px; font-weight:800;
+    padding:4px 10px; border-radius:8px; flex-shrink:0;
+}
+.toss-notice-text { flex:1; font-size:14px; font-weight:600; color:#4E5968; }
+
+.toss-banner-wrap { margin-bottom:16px; }
+.toss-banner-wrap .banner-box { border-radius:18px; box-shadow:none; border:1px solid #F2F4F6; }
+
+.toss-card {
+    background:white; border-radius:20px; padding:22px 20px;
+    border:1px solid #F2F4F6; margin-bottom:16px;
+}
+.toss-card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.toss-card-title { font-size:17px; font-weight:800; color:#191F28; }
+.toss-link { font-size:13px; font-weight:700; color:#3182F6; cursor:pointer; }
+
+.toss-status-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.toss-status-box { background:#F9FAFB; border-radius:14px; padding:18px 8px; text-align:center; }
+.toss-status-num { font-size:22px; font-weight:800; color:#191F28; }
+.toss-status-num span { font-size:13px; font-weight:700; color:#8B95A1; margin-left:2px; }
+.toss-status-label { font-size:12px; color:#8B95A1; font-weight:600; margin-top:6px; }
+
+.toss-empty {
+    text-align:center; color:#B0B8C1; font-size:14px; padding:40px 0;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+}
+.toss-empty i { font-size:32px; color:#E5E8EB; }
+
+@media (max-width: 640px) {
+    .toss-menu-grid { gap:8px; }
+    .toss-menu-item { padding:16px 4px; }
+    .toss-menu-item span { font-size:11px; }
+    .toss-menu-icon { width:40px; height:40px; font-size:18px; }
+    .toss-hero-title { font-size:20px; }
+}
+</style>
+
+<script>
+(function(){
+    const days = ['일','월','화','수','목','금','토'];
+    const now = new Date();
+    const el = document.getElementById('claim-main-date');
+    if(el) el.innerText = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+})();
+</script>

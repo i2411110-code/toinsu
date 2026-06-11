@@ -1,0 +1,210 @@
+<div class="sub-page toss" style="display:block; padding: 0; background:transparent; box-shadow:none;">
+
+    <!-- 상단 헤더 -->
+    <div class="toss-hero" style="background:#3182F6;">
+        <button class="toss-home-btn" onclick="window.navigateTo('page-claim-main')">
+            <i class="bi bi-arrow-left"></i> 청구의 모든것
+        </button>
+        <div class="toss-hero-tag"><i class="bi bi-search-heart"></i> 약관조회</div>
+        <p class="toss-hero-sub">보험사별 약관 및 상품공시 바로가기</p>
+        <h1 class="toss-hero-title" style="font-size:22px;">필요한 약관을<br>빠르게 찾아보세요</h1>
+    </div>
+
+    <!-- 손해/생명 탭 -->
+    <div class="toss-tab-group">
+        <button id="terms-tab-nonlife" class="toss-tab-btn active" onclick="window.switchTermsTab('nonlife')">손해보험</button>
+        <button id="terms-tab-life" class="toss-tab-btn" onclick="window.switchTermsTab('life')">생명보험</button>
+    </div>
+
+    <!-- 손해보험 -->
+    <div id="terms-grid-nonlife" class="toss-logo-grid">
+
+        <div class="toss-logo-card" onclick="window.open('https://www.idbins.com/FWMAIV1534.do')">
+            <img src="보험사 로고/db.png" alt="DB손해보험">
+            <span>DB손해보험</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.samsungfire.com/vh/page/VH.HPIF0103.do')">
+            <img src="보험사 로고/samsung.png" alt="삼성화재">
+            <span>삼성화재</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.hwgeneralins.com/notice/ir/main.do')">
+            <img src="보험사 로고/hanwha.png" alt="한화손해보험">
+            <span>한화손해보험</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.hi.co.kr/serviceAction.do?menuId=100932')">
+            <img src="보험사 로고/hyundai.png" alt="현대해상">
+            <span>현대해상</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.meritzfire.com/disclosure/product-announcement/product-list.do#!/')">
+            <img src="보험사 로고/meritz.png" alt="메리츠화재">
+            <span>메리츠화재</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.lotteins.co.kr/index2.jsp')">
+            <img src="보험사 로고/lotte.png" alt="롯데손해보험">
+            <span>롯데손해보험</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.kbinsure.co.kr/CG802030001.ecs')">
+            <img src="보험사 로고/kb.png" alt="KB손해보험">
+            <span>KB손해보험</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.yebyeol.co.kr/PB031210DM.scp?menuId=MN0803006')">
+            <img src="보험사 로고/mg.png" alt="MG새마을금고">
+            <span>MG새마을금고</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.nhfire.co.kr/announce/productAnnounce/retrieveInsuranceProductsAnnounce.nhfire')">
+            <img src="보험사 로고/nh.png" alt="NH농협손해">
+            <span>NH농협손해</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.hanainsure.co.kr/w/disclosure/product/saleProduct')">
+            <img src="보험사 로고/hana.png" alt="하나손해보험">
+            <span>하나손해보험</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.heungkukfire.co.kr/FRW/announce/insGoodsGongsiSale.do')">
+            <img src="보험사 로고/heungkuk.png" alt="흥국화재">
+            <span>흥국화재</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.heungkukfire.co.kr/FRW/announce/insGoodsGongsiSale.do')">
+            <img src="보험사 로고/aig.png" alt="AIG손해보험">
+            <span>AIG손해보험</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.chubb.com/kr-kr/disclosure/product.html')">
+            <img src="보험사 로고/lina.png" alt="라이나손해보험">
+            <span>라이나손해보험</span>
+        </div>
+
+    </div>
+
+    <!-- 생명보험 -->
+    <div id="terms-grid-life" class="toss-logo-grid" style="display:none;">
+
+        <div class="toss-logo-card" onclick="window.open('https://www.kyobo.com/dgt/web/product-official/all-product/search')">
+            <img src="보험사 로고/kyobo.png" alt="교보생명">
+            <span>교보생명</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.shinhanlife.co.kr/hp/cdhi0030.do')">
+            <img src="보험사 로고/shinhanlife.png" alt="신한라이프">
+            <span>신한라이프</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://brand.metlife.co.kr/pn/paReal/insuProductDisclMain.do')">
+            <img src="보험사 로고/metlife.png" alt="메트라이프">
+            <span>메트라이프</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.samsunglife.com/individual/products/disclosure/sales/PDO-PRPRI010110M')">
+            <img src="보험사 로고/samsunglife.png" alt="삼성생명">
+            <span>삼성생명</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.kdblife.com/ajax.do?scrId=HDLMA000M00P')">
+            <img src="보험사 로고/kdblife.png" alt="KDB생명">
+            <span>KDB생명</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.kblife.co.kr/customer-common/productList.do')">
+            <img src="보험사 로고/kblife.png" alt="KB라이프">
+            <span>KB라이프</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.heungkuklife.co.kr/front/public/saleProduct.do')">
+            <img src="보험사 로고/heungkuklife.png" alt="흥국생명">
+            <span>흥국생명</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.idblife.com/notice/product/sale')">
+            <img src="보험사 로고/dblife.png" alt="DB생명">
+            <span>DB생명</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://pbano.myangel.co.kr/paging/WE_AC_WEPAAP020100L')">
+            <img src="보험사 로고/tongyang.png" alt="동양생명">
+            <span>동양생명</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.abllife.co.kr/st/pban/prdtPban/whlPrdt/whlPrdt1/whlPrdt11?page=index')">
+            <img src="보험사 로고/abl.png" alt="ABL생명">
+            <span>ABL생명</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.ibki.co.kr/process/HP_PBANO_PDT_SP_INDV')">
+            <img src="보험사 로고/ibk.png" alt="IBK연금보험">
+            <span>IBK연금보험</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.lina.co.kr/disclosure/product-public-announcement/product-on-sales?key=0')">
+            <img src="보험사 로고/linalife.png" alt="라이나생명">
+            <span>라이나생명</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.hanwhalife.com/main/disclosure/main/DF_0000000_P00000.do')">
+            <img src="보험사 로고/hanwhalife.png" alt="한화생명">
+            <span>한화생명</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.hanalife.co.kr/anm/product/allProduct.do?status=on')">
+            <img src="보험사 로고/hanalife.png" alt="하나생명">
+            <span>하나생명</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://life.miraeasset.com/micro/disclosure/product/PC-HO-080301-000000.do')">
+            <img src="보험사 로고/miraeasset.png" alt="미래에셋생명">
+            <span>미래에셋생명</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.nhlife.co.kr/ho/ig/HOIG0000M00.nhl')">
+            <img src="보험사 로고/nhlife.png" alt="농협생명">
+            <span>농협생명</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.aia.co.kr/ko/disclosure/our-products/disclosing-process.html')">
+            <img src="보험사 로고/aia.png" alt="AIA생명">
+            <span>AIA생명</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.chubblife.co.kr/front/official/sale/listSale.do')">
+            <img src="보험사 로고/chubb.png" alt="처브라이프">
+            <span>처브라이프</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.cardif.co.kr/disclosure/papag101.do')">
+            <img src="보험사 로고/cardif.png" alt="카디프생명">
+            <span>카디프생명</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.fubonhyundai.com/#CUSI150102010101')">
+            <img src="보험사 로고/fubon.png" alt="푸본현대">
+            <span>푸본현대</span>
+        </div>
+        <div class="toss-logo-card" onclick="window.open('https://www.imlifeins.co.kr/BA/BA_A020.do')">
+            <img src="보험사 로고/imlife.png" alt="IM라이프">
+            <span>IM라이프</span>
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+.toss-tab-group {
+    display:flex; background:#F2F4F6; padding:4px; border-radius:14px;
+    margin-bottom:18px; gap:4px;
+}
+.toss-tab-btn {
+    flex:1; padding:13px; border:none; border-radius:11px;
+    font-weight:800; font-size:14px; cursor:pointer;
+    background:transparent; color:#8B95A1; transition:all 0.15s;
+    font-family:'Noto Sans KR', sans-serif;
+}
+.toss-tab-btn.active { background:white; color:#3182F6; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+
+.toss-logo-grid {
+    display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap:10px;
+}
+.toss-logo-card {
+    background:white; border-radius:16px; padding:18px 12px;
+    display:flex; flex-direction:column; align-items:center; gap:12px;
+    border:1px solid #F2F4F6; cursor:pointer; transition:all 0.15s;
+}
+.toss-logo-card:hover { border-color:#3182F6; transform:translateY(-2px); }
+.toss-logo-card img { max-width:80%; max-height:36px; object-fit:contain; }
+.toss-logo-card span { font-size:12px; font-weight:700; color:#4E5968; }
+</style>
+
+<script>
+window.switchTermsTab = function(type) {
+    const nonlifeTab = document.getElementById('terms-tab-nonlife');
+    const lifeTab    = document.getElementById('terms-tab-life');
+    const gridNon    = document.getElementById('terms-grid-nonlife');
+    const gridLife   = document.getElementById('terms-grid-life');
+    if (type === 'nonlife') {
+        nonlifeTab.classList.add('active'); lifeTab.classList.remove('active');
+        gridNon.style.display = 'grid'; gridLife.style.display = 'none';
+    } else {
+        lifeTab.classList.add('active'); nonlifeTab.classList.remove('active');
+        gridNon.style.display = 'none'; gridLife.style.display = 'grid';
+    }
+};
+</script>
