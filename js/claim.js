@@ -170,9 +170,26 @@ window.generateHyundai5PagePDF = async function() {
     try {
         const { PDFDocument, rgb } = window.PDFLib; // CDN에서 로드된 pdf-lib 사용
 
-        // ⚠️ 깃허브 경로에 맞게 파일 위치를 조정하세요
+        // ⚠️ 여기서 폰트 이름을 팀장님이 가진 otf 파일로 정확히 바꿨습니다!
         const formUrl = './forms/hyundai.pdf'; 
-        const fontUrl = './fonts/NotoSansKR-Regular.ttf';
+        const fontUrl = './fonts/NotoSansKR-Black.otf'; 
+
+        // 파일 다운로드 시도
+        const pdfRes = await fetch(formUrl);
+        const fontRes = await fetch(fontUrl);
+
+        // [핵심] 파일이 없으면 뭐가 없는지 정확히 알려줍니다.
+        if (!pdfRes.ok) {
+            throw new Error(`현대해상 PDF 양식을 찾을 수 없습니다.\n깃허브에 forms 폴더와 hyundai.pdf 파일이 있는지 확인하세요.`);
+        }
+        if (!fontRes.ok) {
+            throw new Error(`폰트 파일을 찾을 수 없습니다.\n깃허브에 fonts 폴더와 NotoSansKR-Black.otf 파일이 있는지 확인하세요.`);
+        }
+
+        const [pdfBytes, fontBytes] = await Promise.all([
+            pdfRes.arrayBuffer(),
+            fontRes.arrayBuffer()
+        ]);
 
         const [pdfBytes, fontBytes] = await Promise.all([
             fetch(formUrl).then(res => res.arrayBuffer()),
@@ -248,7 +265,8 @@ window.generateHyundai5PagePDF = async function() {
 
     } catch (error) {
         console.error("PDF 생성 오류:", error);
-        alert("청구서 생성 중 오류가 발생했습니다. (경로나 파일명을 확인해주세요)");
+        // 에러 창에 진짜 원인을 띄워줍니다.
+        alert("오류 원인:\n" + error.message);
     } finally {
         btn.innerHTML = originalHTML;
         btn.disabled = false;
