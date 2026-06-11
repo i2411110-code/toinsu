@@ -224,80 +224,83 @@ window.generateHyundai5PagePDF = async function() {
         }
         const signOpt = { width: 60, height: 30 };
 
-       // 피보험자 성명 - 라벨("성 명")과 겹치지 않게, 셀 중앙: x:120.7~205.3, y:577.2~599.8
-pages[0].drawText(name, { x: 145, y: 584, size: 11, ...txtOpt });
+        // 피보험자 성명 - 라벨("성 명")과 겹치지 않게, 셀 중앙: x:120.7~205.3, y:577.2~599.8
+        pages[0].drawText(name, { x: 145, y: 584, size: 11, ...txtOpt });
 
-// 주민번호 - 셀 x:250.6~567.4 (폭 316.8), y:577.2~599.8
-// 13자리를 칸처럼 보이게 자간을 줘서 한 글자씩 출력
-const jumin = "9608141284615"; // 6자리+7자리
-const juminFull = jumin.slice(0,6) + "-" + jumin.slice(6); // 표시용
-let jx = 270;
-for (const ch of juminFull) {
-  pages[0].drawText(ch, { x: jx, y: 584, size: 11, ...txtOpt });
-  jx += 16; // 글자 간격(칸 너비)
-}
+        // 주민번호 - 셀 x:250.6~567.4 (폭 316.8), y:577.2~599.8
+        // 13자리를 칸처럼 보이게 자간을 줘서 한 글자씩 출력
+        // [수정됨] 하드코딩된 변수 중복 선언 제거, 상단에서 수집한 jumin 변수 사용
+        const juminFull = jumin.slice(0,6) + "-" + jumin.slice(6); // 표시용
+        let jx = 270;
+        for (const ch of juminFull) {
+          pages[0].drawText(ch, { x: jx, y: 584, size: 11, ...txtOpt });
+          jx += 16; // 글자 간격(칸 너비)
+        }
 
-// 연락처 - 셀 x:120.7~401.9, y:486.8~509.4
-const phone = "01028874291";
-let px = 145;
-for (const ch of phone) {
-  pages[0].drawText(ch, { x: px, y: 494, size: 11, ...txtOpt });
-  px += 17;
-}
+        // 연락처 - 셀 x:120.7~401.9, y:486.8~509.4
+        // [수정됨] 하드코딩된 변수 중복 선언 제거, 상단에서 수집한 phone 변수 사용
+        let px = 145;
+        for (const ch of phone) {
+          pages[0].drawText(ch, { x: px, y: 494, size: 11, ...txtOpt });
+          px += 17;
+        }
 
-// 작성일자 - "20"은 인쇄돼있으므로 26/06/11만, y:372.2~404.4 행, x:81.1~333.6 영역 안에서
-// "20 년 월 일" 라벨 위치에 맞춰 숫자만 겹쳐쓰기
-pages[0].drawText("26", { x: 110, y: 382, size: 11, ...txtOpt });
-pages[0].drawText(month, { x: 165, y: 382, size: 11, ...txtOpt });
-pages[0].drawText(day, { x: 215, y: 382, size: 11, ...txtOpt });
+        // 작성일자 - "20"은 인쇄돼있으므로 26/06/11만, y:372.2~404.4 행, x:81.1~333.6 영역 안에서
+        // "20 년 월 일" 라벨 위치에 맞춰 숫자만 겹쳐쓰기
+        pages[0].drawText("26", { x: 110, y: 382, size: 11, ...txtOpt });
+        pages[0].drawText(month, { x: 165, y: 382, size: 11, ...txtOpt });
+        pages[0].drawText(day, { x: 215, y: 382, size: 11, ...txtOpt });
 
-// 보험금청구인(대리인) 성명 - x:380.4~562.3, y:372.2~404.4 셀, "성 명" 라벨 위에 겹치게
-pages[0].drawText(name, { x: 430, y: 388, size: 12, font: boldFont, ...txtOpt });
+        // 보험금청구인(대리인) 성명 - x:380.4~562.3, y:372.2~404.4 셀, "성 명" 라벨 위에 겹치게
+        // [수정됨] 존재하지 않는 boldFont 제거
+        pages[0].drawText(name, { x: 430, y: 388, size: 12, ...txtOpt });
 
-// (서명) 위에 겹쳐서, 굵게
-if (signImage) {
-  pages[0].drawImage(signImage, { x: 500, y: 376, width: 55, height: 22 });
-}
+        // (서명) 위에 겹쳐서, 굵게
+        if (signImage) {
+          pages[0].drawImage(signImage, { x: 500, y: 376, width: 55, height: 22 });
+        }
 
-// 보험금청구인(대리인) 성명 - 셀 x:380.4~562.3, y:404.4~427.0
-// "성 명" 글자 위에 겹치도록 같은 좌표
-pages[0].drawText(name, { x: 430, y: 412, font: boldFont, ...txtOpt });
-// 서명 - "(서명)" 칸 위에 겹쳐서, 더 두꺼운 폰트로
-if (signImage) pages[0].drawImage(signImage, { x: 500, y: 405, width: 60, height: 22 });
+        // 보험금청구인(대리인) 성명 - 셀 x:380.4~562.3, y:404.4~427.0
+        // "성 명" 글자 위에 겹치도록 같은 좌표
+        // [수정됨] 존재하지 않는 boldFont 제거
+        pages[0].drawText(name, { x: 430, y: 412, ...txtOpt });
+        // 서명 - "(서명)" 칸 위에 겹쳐서, 더 두꺼운 폰트로
+        if (signImage) pages[0].drawImage(signImage, { x: 500, y: 405, width: 60, height: 22 });
 
         // 2페이지(원본 pages[1]) - 동의 항목 3개
-pages[1].drawText(checkMark, { x: 513, y: 416, ...checkOpt }); // 고유식별정보
-pages[1].drawText(checkMark, { x: 513, y: 311, ...checkOpt }); // 민감정보
-pages[1].drawText(checkMark, { x: 513, y: 188, ...checkOpt }); // 개인(신용)정보
+        pages[1].drawText(checkMark, { x: 513, y: 416, ...checkOpt }); // 고유식별정보
+        pages[1].drawText(checkMark, { x: 513, y: 311, ...checkOpt }); // 민감정보
+        pages[1].drawText(checkMark, { x: 513, y: 188, ...checkOpt }); // 개인(신용)정보
 
-// 3페이지(원본 pages[2]) - 국내제공 2개
-pages[2].drawText(checkMark, { x: 513, y: 288, ...checkOpt }); // 고유식별정보 제공
-pages[2].drawText(checkMark, { x: 513, y: 188, ...checkOpt }); // 민감정보 제공
+        // 3페이지(원본 pages[2]) - 국내제공 2개
+        pages[2].drawText(checkMark, { x: 513, y: 288, ...checkOpt }); // 고유식별정보 제공
+        pages[2].drawText(checkMark, { x: 513, y: 188, ...checkOpt }); // 민감정보 제공
 
-// 4페이지(원본 pages[3]) - 일반개인정보/국외이전 4개
-pages[3].drawText(checkMark, { x: 513, y: 645, ...checkOpt }); // 일반개인정보 제공
-pages[3].drawText(checkMark, { x: 513, y: 226, ...checkOpt }); // 민감정보(국외)
-pages[3].drawText(checkMark, { x: 513, y: 134, ...checkOpt }); // 개인(신용)정보(국외)
-// (참고: 4페이지에 항목이 더 있을 수 있으니 페이지 텍스트 재확인 필요)
+        // 4페이지(원본 pages[3]) - 일반개인정보/국외이전 4개
+        pages[3].drawText(checkMark, { x: 513, y: 645, ...checkOpt }); // 일반개인정보 제공
+        pages[3].drawText(checkMark, { x: 513, y: 226, ...checkOpt }); // 민감정보(국외)
+        pages[3].drawText(checkMark, { x: 513, y: 134, ...checkOpt }); // 개인(신용)정보(국외)
+        // (참고: 4페이지에 항목이 더 있을 수 있으니 페이지 텍스트 재확인 필요)
 
-// 5페이지(원본 pages[4]) - 조회 동의 3개
-pages[4].drawText(checkMark, { x: 513, y: 564, ...checkOpt }); // 고유식별정보 조회
-pages[4].drawText(checkMark, { x: 513, y: 518, ...checkOpt }); // 민감정보 조회
-pages[4].drawText(checkMark, { x: 513, y: 429, ...checkOpt }); // 개인(신용)정보 조회
+        // 5페이지(원본 pages[4]) - 조회 동의 3개
+        pages[4].drawText(checkMark, { x: 513, y: 564, ...checkOpt }); // 고유식별정보 조회
+        pages[4].drawText(checkMark, { x: 513, y: 518, ...checkOpt }); // 민감정보 조회
+        pages[4].drawText(checkMark, { x: 513, y: 429, ...checkOpt }); // 개인(신용)정보 조회
 
-// 동의일자 - 칸 한 개당 숫자 한 개, y: 362.7~385.3
-const yearDigits = year, monthDigits=month, dayDigits=day;
-const yearX = [117, 156, 195, 234];
-const monthX = [301, 341];
-const dayX = [408, 447];
-yearDigits.split('').forEach((d,i)=> pages[4].drawText(d, {x: yearX[i]+8, y: 369, size: 11, ...txtOpt}));
-monthDigits.split('').forEach((d,i)=> pages[4].drawText(d, {x: monthX[i]+8, y: 369, size: 11, ...txtOpt}));
-dayDigits.split('').forEach((d,i)=> pages[4].drawText(d, {x: dayX[i]+8, y: 369, size: 11, ...txtOpt}));
+        // 동의일자 - 칸 한 개당 숫자 한 개, y: 362.7~385.3
+        const yearDigits = year, monthDigits=month, dayDigits=day;
+        const yearX = [117, 156, 195, 234];
+        const monthX = [301, 341];
+        const dayX = [408, 447];
+        yearDigits.split('').forEach((d,i)=> pages[4].drawText(d, {x: yearX[i]+8, y: 369, size: 11, ...txtOpt}));
+        monthDigits.split('').forEach((d,i)=> pages[4].drawText(d, {x: monthX[i]+8, y: 369, size: 11, ...txtOpt}));
+        dayDigits.split('').forEach((d,i)=> pages[4].drawText(d, {x: dayX[i]+8, y: 369, size: 11, ...txtOpt}));
 
-// 동의자 본인 - 성명 셀 x:89.6~212.4, 서명 셀 x:419.7~554.1, y:275.8~315.3
-// "성 명" / "서 명" 글자 위에 겹쳐 쓰기
-pages[4].drawText(name, { x: 130, y: 290, size: 12, font: boldFont, ...txtOpt });
-if (signImage) pages[4].drawImage(signImage, { x: 460, y: 283, width: 70, height: 25 });
+        // 동의자 본인 - 성명 셀 x:89.6~212.4, 서명 셀 x:419.7~554.1, y:275.8~315.3
+        // "성 명" / "서 명" 글자 위에 겹쳐 쓰기
+        // [수정됨] 존재하지 않는 boldFont 제거
+        pages[4].drawText(name, { x: 130, y: 290, size: 12, ...txtOpt });
+        if (signImage) pages[4].drawImage(signImage, { x: 460, y: 283, width: 70, height: 25 });
 
         // 완성된 PDF 미리보기 (새 탭에서 열기)
         const pdfResultBytes = await pdfDoc.save();
