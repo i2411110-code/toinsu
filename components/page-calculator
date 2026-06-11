@@ -1,0 +1,204 @@
+<div class="sub-page toss" style="display:block; padding: 0; background:transparent; box-shadow:none;">
+
+    <div class="toss-hero" style="background:#0284C7;">
+        <button class="toss-home-btn" onclick="window.goBack()">
+            <i class="bi bi-house-fill"></i> 메인화면
+        </button>
+        <div class="toss-hero-tag"><i class="bi bi-calculator-fill"></i> 재무 계산기</div>
+        <p class="toss-hero-sub">가온사업단 맞춤형 재무설계 도구</p>
+        <h1 class="toss-hero-title" style="font-size:24px;">상담에 꼭 필요한<br>계산기 모음입니다.</h1>
+    </div>
+
+    <div style="display: flex; background: white; padding: 4px; border-radius: 12px; margin: 0 4px 16px; border: 1px solid #F2F4F6;">
+        <button id="tab-calc-1" onclick="window.switchCalcTab('calc-1')" style="flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; background: #EFF6FF; color: #2563EB; transition: all 0.2s;">화폐가치</button>
+        <button id="tab-calc-2" onclick="window.switchCalcTab('calc-2')" style="flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; background: transparent; color: #8B95A1; transition: all 0.2s;">예금·적금</button>
+        <button id="tab-calc-3" onclick="window.switchCalcTab('calc-3')" style="flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; background: transparent; color: #8B95A1; transition: all 0.2s;">연금</button>
+    </div>
+
+    <div style="padding: 0 4px;">
+
+        <div id="view-calc-1" class="toss-card" style="display: block;">
+            <div class="toss-card-title" style="margin-bottom: 16px;">시간의 경과에 따른 화폐가치</div>
+            <div class="form-group">
+                <label>현재 금액 (원)</label>
+                <input type="number" id="fv_present" class="form-control" placeholder="예: 10000000">
+            </div>
+            <div class="form-group">
+                <label>예상 물가상승률 (%)</label>
+                <input type="number" id="fv_rate" class="form-control" placeholder="예: 3" value="3">
+            </div>
+            <div class="form-group">
+                <label>기간 (년)</label>
+                <input type="number" id="fv_years" class="form-control" placeholder="예: 10">
+            </div>
+            <button class="btn-action" onclick="window.calcFutureValue()">결과 계산하기</button>
+            
+            <div id="fv_result_box" class="result-box" style="display: none; background:#F8FAFC; border-color:#3182F6;">
+                <p style="font-size:13px; color:#64748B;">미래의 체감 가치 금액:</p>
+                <h3 id="fv_result_val" style="font-size:22px; font-weight:800; color:#191F28; margin-top:4px;">0원</h3>
+                <p style="font-size:11px; color:#8B95A1; margin-top:8px;">* 입력하신 물가상승률로 화폐가치가 하락했을 때를 가정한 금액입니다.</p>
+            </div>
+        </div>
+
+        <div id="view-calc-2" class="toss-card" style="display: none;">
+            <div class="toss-card-title" style="margin-bottom: 16px;">단리 · 복리 만기금액 계산</div>
+            <div class="form-group">
+                <label>계산 종류</label>
+                <select id="sv_type" class="form-control">
+                    <option value="deposit">예금 (목돈 굴리기)</option>
+                    <option value="savings">적금 (매월 모으기)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>금액 (원)</label>
+                <input type="number" id="sv_amount" class="form-control" placeholder="원금 또는 매월 납입액">
+            </div>
+            <div class="form-group">
+                <label>연 이자율 (%)</label>
+                <input type="number" id="sv_rate" class="form-control" placeholder="예: 4.5">
+            </div>
+            <div class="form-group">
+                <label>가입 기간 (개월)</label>
+                <input type="number" id="sv_months" class="form-control" placeholder="예: 12">
+            </div>
+            <button class="btn-action" style="background:#16A34A;" onclick="window.calcSavings()">결과 계산하기</button>
+
+            <div id="sv_result_box" class="result-box" style="display: none; background:#F0FDF4; border-color:#16A34A;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <span style="font-size:13px; color:#64748B;">원금 총액</span>
+                    <span id="sv_principal" style="font-weight:700;">0원</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <span style="font-size:13px; color:#64748B;">세전 이자</span>
+                    <span id="sv_interest" style="font-weight:700; color:#16A34A;">0원</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; border-top:1px solid #DCFCE7; padding-top:10px; margin-top:5px;">
+                    <span style="font-size:14px; font-weight:800; color:#191F28;">세후 수령액 (15.4% 공제)</span>
+                    <span id="sv_total" style="font-size:18px; font-weight:900; color:#191F28;">0원</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-calc-3" class="toss-card" style="display: none;">
+            <div class="toss-card-title" style="margin-bottom: 16px;">은퇴자금 · 연금액 계산</div>
+            <div class="form-group">
+                <label>현재 연령 (세)</label>
+                <input type="number" id="pn_current_age" class="form-control" placeholder="예: 35">
+            </div>
+            <div class="form-group">
+                <label>연금 수령 시작 연령 (세)</label>
+                <input type="number" id="pn_start_age" class="form-control" placeholder="예: 65">
+            </div>
+            <div class="form-group">
+                <label>매월 납입액 (원)</label>
+                <input type="number" id="pn_monthly" class="form-control" placeholder="예: 300000">
+            </div>
+            <div class="form-group">
+                <label>예상 연 수익률 (%)</label>
+                <input type="number" id="pn_rate" class="form-control" placeholder="예: 5" value="5">
+            </div>
+            <button class="btn-action" style="background:#D97706;" onclick="window.calcPension()">결과 계산하기</button>
+
+            <div id="pn_result_box" class="result-box" style="display: none; background:#FEF3C7; border-color:#D97706;">
+                <p style="font-size:13px; color:#92400E;">연금 개시 시점 예상 적립액:</p>
+                <h3 id="pn_result_total" style="font-size:22px; font-weight:800; color:#92400E; margin-top:4px;">0원</h3>
+                <p style="font-size:11px; color:#B45309; margin-top:8px;">* 매월 납입(복리) 기준 단순 예상치이며, 실제 수령액은 차이가 있을 수 있습니다.</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// --- [UI 탭 전환 로직] ---
+window.switchCalcTab = function(tabId) {
+    // 탭 버튼 스타일 초기화
+    document.querySelectorAll('[id^="tab-calc-"]').forEach(btn => {
+        btn.style.background = 'transparent';
+        btn.style.color = '#8B95A1';
+    });
+    // 콘텐츠 뷰 초기화
+    document.querySelectorAll('[id^="view-calc-"]').forEach(view => {
+        view.style.display = 'none';
+    });
+
+    // 선택된 탭 스타일 적용
+    const selectedBtn = document.getElementById('tab-' + tabId);
+    selectedBtn.style.background = '#EFF6FF';
+    selectedBtn.style.color = '#2563EB';
+    
+    // 탭별 고유 컬러 적용
+    if(tabId === 'calc-2') { selectedBtn.style.background = '#F0FDF4'; selectedBtn.style.color = '#16A34A'; }
+    if(tabId === 'calc-3') { selectedBtn.style.background = '#FEF3C7'; selectedBtn.style.color = '#D97706'; }
+
+    // 선택된 뷰 표시
+    document.getElementById('view-' + tabId).style.display = 'block';
+};
+
+// --- [계산기 1: 화폐가치 로직] ---
+window.calcFutureValue = function() {
+    const pv = Number(document.getElementById('fv_present').value);
+    const rate = Number(document.getElementById('fv_rate').value) / 100;
+    const years = Number(document.getElementById('fv_years').value);
+
+    if(!pv || !years) return alert("현재 금액과 기간을 입력해주세요.");
+
+    // 물가상승을 감안한 현재 화폐의 미래 체감 가치 = PV / (1 + rate)^years
+    // (또는 미래의 목표를 위해 필요한 금액 = PV * (1 + rate)^years)
+    // 고객 안내용이므로 직관적인 '구매력 하락' 수치를 보여주도록 계산 (PV / (1+r)^n)
+    const futureValue = pv / Math.pow(1 + rate, years);
+    
+    document.getElementById('fv_result_val').innerText = Math.round(futureValue).toLocaleString() + "원";
+    document.getElementById('fv_result_box').style.display = 'block';
+};
+
+// --- [계산기 2: 예금적금 로직 (단리 기준)] ---
+window.calcSavings = function() {
+    const type = document.getElementById('sv_type').value;
+    const amount = Number(document.getElementById('sv_amount').value);
+    const rate = Number(document.getElementById('sv_rate').value) / 100;
+    const months = Number(document.getElementById('sv_months').value);
+
+    if(!amount || !months) return alert("금액과 기간을 입력해주세요.");
+
+    let principal = 0;
+    let interest = 0;
+
+    if (type === 'deposit') {
+        // 거치식 예금 단리 이자
+        principal = amount;
+        interest = amount * rate * (months / 12);
+    } else {
+        // 적립식 적금 단리 이자: 월납입액 * 이자율 * (월수*(월수+1)/2) / 12
+        principal = amount * months;
+        interest = amount * rate * (months * (months + 1) / 2) / 12;
+    }
+
+    const tax = interest * 0.154; // 이자소득세 15.4%
+    const total = principal + interest - tax;
+
+    document.getElementById('sv_principal').innerText = Math.round(principal).toLocaleString() + "원";
+    document.getElementById('sv_interest').innerText = Math.round(interest).toLocaleString() + "원";
+    document.getElementById('sv_total').innerText = Math.round(total).toLocaleString() + "원";
+    document.getElementById('sv_result_box').style.display = 'block';
+};
+
+// --- [계산기 3: 연금 로직 (월복리 미래가치)] ---
+window.calcPension = function() {
+    const currentAge = Number(document.getElementById('pn_current_age').value);
+    const startAge = Number(document.getElementById('pn_start_age').value);
+    const monthly = Number(document.getElementById('pn_monthly').value);
+    const rate = Number(document.getElementById('pn_rate').value) / 100;
+
+    if(!monthly || startAge <= currentAge) return alert("정확한 연령과 납입액을 입력해주세요.");
+
+    const months = (startAge - currentAge) * 12;
+    const monthlyRate = rate / 12;
+    
+    // 월복리 연금 종가(FV) 공식: PMT * (((1 + r)^n - 1) / r) * (1 + r)
+    const futureValue = monthly * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate) * (1 + monthlyRate);
+
+    document.getElementById('pn_result_total').innerText = Math.round(futureValue).toLocaleString() + "원";
+    document.getElementById('pn_result_box').style.display = 'block';
+};
+</script>
