@@ -168,17 +168,17 @@ window.generateHyundai5PagePDF = async function() {
     btn.disabled = true;
 
     try {
-        const { PDFDocument, rgb } = window.PDFLib; // CDN에서 로드된 pdf-lib 사용
+        const { PDFDocument, rgb } = window.PDFLib; 
 
-        // ⚠️ 여기서 폰트 이름을 팀장님이 가진 otf 파일로 정확히 바꿨습니다!
+        // 폰트와 양식 경로
         const formUrl = './forms/hyundai.pdf'; 
-        const fontUrl = './fonts/NotoSansKR-Black.otf'; 
+        const fontUrl = 'fonts/noto-sans-kr/Noto_Sans_KR/NotoSansKR-Black.otf'; 
 
         // 파일 다운로드 시도
         const pdfRes = await fetch(formUrl);
         const fontRes = await fetch(fontUrl);
 
-        // [핵심] 파일이 없으면 뭐가 없는지 정확히 알려줍니다.
+        // 파일이 없을 경우 에러 메시지
         if (!pdfRes.ok) {
             throw new Error(`현대해상 PDF 양식을 찾을 수 없습니다.\n깃허브에 forms 폴더와 hyundai.pdf 파일이 있는지 확인하세요.`);
         }
@@ -186,14 +186,10 @@ window.generateHyundai5PagePDF = async function() {
             throw new Error(`폰트 파일을 찾을 수 없습니다.\n깃허브에 fonts 폴더와 NotoSansKR-Black.otf 파일이 있는지 확인하세요.`);
         }
 
+        // [문제 해결] 중복 선언된 코드를 하나로 깔끔하게 정리했습니다!
         const [pdfBytes, fontBytes] = await Promise.all([
             pdfRes.arrayBuffer(),
             fontRes.arrayBuffer()
-        ]);
-
-        const [pdfBytes, fontBytes] = await Promise.all([
-            fetch(formUrl).then(res => res.arrayBuffer()),
-            fetch(fontUrl).then(res => res.arrayBuffer())
         ]);
 
         const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -228,44 +224,70 @@ window.generateHyundai5PagePDF = async function() {
         }
         const signOpt = { width: 60, height: 30 };
 
-        // [1페이지] 인적사항
-        pages[0].drawText(name, { x: 130, y: 720, ...txtOpt });
-        pages[0].drawText(jumin, { x: 280, y: 720, ...txtOpt });
-        pages[0].drawText(phone, { x: 130, y: 680, ...txtOpt });
-        pages[0].drawText(content, { x: 130, y: 490, maxWidth: 300, lineHeight: 15, ...txtOpt });
-        
-        pages[0].drawText(year, { x: 150, y: 130, ...txtOpt });
-        pages[0].drawText(month, { x: 210, y: 130, ...txtOpt });
-        pages[0].drawText(day, { x: 250, y: 130, ...txtOpt });
-        pages[0].drawText(name, { x: 350, y: 130, ...txtOpt });
-        if (signImage) pages[0].drawImage(signImage, { x: 420, y: 120, ...signOpt });
+       // 피보험자 성명 - 셀 x:120.7~205.3, y:577.2~599.8
+pages[0].drawText(name, { x: 145, y: 583, ...txtOpt });
 
-        // [2~4페이지] 필수 동의 체크박스 (좌표는 실제 PDF에 맞춰 수정 필요)
-        pages[1].drawText(checkMark, { x: 350, y: 600, ...checkOpt });
-        pages[1].drawText(checkMark, { x: 350, y: 450, ...checkOpt });
-        pages[1].drawText(checkMark, { x: 350, y: 300, ...checkOpt });
-        
-        pages[2].drawText(checkMark, { x: 350, y: 500, ...checkOpt }); 
-        pages[3].drawText(checkMark, { x: 350, y: 650, ...checkOpt });
+// 주민번호 - 셀 x:250.6~567.4, y:577.2~599.8 (앞 6자리-뒤 7자리, '-' 위치 약 x≈394)
+pages[0].drawText(jumin1, { x: 270, y: 583, ...txtOpt }); // 960814
+pages[0].drawText(jumin2, { x: 400, y: 583, ...txtOpt }); // 1284615
 
-        // [5페이지] 최종 서명
-        pages[4].drawText(year, { x: 180, y: 250, ...txtOpt });
-        pages[4].drawText(month, { x: 230, y: 250, ...txtOpt });
-        pages[4].drawText(day, { x: 280, y: 250, ...txtOpt });
-        pages[4].drawText(name, { x: 350, y: 220, ...txtOpt });
-        if (signImage) pages[4].drawImage(signImage, { x: 430, y: 210, ...signOpt });
+// 연락처 - 셀 x:120.7~401.9(또는 그 아래), y:486.8~509.4
+pages[0].drawText(phone, { x: 145, y: 493, ...txtOpt });
 
-        // 완성된 PDF 다운로드
+// 치료경위 (사고내용) - 셀 x:85.2~186.9 / 235.5~428.0, y:205.8~228.4
+pages[0].drawText(content, { x: 240, y: 213, ...txtOpt });
+
+// 작성일자 영역: 셀 x:81.1~333.6, y:404.4~427.0 → 라벨+년월일 입력칸
+// "20" 뒤에 년도 2자리, 월, 일 박스
+pages[0].drawText(year2, { x: 110, y: 412, ...txtOpt });  // 26
+pages[0].drawText(month, { x: 165, y: 412, ...txtOpt });
+pages[0].drawText(day,   { x: 215, y: 412, ...txtOpt });
+
+// 보험금청구인(대리인) 성명 - 셀 x:380.4~562.3, y:404.4~427.0
+// "성 명" 글자 위에 겹치도록 같은 좌표
+pages[0].drawText(name, { x: 430, y: 412, font: boldFont, ...txtOpt });
+// 서명 - "(서명)" 칸 위에 겹쳐서, 더 두꺼운 폰트로
+if (signImage) pages[0].drawImage(signImage, { x: 500, y: 405, width: 60, height: 22 });
+
+        // 2페이지(원본 pages[1]) - 동의 항목 3개
+pages[1].drawText(checkMark, { x: 513, y: 416, ...checkOpt }); // 고유식별정보
+pages[1].drawText(checkMark, { x: 513, y: 311, ...checkOpt }); // 민감정보
+pages[1].drawText(checkMark, { x: 513, y: 188, ...checkOpt }); // 개인(신용)정보
+
+// 3페이지(원본 pages[2]) - 국내제공 2개
+pages[2].drawText(checkMark, { x: 513, y: 288, ...checkOpt }); // 고유식별정보 제공
+pages[2].drawText(checkMark, { x: 513, y: 188, ...checkOpt }); // 민감정보 제공
+
+// 4페이지(원본 pages[3]) - 일반개인정보/국외이전 4개
+pages[3].drawText(checkMark, { x: 513, y: 645, ...checkOpt }); // 일반개인정보 제공
+pages[3].drawText(checkMark, { x: 513, y: 226, ...checkOpt }); // 민감정보(국외)
+pages[3].drawText(checkMark, { x: 513, y: 134, ...checkOpt }); // 개인(신용)정보(국외)
+// (참고: 4페이지에 항목이 더 있을 수 있으니 페이지 텍스트 재확인 필요)
+
+// 5페이지(원본 pages[4]) - 조회 동의 3개
+pages[4].drawText(checkMark, { x: 513, y: 564, ...checkOpt }); // 고유식별정보 조회
+pages[4].drawText(checkMark, { x: 513, y: 518, ...checkOpt }); // 민감정보 조회
+pages[4].drawText(checkMark, { x: 513, y: 429, ...checkOpt }); // 개인(신용)정보 조회
+
+// 동의일자 - 년 박스 x:117-140 / 월 박스 x:301-324 / 일 박스 x:408-431, y:362.7~385.3 (h=841.68 기준 bottom-up)
+pages[4].drawText(year, { x: 119, y: 368, ...txtOpt });
+pages[4].drawText(month,   { x: 304, y: 368, ...txtOpt });
+pages[4].drawText(day,   { x: 411, y: 368, ...txtOpt });
+
+// 동의자 - 본인 행: 성명 셀 x:89.6~212.4, 서명 셀 x:419.7~554.1, y: 275.8~315.3
+pages[4].drawText(name, { x: 130, y: 290, font: boldFont, ...txtOpt }); // "성 명" 위에 겹침
+if (signImage) pages[4].drawImage(signImage, { x: 460, y: 283, width: 70, height: 25 }); // "서 명" 위에 겹침
+
+        // 완성된 PDF 미리보기 (새 탭에서 열기)
         const pdfResultBytes = await pdfDoc.save();
         const blob = new Blob([pdfResultBytes], { type: 'application/pdf' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `현대해상_청구서_${name}.pdf`;
-        link.click();
+        const pdfUrl = URL.createObjectURL(blob);
+        
+        // 브라우저의 새 창/새 탭에서 PDF를 바로 띄워줍니다.
+        window.open(pdfUrl, '_blank');
 
     } catch (error) {
         console.error("PDF 생성 오류:", error);
-        // 에러 창에 진짜 원인을 띄워줍니다.
         alert("오류 원인:\n" + error.message);
     } finally {
         btn.innerHTML = originalHTML;
