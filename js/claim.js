@@ -75,8 +75,11 @@ window.selectClaimCompany = function(cardElement, companyName) {
         
         // 5. 다음 화면 이동 연결
         nextBtn.onclick = function() {
-            // window.navigateTo('page-claim-form');
-            alert(companyName + " 청구 폼으로 이동합니다.");
+            // 1. 앞에 있던 '//' 를 지워서 화면 이동 코드를 살려줍니다.
+            window.navigateTo('page-claim-form'); 
+            
+            // 2. 이제 알림창은 필요 없으니 지우셔도 됩니다.
+            // alert(companyName + " 청구 폼으로 이동합니다."); 
         };
     }
 };
