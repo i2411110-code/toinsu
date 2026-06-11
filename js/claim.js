@@ -75,27 +75,16 @@ window.selectClaimCompany = function(cardElement, companyName) {
         
         // 5. 다음 화면 이동 연결
         nextBtn.onclick = function() {
-            // 1. 앞에 있던 '//' 를 지워서 화면 이동 코드를 살려줍니다.
             window.navigateTo('page-claim-form'); 
-            
-            // 2. 이제 알림창은 필요 없으니 지우셔도 됩니다.
-            // alert(companyName + " 청구 폼으로 이동합니다."); 
         };
     }
 };
-
-
-
-
-
-
-
 
 // ==========================================
 // [청구서 작성 폼 - 캔버스 및 PDF 전역 로직]
 // ==========================================
 
-// 1. 화면 뜰 때 초기화 (HTML의 img onerror에서 호출됨)
+// 1. 화면 뜰 때 초기화
 window.initClaimCanvas = function() {
     const company = window.selectedClaimInsurance || '선택안됨';
     const titleEl = document.getElementById('claim-form-title');
@@ -178,7 +167,6 @@ window.generateHyundai5PagePDF = async function() {
         const pdfRes = await fetch(formUrl);
         const fontRes = await fetch(fontUrl);
 
-        // 파일이 없을 경우 에러 메시지
         if (!pdfRes.ok) {
             throw new Error(`현대해상 PDF 양식을 찾을 수 없습니다.\n깃허브에 forms 폴더와 hyundai.pdf 파일이 있는지 확인하세요.`);
         }
@@ -186,7 +174,6 @@ window.generateHyundai5PagePDF = async function() {
             throw new Error(`폰트 파일을 찾을 수 없습니다.\n깃허브에 fonts 폴더와 NotoSansKR-Black.otf 파일이 있는지 확인하세요.`);
         }
 
-        // [문제 해결] 중복 선언된 코드를 하나로 깔끔하게 정리했습니다!
         const [pdfBytes, fontBytes] = await Promise.all([
             pdfRes.arrayBuffer(),
             fontRes.arrayBuffer()
@@ -199,15 +186,25 @@ window.generateHyundai5PagePDF = async function() {
 
         // 폼 데이터 수집
         const name = document.getElementById('form-name').value;
-        const jumin = document.getElementById('form-jumin').value;
+        let jumin = document.getElementById('form-jumin').value;
         const phone = document.getElementById('form-phone').value;
         const content = document.getElementById('form-content').value;
+
+        // [수정됨] 하이픈(-)이 입력되었다면 제거하여 순수 숫자만 추출
+        jumin = jumin.replace(/-/g, '');
+        
+        // [추가됨] jumin을 jumin1(앞 6자리)과 jumin2(뒤 7자리)로 분리
+        const jumin1 = jumin.slice(0, 6);
+        const jumin2 = jumin.slice(6, 13);
 
         // 오늘 날짜
         const today = new Date();
         const year = String(today.getFullYear());
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
+
+        // [추가됨] year에서 뒤 2자리만 추출 (예: '2026' -> '26')
+        const year2 = year.slice(2, 4);
 
         // 텍스트 & 체크 스타일
         const txtOpt = { font: customFont, size: 11, color: rgb(0, 0, 0) };
@@ -222,66 +219,63 @@ window.generateHyundai5PagePDF = async function() {
             const signBytes = await fetch(signDataUrl).then(res => res.arrayBuffer());
             signImage = await pdfDoc.embedPng(signBytes);
         }
-        const signOpt = { width: 60, height: 30 };
 
-       // 피보험자 성명 - 셀 x:120.7~205.3, y:577.2~599.8
-pages[0].drawText(name, { x: 145, y: 583, ...txtOpt });
+        // 피보험자 성명 - 셀 x:120.7~205.3, y:577.2~599.8
+        pages[0].drawText(name, { x: 145, y: 583, ...txtOpt });
 
-// 주민번호 - 셀 x:250.6~567.4, y:577.2~599.8 (앞 6자리-뒤 7자리, '-' 위치 약 x≈394)
-pages[0].drawText(jumin1, { x: 270, y: 583, ...txtOpt }); // 960814
-pages[0].drawText(jumin2, { x: 400, y: 583, ...txtOpt }); // 1284615
+        // 주민번호 (이제 jumin1과 jumin2가 정상적으로 작동합니다)
+        pages[0].drawText(jumin1, { x: 270, y: 583, ...txtOpt }); 
+        pages[0].drawText(jumin2, { x: 400, y: 583, ...txtOpt }); 
 
-// 연락처 - 셀 x:120.7~401.9(또는 그 아래), y:486.8~509.4
-pages[0].drawText(phone, { x: 145, y: 493, ...txtOpt });
+        // 연락처 
+        pages[0].drawText(phone, { x: 145, y: 493, ...txtOpt });
 
-// 치료경위 (사고내용) - 셀 x:85.2~186.9 / 235.5~428.0, y:205.8~228.4
-pages[0].drawText(content, { x: 240, y: 213, ...txtOpt });
+        // 치료경위 (사고내용)
+        pages[0].drawText(content, { x: 240, y: 213, ...txtOpt });
 
-// 작성일자 영역: 셀 x:81.1~333.6, y:404.4~427.0 → 라벨+년월일 입력칸
-// "20" 뒤에 년도 2자리, 월, 일 박스
-pages[0].drawText(year2, { x: 110, y: 412, ...txtOpt });  // 26
-pages[0].drawText(month, { x: 165, y: 412, ...txtOpt });
-pages[0].drawText(day,   { x: 215, y: 412, ...txtOpt });
+        // 작성일자 영역 (이제 year2가 정상적으로 작동합니다)
+        pages[0].drawText(year2, { x: 110, y: 412, ...txtOpt });  
+        pages[0].drawText(month, { x: 165, y: 412, ...txtOpt });
+        pages[0].drawText(day,   { x: 215, y: 412, ...txtOpt });
 
-// 보험금청구인(대리인) 성명 - 셀 x:380.4~562.3, y:404.4~427.0
-// "성 명" 글자 위에 겹치도록 같은 좌표
-pages[0].drawText(name, { x: 430, y: 412, font: boldFont, ...txtOpt });
-// 서명 - "(서명)" 칸 위에 겹쳐서, 더 두꺼운 폰트로
-if (signImage) pages[0].drawImage(signImage, { x: 500, y: 405, width: 60, height: 22 });
+        // 보험금청구인(대리인) 성명
+        // [수정됨] 존재하지 않는 boldFont 대신 customFont 사용
+        pages[0].drawText(name, { x: 430, y: 412, ...txtOpt });
+        
+        // 서명
+        if (signImage) pages[0].drawImage(signImage, { x: 500, y: 405, width: 60, height: 22 });
 
         // 2페이지(원본 pages[1]) - 동의 항목 3개
-pages[1].drawText(checkMark, { x: 513, y: 416, ...checkOpt }); // 고유식별정보
-pages[1].drawText(checkMark, { x: 513, y: 311, ...checkOpt }); // 민감정보
-pages[1].drawText(checkMark, { x: 513, y: 188, ...checkOpt }); // 개인(신용)정보
+        pages[1].drawText(checkMark, { x: 513, y: 416, ...checkOpt });
+        pages[1].drawText(checkMark, { x: 513, y: 311, ...checkOpt });
+        pages[1].drawText(checkMark, { x: 513, y: 188, ...checkOpt });
 
-// 3페이지(원본 pages[2]) - 국내제공 2개
-pages[2].drawText(checkMark, { x: 513, y: 288, ...checkOpt }); // 고유식별정보 제공
-pages[2].drawText(checkMark, { x: 513, y: 188, ...checkOpt }); // 민감정보 제공
+        // 3페이지(원본 pages[2]) - 국내제공 2개
+        pages[2].drawText(checkMark, { x: 513, y: 288, ...checkOpt });
+        pages[2].drawText(checkMark, { x: 513, y: 188, ...checkOpt });
 
-// 4페이지(원본 pages[3]) - 일반개인정보/국외이전 4개
-pages[3].drawText(checkMark, { x: 513, y: 645, ...checkOpt }); // 일반개인정보 제공
-pages[3].drawText(checkMark, { x: 513, y: 226, ...checkOpt }); // 민감정보(국외)
-pages[3].drawText(checkMark, { x: 513, y: 134, ...checkOpt }); // 개인(신용)정보(국외)
-// (참고: 4페이지에 항목이 더 있을 수 있으니 페이지 텍스트 재확인 필요)
+        // 4페이지(원본 pages[3]) - 일반개인정보/국외이전 4개
+        pages[3].drawText(checkMark, { x: 513, y: 645, ...checkOpt });
+        pages[3].drawText(checkMark, { x: 513, y: 226, ...checkOpt });
+        pages[3].drawText(checkMark, { x: 513, y: 134, ...checkOpt });
 
-// 5페이지(원본 pages[4]) - 조회 동의 3개
-pages[4].drawText(checkMark, { x: 513, y: 564, ...checkOpt }); // 고유식별정보 조회
-pages[4].drawText(checkMark, { x: 513, y: 518, ...checkOpt }); // 민감정보 조회
-pages[4].drawText(checkMark, { x: 513, y: 429, ...checkOpt }); // 개인(신용)정보 조회
+        // 5페이지(원본 pages[4]) - 조회 동의 3개
+        pages[4].drawText(checkMark, { x: 513, y: 564, ...checkOpt });
+        pages[4].drawText(checkMark, { x: 513, y: 518, ...checkOpt });
+        pages[4].drawText(checkMark, { x: 513, y: 429, ...checkOpt });
 
-pages[4].drawText(year,  { x: 230, y: 381, ...txtOpt });  // 동의일자 - 년 (라벨 y≈381, x≈273)
-pages[4].drawText(month, { x: 340, y: 381, ...txtOpt });  // 월 (x≈379)
-pages[4].drawText(day,   { x: 460, y: 381, ...txtOpt });  // 일 (x≈504)
+        pages[4].drawText(year,  { x: 230, y: 381, ...txtOpt });
+        pages[4].drawText(month, { x: 340, y: 381, ...txtOpt });
+        pages[4].drawText(day,   { x: 460, y: 381, ...txtOpt });
 
-pages[4].drawText(name,  { x: 200, y: 320, ...txtOpt });  // 본인 성명 (행 y≈302~321)
-if (signImage) pages[4].drawImage(signImage, { x: 460, y: 295, width: 70, height: 25 }); // 본인 서명 (x≈474~496, y≈302)
+        pages[4].drawText(name,  { x: 200, y: 320, ...txtOpt });
+        if (signImage) pages[4].drawImage(signImage, { x: 460, y: 295, width: 70, height: 25 });
 
         // 완성된 PDF 미리보기 (새 탭에서 열기)
         const pdfResultBytes = await pdfDoc.save();
         const blob = new Blob([pdfResultBytes], { type: 'application/pdf' });
         const pdfUrl = URL.createObjectURL(blob);
         
-        // 브라우저의 새 창/새 탭에서 PDF를 바로 띄워줍니다.
         window.open(pdfUrl, '_blank');
 
     } catch (error) {
