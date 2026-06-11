@@ -99,19 +99,19 @@ window.toggleAuthTab = function(mode) {
     const inviteGroup = document.getElementById('invite-code-group');
     document.getElementById('auth-error-msg').style.display = 'none';
     
-// 수정 후
-const nameGroup = document.getElementById('name-input-group');
-if(mode === 'login') {
-    loginBtn.classList.add('active'); regBtn.classList.remove('active');
-    title.innerText = "보험가온포탈 로그인"; submitBtn.innerText = "포탈 접속하기";
-    inviteGroup.style.display = 'none';
-    if(nameGroup) nameGroup.style.display = 'none';
-} else {
-    regBtn.classList.add('active'); loginBtn.classList.remove('active');
-    title.innerText = "신규 멤버 회원가입"; submitBtn.innerText = "가입 및 로그인";
-    inviteGroup.style.display = 'block';
-    if(nameGroup) nameGroup.style.display = 'block';
-}
+    const nameGroup = document.getElementById('name-input-group');
+    if(mode === 'login') {
+        loginBtn.classList.add('active'); regBtn.classList.remove('active');
+        title.innerText = "보험가온포탈 로그인"; submitBtn.innerText = "포탈 접속하기";
+        inviteGroup.style.display = 'none';
+        if(nameGroup) nameGroup.style.display = 'none';
+    } else {
+        regBtn.classList.add('active'); loginBtn.classList.remove('active');
+        title.innerText = "신규 멤버 회원가입"; submitBtn.innerText = "가입 및 로그인";
+        inviteGroup.style.display = 'block';
+        if(nameGroup) nameGroup.style.display = 'block';
+    }
+}   // ← 이 닫는 괄호가 없어서 생긴 문제
 
 window.handleAuthSubmit = function() {
     const email = document.getElementById('auth-email').value.trim();
@@ -139,14 +139,14 @@ window.handleAuthSubmit = function() {
         }
         createUserWithEmailAndPassword(auth, email, password)
             .then(async (userCred) => {
-    const userName = document.getElementById('auth-name')?.value.trim() || '';
-    if(userName) {
-        const userRef = doc(db, "users_portal", userCred.user.email);
-        await setDoc(userRef, { displayName: userName }, { merge: true });
-    }
-    alert("가입이 완료되었습니다!");
-    document.getElementById('auth-overlay').style.display = 'none';
-})
+                const userName = document.getElementById('auth-name')?.value.trim() || '';
+                if(userName) {
+                    const userRef = doc(db, "users_portal", userCred.user.email);
+                    await setDoc(userRef, { displayName: userName }, { merge: true });
+                }
+                alert("가입이 완료되었습니다!");
+                document.getElementById('auth-overlay').style.display = 'none';
+            })
             .catch((error) => { 
                 errorMsg.innerText = "❌ 가입 실패: " + error.message; 
                 errorMsg.style.display = "block"; 
