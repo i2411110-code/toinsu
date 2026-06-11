@@ -2,9 +2,8 @@
 
     <!-- 상단 헤더 -->
     <div class="toss-hero">
-        <button class="toss-home-btn" onclick="window.goBack()" style="z-index:10; pointer-events:auto;">
-    <i class="bi bi-house-fill"></i> 메인화면
-</button>
+        <button class="toss-home-btn" onclick="window.goBack()">
+            <i class="bi bi-house-fill"></i> 메인화면
         </button>
         <div class="toss-hero-tag">청구의 모든 것</div>
         <p class="toss-hero-sub">보험금 청구 자동화 시스템</p>
@@ -32,11 +31,15 @@
         </div>
     </div>
 
-    <!-- 공지 -->
-    <div class="toss-notice-bar" onclick="window.openNoticeModal()">
+    <!-- 공지 슬라이더 바 -->
+    <div class="toss-notice-bar" onclick="window.openNoticeListModal()">
         <span class="toss-notice-tag">공지</span>
-        <span class="toss-notice-text" id="notice-bar-text">로딩중...</span>
-        <i class="bi bi-chevron-right" style="color:#B0B8C1;"></i>
+        <div style="flex:1; overflow:hidden; position:relative; height:20px;">
+            <div id="notice-ticker-wrap" style="position:absolute; width:100%; transition:opacity 0.4s ease;">
+                <span id="notice-bar-text" style="font-size:14px; font-weight:600; color:#4E5968; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;">로딩중...</span>
+            </div>
+        </div>
+        <i class="bi bi-chevron-right" style="color:#B0B8C1; flex-shrink:0;"></i>
     </div>
 
     <!-- 광고 배너 -->
@@ -46,40 +49,80 @@
         </div>
     </div>
 
-    <!-- 공지 상세 모달 -->
-    <div id="notice-detail-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;" onclick="document.getElementById('notice-detail-modal').style.display='none'">
-        <div style="background:white; border-radius:20px; padding:24px; max-width:420px; width:90%; max-height:80vh; overflow-y:auto;" onclick="event.stopPropagation()">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:2px solid #3182F6; padding-bottom:12px;">
-                <h3 style="font-size:17px; font-weight:800; color:#191F28; margin:0;"><i class="bi bi-megaphone-fill" style="color:#3182F6;"></i> 공지사항</h3>
-                <button onclick="document.getElementById('notice-detail-modal').style.display='none'" style="background:none; border:none; font-size:22px; cursor:pointer; color:#8B95A1;">&times;</button>
+    <!-- ===== 공지 목록 모달 ===== -->
+    <div id="notice-list-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9000; align-items:flex-end; justify-content:center;" onclick="document.getElementById('notice-list-modal').style.display='none'">
+        <div style="background:white; border-radius:24px 24px 0 0; padding:24px; width:100%; max-width:600px; max-height:85vh; overflow-y:auto;" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3 style="font-size:18px; font-weight:800; color:#191F28; margin:0;"><i class="bi bi-megaphone-fill" style="color:#3182F6; margin-right:6px;"></i>공지사항</h3>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <div id="notice-admin-write-btn" style="display:none;">
+                        <button onclick="window.openNoticeWriter()" style="padding:8px 16px; background:#3182F6; color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer;"><i class="bi bi-pencil-fill"></i> 공지 작성</button>
+                    </div>
+                    <button onclick="document.getElementById('notice-list-modal').style.display='none'" style="background:#F2F4F6; border:none; width:32px; height:32px; border-radius:50%; font-size:18px; cursor:pointer; color:#8B95A1; display:flex; align-items:center; justify-content:center;">&times;</button>
+                </div>
             </div>
-            <div id="notice-detail-content" style="font-size:14px; color:#334155; line-height:1.8; white-space:pre-wrap; margin-bottom:16px;"></div>
-            <div id="notice-admin-btn-wrap" style="display:none;">
-                <button onclick="window.openNoticeEditor()" style="width:100%; padding:12px; background:#3182F6; color:white; border:none; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer;"><i class="bi bi-pencil-square"></i> 공지 수정 (관리자)</button>
+            <div id="notice-list-body">
+                <div style="text-align:center; padding:40px; color:#B0B8C1; font-size:14px;">불러오는 중...</div>
             </div>
         </div>
     </div>
 
-    <!-- 관리자 공지 편집 모달 -->
-    <div id="notice-editor-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:10000; align-items:center; justify-content:center;" onclick="document.getElementById('notice-editor-modal').style.display='none'">
-        <div style="background:white; border-radius:20px; padding:24px; max-width:480px; width:90%;" onclick="event.stopPropagation()">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h3 style="font-size:17px; font-weight:800; color:#191F28; margin:0;"><i class="bi bi-shield-lock-fill" style="color:#E11D48;"></i> 관리자 공지 편집</h3>
-                <button onclick="document.getElementById('notice-editor-modal').style.display='none'" style="background:none; border:none; font-size:22px; cursor:pointer; color:#8B95A1;">&times;</button>
+    <!-- ===== 공지 상세 모달 ===== -->
+    <div id="notice-detail-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9500; align-items:center; justify-content:center;" onclick="document.getElementById('notice-detail-modal').style.display='none'">
+        <div style="background:white; border-radius:20px; padding:24px; max-width:440px; width:92%; max-height:80vh; overflow-y:auto;" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid #F2F4F6;">
+                <span id="notice-detail-tag" style="background:#EFF6FF; color:#3182F6; font-size:11px; font-weight:800; padding:4px 10px; border-radius:8px;">공지</span>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <div id="notice-detail-admin-btns" style="display:none; gap:6px; display:none;">
+                        <button id="notice-detail-edit-btn" onclick="window.openNoticeEditor()" style="padding:6px 12px; background:#F2F4F6; color:#4E5968; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;"><i class="bi bi-pencil"></i> 수정</button>
+                        <button id="notice-detail-delete-btn" onclick="window.deleteCurrentNotice()" style="padding:6px 12px; background:#FEF2F2; color:#EF4444; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;"><i class="bi bi-trash"></i> 삭제</button>
+                    </div>
+                    <button onclick="document.getElementById('notice-detail-modal').style.display='none'" style="background:#F2F4F6; border:none; width:30px; height:30px; border-radius:50%; font-size:16px; cursor:pointer; color:#8B95A1;">&times;</button>
+                </div>
             </div>
-            <div style="margin-bottom:12px;">
-                <label style="font-size:13px; font-weight:700; color:#64748B; display:block; margin-bottom:6px;">공지 제목 (공지 바에 표시)</label>
-                <input id="notice-edit-title" type="text" style="width:100%; padding:11px 14px; border:1.5px solid #E5E8EB; border-radius:10px; font-size:14px; font-family:inherit; outline:none; box-sizing:border-box;" placeholder="예: DB 손해보험 오류 관련 안내">
+            <div id="notice-detail-date" style="font-size:12px; color:#B0B8C1; margin-bottom:8px;"></div>
+            <h3 id="notice-detail-title" style="font-size:17px; font-weight:800; color:#191F28; margin:0 0 16px;"></h3>
+            <div id="notice-detail-content" style="font-size:14px; color:#334155; line-height:1.8; white-space:pre-wrap;"></div>
+        </div>
+    </div>
+
+    <!-- ===== 관리자 공지 작성/편집 모달 ===== -->
+    <div id="notice-editor-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:10000; align-items:center; justify-content:center;" onclick="event.target===this && (this.style.display='none')">
+        <div style="background:white; border-radius:20px; padding:24px; max-width:500px; width:92%; max-height:90vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3 style="font-size:17px; font-weight:800; color:#191F28; margin:0;"><i class="bi bi-shield-lock-fill" style="color:#E11D48; margin-right:6px;"></i><span id="editor-modal-title">공지 작성</span></h3>
+                <button onclick="document.getElementById('notice-editor-modal').style.display='none'" style="background:#F2F4F6; border:none; width:32px; height:32px; border-radius:50%; font-size:18px; cursor:pointer; color:#8B95A1;">&times;</button>
             </div>
-            <div style="margin-bottom:16px;">
-                <label style="font-size:13px; font-weight:700; color:#64748B; display:block; margin-bottom:6px;">공지 내용</label>
-                <textarea id="notice-edit-content" style="width:100%; height:200px; padding:11px 14px; border:1.5px solid #E5E8EB; border-radius:10px; font-size:13px; font-family:inherit; outline:none; resize:vertical; line-height:1.7; box-sizing:border-box;" placeholder="공지 내용을 입력하세요."></textarea>
+
+            <input type="hidden" id="notice-edit-id" value="">
+
+            <div style="margin-bottom:14px;">
+                <label style="font-size:13px; font-weight:700; color:#64748B; display:block; margin-bottom:6px;">공지 제목</label>
+                <input id="notice-edit-title" type="text" style="width:100%; padding:12px 14px; border:1.5px solid #E5E8EB; border-radius:10px; font-size:14px; font-family:inherit; outline:none; box-sizing:border-box;" placeholder="제목을 입력하세요">
             </div>
+
+            <div style="margin-bottom:14px;">
+                <label style="font-size:13px; font-weight:700; color:#64748B; display:block; margin-bottom:6px;">내용</label>
+                <textarea id="notice-edit-content" style="width:100%; height:180px; padding:12px 14px; border:1.5px solid #E5E8EB; border-radius:10px; font-size:13px; font-family:inherit; outline:none; resize:vertical; line-height:1.7; box-sizing:border-box;" placeholder="공지 내용을 입력하세요."></textarea>
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <label style="font-size:13px; font-weight:700; color:#64748B; display:block; margin-bottom:8px;">공지 바 슬라이드 게시 여부</label>
+                <div style="display:flex; gap:8px;">
+                    <button id="publish-btn-yes" onclick="window.setPublish(true)" style="flex:1; padding:11px; border:1.5px solid #3182F6; border-radius:10px; background:#EFF6FF; color:#3182F6; font-weight:700; font-size:13px; cursor:pointer;">
+                        <i class="bi bi-megaphone-fill"></i> 슬라이드 게시
+                    </button>
+                    <button id="publish-btn-no" onclick="window.setPublish(false)" style="flex:1; padding:11px; border:1.5px solid #E5E8EB; border-radius:10px; background:white; color:#8B95A1; font-weight:700; font-size:13px; cursor:pointer;">
+                        <i class="bi bi-eye-slash"></i> 목록만 등록
+                    </button>
+                </div>
+            </div>
+
             <div style="display:flex; gap:8px;">
-                <button onclick="document.getElementById('notice-editor-modal').style.display='none'" style="flex:1; padding:12px; background:#F2F4F6; color:#64748B; border:none; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer;">취소</button>
-                <button onclick="window.saveNotice()" style="flex:2; padding:12px; background:#3182F6; color:white; border:none; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer;"><i class="bi bi-cloud-upload-fill"></i> 저장 및 게시</button>
+                <button onclick="document.getElementById('notice-editor-modal').style.display='none'" style="flex:1; padding:13px; background:#F2F4F6; color:#64748B; border:none; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer;">취소</button>
+                <button onclick="window.saveNotice()" style="flex:2; padding:13px; background:#3182F6; color:white; border:none; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer;"><i class="bi bi-cloud-upload-fill"></i> 저장</button>
             </div>
-            <p id="notice-save-msg" style="font-size:12px; color:#16A34A; margin-top:10px; display:none; text-align:center; font-weight:700;"></p>
+            <p id="notice-save-msg" style="font-size:12px; margin-top:10px; display:none; text-align:center; font-weight:700;"></p>
         </div>
     </div>
 
@@ -117,86 +160,38 @@
 </div>
 
 <style>
-/* ============ TOSS STYLE ============ */
 .toss { font-family: 'Noto Sans KR', sans-serif; color:#191F28; padding-bottom: 20px; }
-
-.toss-hero {
-    background: #3182F6;
-    border-radius: 24px;
-    padding: 28px 24px 32px;
-    color: white;
-    position: relative;
-    margin-bottom: 16px;
-}
-.toss-home-btn {
-    position:absolute; top:18px; right:18px;
-    background: rgba(255,255,255,0.18);
-    color:white; border:none;
-    padding: 8px 14px; border-radius: 20px;
-    font-size: 13px; font-weight: 700; cursor:pointer;
-    display:flex; align-items:center; gap:6px;
-    transition: background 0.15s;
-}
+.toss-hero { background: #3182F6; border-radius: 24px; padding: 28px 24px 32px; color: white; position: relative; margin-bottom: 16px; }
+.toss-home-btn { position:absolute; top:18px; right:18px; background: rgba(255,255,255,0.18); color:white; border:none; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor:pointer; display:flex; align-items:center; gap:6px; transition: background 0.15s; }
 .toss-home-btn:hover { background: rgba(255,255,255,0.28); }
 .toss-hero-tag { font-size: 14px; font-weight: 700; opacity:0.85; margin-bottom:4px; }
 .toss-hero-sub { font-size: 13px; opacity:0.7; margin-bottom: 22px; }
 .toss-hero-date { font-size: 13px; opacity:0.75; margin-bottom: 4px; }
 .toss-hero-title { font-size: 24px; font-weight: 800; line-height:1.4; letter-spacing:-0.5px; }
-
-.toss-menu-grid {
-    display:grid; grid-template-columns: repeat(4, 1fr);
-    gap: 10px; margin-bottom: 16px;
-}
-.toss-menu-item {
-    background: white; border-radius: 18px; padding: 20px 8px;
-    text-align:center; cursor:pointer;
-    display:flex; flex-direction:column; align-items:center; gap:10px;
-    border: 1px solid #F2F4F6;
-    transition: all 0.15s;
-}
+.toss-menu-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.toss-menu-item { background: white; border-radius: 18px; padding: 20px 8px; text-align:center; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:10px; border: 1px solid #F2F4F6; transition: all 0.15s; }
 .toss-menu-item:hover { background:#F9FAFB; transform: translateY(-2px); }
-.toss-menu-icon {
-    width:46px; height:46px; border-radius:14px;
-    display:flex; align-items:center; justify-content:center; font-size:20px;
-}
+.toss-menu-icon { width:46px; height:46px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:20px; }
 .toss-menu-item span { font-size:13px; font-weight:700; color:#191F28; }
-
-.toss-notice-bar {
-    background:white; border-radius:14px; padding:14px 16px;
-    display:flex; align-items:center; gap:10px;
-    border:1px solid #F2F4F6; cursor:pointer; margin-bottom:16px;
-    transition: border-color 0.15s;
-}
+.toss-notice-bar { background:white; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:10px; border:1px solid #F2F4F6; cursor:pointer; margin-bottom:16px; transition: border-color 0.15s; }
 .toss-notice-bar:hover { border-color:#D1D6DB; }
-.toss-notice-tag {
-    background:#EFF6FF; color:#3182F6; font-size:11px; font-weight:800;
-    padding:4px 10px; border-radius:8px; flex-shrink:0;
-}
-.toss-notice-text { flex:1; font-size:14px; font-weight:600; color:#4E5968; }
-
+.toss-notice-tag { background:#EFF6FF; color:#3182F6; font-size:11px; font-weight:800; padding:4px 10px; border-radius:8px; flex-shrink:0; }
 .toss-banner-wrap { margin-bottom:16px; }
 .toss-banner-wrap .banner-box { border-radius:18px; box-shadow:none; border:1px solid #F2F4F6; }
-
-.toss-card {
-    background:white; border-radius:20px; padding:22px 20px;
-    border:1px solid #F2F4F6; margin-bottom:16px;
-}
+.toss-card { background:white; border-radius:20px; padding:22px 20px; border:1px solid #F2F4F6; margin-bottom:16px; }
 .toss-card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
 .toss-card-title { font-size:17px; font-weight:800; color:#191F28; }
 .toss-link { font-size:13px; font-weight:700; color:#3182F6; cursor:pointer; }
-
 .toss-status-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
 .toss-status-box { background:#F9FAFB; border-radius:14px; padding:18px 8px; text-align:center; }
 .toss-status-num { font-size:22px; font-weight:800; color:#191F28; }
 .toss-status-num span { font-size:13px; font-weight:700; color:#8B95A1; margin-left:2px; }
 .toss-status-label { font-size:12px; color:#8B95A1; font-weight:600; margin-top:6px; }
-
-.toss-empty {
-    text-align:center; color:#B0B8C1; font-size:14px; padding:40px 0;
-    display:flex; flex-direction:column; align-items:center; gap:10px;
-}
+.toss-empty { text-align:center; color:#B0B8C1; font-size:14px; padding:40px 0; display:flex; flex-direction:column; align-items:center; gap:10px; }
 .toss-empty i { font-size:32px; color:#E5E8EB; }
-
+.notice-list-item { padding:16px 0; border-bottom:1px solid #F2F4F6; cursor:pointer; transition:background 0.1s; }
+.notice-list-item:last-child { border-bottom:none; }
+.notice-list-item:hover { background:#FAFAFA; border-radius:10px; padding-left:8px; }
 @media (max-width: 640px) {
     .toss-menu-grid { gap:8px; }
     .toss-menu-item { padding:16px 4px; }
@@ -214,81 +209,233 @@
     if(el) el.innerText = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
 })();
 
-// ========== 공지 시스템 ==========
-const ADMIN_EMAIL = "dlsqh814@naver.com"; // 관리자 이메일 (변경 가능)
+// =========================================
+// 공지 시스템 (Firebase Firestore 연동)
+// =========================================
+const NOTICE_ADMIN_EMAIL = "dlsqh814@naver.com"; // ← 관리자 이메일 변경 가능
+let _noticeList = [];       // 전체 공지 목록 캐시
+let _currentNoticeId = "";  // 현재 열람중인 공지 ID
+let _publishState = true;   // 작성 모달 게시 여부 상태
+let _tickerTimer = null;    // 슬라이더 타이머
+let _tickerIdx = 0;         // 현재 슬라이더 인덱스
 
-window.openNoticeModal = async function() {
-    const modal = document.getElementById('notice-detail-modal');
-    const contentEl = document.getElementById('notice-detail-content');
-    const adminBtnWrap = document.getElementById('notice-admin-btn-wrap');
-    modal.style.display = 'flex';
+// Firebase 모듈 동적 import 헬퍼
+async function getDB() {
+    const { getFirestore } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+    const { getApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+    return getFirestore(getApp());
+}
 
-    // 관리자 여부 확인
-    const isAdmin = window.__currentUserEmail === ADMIN_EMAIL;
-    adminBtnWrap.style.display = isAdmin ? 'block' : 'none';
+// 날짜 포맷 헬퍼
+function fmtDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return `${d.getFullYear()}. ${String(d.getMonth()+1).padStart(2,'0')}. ${String(d.getDate()).padStart(2,'0')}.`;
+}
 
+// ---- 공지 바 슬라이더 시작 ----
+function startTicker(publishedList) {
+    if (_tickerTimer) clearInterval(_tickerTimer);
+    if (!publishedList || publishedList.length === 0) {
+        const el = document.getElementById('notice-bar-text');
+        if (el) el.textContent = '등록된 공지가 없습니다.';
+        return;
+    }
+    _tickerIdx = 0;
+    function show(idx) {
+        const el = document.getElementById('notice-bar-text');
+        const wrap = document.getElementById('notice-ticker-wrap');
+        if (!el || !wrap) return;
+        wrap.style.opacity = '0';
+        setTimeout(() => {
+            el.textContent = publishedList[idx].title;
+            wrap.style.opacity = '1';
+        }, 400);
+    }
+    show(0);
+    if (publishedList.length > 1) {
+        _tickerTimer = setInterval(() => {
+            _tickerIdx = (_tickerIdx + 1) % publishedList.length;
+            show(_tickerIdx);
+        }, 4000);
+    }
+}
+
+// ---- 초기 공지 로드 ----
+(async function initNotices() {
     try {
-        const { getFirestore, doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-        const { getApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
-        const db = getFirestore(getApp());
-        const snap = await getDoc(doc(db, "site_config", "notice"));
-        if (snap.exists()) {
-            const d = snap.data();
-            contentEl.textContent = d.content || '등록된 공지가 없습니다.';
-            const barEl = document.getElementById('notice-bar-text');
-            if (barEl) barEl.textContent = d.title || '공지사항';
-        } else {
-            contentEl.textContent = '등록된 공지가 없습니다.';
+        const { collection, getDocs, orderBy, query } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        const db = await getDB();
+        const q = query(collection(db, "notices"), orderBy("createdAt", "desc"));
+        const snap = await getDocs(q);
+        _noticeList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const published = _noticeList.filter(n => n.published);
+        startTicker(published);
+        // 관리자 버튼 노출
+        if (window.__currentUserEmail === NOTICE_ADMIN_EMAIL) {
+            const adminBtn = document.getElementById('notice-admin-write-btn');
+            if (adminBtn) adminBtn.style.display = 'block';
         }
     } catch(e) {
-        contentEl.textContent = '공지를 불러오지 못했습니다.';
+        const el = document.getElementById('notice-bar-text');
+        if (el) el.textContent = 'DB 손해보험 오류 관련 안내';
+    }
+})();
+
+// ---- 공지 목록 모달 열기 ----
+window.openNoticeListModal = async function() {
+    const modal = document.getElementById('notice-list-modal');
+    const body  = document.getElementById('notice-list-body');
+    const adminBtn = document.getElementById('notice-admin-write-btn');
+    modal.style.display = 'flex';
+
+    const isAdmin = window.__currentUserEmail === NOTICE_ADMIN_EMAIL;
+    if (adminBtn) adminBtn.style.display = isAdmin ? 'block' : 'none';
+
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:#B0B8C1;font-size:14px;">불러오는 중...</div>';
+
+    try {
+        const { collection, getDocs, orderBy, query } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        const db = await getDB();
+        const q = query(collection(db, "notices"), orderBy("createdAt", "desc"));
+        const snap = await getDocs(q);
+        _noticeList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        if (_noticeList.length === 0) {
+            body.innerHTML = '<div style="text-align:center;padding:40px;color:#B0B8C1;font-size:14px;">등록된 공지가 없습니다.</div>';
+            return;
+        }
+        body.innerHTML = _noticeList.map(n => `
+            <div class="notice-list-item" onclick="window.openNoticeDetail('${n.id}')">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                    <span style="background:#EFF6FF; color:#3182F6; font-size:10px; font-weight:800; padding:3px 8px; border-radius:6px;">공지</span>
+                    ${n.published ? '<span style="background:#F0FDF4; color:#16A34A; font-size:10px; font-weight:800; padding:3px 8px; border-radius:6px;"><i class="bi bi-megaphone-fill"></i> 슬라이드</span>' : ''}
+                    <span style="font-size:11px; color:#B0B8C1; margin-left:auto;">${fmtDate(n.createdAt)}</span>
+                </div>
+                <div style="font-size:15px; font-weight:700; color:#191F28;">${n.title}</div>
+            </div>
+        `).join('');
+    } catch(e) {
+        body.innerHTML = '<div style="text-align:center;padding:40px;color:#EF4444;font-size:14px;">불러오기 실패</div>';
     }
 };
 
-window.openNoticeEditor = function() {
-    document.getElementById('notice-detail-modal').style.display = 'none';
-    const el = document.getElementById('notice-detail-content');
-    document.getElementById('notice-edit-content').value = el ? el.textContent : '';
-    const barEl = document.getElementById('notice-bar-text');
-    document.getElementById('notice-edit-title').value = barEl ? barEl.textContent : '';
+// ---- 공지 상세 열기 ----
+window.openNoticeDetail = function(id) {
+    const n = _noticeList.find(x => x.id === id);
+    if (!n) return;
+    _currentNoticeId = id;
+
+    document.getElementById('notice-detail-title').textContent = n.title;
+    document.getElementById('notice-detail-content').textContent = n.content;
+    document.getElementById('notice-detail-date').textContent = fmtDate(n.createdAt);
+
+    const adminBtns = document.getElementById('notice-detail-admin-btns');
+    const isAdmin = window.__currentUserEmail === NOTICE_ADMIN_EMAIL;
+    if (adminBtns) adminBtns.style.display = isAdmin ? 'flex' : 'none';
+
+    document.getElementById('notice-detail-modal').style.display = 'flex';
+};
+
+// ---- 공지 작성 모달 열기 ----
+window.openNoticeWriter = function() {
+    _currentNoticeId = '';
+    document.getElementById('notice-edit-id').value = '';
+    document.getElementById('notice-edit-title').value = '';
+    document.getElementById('notice-edit-content').value = '';
     document.getElementById('notice-save-msg').style.display = 'none';
+    document.getElementById('editor-modal-title').textContent = '공지 작성';
+    window.setPublish(true);
     document.getElementById('notice-editor-modal').style.display = 'flex';
 };
 
-window.saveNotice = async function() {
-    const title   = document.getElementById('notice-edit-title').value.trim();
-    const content = document.getElementById('notice-edit-content').value.trim();
-    const msgEl   = document.getElementById('notice-save-msg');
-    if (!title || !content) { msgEl.style.color='#EF4444'; msgEl.textContent='제목과 내용을 모두 입력해주세요.'; msgEl.style.display='block'; return; }
-    try {
-        const { getFirestore, doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-        const { getApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
-        const db = getFirestore(getApp());
-        await setDoc(doc(db, "site_config", "notice"), { title, content, updatedAt: new Date().toISOString() });
-        const barEl = document.getElementById('notice-bar-text');
-        if (barEl) barEl.textContent = title;
-        msgEl.style.color = '#16A34A';
-        msgEl.textContent = '✅ 공지가 성공적으로 게시되었습니다!';
-        msgEl.style.display = 'block';
-        setTimeout(() => { document.getElementById('notice-editor-modal').style.display = 'none'; }, 1500);
-    } catch(e) {
-        msgEl.style.color='#EF4444'; msgEl.textContent='저장 실패: ' + e.message; msgEl.style.display='block';
+// ---- 공지 편집 모달 열기 ----
+window.openNoticeEditor = function() {
+    const n = _noticeList.find(x => x.id === _currentNoticeId);
+    if (!n) return;
+    document.getElementById('notice-detail-modal').style.display = 'none';
+    document.getElementById('notice-edit-id').value = n.id;
+    document.getElementById('notice-edit-title').value = n.title;
+    document.getElementById('notice-edit-content').value = n.content;
+    document.getElementById('notice-save-msg').style.display = 'none';
+    document.getElementById('editor-modal-title').textContent = '공지 수정';
+    window.setPublish(n.published !== false);
+    document.getElementById('notice-editor-modal').style.display = 'flex';
+};
+
+// ---- 게시 여부 버튼 토글 ----
+window.setPublish = function(val) {
+    _publishState = val;
+    const yes = document.getElementById('publish-btn-yes');
+    const no  = document.getElementById('publish-btn-no');
+    if (val) {
+        yes.style.borderColor='#3182F6'; yes.style.background='#EFF6FF'; yes.style.color='#3182F6';
+        no.style.borderColor='#E5E8EB';  no.style.background='white';    no.style.color='#8B95A1';
+    } else {
+        no.style.borderColor='#3182F6';  no.style.background='#EFF6FF';  no.style.color='#3182F6';
+        yes.style.borderColor='#E5E8EB'; yes.style.background='white';   yes.style.color='#8B95A1';
     }
 };
 
-// 페이지 로드 시 공지 제목 자동 로드
-(async function loadNoticeBar() {
-    try {
-        const { getFirestore, doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-        const { getApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
-        const db = getFirestore(getApp());
-        const snap = await getDoc(doc(db, "site_config", "notice"));
-        const barEl = document.getElementById('notice-bar-text');
-        if (snap.exists() && barEl) barEl.textContent = snap.data().title || '공지사항';
-        else if (barEl) barEl.textContent = 'DB 손해보험 오류 관련 안내';
-    } catch(e) {
-        const barEl = document.getElementById('notice-bar-text');
-        if (barEl) barEl.textContent = 'DB 손해보험 오류 관련 안내';
+// ---- 공지 저장 (신규/수정) ----
+window.saveNotice = async function() {
+    const title   = document.getElementById('notice-edit-title').value.trim();
+    const content = document.getElementById('notice-edit-content').value.trim();
+    const editId  = document.getElementById('notice-edit-id').value;
+    const msgEl   = document.getElementById('notice-save-msg');
+    if (!title || !content) {
+        msgEl.style.color = '#EF4444';
+        msgEl.textContent = '제목과 내용을 모두 입력해주세요.';
+        msgEl.style.display = 'block';
+        return;
     }
-})();
+    try {
+        const { collection, doc, setDoc, addDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        const db = await getDB();
+        const data = { title, content, published: _publishState, createdAt: editId ? (_noticeList.find(x=>x.id===editId)?.createdAt || new Date().toISOString()) : new Date().toISOString(), updatedAt: new Date().toISOString() };
+
+        if (editId) {
+            await setDoc(doc(db, "notices", editId), data);
+        } else {
+            await addDoc(collection(db, "notices"), data);
+        }
+
+        msgEl.style.color = '#16A34A';
+        msgEl.textContent = '✅ 저장되었습니다!';
+        msgEl.style.display = 'block';
+
+        // 슬라이더 갱신
+        const { getDocs, query, orderBy } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        const q = query(collection(db, "notices"), orderBy("createdAt", "desc"));
+        const snap = await getDocs(q);
+        _noticeList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        startTicker(_noticeList.filter(n => n.published));
+
+        setTimeout(() => {
+            document.getElementById('notice-editor-modal').style.display = 'none';
+            window.openNoticeListModal();
+        }, 1200);
+    } catch(e) {
+        msgEl.style.color = '#EF4444';
+        msgEl.textContent = '저장 실패: ' + e.message;
+        msgEl.style.display = 'block';
+    }
+};
+
+// ---- 공지 삭제 ----
+window.deleteCurrentNotice = async function() {
+    if (!_currentNoticeId) return;
+    if (!confirm('이 공지를 삭제하시겠습니까?')) return;
+    try {
+        const { doc, deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        const db = await getDB();
+        await deleteDoc(doc(db, "notices", _currentNoticeId));
+        document.getElementById('notice-detail-modal').style.display = 'none';
+        _noticeList = _noticeList.filter(n => n.id !== _currentNoticeId);
+        startTicker(_noticeList.filter(n => n.published));
+        window.openNoticeListModal();
+    } catch(e) {
+        alert('삭제 실패: ' + e.message);
+    }
+};
 </script>
