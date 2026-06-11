@@ -45,7 +45,7 @@
     <!-- 광고 배너 -->
     <div class="banner-wrapper center-banner toss-banner-wrap" style="max-height:300px; overflow:hidden;">
         <div class="banner-box" onclick="window.open('https://naver.me/GiajN4ki')" style="max-height:300px; overflow:hidden;">
-            <img src="광고/광고.png" alt="광고배너" class="banner-img" style="max-height:120px; width:100%; object-fit:cover; object-position:center;" onerror="this.parentElement.parentElement.style.display='none'">
+            <img src="광고/광고.png" alt="광고배너" class="banner-img" style="max-height:300px; width:100%; object-fit:cover; object-position:center;" onerror="this.parentElement.parentElement.style.display='none'">
         </div>
     </div>
 
@@ -219,11 +219,24 @@ let _publishState = true;   // 작성 모달 게시 여부 상태
 let _tickerTimer = null;    // 슬라이더 타이머
 let _tickerIdx = 0;         // 현재 슬라이더 인덱스
 
-// Firebase 모듈 동적 import 헬퍼
+// Firebase 모듈 동적 import 헬퍼 (gaon-f3399 프로젝트 연결 완료)
 async function getDB() {
+    const { initializeApp, getApps, getApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
     const { getFirestore } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-    const { getApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
-    return getFirestore(getApp());
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA1GU9E5WuFUPIyT4Ma4_crArdANpCMQfs",
+        authDomain: "gaon-f3399.firebaseapp.com",
+        projectId: "gaon-f3399",
+        storageBucket: "gaon-f3399.firebasestorage.app",
+        messagingSenderId: "870111782359",
+        appId: "1:870111782359:web:d6d3eeb441d1ac06169792",
+        measurementId: "G-JCW1K0YNZ3"
+    };
+
+    // 앱이 중복으로 초기화되는 것을 방지합니다.
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    return getFirestore(app);
 }
 
 // 날짜 포맷 헬퍼
