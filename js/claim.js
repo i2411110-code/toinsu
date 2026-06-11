@@ -171,8 +171,8 @@ window.generateHyundai5PagePDF = async function() {
         const { PDFDocument, rgb } = window.PDFLib; // CDN에서 로드된 pdf-lib 사용
 
         // ⚠️ 깃허브 경로에 맞게 파일 위치를 조정하세요
-        const formUrl = './보험사 청구 양식지/hyundai.pdf'; 
-        const fontUrl = './폰트/NotoSansKR-Black.otf';
+        const formUrl = './forms/hyundai.pdf'; 
+        const fontUrl = './fonts/NotoSansKR-Regular.ttf';
 
         const [pdfBytes, fontBytes] = await Promise.all([
             fetch(formUrl).then(res => res.arrayBuffer()),
