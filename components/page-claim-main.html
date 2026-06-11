@@ -132,20 +132,22 @@
             <div class="toss-card-title">청구 현황</div>
             <span class="toss-link" onclick="window.navigateTo('page-docs')">전체보기 <i class="bi bi-chevron-right"></i></span>
         </div>
-        <div class="toss-status-grid">
-            <div class="toss-status-box">
-                <div class="toss-status-num">0<span>건</span></div>
-                <div class="toss-status-label">전체 청구</div>
-            </div>
-            <div class="toss-status-box">
-                <div class="toss-status-num">0<span>건</span></div>
-                <div class="toss-status-label">임시 저장</div>
-            </div>
-            <div class="toss-status-box">
-                <div class="toss-status-num">0<span>건</span></div>
-                <div class="toss-status-label">발송완료</div>
-            </div>
+        <img src="dummy" onerror="if(window.loadClaimData) window.loadClaimData(); this.style.display='none';" style="display:none;">
+
+    <div class="toss-status-grid">
+        <div class="toss-status-box">
+            <div class="toss-status-num" id="claim-count-total">0<span>건</span></div>
+            <div class="toss-status-label">전체 청구</div>
         </div>
+        <div class="toss-status-box">
+            <div class="toss-status-num" id="claim-count-temp">0<span>건</span></div>
+            <div class="toss-status-label">임시 저장</div>
+        </div>
+        <div class="toss-status-box">
+            <div class="toss-status-num" id="claim-count-done">0<span>건</span></div>
+            <div class="toss-status-label">발송 완료</div>
+        </div>
+    </div>
     </div>
 
     <!-- 최근 청구 -->
