@@ -1,14 +1,17 @@
-// 외부 JS 파일 불러오기 (부품 조립)
+// ==========================================
+// 1. 모든 import는 반드시 파일 맨 꼭대기에 위치!
+// ==========================================
 import './claim.js'; 
-
-
-window.globalClientRegistry = {};
-window.currentUserSchedules = [];
-let currentModalTargetName = "";
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// ==========================================
+// 2. 변수 선언 및 설정은 그 아래에 위치!
+// ==========================================
+window.globalClientRegistry = {};
+window.currentUserSchedules = [];
+let currentModalTargetName = "";
 
 const firebaseConfig = {
     apiKey: "AIzaSyA1GU9E5WuFUPIyT4Ma4_crArdANpCMQfs",
@@ -26,6 +29,8 @@ const db = getFirestore(app);
 
 let currentUserEmail = "";
 const MASTER_INVITE_CODE = "gaon2026";
+
+// ... (이 아래로는 기존 코드 그대로 유지) ...
 
 async function loadUserIntegratedData(email) {
     currentUserEmail = email;
