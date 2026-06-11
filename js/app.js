@@ -1195,15 +1195,20 @@ window.resetClaimSelection = function() {
 };
 
 window.selectClaimCompany = function(cardElement, companyName) {
+    // 1. 모든 카드 활성화 해제 (기본 얇은 회색 테두리)
     document.querySelectorAll('.ins-select-card').forEach(card => {
-        card.style.borderColor = '#E5E8EB';
+        card.style.border = '1px solid #E5E8EB';
         card.style.background = 'white';
     });
 
-    cardElement.style.borderColor = '#3182F6';
-    cardElement.style.background = '#EFF6FF';
+    // 2. 누른 카드 활성화 (배경은 하얗게 유지, 파란색 테두리만 2px로 강조)
+    cardElement.style.border = '2px solid #3182F6';
+    cardElement.style.background = 'white';
+    
+    // 3. 선택된 회사명 저장
     window.selectedClaimInsurance = companyName;
 
+    // 4. 하단 고정 버튼 활성화
     const nextBtn = document.getElementById('next-step-btn');
     if(nextBtn) {
         nextBtn.disabled = false;
@@ -1212,7 +1217,9 @@ window.selectClaimCompany = function(cardElement, companyName) {
         nextBtn.style.cursor = 'pointer';
         nextBtn.innerText = companyName + ' 청구 진행하기';
         
+        // 5. 다음 화면 이동 연결
         nextBtn.onclick = function() {
+            // window.navigateTo('page-claim-form');
             alert(companyName + " 청구 폼으로 이동합니다.");
         };
     }
