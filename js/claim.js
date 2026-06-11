@@ -172,7 +172,7 @@ window.generateHyundai5PagePDF = async function() {
 
         // 폰트와 양식 경로
         const formUrl = './forms/hyundai.pdf'; 
-        const fontUrl = './fonts/NotoSansKR-Black.otf'; 
+        const fontUrl = 'fonts/noto-sans-kr/Noto_Sans_KR/NotoSansKR-Black.otf'; 
 
         // 파일 다운로드 시도
         const pdfRes = await fetch(formUrl);
