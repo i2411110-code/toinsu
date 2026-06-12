@@ -18,6 +18,7 @@
         <div class="office-nav" style="margin-bottom: 20px;">
             <button id="btn-db-dash" class="active" onclick="window.switchPrivateTab('db')">📊 DB 영업 스크립트</button>
             <button id="btn-chk-list" onclick="window.switchPrivateTab('chk')">📝 상담 체크리스트</button>
+            <button id="btn-rpt-gen" onclick="window.switchPrivateTab('rpt')">📋 보장분석 리포트</button>
         </div>
 
         <div id="dashboard-app" style="display: grid;">
@@ -206,6 +207,11 @@
                     오늘의 작은 준비가 내일의 큰 자산을 지킵니다!
                 </div>
             </div>
+        </div>
+
+        <!-- ══ 보장분석 리포트 앱 ══ -->
+        <div id="report-app" style="display:none; padding:4px 0;">
+          <!-- 콘텐츠는 JS로 로드됨 -->
         </div>
 
     </div>
