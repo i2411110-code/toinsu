@@ -370,7 +370,7 @@ async function callClaude(imgB64) {
   const GEMINI_API_KEY = "AIzaSyAbMeBcf5gjazsKi2BmT95tPGOcFAkke3Y"; 
   
   // 2. 제미나이 무료 API 주소 (보안 에러가 없어서 프록시 우회 주소가 필요 없습니다!)
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
   const res = await fetch(url, {
     method: 'POST',
