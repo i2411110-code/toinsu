@@ -630,9 +630,6 @@ window.switchPrivateTab = function(target) {
         if(btnRpt) btnRpt.classList.add('active');
         if(appRpt) appRpt.style.display = 'block';
         
-        // 🚨 테스트용 알림창 (확인 후 삭제하셔도 됩니다)
-        alert("리포트 탭 버튼이 정상적으로 눌렸습니다!");
-
         // 리포트 UI 생성 함수 실행
         if(window.initRptModule) {
             window.initRptModule();
