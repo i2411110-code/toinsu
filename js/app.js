@@ -591,7 +591,6 @@ window.closeNotice = function() {
 // app.js 맨 아래에 추가하거나 수정하세요
 window.unlockPrivate = function() {
     const pwd = document.getElementById('privatePwd').value;
-    console.log("입력된 비밀번호:", pwd); // 💡 F12(개발자도구) 콘솔창에서 확인용
     
     if(pwd === 'gaon1004') {
         document.getElementById('privateAuthScreen').style.display = 'none';
@@ -1172,5 +1171,3 @@ window.deleteCurrentNotice = async function() {
         alert('삭제 실패: ' + e.message);
     }
 };
-
-
