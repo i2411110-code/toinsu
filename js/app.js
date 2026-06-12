@@ -602,20 +602,7 @@ window.unlockPrivate = function() {
 };
 
 // 2. 내부 탭 (대시보드 vs 체크리스트) 전환
-window.switchPrivateTab = function(target) {
-    document.getElementById('btn-db-dash').classList.remove('active');
-    document.getElementById('btn-chk-list').classList.remove('active');
-    document.getElementById('dashboard-app').style.display = 'none';
-    document.getElementById('checklist-app').style.display = 'none';
 
-    if(target === 'db') {
-        document.getElementById('btn-db-dash').classList.add('active');
-        document.getElementById('dashboard-app').style.display = 'grid'; // 데스크탑 grid 유지
-    } else {
-        document.getElementById('btn-chk-list').classList.add('active');
-        document.getElementById('checklist-app').style.display = 'block';
-    }
-};
 
 // 3. 사이드바 메뉴 클릭 시 화면 전환
 window.switchSidebarTab = function(tabId, btnElem) {
