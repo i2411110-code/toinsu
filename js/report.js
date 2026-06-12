@@ -369,8 +369,8 @@ async function callClaude(imgB64) {
   // 1. 구글 AI 스튜디오에서 발급받은 무료 API 키를 아래에 입력하세요.
   const GEMINI_API_KEY = "AIzaSyAbMeBcf5gjazsKi2BmT95tPGOcFAkke3Y"; 
   
-  // 2. 제미나이 무료 API 주소 (보안 에러가 없어서 프록시 우회 주소가 필요 없습니다!)
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+  // 2. 제미나이 무료 API 주소 (최신 3.5 Flash 모델 적용)
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
   const res = await fetch(url, {
     method: 'POST',
