@@ -59,7 +59,7 @@ if (lastCat !== null) CAT_SPANS[lastCat] = { rowspan: COVERAGE_DEF.length - last
 // Claude Vision 프롬프트
 function buildPrompt() {
   return `당신은 한국 보험 보장분석 제안서 전문 데이터 추출 AI입니다.
-이 이미지는 메리츠화재 보장분석 제안서의 페이지입니다.
+이 이미지는 한국 보험사 보장분석 제안서의 페이지입니다. (메리츠화재, 삼성생명, 한화생명, DB손해보험, KB손해보험 등 모든 보험사 포함)
 
 **추출 규칙:**
 1. 이 페이지에서 보험사(회사명)별 계약 정보를 찾으세요.
