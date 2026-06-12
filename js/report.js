@@ -364,28 +364,46 @@ async function pageToBase64(pn) {
   return canvas.toDataURL('image/jpeg', 0.88).split(',')[1];
 }
 
+// ─── AI API 호출부 (무료 구글 제미나이 버전으로 완벽 교체) ───
 async function callClaude(imgB64) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  // 1. 구글 AI 스튜디오에서 발급받은 무료 API 키를 아래에 입력하세요.
+  const GEMINI_API_KEY = "AIzaSyAbMeBcf5gjazsKi2BmT95tPGOcFAkke3Y"; 
+  
+  // 2. 제미나이 무료 API 주소 (보안 에러가 없어서 프록시 우회 주소가 필요 없습니다!)
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+  const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json'
+    },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imgB64 } },
-          { type: 'text', text: buildPrompt() }
+      contents: [{
+        parts: [
+          { text: buildPrompt() }, // 기존에 작성해둔 지시사항(Prompt) 그대로 사용
+          { inlineData: { mimeType: "image/jpeg", data: imgB64 } }
         ]
-      }]
+      }],
+      generationConfig: {
+        responseMimeType: "application/json" // AI가 무조건 JSON 형태로만 대답하도록 강제
+      }
     })
   });
+
+  if (!res.ok) {
+    const errorData = await res.text();
+    throw new Error(`구글 API 응답 오류: ${errorData}`);
+  }
+
   const data = await res.json();
-  const text = (data.content || []).map(b => b.text || '').join('');
+  const text = data.candidates[0].content.parts[0].text || '';
+  
   try {
+    // 응답받은 텍스트에서 JSON 부분만 추출하여 반환
     const m = text.match(/\{[\s\S]*\}/);
     if (m) return JSON.parse(m[0]);
   } catch (_) {}
+  
   return null;
 }
 
