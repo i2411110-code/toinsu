@@ -602,11 +602,7 @@ window.unlockPrivate = function() {
 };
 
 // 2. 내부 탭 (대시보드 vs 체크리스트) 전환
-window.switchPrivateTab = function(target) {
-    document.getElementById('btn-db-dash').classList.remove('active');
-    document.getElementById('btn-chk-list').classList.remove('active');
-    document.getElementById('dashboard-app').style.display = 'none';
-    document.getElementById('checklist-app').style.display = 'none';
+
 
     if(target === 'db') {
         document.getElementById('btn-db-dash').classList.add('active');
