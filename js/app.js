@@ -601,8 +601,46 @@ window.unlockPrivate = function() {
     }
 };
 
-// 2. 내부 탭 (대시보드 vs 체크리스트) 전환
+// 2. 내부 탭 (대시보드 vs 체크리스트 vs 보장분석 리포트) 전환
+window.switchPrivateTab = function(target) {
+    // 1) 모든 버튼 활성화 상태 끄기
+    const btnDb = document.getElementById('btn-db-dash');
+    const btnChk = document.getElementById('btn-chk-list');
+    const btnRpt = document.getElementById('btn-rpt-gen');
+    if(btnDb) btnDb.classList.remove('active');
+    if(btnChk) btnChk.classList.remove('active');
+    if(btnRpt) btnRpt.classList.remove('active');
 
+    // 2) 모든 화면 숨기기
+    const appDb = document.getElementById('dashboard-app');
+    const appChk = document.getElementById('checklist-app');
+    const appRpt = document.getElementById('report-app');
+    if(appDb) appDb.style.display = 'none';
+    if(appChk) appChk.style.display = 'none';
+    if(appRpt) appRpt.style.display = 'none';
+
+    // 3) 누른 탭만 켜기
+    if(target === 'db') {
+        if(btnDb) btnDb.classList.add('active');
+        if(appDb) appDb.style.display = 'grid'; 
+    } else if(target === 'chk') {
+        if(btnChk) btnChk.classList.add('active');
+        if(appChk) appChk.style.display = 'block';
+    } else if(target === 'rpt') {
+        if(btnRpt) btnRpt.classList.add('active');
+        if(appRpt) appRpt.style.display = 'block';
+        
+        // 🚨 테스트용 알림창 (확인 후 삭제하셔도 됩니다)
+        alert("리포트 탭 버튼이 정상적으로 눌렸습니다!");
+
+        // 리포트 UI 생성 함수 실행
+        if(window.initRptModule) {
+            window.initRptModule();
+        } else {
+            alert("경고: report.js 파일을 아직 읽어오지 못했습니다.");
+        }
+    }
+};
 
 // 3. 사이드바 메뉴 클릭 시 화면 전환
 window.switchSidebarTab = function(tabId, btnElem) {
