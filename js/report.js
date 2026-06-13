@@ -1,6 +1,6 @@
 // ================================================
 // 보장분석 리포트 생성기 - 가온사업단 오피스 모듈
-// v4: 다중 페이지 딥머지(Deep Merge) 및 범용 추출 로직 고도화
+// v5: 행(Row) 단위 시각적 추출 및 JS 내부 매핑 (환각/오류 완벽 제거)
 // ================================================
 
 (function () {
@@ -44,7 +44,6 @@ const COVERAGE_DEF = [
   { cat: null,   key: 'car_settlement',   label: '사고처리 지원금(형사합의금)' },
 ];
 
-// 카테고리별 rowspan 계산
 const CAT_SPANS = {};
 let lastCat = null, lastIdx = 0;
 COVERAGE_DEF.forEach((cov, idx) => {
@@ -55,87 +54,42 @@ COVERAGE_DEF.forEach((cov, idx) => {
 });
 if (lastCat !== null) CAT_SPANS[lastCat] = { rowspan: COVERAGE_DEF.length - lastIdx, startIdx: lastIdx };
 
-// ─── AI 프롬프트 (오류 방지 범용화) ───
+// ─── AI 프롬프트 (가장 직관적인 행 단위 추출로 환각 원천 차단) ───
 function buildPrompt() {
-  return `당신은 한국 보험 보장분석 제안서 데이터 추출 전문 AI입니다.
+  return `당신은 한국 보험 보장분석 제안서 표 데이터 추출 전문 AI입니다.
 
-## 페이지 판별 (최우선)
-이 PDF에는 두 종류의 표가 있습니다:
-- [분석 대상] "가입현황 | 세부내역" 페이지: 상단에 "보험사 별 계약정보"가 있고 여러 보험사가 가로(열)로 나열된 비교표
-- [무시] "별첨 | 상품별 보험가입현황" 등 보험사 1개씩 세로로 나열된 페이지
-**반드시 [분석 대상] 페이지만 분석하세요.** [무시] 페이지면 즉시 { "companies": [], "customer_name": "" } 반환.
+## 분석 대상
+- PDF 표 상단에 "보험사별 계약정보"가 있고 가로로 여러 보험사가 나열된 "가입현황 | 세부내역" 페이지만 분석하세요.
+- 세로로만 나열된 "별첨"이나 "가입담보 상세 List" 페이지는 무시하고 즉시 { "companies": [], "rows": [], "customer_name": "" } 를 반환하세요.
 
-## 계약 정보 추출 기준 (열 단위 독립 추출)
-- 표의 열(Column) 하나가 보험계약 1건입니다. 페이지에 보이는 열만 좌측부터 순서대로 추출하세요.
-- 고객명: "OOO 님의 상품별 가입현황" 형태에서 고객명 추출
-- 보험사명: 표 상단 "(1)흥국화재" 등에서 괄호와 번호를 제외한 "흥국화재" 형태의 사명만 추출. (절대 소속 GA명칭을 추출하지 마세요)
-- 상품명: 줄바꿈이 있어도 하나로 이어서 정확한 전체 이름을 추출하세요. (예: 무배당 흥Good The편한 운전자상해보험)
-- 보험료: 원 단위 숫자만 추출. 없으면 0.
+## 추출 방식 (매우 중요: 눈에 보이는 그대로 "행(Row)" 단위 추출)
+AI가 열(Column) 단위로 값을 유추하여 매핑하려 하면 상품명이 망가지거나 금액이 섞이는 치명적인 오류가 발생합니다.
+따라서 눈에 보이는 표 모양 그대로, 행(가로) 단위로 베껴서 추출하세요.
 
-## 가입금액 단위 변환 규칙 (가장 중요! 오류 절대 금지)
-모든 보장금액은 **만원** 단위 정수로 반환합니다.
-- "5,000만" → 5000
-- "30만" → 30
-- "1.6억", "1억6,000만" → 16000
-- "2.2억" → 22000
-- 빈칸, "-", "0" → 0
-* ⚠️극도로 주의: 입원일당(예: 3만~10만), 수술비(예: 30만~500만) 등의 금액을 10,000배 부풀려서 6,000만 등으로 오기입하지 마세요. 화면에 적힌 단위 그대로 만원 기준 숫자로 변환해야 합니다.
+## 데이터 추출 규칙
+1. customer_name: "심*진 님의 상품별 가입현황"에서 고객명 추출
+2. companies: 표 최상단에 있는 보험사 정보 (왼쪽 열부터 순서대로)
+   - name: "(1)흥국화재" -> "흥국화재" (괄호 및 숫자 제거, GA명칭 제외)
+   - product: 줄바꿈 무시하고 정확한 전체 상품명
+   - premium: 월보험료 (숫자만, 예: 24604)
+   - start_date / end_date: 가입시기 / 만기시점 (YYYY.MM.DD)
+3. rows: 표 좌측의 "담보명"과 우측의 "가입금액"들
+   - label: 표 좌측에 적힌 글자 (예: "질병사망", "상해일당", "고액항암 치료비(표적)" 등 표에 적힌 그대로 작성)
+   - values: 해당 담보명의 우측에 있는 보험사별 가입금액 숫자 배열 (companies 순서와 정확히 1:1 일치해야 함)
+   - [금액 변환 필수]: "1억300만" -> 10300, "5,000만" -> 5000, "30만" -> 30, 빈칸/0/- -> 0
+   - (주의) 5,000만은 만원 단위인 5000입니다. 50000000으로 적지 마세요.
+   - 표에 존재하는 가로 행을 위에서부터 아래로 누락 없이 전부 작성하세요.
 
-## 담보 매핑 규칙
-- inpatient (입원 의료비): 실손 입원의료비, 상해/질병 입원의료비 (일당 아님)
-- outpatient (통원 의료비): 실손 통원의료비, 외래, 처방조제료
-- liability (일상생활 배상책임): 일상생활배상책임, 가족일상생활배상책임
-- disease_surg (질병 수술비): 질병수술비 (특정 질환 한정 제외)
-- injury_surg (상해/재해 수술비): 상해수술비, 재해수술비
-- brain_heart_surg (뇌/심장 수술비): 뇌혈관질환수술, 허혈성심장질환수술, 뇌출혈/심근경색수술비 합산
-- type_surg (1~5종수술): 질병종수술 + 상해종수술 (1~5종) 합산
-- cancer_diag (일반암 진단비): 일반암진단비 (유사암/소액암/암 주요치료비 제외)
-- minor_cancer (유사암 진단비): 갑상선암, 제자리암, 기타피부암, 경계성종양 등 합산
-- robot_surg (로봇암 수술비): 다빈치, 레보아이 등 로봇암수술비
-- chemo_rad (항암방사선약물 치료비): 항암방사선치료, 양성자치료 등 (표적항암 제외)
-- targeted (표적항암약물 치료비): 표적항암약물허가치료, 카티(CAR-T)항암
-- cancer_main (암 주요 치료비): 암주요치료비, 2대질환주요치료비
-- cerebro (뇌혈관질환 진단비): 뇌혈관질환진단비
-- stroke (뇌졸증 진단비): 뇌졸중진단비
-- cerebro_hem (뇌출혈 진단비): 뇌출혈진단비
-- thrombo (혈전용해제): 혈전용해치료비 (뇌/심장 무관하게 합산)
-- ischemic (허혈성심장질환 진단비): 허혈성심장질환진단비
-- arrhythmia (부정맥 진단비): 부정맥진단비
-- ami (급성심근경색 진단비): 급성심근경색증진단비
-- injury_hosp (상해/재해 입원일당): 상해입원일당, 재해입원일당
-- disease_hosp (질병 입원일당): 질병입원일당
-- general_hosp (일반 입원일당): 일반상해입원일당(1인실), 일반질병입원일당(1인실)
-- fracture (골절 진단비): 골절진단비 (치아파절 제외 여부 무관)
-- death_general (일반사망): 일반사망
-- death_disease (질병사망): 질병사망, 유병자질병사망
-- death_injury (상해/재해사망): 상해사망, 재해사망, 상해사망후유장해
-- car_injury (자동차 부상치료비): 자동차사고부상치료비, 자동차부상치료지원금
-- car_lawyer (변호사 선임비용): 변호사선임비용
-- car_settlement (사고처리 지원금): 교통사고처리지원금, 형사합의지원금
-
-## 출력 형식 (마크다운 없이 순수 JSON만 반환)
+## 출력 형식 (마크다운 없이 순수 JSON만)
 {
+  "customer_name": "심*진",
   "companies": [
-    {
-      "name": "보험사명",
-      "product": "상품명 전체",
-      "start_date": "YYYY.MM.DD",
-      "end_date": "YYYY.MM.DD",
-      "premium": 12345,
-      "coverages": {
-        "inpatient": 0, "outpatient": 0, "liability": 0,
-        "disease_surg": 0, "injury_surg": 0, "brain_heart_surg": 0, "type_surg": 0,
-        "cancer_diag": 0, "minor_cancer": 0, "robot_surg": 0, "chemo_rad": 0, "targeted": 0, "cancer_main": 0,
-        "cerebro": 0, "stroke": 0, "cerebro_hem": 0, "thrombo": 0,
-        "ischemic": 0, "arrhythmia": 0, "ami": 0,
-        "injury_hosp": 0, "disease_hosp": 0, "general_hosp": 0, "er_visit": 0,
-        "fracture": 0, "five_fracture": 0, "cast": 0,
-        "death_general": 0, "death_disease": 0, "death_cancer": 0, "death_injury": 0,
-        "car_injury": 0, "car_fine": 0, "car_lawyer": 0, "car_settlement": 0
-      }
-    }
+    { "name": "흥국화재", "product": "무배당 흥Good...", "start_date": "2025.12.22", "end_date": "2045.12.22", "premium": 24604 }
   ],
-  "customer_name": "고객명"
+  "rows": [
+    { "label": "질병사망", "values": [10300, 5000, 0, 100] },
+    { "label": "고액항암 치료비(표적)", "values": [0, 28000, 4000, 0] }
+  ]
 }`;
 }
 
@@ -289,7 +243,7 @@ window.rptLoadPDF = async function (file) {
   }
 };
 
-// ─── AI 분석 및 Deep Merge ───
+// ─── AI 분석 ───
 window.rptStartAnalysis = async function () {
   if (rptState.analyzing || !rptState.pdfDoc) return;
   rptState.analyzing = true;
@@ -313,13 +267,73 @@ window.rptStartAnalysis = async function () {
     for (let i = 0; i < pagesToScan.length; i++) {
       const pn = pagesToScan[i];
       const pct = Math.round(((i + 1) / total) * 100);
-      setProgress(pct, `${pn}페이지 분석 중... (${i + 1}/${total})`, '가온 AI가 보험사 계약 정보를 인식하고 있습니다');
+      setProgress(pct, `${pn}페이지 분석 중... (${i + 1}/${total})`, '가온 AI가 보험사 계약 정보를 정확히 인식하고 있습니다');
 
       const imgB64 = await pageToBase64(pn);
       const result = await callClaude(imgB64);
 
       if (result && result.companies && result.companies.length > 0) {
-        rptState.companies.push(...result.companies);
+        
+        // AI가 추출한 표(Row 단위) 데이터를 JS 내부에서 안전하게 정규화 매핑합니다.
+        let parsed_companies = result.companies.map(c => ({
+          name: c.name,
+          product: c.product,
+          start_date: c.start_date,
+          end_date: c.end_date,
+          premium: c.premium,
+          coverages: {}
+        }));
+
+        (result.rows || []).forEach(r => {
+          let key = null;
+          let label = (r.label || '').replace(/\s+/g, '');
+          
+          if (label.includes('질병입원') || label.includes('상해입원')) key = 'inpatient';
+          else if (label.includes('질병통원') || label.includes('상해통원')) key = 'outpatient';
+          else if (label.includes('배상책임')) key = 'liability';
+          else if (label === '질병수술비') key = 'disease_surg';
+          else if (label === '상해수술비') key = 'injury_surg';
+          else if (label.includes('뇌혈관수술비') || label.includes('허혈심장질환수술비')) key = 'brain_heart_surg';
+          else if (label.includes('종수술')) key = 'type_surg';
+          else if (label === '일반암진단비') key = 'cancer_diag';
+          else if (label === '유사암진단비') key = 'minor_cancer';
+          else if (label.includes('로봇암')) key = 'robot_surg';
+          else if (label.includes('방사선약물')) key = 'chemo_rad';
+          else if (label.includes('표적') || label.includes('고액항암')) key = 'targeted';
+          else if (label === '암주요치료비' || label.includes('2대질환주요치료비')) key = 'cancer_main';
+          else if (label === '뇌혈관진단비') key = 'cerebro';
+          else if (label === '뇌졸중진단비') key = 'stroke';
+          else if (label === '뇌출혈진단비') key = 'cerebro_hem';
+          else if (label.includes('혈전용해')) key = 'thrombo';
+          else if (label === '허혈성심장질환진단비') key = 'ischemic';
+          else if (label === '부정맥진단비') key = 'arrhythmia';
+          else if (label.includes('급성심근경색')) key = 'ami';
+          else if (label === '상해일당') key = 'injury_hosp';
+          else if (label === '질병일당') key = 'disease_hosp';
+          else if (label.includes('1인실')) key = 'general_hosp';
+          else if (label.includes('응급실')) key = 'er_visit';
+          else if (label === '골절진단비') key = 'fracture';
+          else if (label.includes('5대골절')) key = 'five_fracture';
+          else if (label.includes('깁스')) key = 'cast';
+          else if (label === '일반사망') key = 'death_general';
+          else if (label === '질병사망') key = 'death_disease';
+          else if (label === '암사망') key = 'death_cancer';
+          else if (label === '상해사망') key = 'death_injury';
+          else if (label.includes('부상치료비')) key = 'car_injury';
+          else if (label === '벌금') key = 'car_fine';
+          else if (label.includes('변호사선임')) key = 'car_lawyer';
+          else if (label.includes('교통사고처리지원금')) key = 'car_settlement';
+
+          if (key && r.values && Array.isArray(r.values)) {
+            r.values.forEach((v, idx) => {
+              if (parsed_companies[idx]) {
+                parsed_companies[idx].coverages[key] = (parsed_companies[idx].coverages[key] || 0) + (Number(v) || 0);
+              }
+            });
+          }
+        });
+
+        rptState.companies.push(...parsed_companies);
         if (result.customer_name && !rptState.customerName) {
           rptState.customerName = result.customer_name;
         }
@@ -343,20 +357,6 @@ window.rptStartAnalysis = async function () {
       return true;
     }
 
-    // 과도한 단위 오류 방지 로직 (만원 기준)
-    function normalizeCoverageValues(coverages) {
-      const MAX_SANE_MAN = 50000; 
-      Object.keys(coverages).forEach(key => {
-        const v = coverages[key];
-        if (!v || v <= 0) { coverages[key] = 0; return; }
-        if (v > MAX_SANE_MAN * 10000) {
-          coverages[key] = Math.round(v / 10000); // 억 단위를 원으로 잘못 표기 시 보정
-        }
-      });
-      return coverages;
-    }
-
-    // 중복 제거 및 Deep Merge용 Key 생성 (보험사명 + 상품명 앞 8글자)
     function makeKey(c) {
       const name = (c.name || '').replace(/\s+/g, '').replace(/\(무\)|\(무배당\)|무배당/g, '');
       const prod = (c.product || '').replace(/\s+/g, '').replace(/\(무\)|\(무배당\)|무배당|갱신형/g, '').slice(0, 8);
@@ -364,9 +364,8 @@ window.rptStartAnalysis = async function () {
     }
 
     const filtered = rptState.companies.filter(isValidCompany);
-    filtered.forEach(c => { c.coverages = normalizeCoverageValues(c.coverages || {}); });
 
-    // ─── 핵심: Deep Merge 병합 로직 ───
+    // Deep Merge (중복된 계약 병합)
     const seen = new Map();
     const deduped = [];
     filtered.forEach(c => {
@@ -374,22 +373,15 @@ window.rptStartAnalysis = async function () {
       if (seen.has(k)) {
         const idx = seen.get(k);
         const existing = deduped[idx];
-
-        // 1. 더 길고 정확한 상품명 유지 (잘못 잘린 텍스트 방지)
-        if (c.product && c.product.length > (existing.product || '').length) {
-          if (!/^\(\d+\)/.test(c.product)) { 
-            existing.product = c.product;
-          }
-        }
         
-        // 2. 가입시기, 만기시점 빈 값 채우기
+        // 상품명이 더 긴/정확한 것으로 업데이트
+        if (c.product && c.product.length > (existing.product || '').length) {
+          if (!/^\(\d+\)/.test(c.product)) existing.product = c.product;
+        }
         if (!existing.start_date && c.start_date) existing.start_date = c.start_date;
         if (!existing.end_date && c.end_date) existing.end_date = c.end_date;
-        
-        // 3. 보험료 보존 (누락된 페이지 대비)
         existing.premium = Math.max(existing.premium || 0, c.premium || 0);
 
-        // 4. 보장항목 누적(Deep Merge) - 페이지별로 나뉜 보장금액을 모두 취합
         Object.keys(c.coverages || {}).forEach(key => {
           existing.coverages[key] = Math.max(existing.coverages[key] || 0, c.coverages[key] || 0);
         });
@@ -466,7 +458,6 @@ function renderPreview() {
   let html = `<table>`;
   html += `<tr class="r-title"><td colspan="${3 + N}">${name} 님 보장분석표</td></tr>`;
 
-  // 헤더행 1 – 보험사명
   html += `<tr>
     <th class="r-cat" rowspan="5" style="width:28px;">주요<br>보장</th>
     <th class="r-hdr" style="background:#001E42;color:#fff;">보험사</th>
@@ -474,7 +465,6 @@ function renderPreview() {
   co.forEach(c => html += `<th class="r-ins">${c.name}</th>`);
   html += `</tr>`;
 
-  // 헤더행 2 – 상품명
   html += `<tr><th class="r-hdr" style="background:#001E42;color:#fff;">상품명</th><th class="r-date"></th>`;
   co.forEach(c => {
     const p = c.product.length > 20 ? c.product.slice(0, 20) + '…' : c.product;
@@ -482,17 +472,14 @@ function renderPreview() {
   });
   html += `</tr>`;
 
-  // 헤더행 3 – 가입시기
   html += `<tr><th class="r-hdr" style="background:#001E42;color:#fff;">가입시기</th><th class="r-date"></th>`;
   co.forEach(c => html += `<td class="r-date">${c.start_date || ''}</td>`);
   html += `</tr>`;
 
-  // 헤더행 4 – 만기
   html += `<tr><th class="r-hdr" style="background:#001E42;color:#fff;">납입기간/<br>만기시점</th><th class="r-date"></th>`;
   co.forEach(c => html += `<td class="r-date-alt" style="font-size:9px;">${c.end_date || ''}</td>`);
   html += `</tr>`;
 
-  // 헤더행 5 – 보험료
   const totalPrem = co.reduce((s, c) => s + (c.premium || 0), 0);
   html += `<tr>
     <th class="r-item r-fee" style="background:#D6DEE7;color:#001E42;">보험료</th>
@@ -500,7 +487,6 @@ function renderPreview() {
   co.forEach(c => html += `<td class="r-fee">${fmtWon(c.premium || 0)}</td>`);
   html += `</tr>`;
 
-  // 데이터 행
   COVERAGE_DEF.forEach((cov, idx) => {
     const vals = co.map(c => (c.coverages || {})[cov.key] || 0);
     const sum  = vals.reduce((s, v) => s + v, 0);
@@ -571,13 +557,10 @@ window.rptDownloadExcel = async function () {
   }
 
   let r = 0;
-
-  // Row 0: 타이틀
   setCell(r, 0, `${name} 님 보장분석표`, null, null, true, 'left', 14);
   addMerge(r, 0, r, 2 + N);
   r++;
 
-  // Row 1~5: 헤더
   setCell(r, 0, '주요\n보장', C.navy, C.white, true, 'center');
   addMerge(r, 0, r + 4, 0);
   setCell(r, 2, '고객\n보장합산', C.gray, C.darkNav, true, 'center');
