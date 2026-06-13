@@ -644,7 +644,87 @@ window.rptDownloadExcel = async function () {
 
   ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r, c: 2 + N } });
   ws['!merges'] = merges;
-  ws['!cols'] = [{ wch: 5 }, { wch: 18 }, { wch: 12 }, ...co
+  ws['!cols'] = [{ wch: 5 }, { wch: 18 }, { wch: 12 }, ...co.map(() => ({ wch: 13 }))];
+
+  const rowHeights = [];
+  for (let i = 0; i <= r; i++) {
+    rowHeights.push({ hpt: i === 0 ? 28 : (i >= 1 && i <= 5) ? 36 : 22 });
+  }
+  ws['!rows'] = rowHeights;
+
+  XLSX.utils.book_append_sheet(wb, ws, '보장분석표');
+
+  const d = new Date();
+  const ds = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  XLSX.writeFile(wb, `${name}_보장분석표_${ds}.xlsx`);
+};
+
+// ─── 인쇄 ───
+window.rptPrint = function () {
+  const content = document.getElementById('rpt-preview-table').innerHTML;
+  const win = window.open('', '_blank', 'width=1200,height=800');
+  win.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="UTF-8"><title>보장분석표 인쇄</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      * { box-sizing: border-box; }
+      @page { size: A4 landscape; margin: 10mm; }
+      body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 0; zoom: 0.65; }
+      table { border-collapse: collapse; width: 100%; table-layout: fixed; word-break: break-all; }
+      th, td { border: 1px solid #C5CBD3; padding: 4px 2px; text-align: center; font-size: 11px; }
+      .r-cat { background: #001E42 !important; color: #fff; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; width: 40px; }
+      .r-item { background: #D6DEE7 !important; font-weight: 600; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; width: 120px; }
+      .r-sum { background: #D6DEE7 !important; font-weight: 700; color: #001E42; -webkit-print-color-adjust: exact; print-color-adjust: exact; width: 70px; }
+      .r-hdr { background: #D6DEE7 !important; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .r-ins { background: #D6DEE7 !important; font-weight: 700; color: #C00000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .r-date { background: #D6DEE7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .r-fee { background: #D7DDE4 !important; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .r-title td { font-size: 16px; font-weight: 700; text-align: left; padding: 10px; border-bottom: 2px solid #001E42; }
+    </style>
+  </head><body>${content}</body></html>`);
+  win.document.close();
+  setTimeout(() => { win.focus(); win.print(); }, 800);
+};
+
+// ─── 리셋 ───
+window.rptReset = function () {
+  rptState = { pdfFile: null, pdfDoc: null, companies: [], customerName: '', analyzing: false };
+  const fi = document.getElementById('rpt-file-info');
+  if (fi) fi.style.display = 'none';
+  ['rpt-step2', 'rpt-step3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  const inp = document.getElementById('rpt-pdf-input');
+  if (inp) inp.value = '';
+  setProgress(0, '분석 준비 중...', '');
+  rptHideError();
+};
+
+// ─── 유틸 ───
+function fmtWon(v) { return v ? v.toLocaleString() + '원' : ''; }
+function fmtMan(v) {
+  if (!v) return '';
+  if (v >= 10000) {
+    const eok = v / 10000;
+    const r = Math.round(eok * 10) / 10;
+    return (Number.isInteger(r) ? r : r.toFixed(1)) + '억';
+  }
+  return v.toLocaleString() + '만';
+}
+function rptShowError(msg) {
+  const b = document.getElementById('rpt-error-box');
+  if (b) { document.getElementById('rpt-error-msg').textContent = msg; b.style.display = 'block'; }
+}
+function rptHideError() {
+  const b = document.getElementById('rpt-error-box');
+  if (b) b.style.display = 'none';
+}
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
   });
 }
 
