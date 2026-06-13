@@ -1,6 +1,6 @@
 // ================================================
 // 보장분석 리포트 생성기 - 가온사업단 오피스 모듈
-// v4.2: 다중 페이지 딥머지 및 CoT(사고 과정 메모) 강제 적용
+// v4.3: 인라인 직접 수정(contenteditable) 및 엑셀 스타일 완벽 유지
 // ================================================
 
 (function () {
@@ -44,7 +44,6 @@ const COVERAGE_DEF = [
   { cat: null,   key: 'car_settlement',   label: '사고처리 지원금(형사합의금)' },
 ];
 
-// 카테고리별 rowspan 계산
 const CAT_SPANS = {};
 let lastCat = null, lastIdx = 0;
 COVERAGE_DEF.forEach((cov, idx) => {
@@ -55,7 +54,6 @@ COVERAGE_DEF.forEach((cov, idx) => {
 });
 if (lastCat !== null) CAT_SPANS[lastCat] = { rowspan: COVERAGE_DEF.length - lastIdx, startIdx: lastIdx };
 
-// ─── AI 프롬프트 (사고 과정 'Chain of Thought' 강제 적용) ───
 function buildPrompt() {
   return `당신은 한국 보험 보장분석 제안서 데이터 추출 전문 AI입니다.
 
@@ -68,7 +66,6 @@ function buildPrompt() {
 [데이터 추출 메모 예시]
 1열_흥국화재: 상품명(무배당 흥Good), 보험료(24604), 상해수술비(50), 질병수술비(0), 자동차부상(20)...
 2열_삼성화재: 상품명(무배당 삼성화재), 보험료(50450), 상해수술비(0), 질병수술비(0), 자동차부상(10)...
-3열_에이스손보: ...
 
 ## 계약 정보 추출 기준
 - 표의 세로 열(Column) 하나가 보험계약 1건입니다.
@@ -138,13 +135,11 @@ function buildPrompt() {
 `;
 }
 
-// ─── 전역 상태 ───
 let rptState = {
   pdfFile: null, pdfDoc: null,
   companies: [], customerName: '', analyzing: false,
 };
 
-// ─── HTML 삽입 ───
 window.initRptModule = function () {
   const app = document.getElementById('report-app');
   if (!app || app.dataset.inited) return;
@@ -202,10 +197,13 @@ function getRptHTML() {
 
   <div id="rpt-step3" class="rpt-card" style="display:none;">
     <div class="rpt-step-label">STEP 3</div>
-    <h3 class="rpt-step-title">보장분석표 미리보기 & 다운로드</h3>
+    <h3 class="rpt-step-title">보장분석표 미리보기 & 수정</h3>
+    <p class="rpt-step-desc" style="color:#3182F6; font-weight:600; margin-bottom:12px;">
+      💡 금액이나 텍스트를 클릭하면 직접 수정할 수 있습니다. (수정 시 합산 금액 자동 변경)
+    </p>
     <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
       <button class="btn-action" style="width:auto; padding:10px 20px;" onclick="window.rptDownloadExcel()">
-        <i class="bi bi-file-earmark-excel-fill"></i> 엑셀 다운로드
+        <i class="bi bi-file-earmark-excel-fill"></i> 엑셀 다운로드 (스타일 포함)
       </button>
       <button class="btn-action" style="width:auto; padding:10px 20px; background:#475569;" onclick="window.rptPrint()">
         <i class="bi bi-printer-fill"></i> 인쇄하기
@@ -251,11 +249,14 @@ function injectRptStyles() {
 #rpt-preview-table .r-val-alt { background:#F8FAFC; color:#1E40AF; min-width:75px; }
 #rpt-preview-table .r-title td { background:#fff; font-size:14px; font-weight:700; text-align:left; padding:10px 12px; border-bottom:2px solid #001E42; }
 #rpt-preview-table .r-foot td { background:#F8FAFC; font-size:10px; color:#64748B; text-align:left; padding:6px 10px; }
+/* 직접 수정(contenteditable) UI 스타일 */
+[contenteditable="true"] { cursor: text; transition: all 0.2s; border-radius: 2px; }
+[contenteditable="true"]:hover { outline: 1px dashed #3182F6; background: rgba(49,130,246,0.1) !important; }
+[contenteditable="true"]:focus { outline: 2px solid #3182F6; background: #fff !important; color: #000 !important; }
 `;
   document.head.appendChild(style);
 }
 
-// ─── 파일 업로드 ───
 window.rptHandleDrop = function (e) {
   e.preventDefault();
   const file = e.dataTransfer.files[0];
@@ -288,7 +289,6 @@ window.rptLoadPDF = async function (file) {
   }
 };
 
-// ─── AI 분석 및 Deep Merge ───
 window.rptStartAnalysis = async function () {
   if (rptState.analyzing || !rptState.pdfDoc) return;
   rptState.analyzing = true;
@@ -327,7 +327,6 @@ window.rptStartAnalysis = async function () {
 
     setProgress(100, `추출 완료! 데이터 병합 최적화 중...`, '');
 
-    // 날짜 정규화
     function normDate(d) { return d ? String(d).replace(/-/g, '.').trim() : ''; }
     rptState.companies.forEach(c => {
       c.start_date = normDate(c.start_date);
@@ -342,20 +341,18 @@ window.rptStartAnalysis = async function () {
       return true;
     }
 
-    // 과도한 단위 오류 방지 로직 (만원 기준)
     function normalizeCoverageValues(coverages) {
       const MAX_SANE_MAN = 50000; 
       Object.keys(coverages).forEach(key => {
         const v = coverages[key];
         if (!v || v <= 0) { coverages[key] = 0; return; }
         if (v > MAX_SANE_MAN * 10000) {
-          coverages[key] = Math.round(v / 10000); // 억 단위를 원으로 잘못 표기 시 보정
+          coverages[key] = Math.round(v / 10000);
         }
       });
       return coverages;
     }
 
-    // 중복 제거 및 Deep Merge용 Key 생성 (보험사명 + 상품명 + 보험료 기반)
     function makeKey(c) {
       const name = (c.name || '').replace(/\s+/g, '').replace(/\(무\)|\(무배당\)|무배당|생명|화재|손보|손해보험/g, '');
       const prod = (c.product || '').replace(/\s+/g, '').replace(/\(무\)|\(무배당\)|무배당|갱신형/g, '').slice(0, 12);
@@ -366,7 +363,6 @@ window.rptStartAnalysis = async function () {
     const filtered = rptState.companies.filter(isValidCompany);
     filtered.forEach(c => { c.coverages = normalizeCoverageValues(c.coverages || {}); });
 
-    // ─── 핵심: Deep Merge 병합 로직 ───
     const seen = new Map();
     const deduped = [];
     filtered.forEach(c => {
@@ -375,21 +371,17 @@ window.rptStartAnalysis = async function () {
         const idx = seen.get(k);
         const existing = deduped[idx];
 
-        // 1. 더 길고 정확한 상품명 유지 (잘못 잘린 텍스트 방지)
         if (c.product && c.product.length > (existing.product || '').length) {
           if (!/^\(\d+\)/.test(c.product)) { 
             existing.product = c.product;
           }
         }
         
-        // 2. 가입시기, 만기시점 빈 값 채우기
         if (!existing.start_date && c.start_date) existing.start_date = c.start_date;
         if (!existing.end_date && c.end_date) existing.end_date = c.end_date;
         
-        // 3. 보험료 보존 (누락된 페이지 대비)
         existing.premium = Math.max(existing.premium || 0, c.premium || 0);
 
-        // 4. 보장항목 누적(Deep Merge) - 페이지별로 나뉜 보장금액을 모두 취합
         Object.keys(c.coverages || {}).forEach(key => {
           existing.coverages[key] = Math.max(existing.coverages[key] || 0, c.coverages[key] || 0);
         });
@@ -457,7 +449,41 @@ async function callClaude(imgB64) {
   return null;
 }
 
-// ─── 미리보기 렌더링 ───
+// ─── 인라인 수정 로직 (DOM 및 상태 동기화) ───
+window.rptUpdateText = function(el, idx, key) {
+  rptState.companies[idx][key] = el.innerText.trim();
+};
+
+window.rptUpdateVal = function(el, idx, key) {
+  let text = el.innerText.replace(/,/g, '').trim();
+  let val = 0;
+  if (text) {
+    if (text.includes('억')) {
+      val = parseFloat(text.replace('억', '')) * 10000;
+    } else if (text.includes('만')) {
+      val = parseFloat(text.replace('만', ''));
+    } else if (text.includes('원')) {
+      val = parseFloat(text.replace('원', ''));
+    } else {
+      val = parseFloat(text);
+    }
+    if (isNaN(val)) val = 0;
+  }
+  
+  if (key === 'premium') {
+    rptState.companies[idx].premium = val;
+    el.innerText = fmtWon(val);
+    const totalPrem = rptState.companies.reduce((s, c) => s + (c.premium || 0), 0);
+    document.getElementById('sum-premium').innerText = fmtWon(totalPrem);
+  } else {
+    rptState.companies[idx].coverages[key] = val;
+    el.innerText = val ? fmtMan(val) : '';
+    const sum = rptState.companies.reduce((s, c) => s + ((c.coverages || {})[key] || 0), 0);
+    document.getElementById('sum-' + key).innerText = sum ? fmtMan(sum) : '';
+  }
+};
+
+// ─── 미리보기 렌더링 (contenteditable 추가) ───
 function renderPreview() {
   const co = rptState.companies;
   const name = rptState.customerName || '고객';
@@ -471,33 +497,32 @@ function renderPreview() {
     <th class="r-cat" rowspan="5" style="width:28px;">주요<br>보장</th>
     <th class="r-hdr" style="background:#001E42;color:#fff;">보험사</th>
     <th class="r-sum r-hdr">고객<br>보장합산</th>`;
-  co.forEach(c => html += `<th class="r-ins">${c.name}</th>`);
+  co.forEach((c, i) => html += `<th class="r-ins" contenteditable="true" onblur="window.rptUpdateText(this, ${i}, 'name')">${c.name}</th>`);
   html += `</tr>`;
 
   // 헤더행 2 – 상품명
   html += `<tr><th class="r-hdr" style="background:#001E42;color:#fff;">상품명</th><th class="r-date"></th>`;
-  co.forEach(c => {
-    const p = c.product.length > 20 ? c.product.slice(0, 20) + '…' : c.product;
-    html += `<td class="r-date-alt" style="font-size:9px;" title="${c.product}">${p}</td>`;
+  co.forEach((c, i) => {
+    html += `<td class="r-date-alt" style="font-size:9px;" contenteditable="true" onblur="window.rptUpdateText(this, ${i}, 'product')" title="${c.product}">${c.product}</td>`;
   });
   html += `</tr>`;
 
   // 헤더행 3 – 가입시기
   html += `<tr><th class="r-hdr" style="background:#001E42;color:#fff;">가입시기</th><th class="r-date"></th>`;
-  co.forEach(c => html += `<td class="r-date">${c.start_date || ''}</td>`);
+  co.forEach((c, i) => html += `<td class="r-date" contenteditable="true" onblur="window.rptUpdateText(this, ${i}, 'start_date')">${c.start_date || ''}</td>`);
   html += `</tr>`;
 
   // 헤더행 4 – 만기
   html += `<tr><th class="r-hdr" style="background:#001E42;color:#fff;">납입기간/<br>만기시점</th><th class="r-date"></th>`;
-  co.forEach(c => html += `<td class="r-date-alt" style="font-size:9px;">${c.end_date || ''}</td>`);
+  co.forEach((c, i) => html += `<td class="r-date-alt" style="font-size:9px;" contenteditable="true" onblur="window.rptUpdateText(this, ${i}, 'end_date')">${c.end_date || ''}</td>`);
   html += `</tr>`;
 
   // 헤더행 5 – 보험료
   const totalPrem = co.reduce((s, c) => s + (c.premium || 0), 0);
   html += `<tr>
     <th class="r-item r-fee" style="background:#D6DEE7;color:#001E42;">보험료</th>
-    <td class="r-sum r-fee">${fmtWon(totalPrem)}</td>`;
-  co.forEach(c => html += `<td class="r-fee">${fmtWon(c.premium || 0)}</td>`);
+    <td class="r-sum r-fee" id="sum-premium">${fmtWon(totalPrem)}</td>`;
+  co.forEach((c, i) => html += `<td class="r-fee" contenteditable="true" onblur="window.rptUpdateVal(this, ${i}, 'premium')">${fmtWon(c.premium || 0)}</td>`);
   html += `</tr>`;
 
   // 데이터 행
@@ -512,10 +537,10 @@ function renderPreview() {
       html += `<td class="r-cat" rowspan="${span}">${cov.cat}</td>`;
     }
     html += `<td class="r-item">${cov.label}</td>`;
-    html += `<td class="r-sum">${sum ? fmtMan(sum) : ''}</td>`;
-    vals.forEach(v => {
+    html += `<td class="r-sum" id="sum-${cov.key}">${sum ? fmtMan(sum) : ''}</td>`;
+    vals.forEach((v, i) => {
       const cls = isEven ? 'r-val-alt' : 'r-val';
-      html += `<td class="${cls}">${v ? fmtMan(v) : ''}</td>`;
+      html += `<td class="${cls}" contenteditable="true" onblur="window.rptUpdateVal(this, ${i}, '${cov.key}')">${v ? fmtMan(v) : ''}</td>`;
     });
     html += `</tr>`;
   });
@@ -527,10 +552,11 @@ function renderPreview() {
   document.getElementById('rpt-preview-table').innerHTML = html;
 }
 
-// ─── 엑셀 다운로드 ───
+// ─── 엑셀 다운로드 (xlsx-js-style 적용: 스타일 완벽 유지) ───
 window.rptDownloadExcel = async function () {
   if (!window.XLSX) {
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+    // 스타일 객체를 지원하는 xlsx-js-style 라이브러리로 교체 로드
+    await loadScript('https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js');
   }
 
   const co   = rptState.companies;
