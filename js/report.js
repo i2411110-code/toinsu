@@ -56,35 +56,80 @@ COVERAGE_DEF.forEach((cov, idx) => {
 });
 if (lastCat !== null) CAT_SPANS[lastCat] = { rowspan: COVERAGE_DEF.length - lastIdx, startIdx: lastIdx };
 
-// 가온 ai Vision 프롬프트
+// ─── AI 프롬프트 최적화 (매칭 사전 추가) ───
 function buildPrompt() {
   return `당신은 한국 보험 보장분석 제안서 전문 데이터 추출 AI입니다.
-이 이미지는 한국 보험사 보장분석 제안서의 페이지입니다.
+이 이미지는 한국 보험사 보장분석 제안서의 표입니다.
 
-**추출 규칙:**
-1. 각 보험사의: 회사명, 상품명, 보장시기(가입일), 보장기간(만기일), 월보험료를 추출하세요.
-2. 각 담보 항목의 가입금액을 만원 단위의 "숫자"로만 추출하세요. (예: 5000, 10000)
-3. 만약 해당 담보가 없거나 찾을 수 없으면 반드시 숫자 0을 입력하세요.
+**[데이터 추출 및 매칭 규칙] - 매우 중요**
+1. 표의 열(Column)을 기준으로 각 보험사별로 데이터를 분리해서 추출하세요.
+2. 각 보험사의: 회사명, 상품명, 보장시기(가입일), 보장기간(만기일), 월보험료를 추출하세요.
+3. **아래의 [한국어 담보명 : 영어 Key] 매칭표를 반드시 준수**하여, 해당 담보의 가입금액을 찾아 "숫자"로만 추출하세요 (단위: 만원). 
+   - 예시: "5,000만원" → 5000, "1억" → 10000, 해당 담보가 없거나 비어있으면 → 0
+   - 쉼표(,)나 한글(만, 억)은 절대 포함하지 마세요.
 
-**중요 필수 지침 (절대 위반 금지):**
-- 금액 텍스트(예: "5,000만원")에서 쉼표와 글자를 모두 빼고 오직 정수(5000)만 넣으세요.
-- 응답은 반드시 아래 JSON 구조로만 출력해야 하며, 설명이나 마크다운 틱(\`\`\`) 등 다른 텍스트는 일절 포함하지 마세요.
+[매칭표]
+- "inpatient" : 입원의료비(실손입원)
+- "outpatient" : 통원의료비(실손통원)
+- "liability" : 일상생활배상책임
+- "disease_surg" : 질병수술비
+- "injury_surg" : 상해/재해수술비
+- "brain_heart_surg" : 뇌/심장수술비
+- "type_surg" : 1~5종수술
+- "cancer_diag" : 일반암진단비
+- "minor_cancer" : 유사암진단비
+- "robot_surg" : 로봇암수술비
+- "chemo_rad" : 항암방사선약물치료비
+- "targeted" : 표적항암약물치료비
+- "cancer_main" : 암주요치료비
+- "cerebro" : 뇌혈관질환진단비
+- "stroke" : 뇌졸중(뇌졸증)진단비
+- "cerebro_hem" : 뇌출혈진단비
+- "thrombo" : 혈전용해제치료비
+- "ischemic" : 허혈성심장질환진단비
+- "arrhythmia" : 부정맥진단비
+- "ami" : 급성심근경색진단비
+- "injury_hosp" : 상해/재해입원일당
+- "disease_hosp" : 질병입원일당
+- "general_hosp" : 일반입원일당
+- "er_visit" : 응급실내원진료비
+- "fracture" : 골절진단비
+- "five_fracture" : 5대골절진단비
+- "cast" : 깁스치료비
+- "death_general" : 일반사망
+- "death_disease" : 질병사망
+- "death_cancer" : 암사망
+- "death_injury" : 상해/재해사망
+- "car_injury" : 자동차부상치료비
+- "car_fine" : 벌금(대인)
+- "car_lawyer" : 변호사선임비용
+- "car_settlement" : 사고처리지원금(형사합의금)
 
+반드시 다음 JSON 형식으로만 응답하세요 (다른 설명 텍스트나 마크다운 기호는 절대 금지):
 {
   "companies": [
     {
       "name": "보험사명",
-      "product": "상품명(20자 이내)",
+      "product": "상품명(20자 이내로 줄임)",
       "start_date": "YYYY.MM.DD",
       "end_date": "YYYY.MM.DD",
       "premium": 50450,
       "coverages": {
-        "inpatient": 0, "outpatient": 0, "liability": 0, "disease_surg": 0, "injury_surg": 0, "brain_heart_surg": 0, "type_surg": 0, "cancer_diag": 0, "minor_cancer": 0, "robot_surg": 0, "chemo_rad": 0, "targeted": 0, "cancer_main": 0, "cerebro": 0, "stroke": 0, "cerebro_hem": 0, "thrombo": 0, "ischemic": 0, "arrhythmia": 0, "ami": 0, "injury_hosp": 0, "disease_hosp": 0, "general_hosp": 0, "er_visit": 0, "fracture": 0, "five_fracture": 0, "cast": 0, "death_general": 0, "death_disease": 0, "death_cancer": 0, "death_injury": 0, "car_injury": 0, "car_fine": 0, "car_lawyer": 0, "car_settlement": 0
+        "inpatient": 0, "outpatient": 0, "liability": 0,
+        "disease_surg": 0, "injury_surg": 0, "brain_heart_surg": 0, "type_surg": 0,
+        "cancer_diag": 0, "minor_cancer": 0, "robot_surg": 0, "chemo_rad": 0, "targeted": 0, "cancer_main": 0,
+        "cerebro": 0, "stroke": 0, "cerebro_hem": 0, "thrombo": 0,
+        "ischemic": 0, "arrhythmia": 0, "ami": 0,
+        "injury_hosp": 0, "disease_hosp": 0, "general_hosp": 0, "er_visit": 0,
+        "fracture": 0, "five_fracture": 0, "cast": 0,
+        "death_general": 0, "death_disease": 0, "death_cancer": 0, "death_injury": 0,
+        "car_injury": 0, "car_fine": 0, "car_lawyer": 0, "car_settlement": 0
       }
     }
   ],
   "customer_name": "고객명"
-}`;
+}
+`;
 }
 
 // ─── 전역 상태 ───
