@@ -1,6 +1,3 @@
-ash
-
-cat > /mnt/user-data/outputs/report_module_fixed.js << 'ENDOFFILE'
 // ================================================
 // 보장분석 리포트 생성기 - 가온사업단 오피스 모듈 (수정본)
 // 수정사항:
