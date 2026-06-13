@@ -1,6 +1,6 @@
 // ================================================
 // 보장분석 리포트 생성기 - 가온사업단 오피스 모듈
-// v6_완성본: 세로(Column) 단위 시각적 추출 및 다중 병합셀 오류 해결
+// v7_최종본: PDF 텍스트 교차검증 및 2-Step 추출 (칸 밀림 완벽 해결)
 // ================================================
 
 (function () {
@@ -54,10 +54,10 @@ COVERAGE_DEF.forEach((cov, idx) => {
 });
 if (lastCat !== null) CAT_SPANS[lastCat] = { rowspan: COVERAGE_DEF.length - lastIdx, startIdx: lastIdx };
 
-// ─── AI 프롬프트 (빈칸 착각 방지를 위한 2-Step 마크다운 표 강제화) ───
+// ─── AI 프롬프트 (2-Step 강제 및 표준 담보명 지정) ───
 function buildPrompt() {
   return `당신은 최고 수준의 금융 데이터 추출 AI입니다. 
-이미지로 제공된 보험 보장분석표를 분석할 때, 빈칸을 옆 칸의 금액으로 착각하는 치명적인 오류를 막기 위해 반드시 아래의 [2-Step] 절차를 엄격히 지켜야 합니다.
+제공된 보험 보장분석표 이미지를 분석할 때, 빈칸을 옆 칸의 금액으로 착각하는 치명적인 오류를 막기 위해 반드시 아래의 [2-Step] 절차를 엄격히 지켜야 합니다. 함께 제공되는 '원본 텍스트 데이터'를 교차 검증하여 빈칸 여부를 반드시 확인하세요.
 
 ## [Step 1] 눈에 보이는 그대로 마크다운 표 그리기 (가장 중요)
 - 이미지에 있는 '상품별 가입현황' 비교표를 마크다운(Markdown) 테이블로 먼저 똑같이 그리세요.
@@ -101,8 +101,7 @@ function buildPrompt() {
       }
     }
   ]
-}
-`;
+}`;
 }
 
 let rptState = {
@@ -123,7 +122,7 @@ function getRptHTML() {
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
     <div style="font-size:18px; font-weight:700; color:#001E42;">
       <i class="bi bi-file-earmark-bar-graph-fill" style="color:#3182F6; margin-right:6px;"></i>
-      보장분석 리포트 생성기 (v6 완성본)
+      보장분석 리포트 생성기 (v7 텍스트 교차검증)
     </div>
   </div>
 
@@ -146,7 +145,7 @@ function getRptHTML() {
 
   <div id="rpt-step2" class="rpt-card" style="display:none;">
     <div class="rpt-step-label">STEP 2</div>
-    <h3 class="rpt-step-title">AI 세로 정밀 추출 (금액 오류 방지)</h3>
+    <h3 class="rpt-step-title">AI 세로 정밀 추출 (텍스트 교차검증)</h3>
     <div style="margin-bottom:16px;">
       <div style="display:flex; justify-content:space-between; font-size:12px; color:#64748B; margin-bottom:6px;">
         <span id="rpt-progress-text">분석 준비 중...</span>
@@ -258,14 +257,15 @@ window.rptStartAnalysis = async function () {
   try {
     for (let i = 0; i < pagesToScan.length; i++) {
       const pn = pagesToScan[i];
-      setProgress(Math.round(((i + 1) / total) * 100), `${pn}페이지 열(Column) 단위 스캔 중... (${i + 1}/${total})`, '금액 오차 방지를 위해 세로로 읽고 있습니다');
+      setProgress(Math.round(((i + 1) / total) * 100), `${pn}페이지 텍스트 교차검증 스캔 중... (${i + 1}/${total})`, '오차 방지를 위해 원본 텍스트 데이터를 추출합니다');
 
+      // 텍스트와 이미지를 동시 추출
       const imgB64 = await pageToBase64(pn);
-      const result = await callClaude(imgB64);
+      const pageText = await extractTextFromPage(pn);
+      const result = await callClaude(imgB64, pageText);
 
       if (result && result.companies && result.companies.length > 0) {
         
-        // ── JS 내부 동적 매핑 (환각 원천 차단 및 순서 최적화) ──
         let parsed_companies = result.companies.map(c => {
           let mappedCoverages = {};
           
@@ -273,7 +273,7 @@ window.rptStartAnalysis = async function () {
             let key = null;
             let L = label.replace(/\s+/g, '');
             
-            // 키워드 기반 스마트 매핑 (순서 중요: 상세한 것부터 먼저 필터링)
+            // 키워드 기반 스마트 매핑
             if (L.includes('질병입원일당') || L === '질병일당') key = 'disease_hosp';
             else if (L.includes('상해입원일당') || L.includes('재해입원일당') || L === '상해일당') key = 'injury_hosp';
             else if (L.includes('1인실') || L === '일반입원일당') key = 'general_hosp';
@@ -334,7 +334,7 @@ window.rptStartAnalysis = async function () {
       }
     }
 
-    setProgress(100, `추출 완료! JS 정밀 매핑 중...`, '');
+    setProgress(100, `추출 완료! 데이터 병합 중...`, '');
 
     function normDate(d) { return d ? String(d).replace(/-/g, '.').trim() : ''; }
     rptState.companies.forEach(c => { c.start_date = normDate(c.start_date); c.end_date = normDate(c.end_date); });
@@ -342,7 +342,7 @@ window.rptStartAnalysis = async function () {
     const BLOCK = ['메리츠', '메리츠화재', '토스인슈어런스', 'GA1', '가온부천'];
     const filtered = rptState.companies.filter(c => c.name && c.product && c.name.length >= 2 && !BLOCK.some(b => c.name.includes(b) || c.product.includes(b)));
 
-    // Deep Merge (중복 합산 방지 및 최댓값 적용, 기준 완화 적용)
+    // Deep Merge (중복 합산 방지, 기준을 15글자로 완화)
     const seen = new Map();
     const deduped = [];
     filtered.forEach(c => {
@@ -374,6 +374,22 @@ window.rptStartAnalysis = async function () {
   }
 };
 
+// ── PDF 텍스트 추출 함수 (착시 방지용) ──
+async function extractTextFromPage(pn) {
+  const page = await rptState.pdfDoc.getPage(pn);
+  const textContent = await page.getTextContent();
+  let text = '';
+  let lastY = -1;
+  for (let item of textContent.items) {
+    if (lastY !== item.transform[5] && lastY !== -1) {
+      text += '\\n';
+    }
+    text += item.str + ' ';
+    lastY = item.transform[5];
+  }
+  return text;
+}
+
 function setProgress(pct, text, status) {
   document.getElementById('rpt-progress-bar').style.width = pct + '%';
   document.getElementById('rpt-progress-pct').textContent = pct + '%';
@@ -389,15 +405,18 @@ async function pageToBase64(pn) {
   return canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
 }
 
-async function callClaude(imgB64) {
+async function callClaude(imgB64, pageText) {
   try {
+    // 텍스트 데이터를 프롬프트에 결합하여 API 호출
+    const strictPrompt = buildPrompt() + `\n\n### [중요] 시각적 착시 방지용 원본 텍스트 데이터\n이미지(표)를 볼 때 빈칸이 헷갈린다면 반드시 아래의 텍스트 원본에서 금액 유무를 교차 검증하세요.\n\n${pageText}`;
+
     const res = await fetch('/api/gemini', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: buildPrompt(), imageB64: imgB64 })
+      body: JSON.stringify({ prompt: strictPrompt, imageB64: imgB64 })
     });
     if (!res.ok) throw new Error(`서버 응답 오류`);
     const text = ((await res.json()).text || '').trim();
-    const m = text.match(/\{[\s\S]*\}/);
+    const m = text.match(/\\{[\\s\\S]*\\}/);
     if (m) return JSON.parse(m[0]);
   } catch (err) { console.error(err); }
   return null;
