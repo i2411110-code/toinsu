@@ -1,5 +1,6 @@
 // ================================================
 // 보장분석 리포트 생성기 - 가온사업단 오피스 모듈
+// (수정본: ① 0→빈칸 처리 ② 표지 페이지 제외 ③ 프롬프트 보강)
 // ================================================
 
 (function () {
@@ -56,32 +57,45 @@ COVERAGE_DEF.forEach((cov, idx) => {
 });
 if (lastCat !== null) CAT_SPANS[lastCat] = { rowspan: COVERAGE_DEF.length - lastIdx, startIdx: lastIdx };
 
-// ─── AI 프롬프트 최적화 (매칭 사전 추가) ───
+// ─── ③ AI 프롬프트 보강 ───
 function buildPrompt() {
   return `당신은 한국 보험 보장분석 제안서 전문 데이터 추출 AI입니다.
-이 이미지는 한국 보험사 보장분석 제안서의 표입니다.
+이 이미지는 한국 보험사 "보장분석 제안서"의 표(가입현황 세부내역) 페이지입니다.
+
+**[절대 주의사항] - 표지/소속 정보 무시**
+- 이 페이지 상단/하단에 보일 수 있는 "GA지점", "토스인슈어런스", "가온부천", "컨설턴트명", "메리츠화재(표지 로고)", "010-XXXX-XXXX" 같은
+  컨설턴트 소속·연락처·로고 정보는 보험사명이나 상품명이 절대 아닙니다. 이런 텍스트는 완전히 무시하세요.
+- 보험사명과 상품명은 반드시 표 안의 "보험사" / "상품명" 행(가입현황 세부내역 표)에 적힌 값만 사용하세요.
+  예: "흥국화재", "삼성화재", "에이스손보", "ABL생명", "KDB생명", "NH농협생명", "라이나생명", "하나생명", "우정사업본부", "현대해상", "BNP파리바카디프손보" 등
+  실제 보험사 이름만 사용하고, "메리츠", "메리츠화재", "GA1-4", "토스인슈어런스" 등을 보험사명/상품명으로 절대 쓰지 마세요.
+- 만약 이 페이지에 "가입현황 세부내역" 표가 없다면(예: 표지 페이지, 가입담보 상세 List 페이지, 별첨 페이지 등)
+  companies 배열을 빈 배열 []로 응답하세요.
 
 **[데이터 추출 및 매칭 규칙] - 매우 중요**
-1. 표의 열(Column)을 기준으로 각 보험사별로 데이터를 분리해서 추출하세요.
-2. 각 보험사의: 회사명, 상품명, 보장시기(가입일), 보장기간(만기일), 월보험료를 추출하세요.
-3. **아래의 [한국어 담보명 : 영어 Key] 매칭표를 반드시 준수**하여, 해당 담보의 가입금액을 찾아 "숫자"로만 추출하세요 (단위: 만원). 
-   - 예시: "5,000만원" → 5000, "1억" → 10000, 해당 담보가 없거나 비어있으면 → 0
+1. 표의 열(Column)을 기준으로 각 보험사별로 데이터를 분리해서 추출하세요. 각 열은 하나의 보험계약(보험사+상품)입니다.
+2. 각 보험사의: 회사명, 상품명(전체 상품명 그대로, 줄이지 말 것), 보장시기(가입일 YYYY.MM.DD), 보장기간(만기일 YYYY.MM.DD), 월보험료(원, 숫자만)를 추출하세요.
+   - 보장시기와 보장기간(만기)은 서로 다른 날짜입니다. 절대 같은 값을 넣지 마세요. 표에서 "보장시기" 행과 "보장기간" 행을 각각 정확히 읽으세요.
+3. **표의 좌측에 나열된 담보명(질병사망, 상해사망, 일반암진단비, 통합암진단비, 뇌졸중진단비 등)과 가입금액을, 아래 [한국어 담보명 : 영어 Key] 매칭표를 반드시 준수**하여 매칭하세요.
+   - 가입금액은 "숫자"로만 추출하세요 (단위: 만원).
+   - 예시: "5,000만" → 5000, "1억" → 10000, "1억6,500만" → 16500, "31만" → 31
+   - 해당 담보가 없거나 값이 "0"으로 표시되어 있으면 → 0 으로 응답하세요(빈 칸과 동일하게 처리).
    - 쉼표(,)나 한글(만, 억)은 절대 포함하지 마세요.
+4. 표의 각 행과 각 보험사 열이 정확히 일치하도록, 행/열 위치를 신중하게 픽셀 단위로 정렬해서 읽으세요. 숫자를 다른 보험사 컬럼으로 잘못 옮기지 마세요.
 
 [매칭표]
-- "inpatient" : 입원의료비(실손입원)
-- "outpatient" : 통원의료비(실손통원)
+- "inpatient" : 입원의료비(실손입원) - 질병입원, 상해입원
+- "outpatient" : 통원의료비(실손통원) - 질병통원, 상해통원
 - "liability" : 일상생활배상책임
 - "disease_surg" : 질병수술비
 - "injury_surg" : 상해/재해수술비
-- "brain_heart_surg" : 뇌/심장수술비
-- "type_surg" : 1~5종수술
+- "brain_heart_surg" : 뇌/심장수술비 (뇌혈관수술비, 허혈심장질환수술비)
+- "type_surg" : 1~5종수술 (질병종수술, 상해종수술)
 - "cancer_diag" : 일반암진단비
 - "minor_cancer" : 유사암진단비
 - "robot_surg" : 로봇암수술비
-- "chemo_rad" : 항암방사선약물치료비
+- "chemo_rad" : 항암방사선약물치료비 (고액항암치료비, 중입자방사선치료비 등)
 - "targeted" : 표적항암약물치료비
-- "cancer_main" : 암주요치료비
+- "cancer_main" : 암주요치료비, 2대질환주요치료비
 - "cerebro" : 뇌혈관질환진단비
 - "stroke" : 뇌졸중(뇌졸증)진단비
 - "cerebro_hem" : 뇌출혈진단비
@@ -91,7 +105,7 @@ function buildPrompt() {
 - "ami" : 급성심근경색진단비
 - "injury_hosp" : 상해/재해입원일당
 - "disease_hosp" : 질병입원일당
-- "general_hosp" : 일반입원일당
+- "general_hosp" : 일반입원일당(1인실입원일당 등)
 - "er_visit" : 응급실내원진료비
 - "fracture" : 골절진단비
 - "five_fracture" : 5대골절진단비
@@ -103,14 +117,14 @@ function buildPrompt() {
 - "car_injury" : 자동차부상치료비
 - "car_fine" : 벌금(대인)
 - "car_lawyer" : 변호사선임비용
-- "car_settlement" : 사고처리지원금(형사합의금)
+- "car_settlement" : 사고처리지원금(형사합의금), 교통사고처리지원금
 
 반드시 다음 JSON 형식으로만 응답하세요 (다른 설명 텍스트나 마크다운 기호는 절대 금지):
 {
   "companies": [
     {
       "name": "보험사명",
-      "product": "상품명(20자 이내로 줄임)",
+      "product": "상품명(전체, 줄이지 말 것)",
       "start_date": "YYYY.MM.DD",
       "end_date": "YYYY.MM.DD",
       "premium": 50450,
@@ -129,6 +143,9 @@ function buildPrompt() {
   ],
   "customer_name": "고객명"
 }
+
+만약 이 페이지에 가입현황 세부내역 표가 없으면:
+{ "companies": [], "customer_name": "" }
 `;
 }
 
@@ -325,12 +342,20 @@ window.rptStartAnalysis = async function () {
   btn.disabled = true;
   btn.innerHTML = '<i class="bi bi-hourglass-split"></i> 분석 중...';
 
-  const total = Math.min(rptState.pdfDoc.numPages, 10);
+  // ② 표지 페이지(1페이지) 제외 -- "가입현황 세부내역" 표는 보통 2페이지부터 시작
+  const totalPages = rptState.pdfDoc.numPages;
+  const startPage = totalPages > 1 ? 2 : 1; // 1페이지짜리 PDF면 예외적으로 1페이지부터
+  const endPage = Math.min(totalPages, 10); // 최대 10페이지까지 분석
+  const pagesToScan = [];
+  for (let pn = startPage; pn <= endPage; pn++) pagesToScan.push(pn);
+
+  const total = pagesToScan.length;
 
   try {
-    for (let pn = 1; pn <= total; pn++) {
-      const pct = Math.round((pn / total) * 100);
-      setProgress(pct, `${pn}/${total} 페이지 분석 중...`,
+    for (let i = 0; i < pagesToScan.length; i++) {
+      const pn = pagesToScan[i];
+      const pct = Math.round(((i + 1) / total) * 100);
+      setProgress(pct, `${pn}페이지 분석 중... (${i + 1}/${total})`,
         '가온 AI가 보험사 계약 정보를 인식하고 있습니다');
 
       const imgB64 = await pageToBase64(pn);
@@ -346,15 +371,22 @@ window.rptStartAnalysis = async function () {
 
     setProgress(100, `분석 완료! ${rptState.companies.length}개 보험사 인식됨`, '');
 
-    // 중복 제거 (수정된 로직)
+    // 중복 제거 + 명백히 잘못된 데이터(메리츠/GA 등) 필터링
+    const BLOCK_NAMES = ['메리츠', '메리츠화재', '토스인슈어런스', 'GA1-4', 'GA4-1', '가온부천'];
     const seen = new Set();
     rptState.companies = rptState.companies.filter(c => {
       if (!c.name || !c.product) return false; // 빈 데이터 거르기
-      
-      // 공백 제거 후 앞 6글자만 추출하여 동일 상품 여부 판단 (예: "무배당 흥Good" == "무배당흥Good")
-      const cleanProduct = c.product.replace(/\s+/g, '').substring(0, 6);
+
+      // 표지/소속 정보가 보험사명으로 잘못 추출된 경우 제거
+      if (BLOCK_NAMES.some(b => c.name.includes(b) || c.product.includes(b))) return false;
+
+      // 가입시기==만기 인 경우(날짜 오인식 가능성 높음) → 그대로 두되, 추후 검토용으로 남김
+      // (자동 제거하지 않음. 사용자가 미리보기에서 확인 가능)
+
+      // 공백 제거 후 앞 8글자만 추출하여 동일 상품 여부 판단
+      const cleanProduct = c.product.replace(/\s+/g, '').substring(0, 8);
       const k = c.name + '|' + cleanProduct;
-      
+
       if (seen.has(k)) return false; // 이미 있는 상품이면 버림
       seen.add(k);
       return true;
@@ -385,25 +417,25 @@ function setProgress(pct, text, status) {
   document.getElementById('rpt-page-status').textContent = status;
 }
 
+// ② 이미지 스케일 상향 (1.8 → 2.5) - 작은 숫자 인식률 향상
 async function pageToBase64(pn) {
   const page = await rptState.pdfDoc.getPage(pn);
-  const vp   = page.getViewport({ scale: 1.8 });
+  const vp   = page.getViewport({ scale: 2.5 });
   const canvas = document.createElement('canvas');
   canvas.width  = vp.width;
   canvas.height = vp.height;
   await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-  return canvas.toDataURL('image/jpeg', 0.88).split(',')[1];
+  return canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
 }
 
-// ─── AI API 호출부 (Vercel 무료 서버 우회 버전으로 완벽 교체) ───
+// ─── AI API 호출부 (Vercel 무료 서버 우회 버전) ───
 async function callClaude(imgB64) {
-  // 내 Vercel 서버 주소로 요청을 보냅니다.
-  const url = '/api/gemini'; 
+  const url = '/api/gemini';
 
   try {
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -419,7 +451,7 @@ async function callClaude(imgB64) {
 
     const data = await res.json();
     const text = data.text || '';
-    
+
     // 응답받은 텍스트에서 JSON 부분만 안전하게 추출
     const m = text.match(/\{[\s\S]*\}/);
     if (m) {
@@ -427,13 +459,13 @@ async function callClaude(imgB64) {
         return JSON.parse(m[0]);
       } catch (e) {
         console.error("AI 응답 JSON 파싱 실패:", e);
-        return null; // 파싱 실패 시 건너뛰도록 처리
+        return null;
       }
     }
   } catch (error) {
     console.error("AI 호출 에러:", error);
   }
-  
+
   return null;
 }
 
@@ -495,6 +527,7 @@ function renderPreview() {
       html += `<td class="r-cat" rowspan="${span}">${cov.cat}</td>`;
     }
     html += `<td class="r-item">${cov.label}</td>`;
+    // ① 0이면 빈칸으로 표시
     html += `<td class="r-sum">${sum ? fmtMan(sum) : ''}</td>`;
     vals.forEach(v => html += `<td class="r-val">${v ? fmtMan(v) : ''}</td>`);
     html += `</tr>`;
@@ -540,6 +573,11 @@ window.rptDownloadExcel = async function () {
   function ncell(r, c, v, s={}) {
     ws[XLSX.utils.encode_cell({r, c})] = mkN(v, s);
   }
+  // ① 보장금액 셀: 0이면 빈 문자열, 0이 아니면 "5,000만"/"1억" 형태의 텍스트로 출력 (3번 양식과 동일)
+  function covCell(r, c, v, s={}) {
+    const display = v ? fmtMan(v) : '';
+    ws[XLSX.utils.encode_cell({r, c})] = mkS(display, s);
+  }
   function merge(r1,c1,r2,c2) {
     merges.push({ s:{r:r1,c:c1}, e:{r:r2,c:c2} });
   }
@@ -572,7 +610,7 @@ window.rptDownloadExcel = async function () {
     vals.forEach((v,i) => cell(r, 3+i, v, { fill:whtFill, font:{sz:9}, alignment:{horizontal:'center',wrapText:true} }));
   });
 
-  // 행6: 보험료
+  // 행6: 보험료 (보험료는 실제 원화 숫자이므로 ncell 유지)
   r++;
   const FEE_S = { fill:feeFill, font:{bold:true,color:{rgb:'001E42'}}, alignment:{horizontal:'right'} };
   cell(r, 0, '', CAT_COL); // 카테고리 빈 칸 (병합에 포함)
@@ -580,7 +618,7 @@ window.rptDownloadExcel = async function () {
   ncell(r, 2, co.reduce((s,c)=>s+(c.premium||0),0), FEE_S);
   co.forEach((c,i) => ncell(r, 3+i, c.premium||0, FEE_S));
 
-  // 데이터 행
+  // 데이터 행 (① 0 → 빈칸, "5,000만"/"1억" 텍스트로 표시)
   let catStartRow = -1;
   let catCurr = null;
 
@@ -601,8 +639,12 @@ window.rptDownloadExcel = async function () {
     cell(r, 1, cov.label, { fill:hdrFill, alignment:{horizontal:'left'} });
     const vals = co.map(c => (c.coverages||{})[cov.key]||0);
     const sum  = vals.reduce((s,v)=>s+v,0);
-    ncell(r, 2, sum, { fill:hdrFill, font:{bold:true,color:{rgb:'001E42'}}, alignment:{horizontal:'right'} });
-    vals.forEach((v,i) => ncell(r, 3+i, v, { fill:df, alignment:{horizontal:'right'} }));
+
+    // 합산 셀: 0이면 빈칸, 아니면 "5,000만"/"1억" 텍스트
+    covCell(r, 2, sum, { fill:hdrFill, font:{bold:true,color:{rgb:'001E42'}}, alignment:{horizontal:'right'} });
+
+    // 보험사별 셀: 0이면 빈칸, 아니면 "5,000만"/"1억" 텍스트
+    vals.forEach((v,i) => covCell(r, 3+i, v, { fill:df, font:{color:{rgb:'1E40AF'}}, alignment:{horizontal:'right'} }));
   });
   if (catCurr !== null) merge(catStartRow, 0, r, 0);
 
@@ -639,16 +681,16 @@ window.rptPrint = function () {
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
       * { box-sizing: border-box; }
-      @page { size: A4 landscape; margin: 10mm; } /* A4 가로 방향 및 여백 설정 */
-      body { 
+      @page { size: A4 landscape; margin: 10mm; }
+      body {
         font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 0;
-        zoom: 0.65; /* ★ 핵심: 컬럼이 많아도 A4 한 장에 들어가도록 화면 비율 65% 축소 */
+        zoom: 0.65;
       }
-      table { 
-        border-collapse: collapse; 
-        width: 100%; 
-        table-layout: fixed; /* 셀 너비를 균등하게 고정 */
-        word-break: break-all; /* 글자가 넘치면 줄바꿈 */
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        table-layout: fixed;
+        word-break: break-all;
       }
       th, td { border: 1px solid #C5CBD3; padding: 4px 2px; text-align: center; font-size: 11px; }
       .r-cat { background: #001E42 !important; color: #fff; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; width: 40px; }
@@ -661,7 +703,7 @@ window.rptPrint = function () {
     </style>
   </head><body>${content}</body></html>`);
   win.document.close();
-  setTimeout(() => { win.focus(); win.print(); }, 800); // 렌더링 대기 시간 살짝 늘림
+  setTimeout(() => { win.focus(); win.print(); }, 800);
 };
 
 // ─── 리셋 ───
@@ -686,7 +728,12 @@ function fmtWon(v) {
 }
 function fmtMan(v) {
   if (!v) return '';
-  if (v >= 10000) return (v/10000) + '억';
+  if (v >= 10000) {
+    const eok = v / 10000;
+    // 소수점 첫째자리까지, 정수면 정수로
+    const rounded = Math.round(eok * 10) / 10;
+    return (Number.isInteger(rounded) ? rounded : rounded.toFixed(1)) + '억';
+  }
   return v.toLocaleString() + '만';
 }
 function rptShowError(msg) {
