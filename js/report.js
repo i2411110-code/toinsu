@@ -62,6 +62,14 @@ function buildPrompt() {
   return `당신은 한국 보험 보장분석 제안서 전문 데이터 추출 AI입니다.
 이 이미지는 한국 보험사 "보장분석 제안서"의 표(가입현황 세부내역) 페이지입니다.
 
+**[페이지 종류 판별 - 매우 중요]**
+- 이 PDF에는 두 종류의 표가 있을 수 있습니다:
+  1) "가입현황 | 세부내역" 페이지: 여러 보험사가 가로로 나열된 비교표 (보험사명/상품명/보장시기/보장기간/월보험료 행이 있고, 그 아래 담보별 가입금액이 보험사별 컬럼으로 나열됨)
+  2) "별첨 | 상품별 보험가입현황" 페이지: 보험사 1개씩, "NO/구분/회사담보명/신정원담보명/가입금액" 형태의 세로 리스트(1~30번)
+- **반드시 1번 형식("가입현황 | 세부내역")의 페이지만 분석하세요.**
+- 2번 형식("별첨 | 상품별 보험가입현황", NO 1~30 리스트)이 보이면, 이미 1번 페이지에서 동일한 정보를 처리했으므로
+  **절대 추출하지 말고 companies를 빈 배열 []로 응답하세요.**
+
 **[절대 주의사항] - 표지/소속 정보 무시**
 - 이 페이지 상단/하단에 보일 수 있는 "GA지점", "토스인슈어런스", "가온부천", "컨설턴트명", "메리츠화재(표지 로고)", "010-XXXX-XXXX" 같은
   컨설턴트 소속·연락처·로고 정보는 보험사명이나 상품명이 절대 아닙니다. 이런 텍스트는 완전히 무시하세요.
@@ -371,26 +379,43 @@ window.rptStartAnalysis = async function () {
 
     setProgress(100, `분석 완료! ${rptState.companies.length}개 보험사 인식됨`, '');
 
+    // 날짜 형식 정규화: "2025-01-24" -> "2025.01.24"
+    function normDate(d) {
+      if (!d) return '';
+      return String(d).replace(/-/g, '.').trim();
+    }
+    rptState.companies.forEach(c => {
+      c.start_date = normDate(c.start_date);
+      c.end_date = normDate(c.end_date);
+    });
+
     // 중복 제거 + 명백히 잘못된 데이터(메리츠/GA 등) 필터링
     const BLOCK_NAMES = ['메리츠', '메리츠화재', '토스인슈어런스', 'GA1-4', 'GA4-1', '가온부천'];
-    const seen = new Set();
-    rptState.companies = rptState.companies.filter(c => {
-      if (!c.name || !c.product) return false; // 빈 데이터 거르기
+    const seen = new Map(); // key: 회사명|가입시기 -> index in result array
+    const result = [];
+    rptState.companies.forEach(c => {
+      if (!c.name || !c.product) return; // 빈 데이터 거르기
 
       // 표지/소속 정보가 보험사명으로 잘못 추출된 경우 제거
-      if (BLOCK_NAMES.some(b => c.name.includes(b) || c.product.includes(b))) return false;
+      if (BLOCK_NAMES.some(b => c.name.includes(b) || c.product.includes(b))) return;
 
-      // 가입시기==만기 인 경우(날짜 오인식 가능성 높음) → 그대로 두되, 추후 검토용으로 남김
-      // (자동 제거하지 않음. 사용자가 미리보기에서 확인 가능)
+      // ★ 핵심: "보험사명 + 가입시기"로 동일 계약 판단 (상품명은 페이지마다 인식이 달라질 수 있음)
+      const k = c.name.replace(/\s+/g, '') + '|' + c.start_date;
 
-      // 공백 제거 후 앞 8글자만 추출하여 동일 상품 여부 판단
-      const cleanProduct = c.product.replace(/\s+/g, '').substring(0, 8);
-      const k = c.name + '|' + cleanProduct;
-
-      if (seen.has(k)) return false; // 이미 있는 상품이면 버림
-      seen.add(k);
-      return true;
+      if (seen.has(k)) {
+        // 이미 있는 계약: 더 나은(보장 항목 수가 많은) 쪽으로 교체
+        const existingIdx = seen.get(k);
+        const existing = result[existingIdx];
+        const cnt = obj => Object.values(obj.coverages || {}).filter(v => v).length;
+        if (cnt(c) > cnt(existing)) {
+          result[existingIdx] = c;
+        }
+        return;
+      }
+      seen.set(k, result.length);
+      result.push(c);
     });
+    rptState.companies = result;
 
     if (rptState.companies.length === 0) {
       rptShowError('보험 계약 정보를 찾을 수 없습니다. 보장분석 제안서 PDF인지 확인해주세요.');
