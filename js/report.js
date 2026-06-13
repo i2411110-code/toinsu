@@ -645,3 +645,7 @@ window.rptDownloadExcel = async function () {
   ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r, c: 2 + N } });
   ws['!merges'] = merges;
   ws['!cols'] = [{ wch: 5 }, { wch: 18 }, { wch: 12 }, ...co
+  });
+}
+
+})();
