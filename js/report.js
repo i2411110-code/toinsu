@@ -997,9 +997,3 @@ function loadScript(src) {
 }
 
 })();
-ENDOFFILE
-echo "done"
-출력
-
-done
-완료
