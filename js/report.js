@@ -1,6 +1,6 @@
 // ================================================
 // 보장분석 리포트 생성기 - 가온사업단 오피스 모듈
-// v6: 세로(Column) 단위 시각적 추출 및 다중 병합셀 오류 해결
+// v6_완성본: 세로(Column) 단위 시각적 추출 및 다중 병합셀 오류 해결
 // ================================================
 
 (function () {
@@ -54,17 +54,13 @@ COVERAGE_DEF.forEach((cov, idx) => {
 });
 if (lastCat !== null) CAT_SPANS[lastCat] = { rowspan: COVERAGE_DEF.length - lastIdx, startIdx: lastIdx };
 
-// ─── AI 프롬프트 (세로 읽기 강제 적용) ───
+// ─── AI 프롬프트 (세로 읽기 강제 적용 및 표준 담보명 지정) ───
 function buildPrompt() {
   return `당신은 데이터 추출 전문가입니다. 
 
-## 치명적인 오류 수정 지시 (가장 중요)
-이전에는 표를 가로(행)로 읽다가 담보명 줄바꿈(병합셀)과 금액 줄바꿈 위치를 혼동하여 금액이 전부 틀리게 추출되었습니다.
-이 오류를 방지하기 위해 **절대 표를 가로로 읽지 말고, 세로(열, Column) 단위로 읽으세요.**
-하나의 보험사(열)를 정했으면, 그 보험사의 세로줄만 위에서 아래로 쭉 내려가면서 표 좌측의 담보명과 자신의 금액을 1:1로 짝맞추어 추출해야 합니다.
-
-## 분석 대상
-- "가입현황 | 세부내역" 비교표 페이지만 분석. (가입담보 상세 List 등 세로형 별첨 페이지는 분석하지 말고 즉시 빈 배열 반환)
+## 치명적인 오류 수정 지시
+표를 절대 가로(행)로 읽지 말고, 세로(열, Column) 단위로 위에서 아래로 스캔하세요.
+하나의 보험사(열)를 정했으면 그 보험사의 세로줄만 위에서 아래로 스캔하여 금액을 추출하세요.
 
 ## 추출 규칙
 1. customer_name: 상단의 "OOO 님의 상품별 가입현황"에서 추출
@@ -72,9 +68,10 @@ function buildPrompt() {
    - name: 보험사명 (괄호와 숫자 제외)
    - product: 상품명 전체 (줄바꿈 무시)
    - premium: 월보험료 (원 단위 숫자만)
-   - coverages: 해당 보험사의 세로줄을 위에서 아래로 읽으며, 존재하는 담보명의 금액만 추출.
-     * KEY: 표 좌측에 적힌 담보명 그대로 작성 (예: "질병사망", "일반암 진단비")
-     * VALUE: 반드시 만원 단위 숫자로 변환 ("1억300만"->10300, "5,000만"->5000, "30만"->30, 빈칸/0/- -> 0)
+   - coverages: 해당 보험사의 세로줄을 읽으며 존재하는 담보명의 금액 추출.
+     * VALUE: 반드시 '만원' 단위 숫자로 변환 ("1억"->10000, "5,000만"->5000, 빈칸/0/- -> 0)
+     * KEY: 반드시 아래의 34개 [표준 담보명] 중 가장 일치하는 하나를 골라 정확히 똑같이 작성하세요.
+     [표준 담보명]: 입원 의료비, 통원 의료비, 일상생활 배상책임, 질병 수술비, 상해 / 재해 수술비, 뇌 / 심장 수술비, 1 ~ 5 종수술, 일반암 진단비, 유사암 진단비, 로봇암 수술비, 항암방사선약물 치료비, 표적항암약물 치료비, 암 주요 치료비, 뇌혈관질환 진단비, ㄴ뇌졸증 진단비, ㄴ뇌출혈 진단비, 혈전용해제, 허혈성심장질환 진단비, ㄴ부정맥 진단비, ㄴ급성심근경색 진단비, 상해 / 재해 입원일당, 질병 입원일당, 일반 입원일당, 응급실 내원 진료비, 골절 진단비, 5대골절 진단비, 깁스 치료비, 일반사망, 질병사망, 암 사망, 상해사망 / 재해사망, 자동차 부상치료비(1급~14급), 벌금(대인), 변호사 선임비용, 사고처리 지원금(형사합의금)
 
 ## 출력 형식 (순수 JSON만 반환)
 {
@@ -88,7 +85,7 @@ function buildPrompt() {
       "premium": 24604,
       "coverages": {
         "질병사망": 10300,
-        "상해사망": 15100,
+        "상해사망 / 재해사망": 15100,
         "일반암 진단비": 16500
       }
     }
@@ -114,7 +111,7 @@ function getRptHTML() {
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
     <div style="font-size:18px; font-weight:700; color:#001E42;">
       <i class="bi bi-file-earmark-bar-graph-fill" style="color:#3182F6; margin-right:6px;"></i>
-      보장분석 리포트 생성기 (v6)
+      보장분석 리포트 생성기 (v6 완성본)
     </div>
   </div>
 
@@ -256,7 +253,7 @@ window.rptStartAnalysis = async function () {
 
       if (result && result.companies && result.companies.length > 0) {
         
-        // ── JS 내부 동적 매핑 (환각 원천 차단) ──
+        // ── JS 내부 동적 매핑 (환각 원천 차단 및 순서 최적화) ──
         let parsed_companies = result.companies.map(c => {
           let mappedCoverages = {};
           
@@ -264,42 +261,46 @@ window.rptStartAnalysis = async function () {
             let key = null;
             let L = label.replace(/\s+/g, '');
             
-            // 키워드 기반 스마트 매핑
-            if (L.includes('질병입원') || L.includes('상해입원')) key = 'inpatient';
-            else if (L.includes('외래') || L.includes('처방조제료') || L.includes('질병통원') || L.includes('상해통원')) key = 'outpatient';
-            else if (L.includes('일상생활배상책임') || L.includes('가족생활배상')) key = 'liability';
-            else if (L === '질병수술비' || L.includes('질병수술급여금')) key = 'disease_surg';
-            else if (L === '상해수술비' || L === '재해수술비' || L.includes('일반상해수술')) key = 'injury_surg';
-            else if (L.includes('뇌혈관수술비') || L.includes('허혈심장질환수술비') || L.includes('뇌출혈및급성심근경색수술비')) key = 'brain_heart_surg';
+            // 키워드 기반 스마트 매핑 (순서 중요: 상세한 것부터 먼저 필터링)
+            if (L.includes('질병입원일당') || L === '질병일당') key = 'disease_hosp';
+            else if (L.includes('상해입원일당') || L.includes('재해입원일당') || L === '상해일당') key = 'injury_hosp';
+            else if (L.includes('1인실') || L === '일반입원일당') key = 'general_hosp';
+            else if (L.includes('입원의료비') || L.includes('입원실손')) key = 'inpatient';
+            else if (L.includes('통원의료비') || L.includes('외래') || L.includes('처방조제')) key = 'outpatient';
+            else if (L.includes('일상생활배상') || L.includes('가족생활배상')) key = 'liability';
             else if (L.includes('종수술')) key = 'type_surg';
-            else if (L.includes('일반암진단비') || L.includes('통합암진단비') || L.includes('특정암진단비')) key = 'cancer_diag';
-            else if (L.includes('유사암진단비')) key = 'minor_cancer';
+            else if (L.includes('뇌혈관질환수술') || L.includes('허혈심장') || L.includes('뇌심장수술')) key = 'brain_heart_surg';
+            else if (L.includes('질병수술')) key = 'disease_surg';
+            else if (L.includes('상해수술') || L.includes('재해수술')) key = 'injury_surg';
             else if (L.includes('로봇암') || L.includes('다빈치')) key = 'robot_surg';
+            else if (L.includes('유사암') || L.includes('기타피부암') || L.includes('갑상선암') || L.includes('제자리암')) key = 'minor_cancer';
+            else if (L.includes('표적항암') || L.includes('카티')) key = 'targeted';
             else if (L.includes('항암방사선') || L.includes('중입자')) key = 'chemo_rad';
-            else if (L.includes('표적항암') || L.includes('고액항암') || L.includes('카티')) key = 'targeted';
-            else if (L.includes('암주요치료비') || L.includes('2대질환주요치료비')) key = 'cancer_main';
-            else if (L === '뇌혈관진단비' || L.includes('뇌혈관질환')) key = 'cerebro';
-            else if (L.includes('뇌졸중')) key = 'stroke';
+            else if (L.includes('암주요치료')) key = 'cancer_main';
+            else if (L.includes('일반암') || L.includes('통합암') || L.includes('특정암') || L === '암진단비') key = 'cancer_diag';
+            else if (L.includes('뇌졸중') || L.includes('뇌졸증')) key = 'stroke';
             else if (L.includes('뇌출혈')) key = 'cerebro_hem';
+            else if (L.includes('뇌혈관진단') || L.includes('뇌혈관질환')) key = 'cerebro';
             else if (L.includes('혈전용해')) key = 'thrombo';
-            else if (L === '허혈성심장질환진단비' || L.includes('허혈심장')) key = 'ischemic';
-            else if (L.includes('부정맥')) key = 'arrhythmia';
             else if (L.includes('급성심근경색')) key = 'ami';
-            else if (L === '상해일당' || L.includes('재해입원일당')) key = 'injury_hosp';
-            else if (L === '질병일당' || L.includes('질병입원일당')) key = 'disease_hosp';
-            else if (L.includes('1인실')) key = 'general_hosp';
+            else if (L.includes('부정맥')) key = 'arrhythmia';
+            else if (L.includes('허혈성심장') || L.includes('허혈심장')) key = 'ischemic';
             else if (L.includes('응급실')) key = 'er_visit';
-            else if (L === '골절진단비') key = 'fracture';
             else if (L.includes('5대골절')) key = 'five_fracture';
+            else if (L.includes('골절진단')) key = 'fracture';
             else if (L.includes('깁스')) key = 'cast';
-            else if (L === '일반사망') key = 'death_general';
             else if (L === '질병사망' || L.includes('유병자질병사망')) key = 'death_disease';
             else if (L === '암사망') key = 'death_cancer';
-            else if (L === '상해사망' || L === '재해사망' || L.includes('상해사망후유장해')) key = 'death_injury';
-            else if (L.includes('부상치료비')) key = 'car_injury';
-            else if (L === '벌금' || L.includes('교통사고벌금')) key = 'car_fine';
+            else if (L.includes('상해사망') || L.includes('재해사망')) key = 'death_injury';
+            else if (L === '일반사망' || L.includes('기본사망')) key = 'death_general';
+            else if (L.includes('부상치료비') || L.includes('자부상')) key = 'car_injury';
+            else if (L.includes('벌금')) key = 'car_fine';
             else if (L.includes('변호사선임')) key = 'car_lawyer';
-            else if (L.includes('교통사고처리지원금') || L.includes('사고처리지원금')) key = 'car_settlement';
+            else if (L.includes('처리지원금') || L.includes('형사합의금')) key = 'car_settlement';
+            else {
+              let matchedDef = COVERAGE_DEF.find(d => d.label.replace(/\s+/g, '') === L);
+              if(matchedDef) key = matchedDef.key;
+            }
 
             if (key) {
               mappedCoverages[key] = Math.max(mappedCoverages[key] || 0, Number(v) || 0);
@@ -329,11 +330,11 @@ window.rptStartAnalysis = async function () {
     const BLOCK = ['메리츠', '메리츠화재', '토스인슈어런스', 'GA1', '가온부천'];
     const filtered = rptState.companies.filter(c => c.name && c.product && c.name.length >= 2 && !BLOCK.some(b => c.name.includes(b) || c.product.includes(b)));
 
-    // Deep Merge (중복 합산 방지 및 최댓값 적용)
+    // Deep Merge (중복 합산 방지 및 최댓값 적용, 기준 완화 적용)
     const seen = new Map();
     const deduped = [];
     filtered.forEach(c => {
-      const k = `${c.name.replace(/\s+/g, '')}|${c.product.replace(/\s+|\(무\)|\(무배당\)|무배당/g, '').slice(0, 8)}`;
+      const k = `${c.name.replace(/\s+/g, '')}|${c.product.replace(/\s+|\(무\)|\(무배당\)|무배당/g, '').slice(0, 15)}`;
       if (seen.has(k)) {
         const ex = deduped[seen.get(k)];
         if (c.product.length > (ex.product || '').length && !/^\(\d+\)/.test(c.product)) ex.product = c.product;
