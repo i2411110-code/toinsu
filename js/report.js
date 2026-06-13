@@ -1,6 +1,6 @@
 // ================================================
 // 보장분석 리포트 생성기 - 가온사업단 오피스 모듈
-// v4.3: 인라인 직접 수정(contenteditable) 및 엑셀 스타일 완벽 유지
+// v4.4: 추출 프롬프트 최적화 복구 및 고객명 인라인 수정 추가
 // ================================================
 
 (function () {
@@ -54,61 +54,64 @@ COVERAGE_DEF.forEach((cov, idx) => {
 });
 if (lastCat !== null) CAT_SPANS[lastCat] = { rowspan: COVERAGE_DEF.length - lastIdx, startIdx: lastIdx };
 
+// ─── AI 프롬프트 (정확도 복구 및 최적화) ───
 function buildPrompt() {
   return `당신은 한국 보험 보장분석 제안서 데이터 추출 전문 AI입니다.
 
-## 🚨 치명적 오류 주의 (AI의 고질적 밀림 현상 방지)
-과거 분석 시, 특정 보험사에 보장금액이 없는(빈칸) 경우 우측에 있는 다른 보험사의 금액을 끌어와서 잘못 기입하는 심각한 오류가 있었습니다. 이를 방지하기 위해 **반드시 세로열(Column) 단위로 완전히 분리**해서 읽어야 합니다.
+## 🚨 1. 페이지 판별 (최우선: 상세 페이지 절대 무시)
+- [분석 대상] 상단에 "(1)흥국화재 (2)삼성화재" 처럼 **여러 보험사가 가로(열)로 비교된 요약표**만 분석하세요.
+- [절대 무시] "상품별 보험가입현황" 등 **1개의 보험사만 세로로 길게 설명된 상세 페이지는 절대 분석하지 마세요.**
+- 무시해야 할 페이지면 즉시 빈 배열 반환: { "companies": [], "customer_name": "" }
 
-## 🚨 사고 과정 (작업 지시사항) - 가장 중요
-당신은 최종 JSON 데이터를 출력하기 전에, 반드시 아래 양식처럼 [데이터 추출 메모]를 텍스트로 먼저 작성해야 합니다. 이 메모를 작성하지 않으면 작업은 실패한 것입니다. 중괄호 { } 는 절대 메모에 쓰지 마세요.
+## 🚨 2. 가로 밀림 방지 (세로열 독립 스캔 강제)
+- 표를 읽을 때 절대 가로줄(Row)을 따라 좌우로 섞어 읽지 마세요. 빈칸을 건너뛰고 우측 회사의 금액을 잘못 가져오는 심각한 오류가 발생합니다.
+- 반드시 사람의 눈처럼 **하나의 세로 기둥(열, Column) 단위**로, 위(보험사명)에서 아래(보장항목 끝)까지 쭉 읽어서 1개 계약의 추출을 완전히 끝낸 후, 다음 우측 열로 넘어가세요.
 
-[데이터 추출 메모 예시]
-1열_흥국화재: 상품명(무배당 흥Good), 보험료(24604), 상해수술비(50), 질병수술비(0), 자동차부상(20)...
-2열_삼성화재: 상품명(무배당 삼성화재), 보험료(50450), 상해수술비(0), 질병수술비(0), 자동차부상(10)...
+## 🚨 3. 가입금액 단위 변환 규칙 (가장 중요)
+- 모든 보장금액은 반드시 **'만원' 단위 정수**로만 반환하세요.
+- 예시: "5,000만" -> 5000 / "30만" -> 30 / "1.6억", "1억6,000만" -> 16000 / "2.2억" -> 22000
+- 예외: 빈칸, "-", "0" -> 0
 
 ## 계약 정보 추출 기준
-- 표의 세로 열(Column) 하나가 보험계약 1건입니다.
 - 고객명: "OOO 님의 상품별 가입현황" 형태에서 이름만 추출
-- 보험사명: 괄호/번호 제외한 "흥국화재" 형태
-- 보장금액 단위: 반드시 **'만원' 단위 정수** (예: "5,000만" -> 5000, "1.6억" -> 16000, 빈칸/0 -> 0)
+- 보험사명: 괄호와 번호, 소속 GA명칭(가온, 메리츠 등)을 제외한 "흥국화재" 형태
+- 상품명: 줄바꿈이 있어도 하나로 이어서 정확한 전체 이름 추출
+- 보험료: 원 단위 숫자만 추출
 
 ## 담보 매핑 규칙
-- inpatient: 입원 의료비 (실비)
-- outpatient: 통원 의료비 (실비)
-- liability: 일상생활 배상책임
-- disease_surg: 질병 수술비
-- injury_surg: 상해 / 재해 수술비
-- brain_heart_surg: 뇌 / 심장 수술비 (뇌혈관+허혈성+뇌출혈+심근경색 수술 합산)
-- type_surg: 1~5 종수술
-- cancer_diag: 일반암 진단비
-- minor_cancer: 유사암 진단비
-- robot_surg: 로봇암 수술비
-- chemo_rad: 항암방사선약물 치료비
-- targeted: 표적항암약물 치료비
-- cancer_main: 암 주요 치료비
-- cerebro: 뇌혈관질환 진단비
-- stroke: 뇌졸증 진단비
-- cerebro_hem: 뇌출혈 진단비
-- thrombo: 혈전용해제
-- ischemic: 허혈성심장질환 진단비
-- arrhythmia: 부정맥 진단비
-- ami: 급성심근경색 진단비
-- injury_hosp: 상해/재해 입원일당
-- disease_hosp: 질병 입원일당
-- general_hosp: 일반 입원일당
-- fracture: 골절 진단비
-- death_general: 일반사망
-- death_disease: 질병사망
-- death_injury: 상해/재해사망
-- car_injury: 자동차 부상치료비(1급~14급)
-- car_fine: 벌금(대인)
-- car_lawyer: 변호사 선임비용
-- car_settlement: 사고처리 지원금(형사합의금)
+- inpatient (입원 의료비): 실손 입원의료비, 상해/질병 입원의료비
+- outpatient (통원 의료비): 실손 통원의료비, 외래, 처방조제료
+- liability (일상생활 배상책임): 일상생활배상책임, 가족일상생활배상책임
+- disease_surg (질병 수술비): 질병수술비
+- injury_surg (상해 / 재해 수술비): 상해수술비, 재해수술비
+- brain_heart_surg (뇌 / 심장 수술비): 뇌혈관+허혈성+뇌출혈+심근경색수술비 합산
+- type_surg (1 ~ 5 종수술): 질병종수술 + 상해종수술 (1~5종) 합산
+- cancer_diag (일반암 진단비): 일반암진단비 (유사암/소액암/주요치료비 제외)
+- minor_cancer (유사암 진단비): 갑상선암, 제자리암, 기타피부암, 경계성종양 등 합산
+- robot_surg (로봇암 수술비): 다빈치, 레보아이 등 로봇암수술비
+- chemo_rad (항암방사선약물 치료비): 항암방사선치료, 양성자치료 등 (표적항암 제외)
+- targeted (표적항암약물 치료비): 표적항암약물허가치료, 카티(CAR-T)항암
+- cancer_main (암 주요 치료비): 암주요치료비, 2대질환주요치료비
+- cerebro (뇌혈관질환 진단비): 뇌혈관질환진단비
+- stroke (뇌졸증 진단비): 뇌졸중진단비
+- cerebro_hem (뇌출혈 진단비): 뇌출혈진단비
+- thrombo (혈전용해제): 혈전용해치료비 (뇌/심장 무관 합산)
+- ischemic (허혈성심장질환 진단비): 허혈성심장질환진단비
+- arrhythmia (부정맥 진단비): 부정맥진단비
+- ami (급성심근경색 진단비): 급성심근경색증진단비
+- injury_hosp (상해/재해 입원일당): 상해입원일당, 재해입원일당
+- disease_hosp (질병 입원일당): 질병입원일당
+- general_hosp (일반 입원일당): 일반상해입원일당(1인실), 일반질병입원일당(1인실)
+- fracture (골절 진단비): 골절진단비
+- death_general (일반사망): 일반사망
+- death_disease (질병사망): 질병사망, 유병자질병사망
+- death_injury (상해/재해사망): 상해사망, 재해사망, 상해사망후유장해
+- car_injury (자동차 부상치료비): 자동차사고부상치료비, 자동차부상치료지원금
+- car_fine (벌금): 벌금(대인)
+- car_lawyer (변호사 선임비용): 변호사선임비용
+- car_settlement (사고처리 지원금): 교통사고처리지원금, 형사합의지원금
 
-## 출력 형식
-[데이터 추출 메모]를 모두 작성한 후, 마지막에 **오직 한 번만** 순수한 JSON 포맷을 출력하세요. 마크다운(\`\`\`json)은 생략하세요.
-
+## 출력 형식 (마크다운 없이 순수 JSON만 반환)
 {
   "companies": [
     {
@@ -131,8 +134,7 @@ function buildPrompt() {
     }
   ],
   "customer_name": "고객명"
-}
-`;
+}`;
 }
 
 let rptState = {
@@ -199,7 +201,7 @@ function getRptHTML() {
     <div class="rpt-step-label">STEP 3</div>
     <h3 class="rpt-step-title">보장분석표 미리보기 & 수정</h3>
     <p class="rpt-step-desc" style="color:#3182F6; font-weight:600; margin-bottom:12px;">
-      💡 금액이나 텍스트를 클릭하면 직접 수정할 수 있습니다. (수정 시 합산 금액 자동 변경)
+      💡 고객 이름, 금액, 텍스트를 클릭하면 직접 수정할 수 있습니다. (금액 수정 시 자동 합산)
     </p>
     <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
       <button class="btn-action" style="width:auto; padding:10px 20px;" onclick="window.rptDownloadExcel()">
@@ -449,7 +451,11 @@ async function callClaude(imgB64) {
   return null;
 }
 
-// ─── 인라인 수정 로직 (DOM 및 상태 동기화) ───
+// ─── 인라인 수정 로직 (이름, 텍스트, 금액 동기화) ───
+window.rptUpdateName = function(el) {
+  rptState.customerName = el.innerText.trim();
+};
+
 window.rptUpdateText = function(el, idx, key) {
   rptState.companies[idx][key] = el.innerText.trim();
 };
@@ -483,14 +489,15 @@ window.rptUpdateVal = function(el, idx, key) {
   }
 };
 
-// ─── 미리보기 렌더링 (contenteditable 추가) ───
+// ─── 미리보기 렌더링 (이름 직접 수정 기능 추가) ───
 function renderPreview() {
   const co = rptState.companies;
   const name = rptState.customerName || '고객';
   const N = co.length;
 
   let html = `<table>`;
-  html += `<tr class="r-title"><td colspan="${3 + N}">${name} 님 보장분석표</td></tr>`;
+  // 상단 고객 이름 수정 영역
+  html += `<tr class="r-title"><td colspan="${3 + N}"><span contenteditable="true" onblur="window.rptUpdateName(this)" style="border-bottom:1px dashed #A0AAB5; padding-bottom:2px;">${name}</span> 님 보장분석표</td></tr>`;
 
   // 헤더행 1 – 보험사명
   html += `<tr>
