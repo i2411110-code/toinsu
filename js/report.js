@@ -56,49 +56,30 @@ COVERAGE_DEF.forEach((cov, idx) => {
 });
 if (lastCat !== null) CAT_SPANS[lastCat] = { rowspan: COVERAGE_DEF.length - lastIdx, startIdx: lastIdx };
 
-// Claude Vision 프롬프트
+// 가온 ai Vision 프롬프트
 function buildPrompt() {
   return `당신은 한국 보험 보장분석 제안서 전문 데이터 추출 AI입니다.
-이 이미지는 한국 보험사 보장분석 제안서의 페이지입니다. (메리츠화재, 삼성생명, 한화생명, DB손해보험, KB손해보험 등 모든 보험사 포함)
+이 이미지는 한국 보험사 보장분석 제안서의 페이지입니다.
 
 **추출 규칙:**
-1. 이 페이지에서 보험사(회사명)별 계약 정보를 찾으세요.
-2. 각 보험사의: 회사명, 상품명, 보장시기(가입일), 보장기간(만기일), 월보험료를 추출하세요.
-3. 아래 담보 항목들의 가입금액을 추출하세요 (없으면 0, 단위: 만원):
-   입원의료비(실손입원), 통원의료비(실손통원), 일상생활배상책임,
-   질병수술비, 상해재해수술비, 뇌심장수술비, 1~5종수술,
-   일반암진단비, 유사암진단비, 로봇암수술비, 항암방사선약물치료비, 표적항암약물치료비, 암주요치료비,
-   뇌혈관질환진단비, 뇌졸중진단비, 뇌출혈진단비, 혈전용해제치료비,
-   허혈성심장질환진단비, 부정맥진단비, 급성심근경색진단비,
-   상해재해입원일당, 질병입원일당, 일반입원일당, 응급실내원진료비,
-   골절진단비, 5대골절진단비, 깁스치료비,
-   일반사망, 질병사망, 암사망, 상해재해사망,
-   자동차부상치료비, 벌금대인, 변호사선임비용, 사고처리지원금
+1. 각 보험사의: 회사명, 상품명, 보장시기(가입일), 보장기간(만기일), 월보험료를 추출하세요.
+2. 각 담보 항목의 가입금액을 만원 단위의 "숫자"로만 추출하세요. (예: 5000, 10000)
+3. 만약 해당 담보가 없거나 찾을 수 없으면 반드시 숫자 0을 입력하세요.
 
-**중요:**
-- 금액은 반드시 숫자만 (단위: 만원). 예: "5,000만원" → 5000, "1억" → 10000
-- 이 페이지에 보험사 계약 정보가 없으면 companies를 빈 배열로 반환
-- 고객명은 마스킹된 경우 그대로 (예: 심*진)
+**중요 필수 지침 (절대 위반 금지):**
+- 금액 텍스트(예: "5,000만원")에서 쉼표와 글자를 모두 빼고 오직 정수(5000)만 넣으세요.
+- 응답은 반드시 아래 JSON 구조로만 출력해야 하며, 설명이나 마크다운 틱(\`\`\`) 등 다른 텍스트는 일절 포함하지 마세요.
 
-반드시 다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
 {
   "companies": [
     {
       "name": "보험사명",
-      "product": "상품명(20자 이내로 줄여도 됨)",
+      "product": "상품명(20자 이내)",
       "start_date": "YYYY.MM.DD",
       "end_date": "YYYY.MM.DD",
-      "premium": 숫자(원단위. 예:50450),
+      "premium": 50450,
       "coverages": {
-        "inpatient": 0, "outpatient": 0, "liability": 0,
-        "disease_surg": 0, "injury_surg": 0, "brain_heart_surg": 0, "type_surg": 0,
-        "cancer_diag": 0, "minor_cancer": 0, "robot_surg": 0, "chemo_rad": 0, "targeted": 0, "cancer_main": 0,
-        "cerebro": 0, "stroke": 0, "cerebro_hem": 0, "thrombo": 0,
-        "ischemic": 0, "arrhythmia": 0, "ami": 0,
-        "injury_hosp": 0, "disease_hosp": 0, "general_hosp": 0, "er_visit": 0,
-        "fracture": 0, "five_fracture": 0, "cast": 0,
-        "death_general": 0, "death_disease": 0, "death_cancer": 0, "death_injury": 0,
-        "car_injury": 0, "car_fine": 0, "car_lawyer": 0, "car_settlement": 0
+        "inpatient": 0, "outpatient": 0, "liability": 0, "disease_surg": 0, "injury_surg": 0, "brain_heart_surg": 0, "type_surg": 0, "cancer_diag": 0, "minor_cancer": 0, "robot_surg": 0, "chemo_rad": 0, "targeted": 0, "cancer_main": 0, "cerebro": 0, "stroke": 0, "cerebro_hem": 0, "thrombo": 0, "ischemic": 0, "arrhythmia": 0, "ami": 0, "injury_hosp": 0, "disease_hosp": 0, "general_hosp": 0, "er_visit": 0, "fracture": 0, "five_fracture": 0, "cast": 0, "death_general": 0, "death_disease": 0, "death_cancer": 0, "death_injury": 0, "car_injury": 0, "car_fine": 0, "car_lawyer": 0, "car_settlement": 0
       }
     }
   ],
@@ -305,7 +286,7 @@ window.rptStartAnalysis = async function () {
     for (let pn = 1; pn <= total; pn++) {
       const pct = Math.round((pn / total) * 100);
       setProgress(pct, `${pn}/${total} 페이지 분석 중...`,
-        'Claude AI가 보험사 계약 정보를 인식하고 있습니다');
+        '가온 AI가 보험사 계약 정보를 인식하고 있습니다');
 
       const imgB64 = await pageToBase64(pn);
       const result  = await callClaude(imgB64);
@@ -320,11 +301,16 @@ window.rptStartAnalysis = async function () {
 
     setProgress(100, `분석 완료! ${rptState.companies.length}개 보험사 인식됨`, '');
 
-    // 중복 제거
+    // 중복 제거 (수정된 로직)
     const seen = new Set();
     rptState.companies = rptState.companies.filter(c => {
-      const k = c.name + '|' + c.product;
-      if (seen.has(k)) return false;
+      if (!c.name || !c.product) return false; // 빈 데이터 거르기
+      
+      // 공백 제거 후 앞 6글자만 추출하여 동일 상품 여부 판단 (예: "무배당 흥Good" == "무배당흥Good")
+      const cleanProduct = c.product.replace(/\s+/g, '').substring(0, 6);
+      const k = c.name + '|' + cleanProduct;
+      
+      if (seen.has(k)) return false; // 이미 있는 상품이면 버림
       seen.add(k);
       return true;
     });
@@ -366,8 +352,6 @@ async function pageToBase64(pn) {
 
 // ─── AI API 호출부 (Vercel 무료 서버 우회 버전으로 완벽 교체) ───
 async function callClaude(imgB64) {
-  // 🚨 기존에 있던 GEMINI_API_KEY 변수는 완전히 삭제했습니다! (보안 해결)
-  
   // 내 Vercel 서버 주소로 요청을 보냅니다.
   const url = '/api/gemini'; 
 
@@ -391,9 +375,16 @@ async function callClaude(imgB64) {
     const data = await res.json();
     const text = data.text || '';
     
-    // 응답받은 텍스트에서 JSON 부분만 추출하여 반환
+    // 응답받은 텍스트에서 JSON 부분만 안전하게 추출
     const m = text.match(/\{[\s\S]*\}/);
-    if (m) return JSON.parse(m[0]);
+    if (m) {
+      try {
+        return JSON.parse(m[0]);
+      } catch (e) {
+        console.error("AI 응답 JSON 파싱 실패:", e);
+        return null; // 파싱 실패 시 건너뛰도록 처리
+      }
+    }
   } catch (error) {
     console.error("AI 호출 에러:", error);
   }
@@ -599,24 +590,33 @@ window.rptPrint = function () {
   const content = document.getElementById('rpt-preview-table').innerHTML;
   const win = window.open('', '_blank', 'width=1200,height=800');
   win.document.write(`<!DOCTYPE html><html><head>
-    <meta charset="UTF-8"><title>보장분석표</title>
+    <meta charset="UTF-8"><title>보장분석표 인쇄</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
-      *{box-sizing:border-box} body{font-family:'Noto Sans KR',sans-serif;margin:10px;font-size:10px;}
-      table{border-collapse:collapse;width:100%;}
-      th,td{border:1px solid #C5CBD3;padding:3px 5px;text-align:center;}
-      .r-cat{background:#001E42!important;color:#fff;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-      .r-item{background:#D6DEE7!important;font-weight:600;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-      .r-sum{background:#D6DEE7!important;font-weight:700;color:#001E42;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-      .r-hdr{background:#D6DEE7!important;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-      .r-ins{background:#D6DEE7!important;font-weight:700;color:#C00000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-      .r-fee{background:#D7DDE4!important;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-      .r-title td{font-size:13px;font-weight:700;text-align:left;padding:8px;border-bottom:2px solid #001E42;}
-      @page{size:A4 landscape;margin:8mm;}
+      * { box-sizing: border-box; }
+      @page { size: A4 landscape; margin: 10mm; } /* A4 가로 방향 및 여백 설정 */
+      body { 
+        font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 0;
+        zoom: 0.65; /* ★ 핵심: 컬럼이 많아도 A4 한 장에 들어가도록 화면 비율 65% 축소 */
+      }
+      table { 
+        border-collapse: collapse; 
+        width: 100%; 
+        table-layout: fixed; /* 셀 너비를 균등하게 고정 */
+        word-break: break-all; /* 글자가 넘치면 줄바꿈 */
+      }
+      th, td { border: 1px solid #C5CBD3; padding: 4px 2px; text-align: center; font-size: 11px; }
+      .r-cat { background: #001E42 !important; color: #fff; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; width: 40px; }
+      .r-item { background: #D6DEE7 !important; font-weight: 600; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; width: 120px; }
+      .r-sum { background: #D6DEE7 !important; font-weight: 700; color: #001E42; -webkit-print-color-adjust: exact; print-color-adjust: exact; width: 70px; }
+      .r-hdr { background: #D6DEE7 !important; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .r-ins { background: #D6DEE7 !important; font-weight: 700; color: #C00000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .r-fee { background: #D7DDE4 !important; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .r-title td { font-size: 16px; font-weight: 700; text-align: left; padding: 10px; border-bottom: 2px solid #001E42; border-top: none; border-left: none; border-right: none; }
     </style>
   </head><body>${content}</body></html>`);
   win.document.close();
-  setTimeout(() => { win.focus(); win.print(); }, 600);
+  setTimeout(() => { win.focus(); win.print(); }, 800); // 렌더링 대기 시간 살짝 늘림
 };
 
 // ─── 리셋 ───
