@@ -3,7 +3,7 @@
 // ================================================
 (function () {
   // [필수] 발급받은 제미나이 API 키를 여기에 입력하세요
-  const GEMINI_API_KEY = "여기에_무료_제미나이_키를_넣으세요";
+  const GEMINI_API_KEY = "/api/gemini";
 
   // ─── 담보 정의 (엑셀 순서 일치) ───
   const COVERAGE_DEF = [
