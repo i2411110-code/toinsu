@@ -1,6 +1,6 @@
 // ================================================
 // 보장분석 리포트 생성기 - 가온사업단 오피스 모듈
-// (수정본 v2: 중복제거 강화 / 프롬프트 보강 / 엑셀 형식 정확히 일치)
+// v3: 프롬프트 전면 재작성 / 단위 오류 수정 / 매핑 정밀화
 // ================================================
 
 (function () {
@@ -55,82 +55,203 @@ COVERAGE_DEF.forEach((cov, idx) => {
 });
 if (lastCat !== null) CAT_SPANS[lastCat] = { rowspan: COVERAGE_DEF.length - lastIdx, startIdx: lastIdx };
 
-// ─── AI 프롬프트 ───
+// ─── AI 프롬프트 (전면 재작성) ───
 function buildPrompt() {
-  return `당신은 한국 보험 보장분석 제안서 전문 데이터 추출 AI입니다.
+  return `당신은 한국 보험 보장분석 제안서 데이터 추출 전문 AI입니다.
 
-**[페이지 종류 판별 - 필수]**
+## 페이지 판별 (최우선)
 이 PDF에는 두 종류의 표가 있습니다:
-1) "가입현황 | 세부내역" 페이지: 여러 보험사가 가로로 나열된 비교표. 상단에 "보험사 별 계약정보 01", "02", "03", "04" 라는 번호가 있음. 보험사명/상품명/보장시기/보장기간/월보험료 행이 있고, 그 아래 담보별 가입금액이 보험사별 컬럼으로 나열됨.
-2) "별첨 | 상품별 보험가입현황" 또는 "가입현황 | 가입담보 상세 List" 페이지: 보험사 1개씩 세로 리스트 형태.
+- [분석 대상] "가입현황 | 세부내역" 페이지: 상단에 "보험사 별 계약정보 01/02/03/04" 번호가 있고, 여러 보험사가 가로로 나열된 비교표
+- [무시] "별첨 | 상품별 보험가입현황" 또는 "가입현황 | 가입담보 상세 List": 보험사 1개씩 세로 리스트
 
-**반드시 1번 형식("가입현황 | 세부내역")의 페이지만 분석하세요.**
-2번 형식이 보이면 즉시 { "companies": [], "customer_name": "" } 로 응답하세요.
+**반드시 [분석 대상] 페이지만 분석하세요.** [무시] 페이지면 즉시 { "companies": [], "customer_name": "" } 반환.
+표지 페이지(메리츠화재 로고, LIFE REPORT만 있음)도 즉시 { "companies": [], "customer_name": "" } 반환.
 
-**[표지 페이지 처리]**
-"보장분석 제안서", "LIFE REPORT", 컨설턴트 소속 정보만 있는 표지 페이지도 즉시 { "companies": [], "customer_name": "" } 로 응답하세요.
+## 고객명 추출
+"심*진 님의 상품별 가입현황" 형태에서 고객명("심*진")을 추출하세요.
 
-**[고객명 추출]**
-- "심*진 님의 상품별 가입현황" 같은 형태에서 고객명을 추출하세요.
-- 고객명은 "심*진" 처럼 마스킹된 형태 그대로 추출하세요.
-
-**[보험사명 추출 - 매우 중요]**
-- 표의 상단 "(1)흥국화재", "(2)삼성화재" 등 번호+보험사명 형태에서 보험사명만 추출 (번호 제외)
+## 보험사명 추출 규칙
+표 상단 "(1)흥국화재", "(2)삼성화재" 등에서 번호를 제외한 보험사명만 추출.
 - 정확한 보험사명 예시: 흥국화재, 삼성화재, 에이스손보, ABL생명, KDB생명, NH농협생명, 라이나생명, 하나생명, 우정사업본부, 현대해상, BNP파리바카디프손보
-- 절대 금지: 메리츠, 메리츠화재, 토스인슈어런스, GA1-4, 가온부천 (이것들은 컨설턴트 소속 정보임)
-- "(13)메이슨손보" 같이 실제 보험사가 아닌 이름이 나오면 인식 오류이므로 제외
+- **"(무)Chubb 3대질병보장보험"은 에이스손보의 상품입니다. 보험사명 = 에이스손보**
+- 절대 포함 금지: 메리츠, 메리츠화재, 토스인슈어런스, 가온부천, GA1-4 (컨설턴트 소속 정보)
 
-**[데이터 추출 규칙]**
-1. 각 열(Column)이 하나의 보험계약입니다. 열을 정확히 구분하세요.
-2. 보장시기 ≠ 보장기간 (만기). 두 날짜는 반드시 다릅니다. 같은 날짜를 두 곳에 쓰지 마세요.
-3. 월보험료: 원 단위 숫자만 (예: "24,604원" → 24604)
-4. 가입금액: 만원 단위 숫자만
-   - "5,000만" → 5000
-   - "1억" → 10000  
-   - "1억6,500만" → 16500
-   - "2억8,000만" → 28000
-   - "31만" → 31
-5. 값이 없거나 0이면 → 0
-6. 각 행(담보항목)과 각 열(보험사)의 교차값을 정확히 읽으세요. 옆 열의 값을 가져오지 마세요.
+## 가입금액 단위 변환 규칙 (가장 중요!)
+모든 가입금액은 **만원** 단위 정수로 반환합니다.
 
-**[담보 매핑표]**
-- "inpatient": 입원의료비(실손입원), 상해+질병 입원의료비
-- "outpatient": 통원의료비(실손통원), 질병/상해 통원
-- "liability": 일상생활배상책임, 가족생활배상책임
-- "disease_surg": 질병수술비, 질병수술급여금
-- "injury_surg": 상해/재해수술비, 상해수술비
-- "brain_heart_surg": 뇌혈관수술비+허혈심장질환수술비 합산, 뇌출혈및급성심근경색수술비
-- "type_surg": 1~5종수술, 질병종수술, 상해종수술 (여러 건이면 합산)
-- "cancer_diag": 일반암진단비 (소액암/유사암 제외한 순수 일반암)
-- "minor_cancer": 유사암진단비 (갑상샘암, 제자리암, 경계성종양, 기타피부암 합산)
-- "robot_surg": 로봇암수술비, 다빈치/레보아이 로봇 암수술
-- "chemo_rad": 항암방사선약물치료비, 항암세기조절방사선치료+항암양성자방사선치료 합산
-- "targeted": 표적항암약물치료비, 표적항암약물허가치료
-- "cancer_main": 암주요치료비, 2대질환주요치료비
-- "cerebro": 뇌혈관질환진단비
-- "stroke": 뇌졸중(뇌졸증)진단비, 뇌혈관질환(II)진단
-- "cerebro_hem": 뇌출혈진단비
-- "thrombo": 혈전용해제치료비, 혈전용해치료비
-- "ischemic": 허혈성심장질환진단비, 심혈관질환(특정I)진단
-- "arrhythmia": 부정맥진단비
-- "ami": 급성심근경색진단비, 심혈관질환(특정II/I49)진단 합산
-- "injury_hosp": 상해/재해입원일당, 재해입원
-- "disease_hosp": 질병입원일당
-- "general_hosp": 일반입원일당, 1인실입원일당
-- "er_visit": 응급실내원진료비
-- "fracture": 골절진단비 (치아파절 제외)
-- "five_fracture": 5대골절진단비
-- "cast": 깁스치료비
-- "death_general": 일반사망 (질병+상해 구분없는 사망)
-- "death_disease": 질병사망
-- "death_cancer": 암사망
-- "death_injury": 상해사망/재해사망
-- "car_injury": 자동차부상치료비
-- "car_fine": 벌금(대인)
-- "car_lawyer": 변호사선임비용, 자동차사고변호사선임비용 합산
-- "car_settlement": 교통사고처리지원금, 사고처리지원금(형사합의금)
+### 표에서 읽는 방법:
+- "5,000만" → 5000
+- "30만" → 30
+- "1억" → 10000
+- "1억6,500만" → 16500
+- "2억8,000만" → 28000
+- "5,500만" → 5500
+- "2억" → 20000
+- 빈칸 또는 0 → 0
 
-반드시 아래 JSON 형식으로만 응답 (마크다운, 설명문 절대 금지):
+### 절대 금지:
+- 만원을 원으로 혼동하지 마세요 (5000만 ≠ 50000000)
+- 억을 만원으로 잘못 변환하지 마세요 (1억 = 10000만원 = 10000)
+
+## 담보 매핑 규칙
+
+### inpatient (입원 의료비)
+- 실손 입원의료비, 상해+질병 입원의료비, 질병입원의료비
+- ⚠️ 주의: 일당(입원일당)이 아닌 실손 의료비만 해당
+
+### outpatient (통원 의료비)
+- 실손 통원의료비, 질병/상해 외래+처방조제료 합산, 재해통원급부금
+- ⚠️ 주의: 실손 통원만 해당 (입원일당 아님)
+
+### liability (일상생활 배상책임)
+- 일상생활배상책임, 가족생활배상책임
+
+### disease_surg (질병 수술비)
+- 질병수술비, 질병수술급여금
+- ⚠️ 주의: 암수술비, 뇌수술비 등 특정 질환 수술은 별도 항목으로
+
+### injury_surg (상해/재해 수술비)
+- 상해수술비, 재해수술급부금, 일반상해수술
+- ⚠️ 주의: 종수술(1~5종)은 type_surg로
+
+### brain_heart_surg (뇌/심장 수술비)
+- 뇌혈관수술비 + 허혈심장질환수술비 합산
+- 뇌출혈및급성심근경색수술비 (이 담보는 뇌수술+심장수술 둘 다에 100만씩 포함됨)
+- 예: 에이스손보 (무)Chubb에서 뇌출혈및급성심근경색수술비 100만 → brain_heart_surg에 100만
+
+### type_surg (1~5종수술)
+- 질병종수술 + 상해종수술 합산
+- 1~5종수술비, 상해1~5종수술비
+
+### cancer_diag (일반암 진단비)
+- 일반암진단비 (소액암/유사암 완전 제외)
+- "일반암진단(소액암 제외)" → cancer_diag에 포함
+
+### minor_cancer (유사암 진단비)
+- 갑상샘암 + 제자리암(상피내암) + 기타피부암 + 경계성종양 진단비 합산
+- 예: 에이스손보 (무)Chubb: 갑상샘암400만 + 경계성종양400만 + 기타피부암400만 + 제자리암400만 = 1,600만
+
+### robot_surg (로봇암 수술비)
+- 다빈치/레보아이 로봇 암수술비
+- 암수술비 중 "다빈치레보아이로봇 암수술" 부분만
+- 에이스손보 (무)더핏: 다빈치레보아이로봇 암수술_암(특정암제외) 2,000만 → robot_surg에 2,000만
+- 에이스손보 (무)Chubb: 일반암수술 100만 → robot_surg 아님, cancer_diag와 별개로 무시 (암수술비에 해당하지만 로봇아님)
+
+### chemo_rad (항암방사선약물 치료비)
+- 항암방사선(세기조절)치료 + 항암방사선(양성자)치료 합산
+- 항암세기조절방사선치료 + 항암양성자방사선치료
+- NH농협생명의 "항암방사선치료비" 4,000만 포함
+- ⚠️ 표적항암약물치료(targeted)와 명확히 구분
+
+### targeted (표적항암약물 치료비)
+- 표적항암약물허가치료비
+- 현대해상: 표적항암약물허가치료 1억 → targeted
+- 카티(CAR-T)항암약물허가치료 → targeted에 포함
+
+### cancer_main (암 주요 치료비)
+- 암주요치료비, 2대질환주요치료비
+- 혈전용해치료비Ⅲ(특정순환계질환Ⅰ) → cancer_main이 아닌 thrombo
+
+### cerebro (뇌혈관질환 진단비)
+- 뇌혈관질환(Ⅰ)진단, 뇌혈관진단비
+
+### stroke (뇌졸증 진단비)
+- 뇌졸중(뇌졸증)진단비, 뇌혈관질환(Ⅱ)진단
+- 현대해상: 뇌혈관질환(Ⅱ)진단 3,000만 → stroke
+
+### cerebro_hem (뇌출혈 진단비)
+- 뇌출혈진단비
+- 에이스손보 (무)Chubb: 뇌출혈진단 4,000만 → cerebro_hem
+
+### thrombo (혈전용해제)
+- 혈전용해치료비 (뇌졸중/심장 관련)
+- 현대해상: 혈전용해치료비Ⅲ(최초1회한)(특정순환계질환Ⅰ) 1,000만 → thrombo
+
+### ischemic (허혈성심장질환 진단비)
+- 허혈성심장질환진단비
+- 심혈관질환(특정Ⅰ,I49제외)진단
+- BNP파리바카디프손보: 허혈성심장질환진단비 500만 → ischemic
+
+### arrhythmia (부정맥 진단비)
+- 부정맥진단비
+
+### ami (급성심근경색 진단비)
+- 급성심근경색증진단비
+- 심혈관질환(특정Ⅱ)진단 + 심혈관질환(I49)진단 + 심혈관질환(특정2대)진단 합산
+- 현대해상: I49=100만 + 특정2대=400만 + 특정Ⅱ=3,000만 = 3,500만 → ami
+- 에이스손보 (무)Chubb: 급성심근경색증진단 4,000만 → ami
+
+### injury_hosp (상해/재해 입원일당)
+- 상해입원일당, 재해입원
+- 삼성화재 통합: [갱신형]상해입원일당 3만 → injury_hosp
+- 우정사업본부: 재해입원 1만 → injury_hosp
+
+### disease_hosp (질병 입원일당)
+- 질병입원일당
+- 삼성화재 통합: [갱신형]질병입원일당 3만 → disease_hosp
+- 에이스손보 더핏: 질병입원일당(4-180) 2만 → disease_hosp
+
+### general_hosp (일반 입원일당)
+- 1인실입원일당 (상급종합+종합병원 합산)
+- 삼성화재 간편: 상급종합병원1인실 40만 + 종합병원1인실 20만 = 60만 → general_hosp
+
+### er_visit (응급실 내원 진료비)
+- 응급실내원비용
+
+### fracture (골절 진단비)
+- 골절진단비(치아파절 제외)
+- 흥국화재: 골절진단비(치아파절제외) 30만 → fracture
+- 우정사업본부: 골절치료자금 20만 → fracture
+
+### five_fracture (5대골절 진단비)
+- 5대골절진단비
+- 흥국화재: 5대골절진단비 80만 → five_fracture
+
+### cast (깁스 치료비)
+- 깁스치료비
+- 흥국화재: 깁스치료비 20만 → cast
+
+### death_general (일반사망)
+- 일반사망 (질병+상해 구분 없음)
+
+### death_disease (질병사망)
+- 질병사망, 일반사망보험(신정원에서 질병사망으로 분류된 것)
+- KDB생명: 일반사망보험_신정원 100만 → death_disease
+- NH농협생명: 유병자질병사망 100만 → death_disease
+
+### death_cancer (암 사망)
+- 암사망 담보 (에이스손보 Chubb에는 있지만 0으로 처리 - 합산 불포함)
+
+### death_injury (상해사망/재해사망)
+- 상해사망, 재해사망, 상해사망후유장해 중 사망 부분
+- 흥국화재: 일반상해후유장해(3~100%) 7,000만 → death_injury (운전자보험 후유장해는 사망과 동일 담보)
+- 삼성화재 통합: 상해사망후유장해 1억 → death_injury
+- 삼성화재 간편: [통합간편]상해사망 1,000만 → death_injury
+- KDB생명: 재해사망보험금_신정원 100만 → death_injury
+
+### car_injury (자동차 부상치료비)
+- 자동차사고부상치료비, 자동차사고부상치료지원금
+- 흥국화재: 자동차사고부상치료비Ⅸ(운전자) 20만 → car_injury
+- 삼성화재: [갱신형]자동차사고부상치료지원금(운전자용) 10만 → car_injury
+
+### car_fine (벌금)
+- 벌금(대인), 교통사고벌금(대물) → 0 (대물은 포함 안 함)
+
+### car_lawyer (변호사 선임비용)
+- 교통사고 변호사선임비용 합산
+- 흥국화재: 교통사고변호사선임비용(추가보장) 500만 + 자동차사고변호사선임비용 5,000만 = 5,500만
+
+### car_settlement (사고처리 지원금)
+- 교통사고처리지원금, 사고처리지원금(형사합의포함)
+
+## 중요: 이 PDF의 실제 보험계약 14건 목록
+정확히 이 14개 보험사/상품 조합만 추출하세요 (이 페이지에 보이는 것만):
+01페이지: (1)흥국화재, (2)삼성화재, (3)에이스손보, (4)ABL생명
+02페이지: (5)ABL생명, (6)KDB생명, (7)NH농협생명, (8)라이나생명
+03페이지: (9)하나생명, (10)우정사업본부, (11)삼성화재, (12)현대해상
+04페이지: (13)에이스손보, (14)BNP파리바카디프손보
+
+## 출력 형식 (JSON만, 마크다운/설명문 절대 금지)
 {
   "companies": [
     {
@@ -323,10 +444,10 @@ window.rptStartAnalysis = async function () {
   btn.innerHTML = '<i class="bi bi-hourglass-split"></i> 분석 중...';
 
   const totalPages = rptState.pdfDoc.numPages;
-  // 표지(1페이지) 제외, "가입현황 세부내역"은 최대 4페이지까지 (보통 2~5p)
-  // 별첨/담보상세는 AI가 자체 판별하여 빈 배열 반환하므로 넉넉히 스캔
+  // 표지(1p) 제외, 가입현황 세부내역은 2~5페이지 (보통 4페이지)
+  // 6페이지부터는 가입담보 상세 List → AI가 자동 필터링
   const startPage = totalPages > 1 ? 2 : 1;
-  const endPage = Math.min(totalPages, 12);
+  const endPage = Math.min(totalPages, 6); // 최대 6페이지까지만 스캔
   const pagesToScan = [];
   for (let pn = startPage; pn <= endPage; pn++) pagesToScan.push(pn);
 
@@ -349,84 +470,81 @@ window.rptStartAnalysis = async function () {
       }
     }
 
-    setProgress(100, `분석 완료! ${rptState.companies.length}개 계약 인식됨 (중복 제거 전)`, '');
+    setProgress(100, `분석 완료! ${rptState.companies.length}개 계약 인식됨 (처리 중...)`, '');
 
-    // 날짜 정규화
+    // ── 날짜 정규화 ──
     function normDate(d) { return d ? String(d).replace(/-/g, '.').trim() : ''; }
     rptState.companies.forEach(c => {
       c.start_date = normDate(c.start_date);
       c.end_date   = normDate(c.end_date);
     });
 
-    // ────────────────────────────────────────────────────
-    // 중복 제거 & 필터링 (핵심 개선 부분)
-    // ────────────────────────────────────────────────────
-    const BLOCK_NAMES = ['메리츠', '메리츠화재', '토스인슈어런스', 'GA1', 'GA4', '가온부천', '메이슨'];
-
-    // 유효한 보험사명인지 확인 (숫자+특수문자만 있거나, 너무 짧으면 제외)
+    // ── 블랙리스트 필터링 ──
+    const BLOCK_NAMES = ['메리츠', '메리츠화재', '토스인슈어런스', 'GA1', 'GA4', '가온부천', '가온'];
     function isValidCompany(c) {
       if (!c.name || !c.product) return false;
       if (BLOCK_NAMES.some(b => c.name.includes(b) || c.product.includes(b))) return false;
       if (c.name.length < 2) return false;
-      // 보험료가 비정상적으로 작으면 담보 금액이 잘못 들어간 것 (보험료 최소 1000원)
+      // 비정상 보험료 필터 (보험료가 있으면서 1000원 미만인 경우)
       if (c.premium > 0 && c.premium < 1000) return false;
       return true;
     }
 
-    // 같은 보험사 계약 판별: 보험사명 + 가입시기 + 만기일 모두 일치
-    function makeKey(c) {
-      return (c.name || '').replace(/\s+/g, '') + '|' + (c.start_date || '') + '|' + (c.end_date || '');
+    // ── 가입금액 단위 정규화 (만원 기준 이상값 보정) ──
+    // AI가 원 단위로 잘못 읽을 경우 자동 보정
+    function normalizeCoverageValues(coverages) {
+      const MAX_SANE_MAN = 50000; // 5억만원이면 비정상
+      Object.keys(coverages).forEach(key => {
+        const v = coverages[key];
+        if (!v || v <= 0) { coverages[key] = 0; return; }
+        // 억 단위 이상으로 비정상적으로 큰 값이면 10000으로 나눔 (원→만원 실수 보정)
+        if (v > MAX_SANE_MAN * 10000) {
+          coverages[key] = Math.round(v / 10000);
+        }
+      });
+      return coverages;
     }
 
-    function coverageCount(c) {
+    // ── 중복 제거: 보험사명 + 상품명 + 가입시기 기준 ──
+    function makeKey(c) {
+      const name = (c.name || '').replace(/\s+/g, '');
+      const prod = (c.product || '').replace(/\s+/g, '').slice(0, 10); // 상품명 앞 10자
+      const start = (c.start_date || '').slice(0, 7); // YYYY.MM
+      return `${name}|${prod}|${start}`;
+    }
+
+    function coverageScore(c) {
       return Object.values(c.coverages || {}).filter(v => v && v > 0).length;
     }
 
-    // 1단계: 유효하지 않은 데이터 제거
     const filtered = rptState.companies.filter(isValidCompany);
+    filtered.forEach(c => { c.coverages = normalizeCoverageValues(c.coverages || {}); });
 
-    // 2단계: 중복 제거 (같은 key면 보장 항목 수가 더 많은 쪽 유지)
+    // 중복 제거 (같은 계약을 여러 페이지에서 중복 추출한 경우)
     const seen = new Map();
     const deduped = [];
     filtered.forEach(c => {
       const k = makeKey(c);
       if (seen.has(k)) {
-        const existIdx = seen.get(k);
-        if (coverageCount(c) > coverageCount(deduped[existIdx])) {
-          deduped[existIdx] = c;
+        const idx = seen.get(k);
+        // 보장 항목 수가 더 많은 쪽 유지
+        if (coverageScore(c) > coverageScore(deduped[idx])) {
+          deduped[idx] = c;
+        } else {
+          // 두 레코드의 보장 항목 병합 (더 큰 값 채택)
+          Object.keys(c.coverages || {}).forEach(key => {
+            if ((c.coverages[key] || 0) > (deduped[idx].coverages[key] || 0)) {
+              deduped[idx].coverages[key] = c.coverages[key];
+            }
+          });
         }
       } else {
         seen.set(k, deduped.length);
-        deduped.push(c);
+        deduped.push(JSON.parse(JSON.stringify(c)));
       }
     });
 
-    // 3단계: 같은 보험사+상품인데 start_date만 살짝 다른 경우(인식오류) 추가 병합
-    // → start_date 앞 7자(YYYY.MM)까지만 비교해서 중복이면 보장항목 병합
-    const seen2 = new Map();
-    const merged = [];
-    deduped.forEach(c => {
-      const shortKey = (c.name || '').replace(/\s+/g, '') + '|' +
-                       (c.start_date || '').slice(0, 7) + '|' +
-                       (c.end_date || '').slice(0, 7);
-      if (seen2.has(shortKey)) {
-        const existIdx = seen2.get(shortKey);
-        const exist = merged[existIdx];
-        // 보장 항목 병합: 각 key에서 더 큰 값 채택
-        Object.keys(c.coverages || {}).forEach(key => {
-          if ((c.coverages[key] || 0) > (exist.coverages[key] || 0)) {
-            exist.coverages[key] = c.coverages[key];
-          }
-        });
-        // 보험료도 더 정확한 쪽(0이 아닌 쪽) 채택
-        if (!exist.premium && c.premium) exist.premium = c.premium;
-      } else {
-        seen2.set(shortKey, merged.length);
-        merged.push(JSON.parse(JSON.stringify(c)));
-      }
-    });
-
-    rptState.companies = merged;
+    rptState.companies = deduped;
 
     if (rptState.companies.length === 0) {
       rptShowError('보험 계약 정보를 찾을 수 없습니다. 보장분석 제안서 PDF인지 확인해주세요.');
@@ -501,7 +619,7 @@ function renderPreview() {
   co.forEach(c => html += `<th class="r-ins">${c.name}</th>`);
   html += `</tr>`;
 
-  // 헤더행 2 – 상품명 (흰 배경)
+  // 헤더행 2 – 상품명
   html += `<tr><th class="r-hdr" style="background:#001E42;color:#fff;">상품명</th><th class="r-date"></th>`;
   co.forEach(c => {
     const p = c.product.length > 18 ? c.product.slice(0, 18) + '…' : c.product;
@@ -509,12 +627,12 @@ function renderPreview() {
   });
   html += `</tr>`;
 
-  // 헤더행 3 – 가입시기 (회색 배경)
+  // 헤더행 3 – 가입시기
   html += `<tr><th class="r-hdr" style="background:#001E42;color:#fff;">가입시기</th><th class="r-date"></th>`;
   co.forEach(c => html += `<td class="r-date">${c.start_date || ''}</td>`);
   html += `</tr>`;
 
-  // 헤더행 4 – 만기 (흰 배경)
+  // 헤더행 4 – 만기
   html += `<tr><th class="r-hdr" style="background:#001E42;color:#fff;">납입기간/<br>만기시점</th><th class="r-date"></th>`;
   co.forEach(c => html += `<td class="r-date-alt" style="font-size:9px;">${c.end_date || ''}</td>`);
   html += `</tr>`;
@@ -527,7 +645,7 @@ function renderPreview() {
   co.forEach(c => html += `<td class="r-fee">${fmtWon(c.premium || 0)}</td>`);
   html += `</tr>`;
 
-  // 데이터 행 (짝/홀 배경 교대)
+  // 데이터 행
   COVERAGE_DEF.forEach((cov, idx) => {
     const vals = co.map(c => (c.coverages || {})[cov.key] || 0);
     const sum  = vals.reduce((s, v) => s + v, 0);
@@ -554,7 +672,7 @@ function renderPreview() {
   document.getElementById('rpt-preview-table').innerHTML = html;
 }
 
-// ─── 엑셀 다운로드 (타겟 파일 스타일 완전 일치) ───
+// ─── 엑셀 다운로드 ───
 window.rptDownloadExcel = async function () {
   if (!window.XLSX) {
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
@@ -567,22 +685,20 @@ window.rptDownloadExcel = async function () {
   const ws   = {};
   const merges = [];
 
-  // ── 색상 상수 (타겟 파일에서 추출한 실제값) ──
   const C = {
-    navy:    '001E42',   // 주요보장 열 배경
+    navy:    '001E42',
     white:   'FFFFFF',
-    gray:    'D6DEE7',   // 헤더/담보명 배경
-    feeGray: 'D7DDE4',   // 보험료 행 배경
-    oddBg:   'FFFFFF',   // 홀수 데이터 행 배경
-    evenBg:  'F8FAFC',   // 짝수 데이터 행 배경
-    footBg:  'F8FAFC',   // 주석 행 배경
-    blue:    '1E40AF',   // 보장금액 글자색
-    darkNav: '001E42',   // 합산열 글자색
-    red:     'C00000',   // 보험사명 글자색
-    grayTxt: '94A3B8',   // 주석 글자색
+    gray:    'D6DEE7',
+    feeGray: 'D7DDE4',
+    oddBg:   'FFFFFF',
+    evenBg:  'F8FAFC',
+    footBg:  'F8FAFC',
+    blue:    '1E40AF',
+    darkNav: '001E42',
+    red:     'C00000',
+    grayTxt: '94A3B8',
   };
 
-  // 얇은 테두리
   const thin = { style: 'thin', color: { rgb: 'C5CBD3' } };
   const BD = { top: thin, bottom: thin, left: thin, right: thin };
 
@@ -602,9 +718,7 @@ window.rptDownloadExcel = async function () {
         wrapText: true,
       },
     };
-    if (v === null || v === undefined || v === '') {
-      return { v: '', t: 's', s };
-    }
+    if (v === null || v === undefined || v === '') return { v: '', t: 's', s };
     if (typeof v === 'number') return { v, t: 'n', s };
     return { v: String(v), t: 's', s };
   }
@@ -619,17 +733,14 @@ window.rptDownloadExcel = async function () {
 
   let r = 0;
 
-  // ── Row 0: 타이틀 ──
+  // Row 0: 타이틀
   setCell(r, 0, `${name} 님 보장분석표`, null, null, true, 'left', 14);
   addMerge(r, 0, r, 2 + N);
   r++;
 
-  // ── Row 1~5: 헤더 (총 5행) ──
-  // A열(주요보장) → 5행 병합 (r=1~5)
+  // Row 1~5: 헤더
   setCell(r, 0, '주요\n보장', C.navy, C.white, true, 'center');
   addMerge(r, 0, r + 4, 0);
-
-  // C열(고객보장합산) → 4행 병합 (r=1~4), 보험료행은 별도
   setCell(r, 2, '고객\n보장합산', C.gray, C.darkNav, true, 'center');
   addMerge(r, 2, r + 3, 2);
 
@@ -638,37 +749,37 @@ window.rptDownloadExcel = async function () {
   co.forEach((c, i) => setCell(r, 3 + i, c.name, C.gray, C.red, true, 'center'));
   r++;
 
-  // 행2: 상품명 (흰 배경)
+  // 행2: 상품명
   setCell(r, 1, '상품명', C.navy, C.white, true, 'center');
-  setCell(r, 2, '', C.gray, null, false, 'center'); // 합산열 (병합됨)
+  setCell(r, 2, '', C.gray, null, false, 'center');
   co.forEach((c, i) => setCell(r, 3 + i, c.product, C.white, null, false, 'center', 9));
   r++;
 
-  // 행3: 가입시기 (회색 배경)
+  // 행3: 가입시기
   setCell(r, 1, '가입시기', C.navy, C.white, true, 'center');
   setCell(r, 2, '', C.gray, null, false, 'center');
   co.forEach((c, i) => setCell(r, 3 + i, c.start_date || '', C.gray, null, false, 'center', 9));
   r++;
 
-  // 행4: 만기 (흰 배경)
+  // 행4: 만기
   setCell(r, 1, '납입기간/\n만기시점', C.navy, C.white, true, 'center');
   setCell(r, 2, '', C.gray, null, false, 'center');
   co.forEach((c, i) => setCell(r, 3 + i, c.end_date || '', C.white, null, false, 'center', 9));
   r++;
 
   // 행5: 보험료
-  setCell(r, 0, '', C.navy, C.white, true, 'center'); // 주요보장 열 (병합됨)
+  setCell(r, 0, '', C.navy, C.white, true, 'center');
   setCell(r, 1, '보험료', C.gray, C.white, true, 'center');
   const totalPrem = co.reduce((s, c) => s + (c.premium || 0), 0);
   setCell(r, 2, totalPrem || '', C.feeGray, C.darkNav, true, 'right');
-  ws[XLSX.utils.encode_cell({ r, c: 2 })].s.numFmt = '#,##0';
+  if (totalPrem) ws[XLSX.utils.encode_cell({ r, c: 2 })].s.numFmt = '#,##0';
   co.forEach((c, i) => {
     setCell(r, 3 + i, c.premium || '', C.feeGray, C.darkNav, true, 'right');
     if (c.premium) ws[XLSX.utils.encode_cell({ r, c: 3 + i })].s.numFmt = '#,##0';
   });
   r++;
 
-  // ── 데이터 행 ──
+  // 데이터 행
   let catStartRow = -1;
   let catCurr = null;
 
@@ -676,7 +787,6 @@ window.rptDownloadExcel = async function () {
     const isEven = idx % 2 === 1;
     const dataBg = isEven ? C.evenBg : C.oddBg;
 
-    // 카테고리 셀
     if (cov.cat !== null) {
       if (catCurr !== null) addMerge(catStartRow, 0, r - 1, 0);
       catCurr = cov.cat;
@@ -684,15 +794,12 @@ window.rptDownloadExcel = async function () {
       setCell(r, 0, cov.cat, C.navy, C.white, true, 'center');
     }
 
-    // 담보명
     setCell(r, 1, cov.label, C.gray, null, true, 'left');
 
-    // 합산
     const vals = co.map(c => (c.coverages || {})[cov.key] || 0);
     const sum  = vals.reduce((s, v) => s + v, 0);
     setCell(r, 2, sum ? fmtMan(sum) : '', C.gray, C.darkNav, true, 'right');
 
-    // 각 보험사 값
     vals.forEach((v, i) => {
       setCell(r, 3 + i, v ? fmtMan(v) : '', dataBg, C.blue, false, 'right');
     });
@@ -700,30 +807,28 @@ window.rptDownloadExcel = async function () {
     r++;
   });
 
-  // 마지막 카테고리 병합 닫기
   if (catCurr !== null) addMerge(catStartRow, 0, r - 1, 0);
 
-  // ── 주석 행 ──
+  // 주석 행
   setCell(r, 0,
     '* 본 자료는 단순 참고용이며 보험 보장에 대한 자세한 사항은 해당 증권과 약관을 참고하시기 바랍니다.',
     C.footBg, C.grayTxt, false, 'left', 9);
   addMerge(r, 0, r, 2 + N);
 
-  // ── 시트 범위 & 병합 & 열너비 & 행높이 ──
   ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r, c: 2 + N } });
   ws['!merges'] = merges;
   ws['!cols'] = [
-    { wch: 5 },   // A: 주요보장
-    { wch: 18 },  // B: 담보명
-    { wch: 12 },  // C: 합산
+    { wch: 5 },
+    { wch: 18 },
+    { wch: 12 },
     ...co.map(() => ({ wch: 13 })),
   ];
 
   const rowHeights = [];
   for (let i = 0; i <= r; i++) {
     let hpt = 22;
-    if (i === 0) hpt = 28; // 타이틀
-    if (i >= 1 && i <= 5) hpt = 36; // 헤더
+    if (i === 0) hpt = 28;
+    if (i >= 1 && i <= 5) hpt = 36;
     rowHeights.push({ hpt });
   }
   ws['!rows'] = rowHeights;
@@ -782,16 +887,17 @@ function fmtWon(v) {
   if (!v) return '';
   return v.toLocaleString() + '원';
 }
+
 function fmtMan(v) {
   if (!v) return '';
   if (v >= 10000) {
     const eok = v / 10000;
     const r = Math.round(eok * 10) / 10;
-    // 소수점이 0이면 정수로 (예: 1.0억 → 1억)
     return (Number.isInteger(r) ? r : r.toFixed(1)) + '억';
   }
   return v.toLocaleString() + '만';
 }
+
 function rptShowError(msg) {
   const b = document.getElementById('rpt-error-box');
   if (b) { document.getElementById('rpt-error-msg').textContent = msg; b.style.display = 'block'; }
