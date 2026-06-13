@@ -1,6 +1,6 @@
 // ================================================
 // 보장분석 리포트 생성기 - 가온사업단 오피스 모듈
-// v7_최종본: PDF 텍스트 교차검증 및 2-Step 추출 (칸 밀림 완벽 해결)
+// v8_최종본: PDF 텍스트 교차검증 + 2-Step 추출 + JSON 파싱 방어
 // ================================================
 
 (function () {
@@ -122,7 +122,7 @@ function getRptHTML() {
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
     <div style="font-size:18px; font-weight:700; color:#001E42;">
       <i class="bi bi-file-earmark-bar-graph-fill" style="color:#3182F6; margin-right:6px;"></i>
-      보장분석 리포트 생성기 (v7 텍스트 교차검증)
+      보장분석 리포트 생성기 (v8 텍스트 교차검증 완료)
     </div>
   </div>
 
@@ -221,8 +221,8 @@ window.rptLoadPDF = async function (file) {
   rptState.pdfFile = file;
   rptHideError();
   if (!window.pdfjsLib) {
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    await loadScript('[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js)');
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = '[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js)';
   }
   try {
     const ab = await file.arrayBuffer();
@@ -374,7 +374,7 @@ window.rptStartAnalysis = async function () {
   }
 };
 
-// ── PDF 텍스트 추출 함수 (착시 방지용) ──
+// ── PDF 텍스트 추출 함수 (줄바꿈 오류 완벽 수정) ──
 async function extractTextFromPage(pn) {
   const page = await rptState.pdfDoc.getPage(pn);
   const textContent = await page.getTextContent();
@@ -382,7 +382,7 @@ async function extractTextFromPage(pn) {
   let lastY = -1;
   for (let item of textContent.items) {
     if (lastY !== item.transform[5] && lastY !== -1) {
-      text += '\\n';
+      text += '\n';
     }
     text += item.str + ' ';
     lastY = item.transform[5];
@@ -405,20 +405,31 @@ async function pageToBase64(pn) {
   return canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
 }
 
+// ── AI 호출 및 JSON 변환 함수 (정규식 및 파싱 방어 로직 적용) ──
 async function callClaude(imgB64, pageText) {
   try {
-    // 텍스트 데이터를 프롬프트에 결합하여 API 호출
     const strictPrompt = buildPrompt() + `\n\n### [중요] 시각적 착시 방지용 원본 텍스트 데이터\n이미지(표)를 볼 때 빈칸이 헷갈린다면 반드시 아래의 텍스트 원본에서 금액 유무를 교차 검증하세요.\n\n${pageText}`;
 
     const res = await fetch('/api/gemini', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: strictPrompt, imageB64: imgB64 })
     });
+    
     if (!res.ok) throw new Error(`서버 응답 오류`);
-    const text = ((await res.json()).text || '').trim();
-    const m = text.match(/\\{[\\s\\S]*\\}/);
-    if (m) return JSON.parse(m[0]);
-  } catch (err) { console.error(err); }
+    
+    let text = ((await res.json()).text || '').trim();
+    
+    // AI가 마크다운 코드블록(```json)을 붙였을 경우 안전하게 제거
+    text = text.replace(/```json/g, '').replace(/```/g, '');
+    
+    // 첫 번째 '{' 부터 마지막 '}' 까지만 정확히 추출
+    const m = text.match(/\{[\s\S]*\}/);
+    if (m) {
+      return JSON.parse(m[0]);
+    }
+  } catch (err) { 
+    console.error("AI 응답 파싱 오류:", err); 
+  }
   return null;
 }
 
