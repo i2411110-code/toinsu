@@ -117,6 +117,13 @@ window.initClaimCanvas = function() {
     const titleEl = document.getElementById('claim-form-title');
     if (titleEl) titleEl.innerText = company + ' 청구서 작성';
 
+    // ✅ 사고 유형 토글 버튼 초기화
+    window.initUiToggleGroups();
+
+    // ✅ 첨부서류 업로드 UI 초기화
+    window.claimAttachments = [];
+    window._renderClaimFileList();
+
     const canvas = document.getElementById('signature-pad');
     if (!canvas) return;
     canvas.width = canvas.parentElement.offsetWidth;
@@ -167,6 +174,93 @@ window.clearSignature = function() {
 };
 
 // ==========================================
+// [사고 유형 토글 버튼 (.ui-toggle)]
+// 클릭 시 .active 토글 + 연결된 hidden input 값 업데이트
+// ==========================================
+window.initUiToggleGroups = function() {
+    document.querySelectorAll('.ui-toggle').forEach(group => {
+        const targetId = group.dataset.target;
+        const hiddenInput = targetId ? document.getElementById(targetId) : null;
+
+        group.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                if (hiddenInput) hiddenInput.value = btn.dataset.val || btn.innerText.trim();
+            });
+        });
+    });
+};
+
+// ==========================================
+// [첨부서류 업로드]
+// window.claimAttachments: Array<{ name, type, dataUrl }>
+// ==========================================
+window.claimAttachments = window.claimAttachments || [];
+
+window.handleClaimFileSelect = function(event) {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    files.forEach(file => {
+        if (file.size > MAX_SIZE) {
+            alert(`"${file.name}" 파일이 너무 큽니다 (10MB 이하만 업로드 가능).`);
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            window.claimAttachments.push({
+                name: file.name,
+                type: file.type,
+                dataUrl: e.target.result,
+            });
+            window._renderClaimFileList();
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // 같은 파일 재선택 가능하도록 초기화
+    event.target.value = '';
+};
+
+window.removeClaimFile = function(idx) {
+    window.claimAttachments.splice(idx, 1);
+    window._renderClaimFileList();
+};
+
+window._renderClaimFileList = function() {
+    const listEl  = document.getElementById('claim-file-list');
+    const emptyEl = document.getElementById('claim-file-empty');
+    if (!listEl) return;
+
+    const files = window.claimAttachments || [];
+
+    if (files.length === 0) {
+        listEl.innerHTML = `
+            <div id="claim-file-empty" style="text-align:center; color:#B0B8C1; font-size:13px; padding:8px 0;">
+                아직 첨부된 파일이 없습니다.
+            </div>`;
+        return;
+    }
+
+    listEl.innerHTML = files.map((f, idx) => {
+        const isImg = f.type && f.type.startsWith('image/');
+        const icon = isImg ? 'bi-file-image' : 'bi-file-earmark-pdf';
+        return `
+            <div class="file-item">
+                <span style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                    <i class="bi ${icon}" style="color:#3182F6; flex-shrink:0;"></i>
+                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${f.name}</span>
+                </span>
+                <button type="button" class="file-remove" onclick="window.removeClaimFile(${idx})">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>`;
+    }).join('');
+};
+
+// ==========================================
 // [청구 데이터 모델]
 // ─────────────────────────────────────────
 // ClaimRecord 구조 (Firestore 저장 단위):
@@ -192,13 +286,24 @@ window.clearSignature = function() {
 // 반환값을 ClaimRecord 필드와 1:1 매핑하도록 정리
 // PDF 좌표 계산용 파생값(year, year2, month, day)은 별도 헬퍼에서 생성
 function collectFormData() {
-    const insuredName = (document.getElementById('form-name')?.value    || '').trim();
-    const phone       = (document.getElementById('form-phone')?.value   || '').trim();
-    const content     = (document.getElementById('form-content')?.value || '').trim();
-    const treatDate   = (document.getElementById('form-date')?.value    || '').trim();
-    const jumin       = (document.getElementById('form-jumin')?.value   || '').replace(/-/g, '').trim();
+    const insuredName  = (document.getElementById('form-name')?.value         || '').trim();
+    const phone        = (document.getElementById('form-phone')?.value        || '').trim();
+    const content      = (document.getElementById('form-content')?.value      || '').trim();
+    const accidentType = (document.getElementById('form-accident-type')?.value|| '').trim();
+    const job          = (document.getElementById('form-job')?.value           || '').trim();
 
-    return { insuredName, phone, content, treatDate, jumin };
+    // 진료(사고)일자: form-year / form-month / form-day → YYYY-MM-DD
+    const yy = (document.getElementById('form-year')?.value  || '').trim();
+    const mm = (document.getElementById('form-month')?.value || '').trim().padStart(2, '0');
+    const dd = (document.getElementById('form-day')?.value   || '').trim().padStart(2, '0');
+    const treatDate = (yy && mm && dd) ? `${yy}-${mm}-${dd}` : '';
+
+    // 주민등록번호: form-jumin-front + form-jumin-back → 13자리 (하이픈 제거)
+    const juminFront = (document.getElementById('form-jumin-front')?.value || '').trim();
+    const juminBack  = (document.getElementById('form-jumin-back')?.value  || '').trim();
+    const jumin = (juminFront + juminBack).replace(/-/g, '').trim();
+
+    return { insuredName, phone, content, treatDate, jumin, accidentType, job };
 }
 
 // ─── PDF 기입용 날짜 파생값 생성 ───
@@ -264,11 +369,24 @@ async function loadPdfAndFont(pdfDoc, fileKey) {
     return { pdfBytes, fontBytes };
 }
 
-// ─── PDF 저장 & 새 탭 열기 ───
-async function openPdfInNewTab(pdfDoc) {
+// ─── PDF 출력 (미리보기: 새 탭 / 다운로드: 파일 저장) ───
+async function outputPdf(pdfDoc, mode, fileName) {
     const resultBytes = await pdfDoc.save();
     const blob = new Blob([resultBytes], { type: 'application/pdf' });
-    window.open(URL.createObjectURL(blob), '_blank');
+    const url = URL.createObjectURL(blob);
+
+    if (mode === 'download') {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName || '청구서.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } else {
+        // 미리보기: 새 탭에서 열기
+        window.open(url, '_blank');
+    }
 }
 
 // ─── 버튼 로딩 상태 제어 ───
@@ -326,8 +444,10 @@ window.saveDraft = async function() {
             phone:        fd.phone,
             treatDate:    fd.treatDate,
             content:      fd.content,
+            accidentType: fd.accidentType,
+            job:          fd.job,
             signDataUrl:  signDataUrl,   // 임시저장에만 보관 (PDF 생성 후 null로 교체 권장)
-            attachments:  [],            // 추후 팩스 첨부파일 배열
+            attachments:  (window.claimAttachments || []).map(a => ({ name: a.name, type: a.type, dataUrl: a.dataUrl })),
             updatedAt:    new Date().toISOString(),
         };
 
@@ -376,10 +496,39 @@ window._restoreDraftToForm = async function(draftId) {
         // 폼 필드 복원
         const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
         setVal('form-name',    d.insuredName);
-        setVal('form-jumin',   d.jumin);
         setVal('form-phone',   d.phone);
-        setVal('form-date',    d.treatDate);
         setVal('form-content', d.content);
+
+        // 주민등록번호 분리 복원
+        if (d.jumin) {
+            setVal('form-jumin-front', d.jumin.slice(0, 6));
+            setVal('form-jumin-back',  d.jumin.slice(6, 13));
+        }
+
+        // 진료(사고)일자 분리 복원 (YYYY-MM-DD → 년/월/일)
+        if (d.treatDate) {
+            const [ty, tm, td] = d.treatDate.split('-');
+            setVal('form-year',  ty);
+            setVal('form-month', tm);
+            setVal('form-day',   td);
+        }
+
+        // 사고 유형 토글 복원
+        if (d.accidentType) {
+            setVal('form-accident-type', d.accidentType);
+            document.querySelectorAll('.ui-toggle[data-target="form-accident-type"] .toggle-btn').forEach(btn => {
+                btn.classList.toggle('active', (btn.dataset.val || btn.innerText.trim()) === d.accidentType);
+            });
+        }
+
+        // 직업 복원
+        if (d.job) setVal('form-job', d.job);
+
+        // 첨부서류 복원
+        if (Array.isArray(d.attachments)) {
+            window.claimAttachments = d.attachments.slice();
+            window._renderClaimFileList();
+        }
 
         // 서명 복원
         if (d.signDataUrl) await restoreSignFromDataUrl(d.signDataUrl);
@@ -415,11 +564,15 @@ function _showDraftToast(msg) {
 
 // ==========================================
 // [보험사별 PDF 생성 분기 - 진입점]
+// mode: 'preview' (새 탭에서 열기) | 'download' (파일로 저장)
 // ==========================================
-window.processClaimPDF = async function() {
+window.processClaimPDF = async function(mode) {
+    mode = mode || 'preview';
     const company = window.selectedClaimInsurance;
     const info    = CLAIM_PDF_MAP[company];
-    const btn     = document.querySelector('button[onclick="window.processClaimPDF()"]');
+    const btn     = mode === 'download'
+        ? document.querySelector('button[onclick="window.downloadClaimPDF()"]')
+        : document.querySelector('button[onclick="window.previewClaimPDF()"]');
 
     if (!info) {
         alert(`"${company}" 양식은 현재 등록 대기 중입니다.`);
@@ -429,9 +582,9 @@ window.processClaimPDF = async function() {
     setPdfBtnLoading(btn, true);
     try {
         if (company === '현대해상') {
-            await window.generateHyundai5PagePDF();
+            await window.generateHyundai5PagePDF(mode);
         } else {
-            await window.generateGenericPDF(info.file, company);
+            await window.generateGenericPDF(info.file, company, mode);
         }
     } catch (error) {
         console.error('PDF 생성 오류:', error);
@@ -441,11 +594,24 @@ window.processClaimPDF = async function() {
     }
 };
 
+// ─── 미리보기 버튼 ───
+window.previewClaimPDF = async function() {
+    await window.processClaimPDF('preview');
+};
+
+// ─── PDF 다운로드 버튼 ───
+window.downloadClaimPDF = async function() {
+    await window.processClaimPDF('download');
+};
+
 // ==========================================
 // [현대해상 - 5페이지 전용 로직]
 // ==========================================
-window.generateHyundai5PagePDF = async function() {
-    const btn = document.querySelector('button[onclick="window.processClaimPDF()"]');
+window.generateHyundai5PagePDF = async function(mode) {
+    mode = mode || 'preview';
+    const btn = mode === 'download'
+        ? document.querySelector('button[onclick="window.downloadClaimPDF()"]')
+        : document.querySelector('button[onclick="window.previewClaimPDF()"]');
     setPdfBtnLoading(btn, true);
 
     try {
@@ -502,7 +668,8 @@ window.generateHyundai5PagePDF = async function() {
         pages[4].drawText(fd.insuredName, { x: 200, y: 320, ...txtOpt });
         if (signImage) pages[4].drawImage(signImage, { x: 460, y: 295, width: 70, height: 25 });
 
-        await openPdfInNewTab(pdfDoc);
+        const fileName = `${fd.insuredName || '청구서'}_${window.selectedClaimInsurance || ''}.pdf`;
+        await outputPdf(pdfDoc, mode, fileName);
     } finally {
         setPdfBtnLoading(btn, false);
     }
@@ -558,7 +725,8 @@ const FIELD_COORDS = {
 };
 
 // ─── 범용 1페이지 PDF 생성 ───
-window.generateGenericPDF = async function(fileKey, companyName) {
+window.generateGenericPDF = async function(fileKey, companyName, mode) {
+    mode = mode || 'preview';
     const { PDFDocument, rgb } = window.PDFLib;
     const { pdfBytes, fontBytes } = await loadPdfAndFont(null, fileKey);
 
@@ -593,5 +761,6 @@ window.generateGenericPDF = async function(fileKey, companyName) {
         });
     }
 
-    await openPdfInNewTab(pdfDoc);
+    const fileName = `${fd.insuredName || '청구서'}_${companyName || ''}.pdf`;
+    await outputPdf(pdfDoc, mode, fileName);
 };
