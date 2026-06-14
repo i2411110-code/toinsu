@@ -125,7 +125,6 @@
         </div>
     </div>
 
-<<<<<<< HEAD
     <div style="position:sticky; bottom:75px; background:white; padding:15px 20px; border-top:1px solid #F2F4F6; z-index:100; box-shadow: 0 -4px 12px rgba(0,0,0,0.03);">
         <div style="display: flex; gap: 10px;">
             <button onclick="window.saveDraft()" class="btn-action" style="flex: 1; background:white; color:#3182F6; border:2px solid #3182F6; font-size:15px; padding:16px; font-weight:800; border-radius:12px;">
@@ -135,81 +134,4 @@
                 <i class="bi bi-file-earmark-pdf"></i> PDF 자동 생성
             </button>
         </div>
-=======
-    <div class="card">
-        <div class="card-title"><div class="icon-box"><i class="bi bi-paperclip"></i></div> 첨부서류</div>
-        <div class="upload-box">
-            <div style="font-size: 24px; color: #8B95A1; margin-bottom: 8px;"><i class="bi bi-cloud-arrow-up"></i></div>
-            <p style="font-size:14px; font-weight:600; color:#191F28; margin:0 0 4px 0;">파일을 드래그</p>
-            <span style="font-size:12px; color:#8B95A1; display:block; margin-bottom:12px;">JPG, PNG, PDF</span>
-            <button type="button" style="background:#3182F6; color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:600;">파일 선택</button>
-        </div>
-        <div class="doc-list">
-            <h4 style="font-size:13px; margin-bottom:8px; color:#191F28;">필수 제출 서류</h4>
-            <ul>
-                <li>진단서 또는 소견서</li>
-                <li>진료비 영수증 및 세부내역서</li>
-            </ul>
-        </div>
->>>>>>> f64e03668076cd1236f5925a1a8b353b330aeb15
     </div>
-<<<<<<< HEAD
-=======
-
-    <div class="bottom-bar">
-        <button type="button" class="btn-action-secondary" onclick="window.processClaimAction('preview')">미리보기</button>
-        <button type="button" class="btn-action-secondary" onclick="window.processClaimAction('download')">다운로드</button>
-        <button type="button" class="btn-action-primary" onclick="window.processClaimPDF()">
-            <i class="bi bi-file-earmark-pdf"></i> 청구 제출
-        </button>
-    </div>
-
-    <script>
-    // UI 토글 버튼 로직
-    document.querySelectorAll('.ui-toggle').forEach(group => {
-        const targetInput = document.getElementById(group.getAttribute('data-target'));
-        group.querySelectorAll('.toggle-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                if(targetInput) targetInput.value = this.getAttribute('data-val');
-            });
-        });
-    });
-
-    // 기존 claim.js에서 요구하는 전역 데이터 수집 함수 (분리된 주민/날짜 데이터를 기존 규격에 맞춤)
-    window.collectFormData = function() {
-        const name = (document.getElementById('form-name')?.value || '').trim();
-        const phone = (document.getElementById('form-phone')?.value || '').trim();
-        const content = (document.getElementById('form-content')?.value || '').trim();
-        const jumin1 = (document.getElementById('form-jumin-front')?.value || '').trim();
-        const jumin2 = (document.getElementById('form-jumin-back')?.value || '').trim();
-        
-        const today = new Date();
-        const inputYear = document.getElementById('form-year')?.value;
-        const inputMonth = document.getElementById('form-month')?.value;
-        const inputDay = document.getElementById('form-day')?.value;
-
-        const year = inputYear ? inputYear : String(today.getFullYear());
-        const month = inputMonth ? inputMonth.padStart(2, '0') : String(today.getMonth() + 1).padStart(2, '0');
-        const day = inputDay ? inputDay.padStart(2, '0') : String(today.getDate()).padStart(2, '0');
-
-        // claim.js의 PDF 생성 함수가 참조하는 규격
-        return {
-            name, phone, content, 
-            jumin: jumin1 + jumin2, jumin1, jumin2,
-            year, year2: year.length === 4 ? year.slice(2,4) : year, month, day
-        };
-    };
-
-    // 추가된 미리보기/다운로드 가상 처리 (필요에 따라 claim.js에 편입 가능)
-    window.processClaimAction = function(action) {
-        if(action === 'preview') {
-            alert("미리보기 기능이 호출되었습니다.");
-        } else if(action === 'download') {
-            alert("다운로드 기능이 호출되었습니다.");
-        }
-    };
-    </script>
-</div>
->>>>>>> f64e03668076cd1236f5925a1a8b353b330aeb15

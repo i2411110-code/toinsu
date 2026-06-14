@@ -3,6 +3,7 @@
 // ==========================================
 import './claim.js'; 
 import './report.js';
+import 'api/claim-dashboard.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -29,6 +30,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+window.__firestoreDb = db;
 
 let currentUserEmail = "";
 const MASTER_INVITE_CODE = "gaon2026";
@@ -237,6 +240,7 @@ window.loadComponent = async function(pageId, extraAction) {
             requestAnimationFrame(() => {
                 const el = document.getElementById('claim-user-name');
                 if(el) el.innerText = window.currentUserDisplayName || '안녕하세요';
+                 await window.loadClaimDashboard();
             });
         }
 
