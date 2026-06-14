@@ -1,61 +1,200 @@
-<div class="sub-page toss" style="display:block; padding: 0; background:transparent; box-shadow:none; padding-bottom:80px;">
+<div class="sub-page toss app-container" style="display:block; padding: 0; background:#F4F6F8; box-shadow:none; padding-bottom:120px; max-width: 600px; margin: 0 auto; position: relative;">
 
     <img src="dummy" onerror="window.initClaimCanvas(); this.style.display='none';" style="display:none;">
 
-    <div class="toss-hero" style="background:white; color:#191F28; border-bottom:1px solid #F2F4F6; border-radius:0; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <button onclick="window.goBack()" style="background:transparent; border:none; font-size:20px; cursor:pointer; color:#191F28;"><i class="bi bi-chevron-left"></i></button>
-        <h2 id="claim-form-title" style="font-size:18px; font-weight:800; margin:0;">청구서 작성</h2>
-        <div style="width:24px;"></div> </div>
+    <div style="background: #E8F3FF; color: #3182F6; font-size: 12px; font-weight: 600; text-align: center; padding: 10px; display: flex; justify-content: center; align-items: center; gap: 6px;">
+        <i class="bi bi-wifi"></i> 안정적인 전송을 위해 와이파이 환경에서 진행을 권장해요
+    </div>
 
-    <div style="padding: 0 20px;">
-        <div class="toss-card">
-            <div class="toss-card-title">피보험자 정보</div>
-            <div class="form-group">
-                <label>이름</label>
-                <input type="text" id="form-name" class="form-control" placeholder="피보험자 이름">
-            </div>
-            <div class="form-group">
-                <label>주민번호</label>
-                <input type="text" id="form-jumin" class="form-control" placeholder="주민번호 13자리 ('-' 제외)">
-            </div>
-            <div class="form-group">
-                <label>연락처</label>
-                <input type="tel" id="form-phone" class="form-control" placeholder="휴대폰 번호 ('-' 제외)">
+    <header style="background: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+        <button onclick="window.goBack()" style="background: none; border: none; font-size: 20px; color: #191F28; cursor: pointer;"><i class="bi bi-chevron-left"></i></button>
+        <h2 id="claim-form-title" style="font-size: 18px; font-weight: 700; margin: 0;">청구서 작성</h2>
+        <div style="width:24px;"></div>
+    </header>
+
+    <style>
+        /* [Design System & Reset] */
+        .app-container * { box-sizing: border-box; font-family: 'Pretendard', -apple-system, sans-serif; }
+        .app-container input, .app-container textarea, .app-container select, .app-container button { font-size: 15px; }
+        .app-container input::placeholder, .app-container textarea::placeholder { color: #ADB5BD; }
+        
+        .card { background: white; border-radius: 16px; margin: 16px 20px; padding: 24px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .card-title { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; margin-bottom: 20px; color: #191F28;}
+        .card-title .icon-box { background: #E8F3FF; color: #3182F6; width: 28px; height: 28px; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 14px; }
+        .card-title.pink .icon-box { background: #FFE8EF; color: #F04452; }
+        .card-title.orange .icon-box { background: #FFF0E6; color: #F08244; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 14px; font-weight: 600; color: #4E5968; margin-bottom: 8px; }
+        .required { color: #F04452; }
+        .input-base { width: 100%; border: 1px solid #E5E8EB; border-radius: 12px; padding: 14px 16px; outline: none; }
+        .input-base:focus { border-color: #3182F6; }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        
+        .select-box { appearance: none; background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238B95A1' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5'/%3E%3C/svg%3E") no-repeat right 16px center; background-size: 12px; }
+        .btn-group { display: flex; gap: 8px; background: #F2F4F6; padding: 4px; border-radius: 12px; }
+        .toggle-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; background: transparent; color: #8B95A1; font-weight: 600; cursor: pointer; }
+        .toggle-btn.active { background: white; color: #191F28; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        .sign-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .retry-btn { font-size: 12px; color: #8B95A1; background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .sign-box { border: 1px solid #E5E8EB; border-radius: 12px; position: relative; touch-action: none; background: #F8FAFC; overflow: hidden; }
+        .sign-placeholder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #94A3B8; font-weight: 700; font-size: 14px; pointer-events: none; display: flex; align-items: center; gap: 6px; }
+        
+        .upload-box { border: 1px dashed #D1D6DB; border-radius: 12px; padding: 30px 20px; text-align: center; margin-bottom: 16px; background: #FAFAFB; }
+        .doc-list { background: #F4F6F8; padding: 16px; border-radius: 12px; }
+        .doc-list ul { list-style: none; padding-left: 0; margin: 0; }
+        .doc-list li { font-size: 13px; color: #4E5968; margin-bottom: 6px; padding-left: 12px; position: relative; }
+        .doc-list li::before { content: '•'; color: #3182F6; position: absolute; left: 0; }
+        
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 600px; margin: 0 auto; background: white; padding: 15px 20px; box-shadow: 0 -4px 12px rgba(0,0,0,0.03); display: flex; gap: 10px; z-index: 100; border-top: 1px solid #F2F4F6;}
+        .btn-action-secondary { flex: 1; padding: 16px; border-radius: 12px; font-weight: 600; cursor: pointer; border: 1px solid #E5E8EB; background: white; color: #4E5968; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 15px; }
+        .btn-action-primary { flex: 1.5; padding: 16px; border-radius: 12px; font-weight: 800; cursor: pointer; border: none; background: #3182F6; color: white; display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 16px; }
+    </style>
+
+    <div class="card">
+        <div class="card-title"><div class="icon-box"><i class="bi bi-person"></i></div> 피보험자 정보</div>
+        <div class="form-group">
+            <label class="form-label">이름 <span class="required">*</span></label>
+            <input type="text" id="form-name" class="input-base" placeholder="홍길동">
+        </div>
+        <div class="form-group">
+            <label class="form-label">주민등록번호 <span class="required">*</span></label>
+            <div class="input-row">
+                <input type="tel" id="form-jumin-front" class="input-base" placeholder="생년월일" maxlength="6">
+                <span>-</span>
+                <input type="password" id="form-jumin-back" class="input-base" placeholder="뒷자리" maxlength="7">
             </div>
         </div>
+        <div class="form-group">
+            <label class="form-label">연락처 <span class="required">*</span></label>
+            <input type="tel" id="form-phone" class="input-base" placeholder="010-0000-0000">
+        </div>
+        <div class="form-group">
+            <label class="form-label">직업 <span class="required">*</span></label>
+            <select id="form-job" class="input-base select-box">
+                <option value="">선택</option>
+                <option value="사무직">사무직</option>
+                <option value="현장직">현장직</option>
+                <option value="학생">학생</option>
+                <option value="기타">기타</option>
+            </select>
+        </div>
+    </div>
 
-        <div class="toss-card">
-            <div class="toss-card-title">진료 정보</div>
-            <div class="form-group">
-                <label>진료(사고)일자</label>
-                <input type="date" id="form-date" class="form-control" style="font-family:inherit;">
+    <div class="card">
+        <div class="card-title pink"><div class="icon-box"><i class="bi bi-hospital"></i></div> 진료정보</div>
+        <div class="form-group">
+            <label class="form-label">사고 유형 <span class="required">*</span></label>
+            <div class="btn-group ui-toggle" data-target="form-accident-type">
+                <button type="button" class="toggle-btn active" data-val="질병">질병</button>
+                <button type="button" class="toggle-btn" data-val="상해">상해</button>
+                <button type="button" class="toggle-btn" data-val="교통사고">교통사고</button>
             </div>
-            <div class="form-group">
-                <label>질병/사고내용</label>
-                <textarea id="form-content" class="form-control" placeholder="어디가 아파서 병원에 가셨나요?" style="height:80px; resize:none;"></textarea>
+            <input type="hidden" id="form-accident-type" value="질병">
+        </div>
+        <div class="form-group">
+            <label class="form-label">진료(사고)일자 <span class="required">*</span></label>
+            <div class="input-row">
+                <input type="tel" id="form-year" class="input-base" placeholder="년" maxlength="4">
+                <input type="tel" id="form-month" class="input-base" placeholder="월" maxlength="2">
+                <input type="tel" id="form-day" class="input-base" placeholder="일" maxlength="2">
             </div>
         </div>
+        <div class="form-group">
+            <label class="form-label">질병/사고내용 <span class="required">*</span></label>
+            <textarea id="form-content" class="input-base" placeholder="질병(사고)내용을 간단히 작성해 주세요" style="height:80px; resize:none;"></textarea>
+        </div>
+    </div>
 
-        <div class="toss-card">
-            <div class="toss-card-title">서명</div>
-            <div style="border:2px dashed #CBD5E1; border-radius:12px; background:#F8FAFC; position:relative; touch-action:none;">
+    <div class="card">
+        <div class="card-title"><div class="icon-box"><i class="bi bi-pen"></i></div> 서명</div>
+        <div class="form-group">
+            <div class="sign-header">
+                <label class="form-label" style="margin:0;">서명란</label>
+                <button type="button" class="retry-btn" onclick="window.clearSignature()"><i class="bi bi-arrow-clockwise"></i> 다시 서명</button>
+            </div>
+            <div class="sign-box">
                 <canvas id="signature-pad" 
-                        onmousedown="window.startSign(event)" 
-                        onmousemove="window.drawSign(event)" 
-                        onmouseup="window.stopSign()" 
-                        onmouseleave="window.stopSign()"
-                        ontouchstart="window.startSign(event)"
-                        ontouchmove="window.drawSign(event)"
-                        ontouchend="window.stopSign()"
-                        style="width:100%; height:200px; cursor:crosshair;"></canvas>
-                <div id="sign-placeholder" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:#94A3B8; font-weight:700; pointer-events:none;">가운데 여기에 서명해주세요</div>
+                        onmousedown="window.startSign(event)" onmousemove="window.drawSign(event)" 
+                        onmouseup="window.stopSign()" onmouseleave="window.stopSign()"
+                        ontouchstart="window.startSign(event)" ontouchmove="window.drawSign(event)" 
+                        ontouchend="window.stopSign()" style="width:100%; height:200px; cursor:crosshair;"></canvas>
+                <div id="sign-placeholder" class="sign-placeholder"><i class="bi bi-pencil"></i> 여기에 서명해주세요</div>
             </div>
-            <button onclick="window.clearSignature()" style="width:100%; margin-top:10px; padding:12px; background:#F2F4F6; color:#4E5968; border:none; border-radius:8px; font-weight:700;"><i class="bi bi-eraser-fill"></i> 서명 다시하기</button>
         </div>
     </div>
 
-    <div style="position:sticky; bottom:75px; background:white; padding:15px 20px; border-top:1px solid #F2F4F6; z-index:100; box-shadow: 0 -4px 12px rgba(0,0,0,0.03);">
-        <button onclick="window.processClaimPDF()" class="btn-action" style="width:100%; background:#3182F6; color:white; font-size:16px; padding:16px; font-weight:800; border:none; border-radius:12px;"><i class="bi bi-file-earmark-pdf"></i> 청구서 PDF 자동 생성</button>
+    <div class="card">
+        <div class="card-title"><div class="icon-box"><i class="bi bi-paperclip"></i></div> 첨부서류</div>
+        <div class="upload-box">
+            <div style="font-size: 24px; color: #8B95A1; margin-bottom: 8px;"><i class="bi bi-cloud-arrow-up"></i></div>
+            <p style="font-size:14px; font-weight:600; color:#191F28; margin:0 0 4px 0;">파일을 드래그</p>
+            <span style="font-size:12px; color:#8B95A1; display:block; margin-bottom:12px;">JPG, PNG, PDF</span>
+            <button type="button" style="background:#3182F6; color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:600;">파일 선택</button>
+        </div>
+        <div class="doc-list">
+            <h4 style="font-size:13px; margin-bottom:8px; color:#191F28;">필수 제출 서류</h4>
+            <ul>
+                <li>진단서 또는 소견서</li>
+                <li>진료비 영수증 및 세부내역서</li>
+            </ul>
+        </div>
     </div>
 
+    <div class="bottom-bar">
+        <button type="button" class="btn-action-secondary" onclick="window.processClaimAction('preview')">미리보기</button>
+        <button type="button" class="btn-action-secondary" onclick="window.processClaimAction('download')">다운로드</button>
+        <button type="button" class="btn-action-primary" onclick="window.processClaimPDF()">
+            <i class="bi bi-file-earmark-pdf"></i> 청구 제출
+        </button>
+    </div>
+
+    <script>
+    // UI 토글 버튼 로직
+    document.querySelectorAll('.ui-toggle').forEach(group => {
+        const targetInput = document.getElementById(group.getAttribute('data-target'));
+        group.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                if(targetInput) targetInput.value = this.getAttribute('data-val');
+            });
+        });
+    });
+
+    // 기존 claim.js에서 요구하는 전역 데이터 수집 함수 (분리된 주민/날짜 데이터를 기존 규격에 맞춤)
+    window.collectFormData = function() {
+        const name = (document.getElementById('form-name')?.value || '').trim();
+        const phone = (document.getElementById('form-phone')?.value || '').trim();
+        const content = (document.getElementById('form-content')?.value || '').trim();
+        const jumin1 = (document.getElementById('form-jumin-front')?.value || '').trim();
+        const jumin2 = (document.getElementById('form-jumin-back')?.value || '').trim();
+        
+        const today = new Date();
+        const inputYear = document.getElementById('form-year')?.value;
+        const inputMonth = document.getElementById('form-month')?.value;
+        const inputDay = document.getElementById('form-day')?.value;
+
+        const year = inputYear ? inputYear : String(today.getFullYear());
+        const month = inputMonth ? inputMonth.padStart(2, '0') : String(today.getMonth() + 1).padStart(2, '0');
+        const day = inputDay ? inputDay.padStart(2, '0') : String(today.getDate()).padStart(2, '0');
+
+        // claim.js의 PDF 생성 함수가 참조하는 규격
+        return {
+            name, phone, content, 
+            jumin: jumin1 + jumin2, jumin1, jumin2,
+            year, year2: year.length === 4 ? year.slice(2,4) : year, month, day
+        };
+    };
+
+    // 추가된 미리보기/다운로드 가상 처리 (필요에 따라 claim.js에 편입 가능)
+    window.processClaimAction = function(action) {
+        if(action === 'preview') {
+            alert("미리보기 기능이 호출되었습니다.");
+        } else if(action === 'download') {
+            alert("다운로드 기능이 호출되었습니다.");
+        }
+    };
+    </script>
 </div>
