@@ -236,13 +236,13 @@ window.loadComponent = async function(pageId, extraAction) {
         }
 
         // ✅ 청구의 모든것 이름 표시
-        if (pageId === 'page-claim-main') {
-            requestAnimationFrame(() => {
-                const el = document.getElementById('claim-user-name');
-                if(el) el.innerText = window.currentUserDisplayName || '안녕하세요';
-                 await window.loadClaimDashboard();
-            });
-        }
+       if (pageId === 'page-claim-main') {
+    requestAnimationFrame(async () => { // <-- 화살표 함수 앞에 async 추가
+        const el = document.getElementById('claim-user-name');
+        if(el) el.innerText = window.currentUserDisplayName || '안녕하세요';
+         await window.loadClaimDashboard();
+    });
+}
 
         // ✅ 재무 계산기 - 인라인 스크립트 재실행
         if (pageId === 'page-calculator') {
@@ -596,7 +596,7 @@ window.closeNotice = function() {
 window.unlockPrivate = function() {
     const pwd = document.getElementById('privatePwd').value;
     
-    if(pwd === 'gaon1004') {
+    if(pwd === '1004') {
         document.getElementById('privateAuthScreen').style.display = 'none';
         document.getElementById('privateMainContent').style.display = 'block';
     } else {
