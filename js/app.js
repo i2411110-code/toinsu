@@ -192,7 +192,7 @@ window.executeRegistrySync = syncRegistryToDatabase;
 // ==========================================
 window.loadComponent = async function(pageId, extraAction) {
     const root = document.getElementById('app-root');
-    let url = `components/${pageId}.html`;
+    let url = `/components/${pageId}.html`;
 
     try {
         const response = await fetch(url);
