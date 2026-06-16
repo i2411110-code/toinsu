@@ -114,7 +114,7 @@
         .m-service-title { font-size: 20px; font-weight: 900; margin-bottom: 6px; }
         .m-service-desc { font-size: 12px; color: var(--muted); }
 
-        /* PWA 설치 배너 */
+        /* ── PWA 안드로이드 설치 배너 ── */
         #pwa-banner {
             display: none;
             position: fixed;
@@ -131,6 +131,41 @@
             animation: slideUp 0.3s ease;
         }
         #pwa-banner.show { display: flex; }
+
+        /* ── PWA iOS 안내 배너 ── */
+        #pwa-ios-banner {
+            display: none;
+            position: fixed;
+            bottom: calc(68px + env(safe-area-inset-bottom));
+            left: 12px; right: 12px;
+            background: white;
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 0 8px 32px rgba(37,99,235,0.2);
+            border: 1.5px solid #DBEAFE;
+            z-index: 500;
+            flex-direction: column;
+            gap: 10px;
+            animation: slideUp 0.3s ease;
+        }
+        #pwa-ios-banner.show { display: flex; }
+        .ios-banner-top { display: flex; align-items: center; gap: 12px; }
+        .ios-banner-arrow {
+            position: absolute;
+            bottom: calc(60px + env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 28px;
+            animation: bounce 1s infinite;
+            z-index: 501;
+            display: none;
+        }
+        .ios-banner-arrow.show { display: block; }
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50%       { transform: translateX(-50%) translateY(6px); }
+        }
+
         @keyframes slideUp {
             from { transform: translateY(20px); opacity: 0; }
             to   { transform: translateY(0);    opacity: 1; }
@@ -282,17 +317,34 @@
 
     </div><!-- /m-body -->
 
-    <!-- PWA 설치 배너 -->
+    <!-- ── 안드로이드 PWA 설치 배너 ── -->
     <div id="pwa-banner">
         <div class="pwa-icon">
             <img src="/icons/icon-192.png" alt="가온포탈">
         </div>
         <div class="pwa-text">
-            <div class="pwa-title">앱으로 설치하기</div>
+            <div class="pwa-title">📲 앱으로 설치하기</div>
             <div class="pwa-sub">홈 화면에서 바로 실행하세요</div>
         </div>
         <button class="pwa-install" id="pwa-install-btn">설치</button>
         <button class="pwa-close" id="pwa-close-btn">&times;</button>
+    </div>
+
+    <!-- ── iOS PWA 안내 배너 ── -->
+    <div id="pwa-ios-banner">
+        <div class="ios-banner-top">
+            <div class="pwa-icon">
+                <img src="/icons/icon-192.png" alt="가온포탈">
+            </div>
+            <div class="pwa-text">
+                <div class="pwa-title">📲 홈 화면에 추가하기</div>
+                <div class="pwa-sub" style="font-size:12px; line-height:1.5; margin-top:4px;">
+                    하단 공유 버튼 <b style="font-size:14px;">□↑</b> 탭 →<br>
+                    <b>'홈 화면에 추가'</b> 선택
+                </div>
+            </div>
+            <button class="pwa-close" id="pwa-ios-close-btn">&times;</button>
+        </div>
     </div>
 
     <!-- 플로팅 버튼 -->
@@ -357,40 +409,73 @@
         }
         setTimeout(showNotice, 800);
 
-        // ── PWA 설치 배너 ──
+        // ══════════════════════════════════════════
+        //  PWA 설치 배너 (안드로이드 + iOS 통합)
+        // ══════════════════════════════════════════
         let deferredPrompt = null;
-        const banner     = document.getElementById('pwa-banner');
-        const installBtn = document.getElementById('pwa-install-btn');
-        const closeBtn   = document.getElementById('pwa-close-btn');
+        const isIOS        = /iphone|ipad|ipod/i.test(navigator.userAgent);
+        const isAndroid    = /android/i.test(navigator.userAgent);
+        const isStandalone = window.navigator.standalone === true ||
+                             window.matchMedia('(display-mode: standalone)').matches;
 
-        window.addEventListener('beforeinstallprompt', function(e) {
-            e.preventDefault();
-            deferredPrompt = e;
-            banner.classList.add('show');
-            console.log('[PWA] 설치 배너 표시');
-        });
+        // 이미 설치된 상태면 배너 완전 숨김
+        if (!isStandalone) {
 
-        installBtn.addEventListener('click', function() {
+            // ── 안드로이드: beforeinstallprompt 이벤트 대기 ──
+            window.addEventListener('beforeinstallprompt', function(e) {
+                e.preventDefault();
+                deferredPrompt = e;
+                // 이전에 닫은 적 있으면 하루 동안 표시 안 함
+                const dismissed = localStorage.getItem('pwa-dismissed');
+                if (dismissed && Date.now() < parseInt(dismissed)) return;
+                document.getElementById('pwa-banner').classList.add('show');
+                console.log('[PWA] 안드로이드 설치 배너 표시');
+            });
+
+            // ── iOS: Safari에서만, 하루에 한 번 표시 ──
+            if (isIOS) {
+                const iosDismissed = localStorage.getItem('pwa-ios-dismissed');
+                if (!iosDismissed || Date.now() > parseInt(iosDismissed)) {
+                    // 페이지 로드 1.5초 후 표시 (공지 모달과 겹치지 않게)
+                    setTimeout(function() {
+                        document.getElementById('pwa-ios-banner').classList.add('show');
+                        console.log('[PWA] iOS 안내 배너 표시');
+                    }, 1500);
+                }
+            }
+        }
+
+        // 안드로이드 설치 버튼
+        document.getElementById('pwa-install-btn').addEventListener('click', function() {
             if (!deferredPrompt) return;
             deferredPrompt.prompt();
             deferredPrompt.userChoice.then(function(r) {
                 console.log('[PWA] 선택:', r.outcome);
-                banner.classList.remove('show');
+                document.getElementById('pwa-banner').classList.remove('show');
                 deferredPrompt = null;
             });
         });
 
-        closeBtn.addEventListener('click', function() {
-            banner.classList.remove('show');
+        // 안드로이드 배너 닫기 (하루 동안 표시 안 함)
+        document.getElementById('pwa-close-btn').addEventListener('click', function() {
+            document.getElementById('pwa-banner').classList.remove('show');
+            localStorage.setItem('pwa-dismissed', Date.now() + 86400000);
         });
 
+        // iOS 배너 닫기 (하루 동안 표시 안 함)
+        document.getElementById('pwa-ios-close-btn').addEventListener('click', function() {
+            document.getElementById('pwa-ios-banner').classList.remove('show');
+            localStorage.setItem('pwa-ios-dismissed', Date.now() + 86400000);
+        });
+
+        // 설치 완료 시 배너 숨김
         window.addEventListener('appinstalled', function() {
-            banner.classList.remove('show');
+            document.getElementById('pwa-banner').classList.remove('show');
             deferredPrompt = null;
             console.log('[PWA] 설치 완료!');
         });
 
-        // ── Service Worker 등록 (루트 scope) ──
+        // ── Service Worker 등록 ──
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('/sw.js', { scope: '/' })
