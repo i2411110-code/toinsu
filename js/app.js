@@ -3,9 +3,6 @@
 // ==========================================
 import './claim.js'; 
 import './report.js';
-import './모바일/sw.js';
-import './모바일/manifest.json ';
-import './모바일/Icon 192.png ';
 import './claim-dashboard.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
