@@ -139,7 +139,6 @@
             visibility: visible;
         }
 
-        /* ✅ 신규 추가: 플로팅 메뉴 호버 시 위로 확장 레이아웃 */
         .pwa-menu-wrapper {
             position: relative;
             display: flex;
@@ -183,7 +182,7 @@
         .btn-pwa-download { background: #2563EB !important; color: white !important; }
         .btn-icd-search { background: #00D4B2 !important; color: white !important; }
 
-        /* ✅ 신규 추가: 이미지 캡처본 기반 상병코드 검색 모달 스타일 */
+        /* ── 상병코드 검색 모달 스타일 ── */
         .icd-modal-header {
             background: #1E293B;
             color: white;
@@ -240,6 +239,9 @@
             font-weight: 500;
             padding: 12px 8px;
             border-bottom: 1px solid #E2E8F0;
+            position: sticky;
+            top: 0;
+            background: white;
         }
         .icd-table td {
             padding: 14px 8px;
@@ -295,7 +297,6 @@
         </div>
     </div>
 
-    <!-- PC 전용 navbar -->
     <div class="navbar navbar-pc">
         <div class="nav-logo">
             <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue)"></i> <b>보험<span>가온</span>포탈</b>
@@ -308,7 +309,6 @@
         </div>
     </div>
 
-    <!-- 모바일 전용 slim navbar -->
     <div class="navbar navbar-mobile">
         <div class="nav-logo" style="font-size:15px;">
             <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue); font-size:14px;"></i>
@@ -335,10 +335,8 @@
         <div id="app-root"></div>
     </div>
 
-    <!-- ✅ 수정: 오른쪽 구석 플로팅 메뉴 구조 고도화 (+ 버튼 마우스 호버 시 위로 서브 메뉴 확장) -->
     <div class="floating-contact-wrap" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
         <div class="pwa-menu-wrapper">
-            <!-- 마우스를 올리면 위로 팝업되는 서브 버튼 세트 -->
             <div class="pwa-sub-menu">
                 <div class="float-btn-container" data-tooltip="상병 검색 (신규)">
                     <button class="sub-float-btn btn-icd-search" onclick="window.openIcdModal()"><i class="bi bi-search"></i></button>
@@ -347,7 +345,6 @@
                     <button id="pwa-float-btn" class="sub-float-btn btn-pwa-download"><i class="bi bi-download"></i></button>
                 </div>
             </div>
-            <!-- 메인 컨트롤 트리거 [+] 버튼 -->
             <div class="float-btn-container" data-tooltip="메뉴 확장">
                 <button class="float-btn" style="background:#191F28; color:white;"><i class="bi bi-plus-lg"></i></button>
             </div>
@@ -360,7 +357,6 @@
         </div>
     </div>
 
-    <!-- ✅ 신규 추가: 이미지 기반 상병코드 검색 전용 종합 모달 레이아웃 -->
     <div id="icd-search-modal" class="portal-modal" style="z-index: 4000; display: none;" onclick="window.closeIcdModal()">
         <div class="modal-body" style="max-width: 900px; width: 90%; padding: 0; background: white; border-radius: 12px; overflow: hidden;" onclick="event.stopPropagation()">
             <div class="icd-modal-header">
@@ -371,81 +367,36 @@
             </div>
             <div class="icd-search-box">
                 <i class="bi bi-search"></i>
-                <input type="text" id="icd-input" class="icd-search-input" placeholder="상병코드 또는 질병명을 검색하세요" oninput="window.filterIcdTable()">
+                <input type="text" id="icd-input" class="icd-search-input" placeholder="상병코드 또는 질병명을 입력하세요 (최소 2글자)" oninput="window.filterIcdTable()">
             </div>
             <div class="icd-meta-info">
-                전체 <span id="icd-total-count">72,822</span>개 · 검색 결과 <span id="icd-result-count" style="color:#2563EB; font-weight:700;">8</span>개
+                전체 <span id="icd-total-count">72,822</span>개 · 검색 결과 <span id="icd-result-count" style="color:#2563EB; font-weight:700;">0</span>개
             </div>
             <div class="icd-table-container">
                 <table class="icd-table">
                     <thead>
                         <tr>
-                            <th style="width: 12%;">코드</th>
-                            <th style="width: 43%;">질병명</th>
-                            <th style="width: 33%;">영문명</th>
-                            <th style="width: 12%;">법정감염병</th>
+                            <th style="width: 15%;">코드</th>
+                            <th style="width: 50%;">질병명</th>
+                            <th style="width: 35%;">영문명</th>
                         </tr>
                     </thead>
                     <tbody id="icd-table-body">
-                        <!-- 마스터 데이터 매칭 구역 -->
                         <tr>
-                            <td><span class="icd-code-text">A000</span></td>
-                            <td>비브리오 콜레라 01 콜레라형균에 의한 콜레라</td>
-                            <td style="color:#64748B;">Cholera due to Vibrio cholerae 01, biovar cholerae</td>
-                            <td>제2급</td>
-                        </tr>
-                        <tr>
-                            <td><span class="icd-code-text">A000</span></td>
-                            <td>고전적 콜레라</td>
-                            <td style="color:#64748B;">Classical cholera</td>
-                            <td>-</td>
-                        </tr>
-                        <tr>
-                            <td><span class="icd-code-text">A001</span></td>
-                            <td>비브리오 콜레라 01 멜토르형균에 의한 콜레라</td>
-                            <td style="color:#64748B;">Cholera due to Vibrio cholerae 01, biovar eltor</td>
-                            <td>제2급</td>
-                        </tr>
-                        <tr>
-                            <td><span class="icd-code-text">A001</span></td>
-                            <td>엘토르 콜레라</td>
-                            <td style="color:#64748B;">Cholera eltor</td>
-                            <td>-</td>
-                        </tr>
-                        <tr>
-                            <td><span class="icd-code-text">A009</span></td>
-                            <td>상세불명의 콜레라</td>
-                            <td style="color:#64748B;">Cholera, unspecified</td>
-                            <td>제2급</td>
-                        </tr>
-                        <tr>
-                            <td><span class="icd-code-text">A010</span></td>
-                            <td>장티푸스</td>
-                            <td style="color:#64748B;">Typhoid fever</td>
-                            <td>제2급</td>
-                        </tr>
-                        <tr>
-                            <td><span class="icd-code-text">A010</span></td>
-                            <td>장티푸스균에 의한 감염</td>
-                            <td style="color:#64748B;">Infection due to Salmonella typhi</td>
-                            <td>-</td>
-                        </tr>
-                        <tr>
-                            <td><span class="icd-code-text">A011</span></td>
-                            <td>파라티푸스 A</td>
-                            <td style="color:#64748B;">Paratyphoid fever A</td>
-                            <td>제2급</td>
+                            <td colspan="3" style="text-align:center; color:#94A3B8; padding:40px 0;">
+                                <i class="bi bi-keyboard" style="font-size:24px; display:block; margin-bottom:8px;"></i>
+                                검색어를 입력하시면 심평원 실시간 마스터 조회가 시작됩니다.
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
             <div class="icd-footer-notice">
-                상병코드는 건강보험심사평가원에서 배포한 상병마스터(26.03) 기준으로 제공되며, 실제 보험금 청구 및 보험사 심사 결과와 다를 수 있습니다.
+                상병코드는 건강보험심사평가원에서 배포한 상병마스터 기준으로 제공되며, 실제 보험금 청구 및 보험사 심사 결과와 다를 수 있습니다.
             </div>
         </div>
     </div>
 
-    <!-- 임시 유지 배너 -->
     <div id="pwa-banner">
         <div class="pwa-row" style="flex:1; min-width:0;">
             <div class="pwa-icon"><i class="bi bi-grid-1x2-fill"></i></div>
@@ -535,20 +486,6 @@
         </div>
     </div>
 
-    <!-- 모바일 알림 바 동기화 로직 -->
-    <script>
-        const observer = new MutationObserver(() => {
-            const src    = document.getElementById('user-display-email');
-            const mobile = document.getElementById('user-display-email-mobile');
-            if (src && mobile) mobile.textContent = src.textContent;
-        });
-        window.addEventListener('DOMContentLoaded', () => {
-            const el = document.getElementById('user-display-email');
-            if (el) observer.observe(el, { childList: true, subtree: true, characterData: true });
-        });
-    </script>
-
-    <!-- ✅ 신규 추가: 상병코드 모달 제어 및 실시간 클라이언트 필터링 자바스크립트 -->
     <script>
         window.openIcdModal = function() {
             var modal = document.getElementById('icd-search-modal');
@@ -561,28 +498,52 @@
             var modal = document.getElementById('icd-search-modal');
             if(modal) modal.style.display = 'none';
         };
+        
+        // 실시간 연동 핵심 로직
+        var icdTimeout = null;
         window.filterIcdTable = function() {
-            var input = document.getElementById('icd-input').value.toLowerCase();
-            var rows = document.querySelectorAll('#icd-table-body tr');
-            var visibleCount = 0;
+            clearTimeout(icdTimeout);
+            var input = document.getElementById('icd-input').value.trim();
+            var tbody = document.getElementById('icd-table-body');
+            
+            if (input.length < 2) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#94A3B8; padding:40px 0;">최소 2글자 이상 입력해 주세요.</td></tr>`;
+                document.getElementById('icd-result-count').textContent = '0';
+                return;
+            }
 
-            rows.forEach(function(row) {
-                var code = row.cells[0].textContent.toLowerCase();
-                var name = row.cells[1].textContent.toLowerCase();
-                var eng  = row.cells[2].textContent.toLowerCase();
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#2563EB; padding:40px 0;"><i class="bi bi-arrow-clockwise-spin"></i> 심평원 마스터 검색 중...</td></tr>`;
 
-                if(code.includes(input) || name.includes(input) || eng.includes(input)) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
+            // 디바운싱: 타자가 끝난 후 300ms 뒤에 API 요청을 보냅니다 (서버 부하 방지)
+            icdTimeout = setTimeout(async function() {
+                try {
+                    const response = await fetch(`/api/search-icd?query=${encodeURIComponent(input)}`);
+                    const items = await response.json();
+                    
+                    tbody.innerHTML = '';
+                    if (!items || items.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#EF4444; padding:40px 0;">검색 결과가 없습니다. 정확한 질병명이나 상병코드를 확인해 주세요.</td></tr>`;
+                        document.getElementById('icd-result-count').textContent = '0';
+                        return;
+                    }
+
+                    items.forEach(function(item) {
+                        var row = `<tr>
+                            <td><span class="icd-code-text">${item.sickCode || '-'}</span></td>
+                            <td>${item.sickName || '-'}</td>
+                            <td style="color:#64748B;">${item.sickEngName || '-'}</td>
+                        </tr>`;
+                        tbody.insertAdjacentHTML('beforeend', row);
+                    });
+                    document.getElementById('icd-result-count').textContent = items.length;
+                } catch (err) {
+                    console.error('API 연동 장애 발생:', err);
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#EF4444; padding:40px 0;">전산 연동 서버가 응답하지 않습니다. 잠시 후 다시 시도해 주세요.</td></tr>`;
                 }
-            });
-            document.getElementById('icd-result-count').textContent = visibleCount;
+            }, 300);
         };
     </script>
 
-    <!-- PWA 및 통합 제어 스크립트 -->
     <script>
     (function () {
         var ua           = navigator.userAgent;
@@ -623,7 +584,6 @@
             });
         }
 
-        // ── Android / Chrome: 토글 및 플로팅 플러스 버튼 연동 ──
         var deferredPrompt = null;
         var toggleWrap     = document.getElementById('pwa-toggle-wrap');
         var toggleBtn      = document.getElementById('pwa-toggle-btn');
@@ -635,7 +595,7 @@
             deferredPrompt = e;
             
             if (toggleWrap) toggleWrap.style.display = 'flex';
-            if (floatWrap) floatWrap.style.display = 'block'; // 자격 충족 시 다운로드 서브버튼 노출 활성화
+            if (floatWrap) floatWrap.style.display = 'block'; 
         });
 
         if (floatBtn) {
