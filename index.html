@@ -2,7 +2,6 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <!-- ✅ 수정: maximum-scale, user-scalable 추가 → iOS 입력필드 자동 확대 방지 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>보험가온포탈 - 토스인슈어런스 가온사업단 심현진 팀장</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +11,6 @@
     
     <link rel="stylesheet" href="css/style.css">
 
-    <!-- PWA 설정 -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563EB">
     <meta name="mobile-web-app-capable" content="yes">
@@ -129,7 +127,6 @@
         </div>
     </div>
 
-    <!-- PC 전용 navbar -->
     <div class="navbar navbar-pc">
         <div class="nav-logo">
             <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue)"></i> <b>보험<span>가온</span>포탈</b>
@@ -142,7 +139,6 @@
         </div>
     </div>
 
-    <!-- 모바일 전용 slim navbar -->
     <div class="navbar navbar-mobile">
         <div class="nav-logo" style="font-size:15px;">
             <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue); font-size:14px;"></i>
@@ -165,7 +161,6 @@
         <a href="https://www.instagram.com/insu_coco?igsh=OWhuc2VlYWs4M3Zi" target="_blank" class="float-btn float-instagram" title="인스타그램"><i class="bi bi-instagram"></i></a>
     </div>
 
-    <!-- ✅ 수정: ID를 pwa-banner로 통일, 마크업 구조 정비 -->
     <div id="pwa-banner">
         <div class="pwa-row" style="flex:1; min-width:0;">
             <div class="pwa-icon"><i class="bi bi-grid-1x2-fill"></i></div>
@@ -178,7 +173,6 @@
         <button class="pwa-close-btn" id="pwa-close-btn">&times;</button>
     </div>
 
-    <!-- ✅ 신규 추가: iOS Safari 전용 배너 마크업 -->
     <div id="pwa-ios-banner">
         <div class="pwa-row">
             <div class="pwa-icon"><i class="bi bi-grid-1x2-fill"></i></div>
@@ -256,7 +250,6 @@
         </div>
     </div>
 
-    <!-- 모바일 email 동기화 스크립트 -->
     <script>
         const observer = new MutationObserver(() => {
             const src    = document.getElementById('user-display-email');
@@ -269,7 +262,6 @@
         });
     </script>
 
-    <!-- ✅ 수정: PWA 전체 로직을 IIFE로 감싸고 ID 불일치 완전 수정 -->
     <script>
     (function () {
         // ── 환경 판별 ──────────────────────────────────────────
@@ -283,7 +275,6 @@
         if (isStandalone) return;
 
         // iOS는 순수 Safari에서만 홈화면 추가 가능
-        // Chrome for iOS(crios), Firefox(fxios), 인앱 브라우저 제외
         var isSafariIOS = isIOS
                        && /safari/i.test(ua)
                        && !/crios|fxios|opios|mercury/i.test(ua);
@@ -301,7 +292,6 @@
 
         // ── iOS Safari 배너 ────────────────────────────────────
         if (isSafariIOS && !isDismissed('pwa-ios-dismissed')) {
-            // 공지 모달(800ms) 이후에 표시
             setTimeout(function () {
                 var b = document.getElementById('pwa-ios-banner');
                 if (b) b.classList.add('show');
@@ -358,11 +348,16 @@
             deferredPrompt = null;
         });
 
-        // ── Service Worker 등록 ────────────────────────────────
+        // ── Service Worker 등록 (✅ 수정: 상대경로 매칭 및 강제 업데이트 파라미터 부여) ──
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
-                navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                    .then(function (reg) { console.log('[SW] 등록 성공, scope:', reg.scope); })
+                // ?v=를 추가하여 브라우저의 무조건적인 새 코드 검증 유도
+                navigator.serviceWorker.register('./sw.js?v=20260617', { scope: './' })
+                    .then(function (reg) { 
+                        console.log('[SW] 등록 성공, scope:', reg.scope); 
+                        // 새로운 SW가 있을 경우 백그라운드에서 즉시 강제 갱신 트리거
+                        reg.update();
+                    })
                     .catch(function (err) { console.error('[SW] 등록 실패:', err); });
             });
         }
