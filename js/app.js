@@ -372,19 +372,27 @@ window.resetCrmInputForm = function() {
 
 window.renderCombinedCrmList = function() {
     const tbody = document.getElementById('combined-crm-tbody');
-    if(!tbody) return;
-    tbody.innerHTML = "";
+    if (!tbody) return;
+    tbody.innerHTML = '';
 
-    const filterContract = document.getElementById('f_contract').value;
-    const filterDoc      = document.getElementById('f_doc').value;
-    const searchKeyword  = document.getElementById('f_search').value.trim();
+    const filterContract = document.getElementById('f_contract')?.value || 'all';
+    const filterDoc      = document.getElementById('f_doc')?.value      || 'all';
+    const searchKeyword  = (document.getElementById('f_search')?.value || '').trim();
 
-    Object.entries(window.globalClientRegistry || {}).forEach(([name, d]) => {
-        if(filterContract !== 'all' && d.contract !== filterContract) return;
-        if(filterDoc !== 'all' && d.document !== filterDoc) return;
-        if(searchKeyword && !name.includes(searchKeyword) && !(d.phone && d.phone.includes(searchKeyword))) return;
+    // ✅ 기본 정렬: savedAt 내림차순(최신순)
+    const entries = Object.entries(window.globalClientRegistry || {})
+        .sort((a, b) => (b[1].savedAt || 0) - (a[1].savedAt || 0));
 
-        const docBadgeClass = d.document === "출력만" ? "badge-blue" : d.document === "출력 X" ? "badge-gray" : "badge-yellow";
+    entries.forEach(([name, d]) => {
+        if (filterContract !== 'all' && d.contract !== filterContract) return;
+        if (filterDoc      !== 'all' && d.document !== filterDoc)      return;
+        if (searchKeyword  && !name.includes(searchKeyword)
+            && !(d.phone && d.phone.includes(searchKeyword)))           return;
+
+        const docBadgeClass = d.document === '출력만'  ? 'badge-blue'
+                            : d.document === '출력 X' ? 'badge-gray'
+                            : 'badge-yellow';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="font-weight:700; color:#0F172A;">${name}</td>
@@ -392,8 +400,10 @@ window.renderCombinedCrmList = function() {
             <td><span class="badge ${docBadgeClass}">${d.document}</span></td>
             <td>${d.phone || '-'}</td>
             <td style="text-align:left; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${d.progress || '-'}</td>
-            <td><button onclick="window.triggerGodeungView(event, '${name}')" style="padding:4px 8px; border-radius:6px; border:1px solid #CBD5E1; background:white; font-size:12px; cursor:pointer;">고등</button></td>
-            <td><button onclick="window.triggerDirectEdit('${name}')" style="padding:4px 8px; border-radius:6px; border:1px solid #CBD5E1; background:white; font-size:12px; cursor:pointer;">수정</button></td>
+            <td><button onclick="window.triggerGodeungView(event,'${name}')"
+                        style="padding:4px 8px;border-radius:6px;border:1px solid #CBD5E1;background:white;font-size:12px;cursor:pointer;">고등</button></td>
+            <td><button onclick="window.triggerDirectEdit('${name}')"
+                        style="padding:4px 8px;border-radius:6px;border:1px solid #CBD5E1;background:white;font-size:12px;cursor:pointer;">수정</button></td>
         `;
         tr.onclick = () => { window.triggerPopupDetailView(name); };
         tbody.appendChild(tr);
@@ -401,12 +411,16 @@ window.renderCombinedCrmList = function() {
 }
 
 window.sortCombinedCrm = function(criteria) {
-    let entries = Object.entries(window.globalClientRegistry || {});
-    if(criteria === 'name') entries.sort((a,b) => a[0].localeCompare(b[0], 'ko'));
-    else entries.sort((a,b) => (b[1].savedAt || 0) - (a[1].savedAt || 0));
-    const sortedObj = {};
-    entries.forEach(([k,v]) => sortedObj[k] = v);
-    window.globalClientRegistry = sortedObj;
+    const entries = Object.entries(window.globalClientRegistry || {});
+    if (criteria === 'name') {
+        entries.sort((a, b) => a[0].localeCompare(b[0], 'ko'));
+    } else {
+        // 'date' 또는 기타 → 최신순
+        entries.sort((a, b) => (b[1].savedAt || 0) - (a[1].savedAt || 0));
+    }
+    const sorted = {};
+    entries.forEach(([k, v]) => { sorted[k] = v; });
+    window.globalClientRegistry = sorted;
     window.renderCombinedCrmList();
 }
 

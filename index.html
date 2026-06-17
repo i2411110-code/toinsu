@@ -2,7 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ✅ 수정: maximum-scale, user-scalable 추가 → iOS 입력필드 자동 확대 방지 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>보험가온포탈 - 토스인슈어런스 가온사업단 심현진 팀장</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,6 +23,76 @@
     <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
     <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144.png">
     <link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128.png">
+
+    <style>
+        /* ── PWA 안드로이드 설치 배너 ── */
+        #pwa-banner {
+            display: none;
+            position: fixed;
+            bottom: calc(70px + env(safe-area-inset-bottom));
+            left: 12px; right: 12px;
+            background: white;
+            border-radius: 18px;
+            padding: 14px 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            border: 1px solid #E2E8F0;
+            z-index: 1500;
+            align-items: center;
+            gap: 12px;
+            animation: pwaBannerUp 0.3s ease;
+        }
+        #pwa-banner.show { display: flex; }
+
+        /* ── PWA iOS 안내 배너 ── */
+        #pwa-ios-banner {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0; right: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 18px 18px calc(18px + env(safe-area-inset-bottom));
+            box-shadow: 0 -4px 30px rgba(37,99,235,0.15);
+            border-top: 1.5px solid #DBEAFE;
+            z-index: 1500;
+            flex-direction: column;
+            gap: 10px;
+            animation: pwaBannerUp 0.3s ease;
+        }
+        #pwa-ios-banner.show { display: flex; }
+
+        @keyframes pwaBannerUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+
+        .pwa-row { display: flex; align-items: center; gap: 12px; }
+        .pwa-icon { width: 42px; height: 42px; background: #EFF6FF; border-radius: 12px;
+                    display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .pwa-icon i { font-size: 20px; color: #2563EB; }
+        .pwa-text { flex: 1; min-width: 0; }
+        .pwa-title { font-size: 13px; font-weight: 800; color: #191F28; }
+        .pwa-sub   { font-size: 11px; color: #8B95A1; margin-top: 2px; line-height: 1.5; }
+        .pwa-install-btn {
+            background: #2563EB; color: white; border: none;
+            padding: 9px 16px; border-radius: 10px;
+            font-size: 13px; font-weight: 700; cursor: pointer;
+            white-space: nowrap; flex-shrink: 0;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .pwa-install-btn:active { background: #1D4ED8; }
+        .pwa-close-btn {
+            background: none; border: none; color: #CBD5E1;
+            font-size: 22px; cursor: pointer; padding: 0;
+            line-height: 1; flex-shrink: 0;
+        }
+        .pwa-ios-hint {
+            font-size: 12px; color: #64748B; text-align: center;
+            background: #F8FAFC; border-radius: 10px; padding: 10px 14px;
+            line-height: 1.6;
+        }
+        .pwa-ios-hint b { color: #2563EB; }
+    </style>
 </head>
 <body>
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
@@ -94,17 +165,33 @@
         <a href="https://www.instagram.com/insu_coco?igsh=OWhuc2VlYWs4M3Zi" target="_blank" class="float-btn float-instagram" title="인스타그램"><i class="bi bi-instagram"></i></a>
     </div>
 
-    <!-- PWA 앱 설치 배너 (모바일 전용) -->
-    <div id="pwa-install-banner" style="display:none; position:fixed; bottom:70px; left:12px; right:12px; background:white; border-radius:18px; padding:14px 16px; box-shadow:0 8px 30px rgba(0,0,0,0.15); border:1px solid #E2E8F0; z-index:1500; align-items:center; gap:12px;">
-        <div style="width:42px; height:42px; background:#EFF6FF; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-            <i class="bi bi-grid-1x2-fill" style="font-size:20px; color:#2563EB;"></i>
+    <!-- ✅ 수정: ID를 pwa-banner로 통일, 마크업 구조 정비 -->
+    <div id="pwa-banner">
+        <div class="pwa-row" style="flex:1; min-width:0;">
+            <div class="pwa-icon"><i class="bi bi-grid-1x2-fill"></i></div>
+            <div class="pwa-text">
+                <div class="pwa-title">보험가온포탈 앱 설치</div>
+                <div class="pwa-sub">홈 화면에 추가하여 앱처럼 사용하세요</div>
+            </div>
         </div>
-        <div style="flex:1; min-width:0;">
-            <div style="font-size:13px; font-weight:800; color:#191F28;">보험가온포탈 앱 설치</div>
-            <div style="font-size:11px; color:#8B95A1; margin-top:1px;">홈 화면에 추가하여 앱처럼 사용하세요</div>
+        <button class="pwa-install-btn" id="pwa-install-btn">설치</button>
+        <button class="pwa-close-btn" id="pwa-close-btn">&times;</button>
+    </div>
+
+    <!-- ✅ 신규 추가: iOS Safari 전용 배너 마크업 -->
+    <div id="pwa-ios-banner">
+        <div class="pwa-row">
+            <div class="pwa-icon"><i class="bi bi-grid-1x2-fill"></i></div>
+            <div class="pwa-text">
+                <div class="pwa-title">📲 홈 화면에 추가하기</div>
+                <div class="pwa-sub">앱처럼 빠르게 실행할 수 있어요</div>
+            </div>
+            <button class="pwa-close-btn" id="pwa-ios-close-btn">&times;</button>
         </div>
-        <button onclick="window.installPWA()" style="background:#2563EB; color:white; border:none; padding:8px 14px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0; white-space:nowrap;">설치</button>
-        <button onclick="window.dismissInstall()" style="background:none; border:none; color:#B0B8C1; font-size:20px; cursor:pointer; padding:0; flex-shrink:0; line-height:1;">&times;</button>
+        <div class="pwa-ios-hint">
+            하단 <b>공유 버튼 □↑</b> 탭 후<br>
+            <b>'홈 화면에 추가'</b>를 선택하세요
+        </div>
     </div>
 
     <div class="footer-bar">
@@ -173,9 +260,8 @@
 
     <!-- 모바일 email 동기화 스크립트 -->
     <script>
-        // user-display-email 변경 감지해서 모바일용에도 동기화
         const observer = new MutationObserver(() => {
-            const src = document.getElementById('user-display-email');
+            const src    = document.getElementById('user-display-email');
             const mobile = document.getElementById('user-display-email-mobile');
             if (src && mobile) mobile.textContent = src.textContent;
         });
@@ -185,46 +271,104 @@
         });
     </script>
 
-    <!-- PWA Service Worker 등록 -->
+    <!-- ✅ 수정: PWA 전체 로직을 IIFE로 감싸고 ID 불일치 완전 수정 -->
     <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('SW 등록 완료:', reg.scope))
-                    .catch(err => console.log('SW 등록 실패:', err));
+    (function () {
+        // ── 환경 판별 ──────────────────────────────────────────
+        var ua           = navigator.userAgent;
+        var isIOS        = /iphone|ipad|ipod/i.test(ua);
+        var isStandalone = (window.navigator.standalone === true)
+                        || window.matchMedia('(display-mode: standalone)').matches
+                        || window.matchMedia('(display-mode: fullscreen)').matches;
+
+        // 이미 설치된 앱이면 종료
+        if (isStandalone) return;
+
+        // iOS는 순수 Safari에서만 홈화면 추가 가능
+        // Chrome for iOS(crios), Firefox(fxios), 인앱 브라우저 제외
+        var isSafariIOS = isIOS
+                       && /safari/i.test(ua)
+                       && !/crios|fxios|opios|mercury/i.test(ua);
+
+        // ── 유틸 ───────────────────────────────────────────────
+        function isDismissed(key) {
+            try {
+                var v = localStorage.getItem(key);
+                return v && Date.now() < parseInt(v, 10);
+            } catch (e) { return false; }
+        }
+        function setDismissed(key, ms) {
+            try { localStorage.setItem(key, Date.now() + ms); } catch (e) {}
+        }
+
+        // ── iOS Safari 배너 ────────────────────────────────────
+        if (isSafariIOS && !isDismissed('pwa-ios-dismissed')) {
+            // 공지 모달(800ms) 이후에 표시
+            setTimeout(function () {
+                var b = document.getElementById('pwa-ios-banner');
+                if (b) b.classList.add('show');
+            }, 2200);
+        }
+
+        var iosCloseBtn = document.getElementById('pwa-ios-close-btn');
+        if (iosCloseBtn) {
+            iosCloseBtn.addEventListener('click', function () {
+                var b = document.getElementById('pwa-ios-banner');
+                if (b) b.classList.remove('show');
+                setDismissed('pwa-ios-dismissed', 86400000);
             });
         }
 
-        // 앱 설치 배너 (Android Chrome)
-        let deferredPrompt;
-        const installBanner = document.getElementById('pwa-install-banner');
-        const installBtn = document.getElementById('pwa-install-btn');
-        const installDismiss = document.getElementById('pwa-install-dismiss');
+        // ── Android / Chrome: beforeinstallprompt ─────────────
+        var deferredPrompt = null;
 
-        window.addEventListener('beforeinstallprompt', (e) => {
+        window.addEventListener('beforeinstallprompt', function (e) {
             e.preventDefault();
             deferredPrompt = e;
-            if (installBanner) installBanner.style.display = 'flex';
+            if (!isDismissed('pwa-dismissed')) {
+                var b = document.getElementById('pwa-banner');
+                if (b) b.classList.add('show');
+            }
         });
 
-        window.installPWA = function() {
-            if (!deferredPrompt) return;
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((result) => {
-                if (installBanner) installBanner.style.display = 'none';
-                deferredPrompt = null;
+        var installBtn = document.getElementById('pwa-install-btn');
+        if (installBtn) {
+            installBtn.addEventListener('click', function () {
+                if (!deferredPrompt) return;
+                var b = document.getElementById('pwa-banner');
+                if (b) b.classList.remove('show');
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(function () {
+                    deferredPrompt = null;
+                });
             });
-        };
+        }
 
-        window.dismissInstall = function() {
-            if (installBanner) installBanner.style.display = 'none';
-        };
+        var closeBtn = document.getElementById('pwa-close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function () {
+                var b = document.getElementById('pwa-banner');
+                if (b) b.classList.remove('show');
+                setDismissed('pwa-dismissed', 86400000);
+            });
+        }
 
-        // 이미 설치된 경우 배너 숨기기
-        window.addEventListener('appinstalled', () => {
-            if (installBanner) installBanner.style.display = 'none';
+        // 설치 완료 시 배너 자동 숨김
+        window.addEventListener('appinstalled', function () {
+            var b = document.getElementById('pwa-banner');
+            if (b) b.classList.remove('show');
             deferredPrompt = null;
         });
+
+        // ── Service Worker 등록 ────────────────────────────────
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(function (reg) { console.log('[SW] 등록 성공, scope:', reg.scope); })
+                    .catch(function (err) { console.error('[SW] 등록 실패:', err); });
+            });
+        }
+    })();
     </script>
 </body>
 </html>
