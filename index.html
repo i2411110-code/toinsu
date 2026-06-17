@@ -6,7 +6,7 @@
     <title>보험가온포탈 - 토스인슈어런스 가온사업단 심현진 팀장</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <link rel="stylesheet" href="css/style.css">
@@ -22,74 +22,161 @@
     <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144.png">
     <link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128.png">
 
-    <script>
-        window.switchToNewsView = function() {
-            const mainView = document.getElementById('pwa-main-content-view');
-            const newsView = document.getElementById('pwa-news-view');
-            if (mainView) mainView.style.display = 'none';
-            if (newsView) {
-                newsView.style.display = 'flex';
-                if (typeof NewsWidget !== 'undefined') {
-                    NewsWidget.init();
-                }
-            }
-        };
-        window.switchToMainView = function() {
-            const mainView = document.getElementById('pwa-main-content-view');
-            const newsView = document.getElementById('pwa-news-view');
-            if (newsView) newsView.style.display = 'none';
-            if (mainView) mainView.style.display = 'block';
-        };
-    </script>
-
     <style>
         /* ── PWA 안드로이드 설치 배너 ── */
         #pwa-banner {
-            display: none; position: fixed; bottom: calc(70px + env(safe-area-inset-bottom));
-            left: 12px; right: 12px; background: white; border-radius: 18px; padding: 14px 16px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15); border: 1px solid #E2E8F0; z-index: 1500; align-items: center; gap: 12px;
+            display: none;
+            position: fixed;
+            bottom: calc(70px + env(safe-area-inset-bottom));
+            left: 12px; right: 12px;
+            background: white;
+            border-radius: 18px;
+            padding: 14px 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            border: 1px solid #E2E8F0;
+            z-index: 1500;
+            align-items: center;
+            gap: 12px;
+            animation: pwaBannerUp 0.3s ease;
         }
         #pwa-banner.show { display: flex; }
 
         /* ── PWA iOS 안내 배너 ── */
         #pwa-ios-banner {
-            display: none; position: fixed; bottom: 0; left: 0; right: 0; background: white;
-            border-radius: 20px 20px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom));
-            box-shadow: 0 -4px 30px rgba(37,99,235,0.15); border-top: 1.5px solid #DBEAFE; z-index: 1500; flex-direction: column; gap: 10px;
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0; right: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 18px 18px calc(18px + env(safe-area-inset-bottom));
+            box-shadow: 0 -4px 30px rgba(37,99,235,0.15);
+            border-top: 1.5px solid #DBEAFE;
+            z-index: 1500;
+            flex-direction: column;
+            gap: 10px;
+            animation: pwaBannerUp 0.3s ease;
         }
         #pwa-ios-banner.show { display: flex; }
 
-        .pwa-toggle-container { display: none; align-items: center; gap: 6px; padding: 4px 8px; background: #EFF6FF; border-radius: 20px; }
-        .pwa-switch { position: relative; display: inline-block; width: 32px; height: 18px; }
+        @keyframes pwaBannerUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+
+        .pwa-toggle-container {
+            display: none; 
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            background: #EFF6FF;
+            border-radius: 20px;
+        }
+        .pwa-switch {
+            position: relative;
+            display: inline-block;
+            width: 32px;
+            height: 18px;
+        }
         .pwa-switch input { opacity: 0; width: 0; height: 0; }
-        .pwa-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #CBD5E1; transition: .3s; border-radius: 18px; }
-        .pwa-slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        .pwa-slider {
+            position: absolute; cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #CBD5E1; transition: .3s; border-radius: 18px;
+        }
+        .pwa-slider:before {
+            position: absolute; content: "";
+            height: 12px; width: 12px; left: 3px; bottom: 3px;
+            background-color: white; transition: .3s; border-radius: 50%;
+        }
         .pwa-switch input:checked + .pwa-slider { background-color: #2563EB; }
         .pwa-switch input:checked + .pwa-slider:before { transform: translateX(14px); }
 
-        /* ── 플로팅 서브 메뉴 디자인 ── */
-        .float-btn-container { position: relative; display: inline-block; }
-        .float-btn-container::after {
-            content: attr(data-tooltip); position: absolute; right: 55px; top: 50%; transform: translateY(-50%);
-            background: rgba(25, 31, 40, 0.9); color: white; padding: 6px 12px; border-radius: 8px;
-            font-size: 12px; font-weight: 500; white-space: nowrap; opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-family: 'Noto Sans KR', sans-serif; z-index: 2000;
+        /* ── 플로팅 버튼 및 호버 확장 구조 ── */
+        .float-btn-container {
+            position: relative;
+            display: inline-block;
         }
-        .float-btn-container:hover::after { opacity: 1; visibility: visible; }
+        .float-btn-container::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            right: 55px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(25, 31, 40, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-family: 'Noto Sans KR', sans-serif;
+            z-index: 2000;
+        }
+        .float-btn-container:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
 
-        .pwa-menu-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; }
-        .pwa-sub-menu { display: flex; flex-direction: column; gap: 10px; position: absolute; bottom: 55px; right: 0; opacity: 0; visibility: hidden; transition: all 0.3s ease; transform: translateY(10px); z-index: 1999; }
-        .pwa-menu-wrapper:hover .pwa-sub-menu { opacity: 1; visibility: visible; transform: translateY(0); }
-        .sub-float-btn { width: 42px; height: 42px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.15); transition: transform 0.2s; }
+        .pwa-menu-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .pwa-sub-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: absolute;
+            bottom: 55px;
+            right: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            transform: translateY(10px);
+            z-index: 1999;
+        }
+        .pwa-menu-wrapper:hover .pwa-sub-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .sub-float-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            transition: transform 0.2s;
+        }
         .sub-float-btn:hover { transform: scale(1.1); }
         .btn-pwa-download { background: #2563EB !important; color: white !important; }
         .btn-icd-search { background: #00D4B2 !important; color: white !important; }
+        
+        /* ✅ 신규 추가: 오늘의 뉴스 버튼 색상 스타일 (노란색) */
         .btn-news-open { background: #FACC15 !important; color: #1E293B !important; }
 
-        /* ── 상병코드 검색 모달 ── */
-        .icd-modal-header { background: #1E293B; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0; }
+        /* ── 상병코드 검색 모달 스타일 ── */
+        .icd-modal-header {
+            background: #1E293B; color: white; padding: 16px 20px;
+            display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0;
+        }
         .icd-search-box { position: relative; margin: 20px; }
         .icd-search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94A3B8; font-size: 16px; }
-        .icd-search-input { width: 100%; padding: 12px 12px 12px 45px; border: 1px solid #E2E8F0; border-radius: 50px; font-size: 14px; outline: none; box-sizing: border-box; }
+        .icd-search-input {
+            width: 100%; padding: 12px 12px 12px 45px; border: 1px solid #E2E8F0;
+            border-radius: 50px; font-size: 14px; outline: none; box-sizing: border-box;
+        }
         .icd-meta-info { padding: 0 24px; font-size: 13px; color: #64748B; margin-bottom: 15px; }
         .icd-table-container { max-height: 400px; overflow-y: auto; padding: 0 20px; }
         .icd-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
@@ -98,92 +185,80 @@
         .icd-code-text { color: #2563EB; font-weight: 700; }
         .icd-footer-notice { padding: 15px 24px; font-size: 11px; color: #94A3B8; border-top: 1px solid #F1F5F9; margin-top: 15px; line-height: 1.5; }
 
-        /* ── 토스인슈어런스 스타일 뉴스 레이아웃 정의 ── */
-        #pwa-news-view { display: none; flex-direction: column; gap: 18px; animation: slideUp 0.25s ease-out; margin-top: 12px; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        /* ── ✅ 신규 추가: 캡처 이미지 기반 오늘의 뉴스 내부 레이아웃 CSS ── */
+        .news-container { display: flex; gap: 24px; padding: 20px; flex-wrap: wrap; background: #F8FAFC; }
+        .news-left-paper { flex: 1.2; min-width: 320px; background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .news-right-feed { flex: 1.5; min-width: 350px; display: flex; flex-direction: column; gap: 16px; }
         
-        .news-top-navbar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 16px 20px; border-radius: 16px; border: 1px solid #F2F4F6; }
-        .weather-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
-        .weather-strip::-webkit-scrollbar { display: none; }
-        .weather-pill { background: #F2F4F6; color: #333D4B; padding: 6px 14px; border-radius: 30px; font-size: 13px; font-weight: 500; white-space: nowrap; }
-
-        .search-area-box { background: white; padding: 20px; border-radius: 16px; border: 1px solid #F2F4F6; display: flex; flex-direction: column; gap: 14px; }
-        .search-input-wrap { position: relative; }
-        .search-input-wrap i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #8B95A1; }
-        .search-bar { width: 100%; padding: 12px 16px 12px 45px; border: 1px solid #E5E8EB; border-radius: 10px; font-size: 14px; outline: none; background: #F9FAFB; transition: all 0.2s; }
-        .search-bar:focus { border-color: #3182F6; background: white; box-shadow: 0 0 0 3px rgba(49,130,246,0.1); }
+        /* 모닝뉴스 신문 양식 헤더 */
+        .paper-header { text-align: center; border-bottom: 2px solid #1E293B; padding-bottom: 10px; margin-bottom: 15px; }
+        .paper-brand { font-size: 12px; font-weight: 700; color: #64748B; letter-spacing: 1px; }
+        .paper-title { font-size: 28px; font-weight: 900; color: #1E293B; margin: 4px 0; font-family: serif; }
+        .paper-date { font-size: 12px; color: #475569; text-align: right; }
         
-        .tag-wrap { display: flex; gap: 6px; flex-wrap: wrap; }
-        .tag-btn { background: #F2F4F6; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #4E5968; cursor: pointer; transition: all 0.15s; }
-        .tag-btn.active, .tag-btn:hover { background: #191F28; color: white; }
+        /* 신문 경제 지표 파트 */
+        .paper-index-box { background: linear-gradient(135deg, #0F172A, #1E293B); color: white; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; margin-bottom: 15px; text-align: center; }
+        .index-item { flex: 1; }
+        .index-item .title { font-size: 10px; color: #94A3B8; }
+        .index-item .val { font-size: 15px; font-weight: 700; margin: 2px 0; }
+        .index-item .change { font-size: 11px; color: #EF4444; }
+        .index-item .change.up { color: #F87171; }
+        .index-item .change.down { color: #60A5FA; }
 
-        .news-grid-body { display: flex; gap: 20px; flex-wrap: wrap; }
-        .paper-section { flex: 1.1; min-width: 330px; background: white; border: 1px solid #F2F4F6; border-radius: 16px; padding: 24px; }
-        .feed-section { flex: 1.4; min-width: 350px; display: flex; flex-direction: column; gap: 14px; }
+        /* 최신뉴스 카드 양식 */
+        .news-card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .news-card-badge { font-size: 11px; font-weight: 700; color: #2563EB; background: #EFF6FF; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
+        .news-card-title { font-size: 15px; font-weight: 700; color: #1E293B; line-height: 1.4; margin-bottom: 6px; }
+        .news-card-desc { font-size: 13px; color: #64748B; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .news-more-lnk { font-size: 12px; color: #2563EB; font-weight: 500; text-decoration: none; display: inline-block; margin-top: 10px; }
 
-        .paper-header { text-align: center; border-bottom: 2px solid #191F28; padding-bottom: 12px; margin-bottom: 18px; }
-        .paper-brand { font-size: 11px; font-weight: 700; color: #10B981; letter-spacing: 0.5px; }
-        .paper-title { font-size: 28px; font-weight: 900; color: #191F28; margin: 4px 0; font-family: serif; }
-        .paper-date { font-size: 11px; color: #8B95A1; text-align: right; }
-        
-        .paper-top-index { background: #F9FAFB; border: 1px solid #F2F4F6; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; text-align: center; margin-bottom: 18px; }
-        .p-idx-link { flex: 1; text-decoration: none; color: #191F28; border-radius: 8px; padding: 4px 0; transition: background 0.15s; }
-        .p-idx-link:hover { background: #F2F4F6; }
-        .p-idx-item .t { font-size: 11px; color: #6B7684; font-weight: 500; }
-        .p-idx-item .v { font-size: 15px; font-weight: 700; margin: 2px 0; color: #191F28; }
-        .p-idx-item .c { font-size: 11px; font-weight: 600; }
-        .p-idx-item .c.up { color: #E11D48; }
-        .p-idx-item .c.down { color: #2563EB; }
-
-        .paper-body-text { font-size: 14px; line-height: 1.65; color: #333D4B; text-align: justify; border-bottom: 1px dashed #E5E8EB; padding-bottom: 16px; margin-bottom: 16px; }
-        .paper-body-text strong { font-size: 16px; color: #191F28; display: block; margin-bottom: 8px; font-weight: 700; }
-
-        .paper-footer-widgets { display: flex; gap: 10px; }
-        .widget-card { flex: 1; background: #F9FAFB; border: 1px solid #F2F4F6; padding: 12px; border-radius: 10px; text-align: center; }
-        .widget-card .w-title { font-size: 11px; font-weight: 700; color: #8B95A1; display: block; margin-bottom: 4px; }
-        .widget-card .w-content { font-size: 14px; font-weight: 700; color: #191F28; }
-
-        .section-header-title { font-size: 16px; font-weight: 700; color: #191F28; display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
-        .btn-refresh { background: white; border: 1px solid #E5E8EB; padding: 6px 12px; border-radius: 8px; color: #4E5968; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: background 0.15s; }
-        .btn-refresh:hover { background: #F2F4F6; }
-
-        .feed-card { background: white; border-radius: 16px; padding: 20px; border: 1px solid #F2F4F6; display: flex; flex-direction: column; gap: 6px; }
-        .feed-badge { font-size: 11px; font-weight: 700; color: #3182F6; background: #E8F3FF; padding: 4px 8px; border-radius: 6px; align-self: flex-start; }
-        .feed-badge.alert-type { background: #FEEBEE; color: #FF4D52; }
-        .feed-title { font-size: 16px; font-weight: 700; color: #191F28; line-height: 1.4; }
-        .feed-desc { font-size: 13.3px; color: #4E5968; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .feed-link { font-size: 12px; color: #3182F6; font-weight: 700; text-decoration: none; margin-top: 6px; display: inline-flex; align-items: center; gap: 2px; }
-
-        .indicator-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
-        .ind-card-link { text-decoration: none; color: inherit; }
-        .ind-card { background: white; border: 1px solid #F2F4F6; border-radius: 16px; padding: 18px; transition: transform 0.2s, box-shadow 0.2s; }
-        .ind-card-link:hover .ind-card { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.04); }
-        .ind-card .lbl { font-size: 12px; color: #8B95A1; font-weight: 500; }
-        .ind-card .price { font-size: 20px; font-weight: 700; color: #191F28; margin: 4px 0; }
-        .ind-card .state { font-size: 12px; font-weight: 600; color: #FF4D52; }
-        .ind-card .state.down { color: #3182F6; }
+        /* 하단 종합 환율판 그리드 */
+        .market-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 11fr)); gap: 12px; padding: 0 20px 20px 20px; background: #F8FAFC; }
+        .market-card { background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px; }
+        .market-card .lbl { font-size: 11px; color: #64748B; font-weight: 500; }
+        .market-card .price { font-size: 16px; font-weight: 700; color: #1E293B; margin: 4px 0; }
+        .market-card .fluc { font-size: 11px; font-weight: 600; color: #EF4444; }
+        .market-card .fluc.down { color: #2563EB; }
     </style>
 </head>
 <body>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/@pdf-lib/fontkit@0.0.4/dist/fontkit.umd.min.js"></script>
+
+    <script type="module" src="js/app.js"></script>
     
-    <div id="notice-modal" class="portal-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
-        <div style="background:white; border-radius:16px; max-width:420px; width:90%; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
-            <div style="font-size:16px; font-weight:800; color:#191F28; margin-bottom:10px;" id="notice-detail-title">📢 알림 알림</div>
-            <div id="notice-ticker-wrap" style="transition: opacity 0.3s; opacity: 1; min-height: 80px; font-size: 14px; color: #4E5968; line-height: 1.6; margin-bottom: 20px; white-space: pre-wrap;">
-                <span id="notice-bar-text">가온 전산망 연결 중...</span>
+    <div id="auth-overlay">
+        <div class="auth-box">
+            <i class="bi bi-grid-1x2-fill" style="font-size:40px; color:var(--main-blue);"></i>
+            <h2 id="auth-title" style="font-size:22px; font-weight:700; margin:15px 0 25px 0;">보험가온포탈 로그인</h2>
+            <div class="auth-tab">
+                <button id="tab-login-btn" class="active" onclick="window.toggleAuthTab('login')">로그인</button>
+                <button id="tab-register-btn" onclick="window.toggleAuthTab('register')">회원가입</button>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#8B95A1; border-top:1px solid #F2F4F6; padding-top:12px;">
-                <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
-                    <input type="checkbox" id="hide-notice-chk"> 오늘 하루 보지 않기
-                </label>
-                <button onclick="window.closeNotice()" style="background:#2563EB; color:white; border:none; padding:6px 14px; border-radius:6px; font-weight:700; cursor:pointer;">확인</button>
+            <div class="form-group" id="name-input-group" style="text-align:left; display:none; margin-bottom:20px;">
+                <label>이름 (표시될 이름)</label>
+                <input type="text" id="auth-name" class="form-control" placeholder="예: 김가온">
             </div>
+            <div class="form-group" style="text-align:left;">
+                <label>이메일 주소</label>
+                <input type="email" id="auth-email" class="form-control" placeholder="example@email.com">
+            </div>
+            <div class="form-group" style="text-align:left;">
+                <label>비밀번호 (6자리 이상)</label>
+                <input type="password" id="auth-password" class="form-control" placeholder="비밀번호 입력">
+            </div>
+            <div class="form-group" id="invite-code-group" style="text-align:left; display:none; margin-bottom:25px;">
+                <label>가온사업단 인증 추천인 코드</label>
+                <input type="text" id="auth-invite-code" class="form-control" placeholder="추천인 코드 입력">
+            </div>
+            <button id="auth-submit-btn" class="btn-action" style="margin-top:10px;" onclick="window.handleAuthSubmit()">포탈 접속하기</button>
+            <p id="auth-error-msg" style="color:#EF4444; font-size:13px; margin-top:15px; display:none; font-weight:500;"></p>
         </div>
     </div>
 
     <div class="navbar navbar-pc">
-        <div class="nav-logo" style="cursor: pointer;" onclick="window.switchToMainView()">
-            <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue)"></i> <b>보험<span>가온포탈</span></b>
+        <div class="nav-logo">
+            <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue)"></i> <b>보험<span>가온</span>포탈</b>
         </div>
         <div class="nav-right">
             <div class="user-badge user-pill"><i class="bi bi-person-badge-fill"></i> <span id="user-display-email">인증 확인 중...</span></div>
@@ -194,12 +269,13 @@
     </div>
 
     <div class="navbar navbar-mobile">
-        <div class="nav-logo" style="font-size:15px; cursor: pointer;" onclick="window.switchToMainView()">
+        <div class="nav-logo" style="font-size:15px;">
             <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue); font-size:14px;"></i>
-            <b>보험<span>가온포탈</span></b>
+            <b>보험<span>가온</span>포탈</b>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
             <span style="font-size:11px; color:var(--text-muted);" id="user-display-email-mobile">확인 중...</span>
+            
             <div id="pwa-toggle-wrap" class="pwa-toggle-container">
                 <span style="font-size:10px; font-weight:700; color:#1D4ED8; white-space:nowrap;">앱 다운</span>
                 <label class="pwa-switch">
@@ -207,87 +283,22 @@
                     <span class="pwa-slider"></span>
                 </label>
             </div>
+
             <button class="logout-btn" style="padding:5px 10px; font-size:11px;" onclick="window.handleLogout()">
                 <i class="bi bi-box-arrow-right"></i>
             </button>
         </div>
     </div>
 
-    <div class="container" id="pwa-main-content-view">
+    <div class="container">
         <div id="app-root"></div>
-    </div>
-
-    <div class="container" id="pwa-news-view">
-        <div class="news-top-navbar">
-            <div style="font-size:18px; font-weight:700; color:#191F28; display:flex; align-items:center; gap:6px;">
-                <i class="bi bi-newspaper" style="color:#3182F6;"></i> 오늘의 뉴스 <span>포탈 스크랩</span>
-            </div>
-            <button class="btn-refresh" style="background:#F2F4F6; border:none; color:#4E5968; font-weight:700;" onclick="window.switchToMainView()">
-                <i class="bi bi-arrow-left"></i> 가온포탈 메인으로
-            </button>
-        </div>
-
-        <div class="weather-strip" id="news-weather-strip-line">
-            <div class="weather-pill">전국 기상전산망 연결 중...</div>
-        </div>
-
-        <div class="search-area-box">
-            <div class="search-input-wrap">
-                <i class="bi bi-search"></i>
-                <input type="text" id="news-inner-search-input" class="search-bar" placeholder="뉴스 키워드, 보험 트렌드를 검색한 후 엔터를 누르세요">
-            </div>
-            <div class="tag-wrap" id="news-tag-btn-group">
-                <button class="tag-btn active">전체 뉴스</button>
-                <button class="tag-btn">보험정보</button>
-                <button class="tag-btn">금융경제</button>
-                <button class="tag-btn">손해생보</button>
-                <button class="tag-btn">금감원 공시</button>
-            </div>
-        </div>
-
-        <div class="news-grid-body">
-            <div class="paper-section">
-                <div class="paper-header">
-                    <div class="paper-brand"><i class="bi bi-tree-fill"></i> INSURANCE TREE</div>
-                    <div class="paper-title">MORNING NEWS</div>
-                    <div class="paper-date" id="paper-live-date">2026년 6월 17일 (수)</div>
-                </div>
-                <div class="paper-top-index" id="paper-mini-index-box"></div>
-                <div class="paper-body-text" id="paper-main-headline-body">
-                    <strong>헤드라인 스크랩 분석 중...</strong>
-                </div>
-                <div class="paper-footer-widgets">
-                    <div class="widget-card">
-                        <span class="w-title">오늘의 날씨</span>
-                        <div class="w-content" id="paper-weather-widget-val">-</div>
-                    </div>
-                    <div class="widget-card" style="flex: 1.6;">
-                        <span class="w-title">오늘의 명언</span>
-                        <div class="w-content" style="font-size:11px; color:#4E5968; font-weight:500; text-align:justify; line-height:1.4;">
-                            스스로 생각하는 능력이 모자라면 유능한 스승의 제자가 되어봤자 자격미달이다. - 에피카르모스
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="feed-section">
-                <div class="section-header-title">
-                    최신 속보 피드
-                    <button class="btn-refresh" id="news-feed-manual-refresh-btn"><i class="bi bi-arrow-clockwise"></i> 실시간 뉴스 새로고침</button>
-                </div>
-                <div id="news-live-feed-target-container" style="display:flex; flex-direction:column; gap:12px;"></div>
-            </div>
-        </div>
-
-        <div style="font-size: 15px; font-weight: 700; color: #191F28; margin-top: 10px; margin-bottom: 2px;">오늘의 시장 지표 (네이버 증권 기준)</div>
-        <div class="indicator-grid" id="news-bottom-market-grid"></div>
     </div>
 
     <div class="floating-contact-wrap" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
         <div class="pwa-menu-wrapper">
             <div class="pwa-sub-menu">
                 <div class="float-btn-container" data-tooltip="오늘의 뉴스">
-                    <button class="sub-float-btn btn-news-open" onclick="window.switchToNewsView()"><i class="bi bi-newspaper"></i></button>
+                    <button class="sub-float-btn btn-news-open" onclick="window.openNewsModal()"><i class="bi bi-newspaper"></i></button>
                 </div>
                 <div class="float-btn-container" data-tooltip="상병 검색 (신규)">
                     <button class="sub-float-btn btn-icd-search" onclick="window.openIcdModal()"><i class="bi bi-search"></i></button>
@@ -305,6 +316,108 @@
         </div>
         <div class="float-btn-container" data-tooltip="인스타그램">
             <a href="https://www.instagram.com/insu_coco?igsh=OWhuc2VlYWs4M3Zi" target="_blank" class="float-btn float-instagram"><i class="bi bi-instagram"></i></a>
+        </div>
+    </div>
+
+    <div id="news-portal-modal" class="portal-modal" style="z-index: 5000; display: none;" onclick="window.closeNewsModal()">
+        <div class="modal-body" style="max-width: 1050px; width: 95%; padding: 0; background: white; border-radius: 16px; overflow: hidden;" onclick="event.stopPropagation()">
+            <div class="icd-modal-header" style="background: #2563EB;">
+                <div style="display:flex; align-items:center; gap:8px; font-size:16px; font-weight:700;">
+                    <i class="bi bi-newspaper"></i> 오늘의 뉴스 통합 전산망
+                </div>
+                <button onclick="window.closeNewsModal()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            
+            <div class="news-container">
+                <div class="news-left-paper">
+                    <div class="paper-header">
+                        <div class="paper-brand"><i class="bi bi-tree-fill" style="color:#10B981;"></i> INSURANCE TREE</div>
+                        <div class="paper-title">MORNING NEWS</div>
+                        <div class="paper-date">2026년 6월 17일 (수)</div>
+                    </div>
+                    
+                    <div class="paper-index-box">
+                        <div class="index-item">
+                            <div class="title">USD/KRW</div>
+                            <div class="val">1,514.60</div>
+                            <div class="change down"><i class="bi bi-caret-down-fill"></i> 5.20 (0.34%)</div>
+                        </div>
+                        <div class="index-item" style="border-left: 1px solid #334155; border-right: 1px solid #334155;">
+                            <div class="title">KOSPI</div>
+                            <div class="val">8,545.98</div>
+                            <div class="change up"><i class="bi bi-caret-up-fill"></i> 422.36 (5.20%)</div>
+                        </div>
+                        <div class="index-item">
+                            <div class="title">KOSDAQ</div>
+                            <div class="val">1,034.03</div>
+                            <div class="change up"><i class="bi bi-caret-up-fill"></i> 14.98 (1.48%)</div>
+                        </div>
+                    </div>
+                    
+                    <div style="font-size:13px; line-height:1.6; color:#334155; text-align:justify; margin-bottom:15px; border-bottom:1px dashed #CBD5E1; padding-bottom:15px;">
+                        <strong>"변액보험 수익률 보고 깼다가 후회... 신중해라 주의보"</strong><br><br>
+                        증시 증세로 변액보험 관심이 증대되며 노후 준비 목적의 변액연금보험 수요가 늘고 있습니다. 1분기 변액연금보험 신계약은 전 분기보다 15.8% 증가하며 판매 성장세를 이끌었습니다. 반면 일반보험은 감소했으며 고객 저축성 상품보다 연금형 중심으로 수요가 이동했습니다. 변액보험은 사업비 등을 제외하고 투자해 펀드 수익률과 실제 환급금이 다를 수 있기 때문에 가입 초기에는 단기 수익률만 보고 해지하기보다 원금확보와 장기 유지 효과를 살펴봐야 합니다. 급격한 중도해지 손실과 불완전판매 가능성을 경고하며 판매 모니터링을 강화할 예정입니다.
+                    </div>
+                    
+                    <div style="display:flex; gap:10px; font-size:12px;">
+                        <div style="flex:1; background:#F8FAFC; padding:10px; border-radius:6px; text-align:center;">
+                            <span style="font-weight:700; color:#475569; display:block; margin-bottom:4px;">오늘의 날씨</span>
+                            <span style="font-size:16px; font-weight:700; color:#1E293B;">22° <i class="bi bi-cloud-sun-fill" style="color:#F59E0B;"></i></span>
+                        </div>
+                        <div style="flex:1.5; background:#F8FAFC; padding:10px; border-radius:6px;">
+                            <span style="font-weight:700; color:#475569; display:block; margin-bottom:2px; text-align:center;">오늘의 명언</span>
+                            <span style="font-size:10px; color:#64748B; line-height:1.3; display:block; text-align:justify;">스스로 생각하는 능력이 모자라면 유능한 스승의 제자가 되어봤자 자격미달이다. - 에피카르모스</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="news-right-feed">
+                    <div class="news-card" style="border-left:4px solid #EF4444;">
+                        <div class="news-card-badge" style="background:#FEF2F2; color:#EF4444;">주요뉴스</div>
+                        <div class="news-card-title">[속보] 특검 오세훈 징역 1년 6월 구형 "법질서 신뢰훼손"</div>
+                        <div class="news-card-desc">특허 결정 과정에서는 느리게 배정배당 회원보장 조치를 마련하고 있다. 배정 상태의 안위 여부나 학력, 직업, 재산 등 핵심 정보에 오류가 확인될 경우...</div>
+                        <a href="#" class="news-more-lnk">기사 원문 보기</a>
+                    </div>
+                    
+                    <div class="news-card">
+                        <div class="news-card-badge">의료보건</div>
+                        <div class="news-card-title">상급종합병원이 더 우월한 병원 아니다... '상급' 명칭 개편 추진</div>
+                        <div class="news-card-desc">특히 이번 세칭안은 의료법상의 명칭 변경에 맞춰 각 병원과의 정당성을 확보하기 위해 보건복지부가 주도하여 추진단을 구성하였습니다.</div>
+                        <a href="#" class="news-more-lnk">자세히 보기</a>
+                    </div>
+
+                    <div class="news-card">
+                        <div class="news-card-badge">금융경제</div>
+                        <div class="news-card-title">신한금융 '슈퍼SOL' 공개... "다른 금융앱은 다 잊게 될 것"</div>
+                        <div class="news-card-desc">사전 배당 행사 영상 캡처 | 뉴스워치 신한금융그룹이 17일 은행, 카드, 증권, 보험 등 핵심 금융 기능을 한 데 모은 통합 앱을 출시했습니다.</div>
+                        <a href="#" class="news-more-lnk">자세히 보기</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="font-size:12px; font-weight:700; padding:10px 20px 0 20px; background:#F8FAFC; color:#475569;">오늘의 실시간 지표 요약</div>
+            <div class="market-grid">
+                <div class="market-card">
+                    <div class="lbl">USD / KRW</div>
+                    <div class="price">1,512.40</div>
+                    <div class="fluc"><i class="bi bi-caret-up-fill"></i> 1.40</div>
+                </div>
+                <div class="market-card">
+                    <div class="lbl">JPY / KRW (100엔)</div>
+                    <div class="price">943.63</div>
+                    <div class="fluc"><i class="bi bi-caret-up-fill"></i> 1.78</div>
+                </div>
+                <div class="market-card">
+                    <div class="lbl">KOSPI 종합</div>
+                    <div class="price">8,864.24</div>
+                    <div class="fluc"><i class="bi bi-caret-up-fill"></i> 137.84</div>
+                </div>
+                <div class="market-card">
+                    <div class="lbl">국내 금 (g당)</div>
+                    <div class="price">209,700</div>
+                    <div class="fluc"><i class="bi bi-caret-up-fill"></i> 80</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -380,7 +493,7 @@
         <a href="#" class="footer-link"><i class="bi bi-cpu"></i> AI 엔진 가동중</a>
     </div>
 
-    <script id="navbar-sync-script">
+    <script>
         const observer = new MutationObserver(() => {
             const src    = document.getElementById('user-display-email');
             const mobile = document.getElementById('user-display-email-mobile');
@@ -392,38 +505,30 @@
         });
     </script>
 
-    <script id="pwa-core-script">
-    (function () {
-        var ua = navigator.userAgent;
-        var isStandalone = (window.navigator.standalone === true) || window.matchMedia('(display-mode: standalone)').matches;
-        if (isStandalone) return;
-
-        var deferredPrompt = null;
-        var toggleWrap = document.getElementById('pwa-toggle-wrap');
-        var floatWrap  = document.getElementById('pwa-float-wrap');
-        var floatBtn   = document.getElementById('pwa-float-btn');
-
-        window.addEventListener('beforeinstallprompt', function (e) {
-            e.preventDefault(); deferredPrompt = e;
-            if (toggleWrap) toggleWrap.style.display = 'flex';
-            if (floatWrap) floatWrap.style.display = 'block'; 
-        });
-
-        if (floatBtn) {
-            floatBtn.addEventListener('click', function () {
-                if (!deferredPrompt) return;
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then(function (result) {
-                    if (result.outcome === 'accepted') {
-                        if (floatWrap) floatWrap.style.display = 'none';
-                    }
-                });
-            });
-        }
-    })();
+    <script>
+        window.openNewsModal = function() {
+            var modal = document.getElementById('news-portal-modal');
+            if(modal) modal.style.display = 'flex';
+        };
+        window.closeNewsModal = function() {
+            var modal = document.getElementById('news-portal-modal');
+            if(modal) modal.style.display = 'none';
+        };
     </script>
-    
-    <script id="hira-icd-core">
+
+    <script>
+        window.openIcdModal = function() {
+            var modal = document.getElementById('icd-search-modal');
+            if(modal) {
+                modal.style.display = 'flex';
+                document.getElementById('icd-input').focus();
+            }
+        };
+        window.closeIcdModal = function() {
+            var modal = document.getElementById('icd-search-modal');
+            if(modal) modal.style.display = 'none';
+        };
+        
         var icdTimeout = null;
         window.filterIcdTable = function() {
             clearTimeout(icdTimeout);
@@ -435,18 +540,21 @@
                 document.getElementById('icd-result-count').textContent = '0';
                 return;
             }
+
             tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#2563EB; padding:40px 0;"><i class="bi bi-arrow-clockwise-spin"></i> 심평원 마스터 검색 중...</td></tr>`;
 
             icdTimeout = setTimeout(async function() {
                 try {
                     const response = await fetch(`/api/search-icd?query=${encodeURIComponent(input)}`);
                     const items = await response.json();
+                    
                     tbody.innerHTML = '';
                     if (!items || items.length === 0) {
                         tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#EF4444; padding:40px 0;">검색 결과가 없습니다. 정확한 질병명이나 상병코드를 확인해 주세요.</td></tr>`;
                         document.getElementById('icd-result-count').textContent = '0';
                         return;
                     }
+
                     items.forEach(function(item) {
                         var row = `<tr>
                             <td><span class="icd-code-text">${item.sickCode || '-'}</span></td>
@@ -457,10 +565,91 @@
                     });
                     document.getElementById('icd-result-count').textContent = items.length;
                 } catch (err) {
-                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#EF4444; padding:40px 0;">전산 서버 응답 실패</td></tr>`;
+                    console.error('API 연동 장애 발생:', err);
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#EF4444; padding:40px 0;">전산 연동 서버가 응답하지 않습니다. 잠시 후 다시 시도해 주세요.</td></tr>`;
                 }
             }, 300);
         };
+    </script>
+
+    <script>
+    (function () {
+        var ua           = navigator.userAgent;
+        var isIOS        = /iphone|ipad|ipod/i.test(ua);
+        var isStandalone = (window.navigator.standalone === true)
+                        || window.matchMedia('(display-mode: standalone)').matches
+                        || window.matchMedia('(display-mode: fullscreen)').matches;
+
+        if (isStandalone) return;
+
+        var isSafariIOS = isIOS
+                       && /safari/i.test(ua)
+                       && !/crios|fxios|opios|mercury/i.test(ua);
+
+        function isDismissed(key) {
+            try {
+                var v = localStorage.getItem(key);
+                return v && Date.now() < parseInt(v, 10);
+            } catch (e) { return false; }
+        }
+        function setDismissed(key, ms) {
+            try { localStorage.setItem(key, Date.now() + ms); } catch (e) {}
+        }
+
+        if (isSafariIOS && !isDismissed('pwa-ios-dismissed')) {
+            setTimeout(function () {
+                var b = document.getElementById('pwa-ios-banner');
+                if (b) b.classList.add('show');
+            }, 2200);
+        }
+
+        var iosCloseBtn = document.getElementById('pwa-ios-close-btn');
+        if (iosCloseBtn) {
+            iosCloseBtn.addEventListener('click', function () {
+                var b = document.getElementById('pwa-ios-banner');
+                if (b) b.classList.remove('show');
+                setDismissed('pwa-ios-dismissed', 86400000);
+            });
+        }
+
+        var deferredPrompt = null;
+        var toggleWrap     = document.getElementById('pwa-toggle-wrap');
+        var toggleBtn      = document.getElementById('pwa-toggle-btn');
+        var floatWrap      = document.getElementById('pwa-float-wrap');
+        var floatBtn       = document.getElementById('pwa-float-btn');
+
+        window.addEventListener('beforeinstallprompt', function (e) {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            if (toggleWrap) toggleWrap.style.display = 'flex';
+            if (floatWrap) floatWrap.style.display = 'block'; 
+        });
+
+        if (floatBtn) {
+            floatBtn.addEventListener('click', function () {
+                if (!deferredPrompt) {
+                    alert('앱 설치가 불가능한 브라우저 환경이거나 이미 설치가 완료된 기기입니다.');
+                    return;
+                }
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(function (result) {
+                    if (result.outcome === 'accepted') {
+                        if (floatWrap) floatWrap.style.display = 'none';
+                        if (toggleWrap) toggleWrap.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('./sw.js?v=20260617', { scope: './' })
+                    .then(function (reg) { reg.update(); })
+                    .catch(function (err) { console.error('[SW] 등록 실패:', err); });
+            });
+        }
+    })();
     </script>
 </body>
 </html>
