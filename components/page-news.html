@@ -1,260 +1,223 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>오늘의 뉴스 - 보험가온포탈</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Noto Sans KR', sans-serif; }
-        body { background: #F1F5F9; color: #1E293B; padding-bottom: 6px; }
+/**
+ * news.js - 보험가온포탈 통합 뉴스 가동 엔진
+ * index.html 내장 전산 뷰 테두리 및 탭, 지표들을 실시간으로 정밀 결합 처리합니다.
+ */
 
-        /* 상단 헤더 바 */
-        .news-header-bar {
-            background: white; padding: 16px 24px; display: flex; align-items: center; 
-            justify-content: space-between; border-bottom: 1px solid #E2E8F0; position: sticky; top: 0; z-index: 100;
+const NewsWidget = (() => {
+  const clean = (str = '') =>
+    str.replace(/<b>/g, '').replace(/<\/b>/g, '')
+       .replace(/&quot;/g, '"').replace(/&amp;/g, '&')
+       .replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+
+  const fmtDate = (str) => {
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? '' : d.toLocaleString('ko-KR', {
+      month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+    });
+  };
+
+  const weatherEmoji = (desc = '') =>
+    desc.includes('맑') ? '☀️' : desc.includes('구름') || desc.includes('흐림') ? '☁️' :
+    desc.includes('비') ? '🌧️' : desc.includes('눈') ? '❄️' : '☀️';
+
+  const api = {
+    news: async (query, display = 10) => {
+      try {
+        const r = await fetch(`/api/naver-news?query=${encodeURIComponent(query)}&display=${display}`, { cache: 'no-store' });
+        const j = await r.json(); return j.items || [];
+      } catch { return []; }
+    },
+    exchange: async () => {
+      try {
+        const r = await fetch('/api/naver-exchange', { cache: 'no-store' });
+        const j = await r.json(); return j.items || [];
+      } catch { return []; }
+    },
+    market: async () => {
+      try {
+        const r = await fetch('/api/market', { cache: 'no-store' });
+        const j = await r.json(); return j.items || [];
+      } catch { return []; }
+    },
+    weather: async (region) => {
+      try {
+        const r = await fetch(`/api/weather?region=${region}`, { cache: 'no-store' });
+        return await r.json();
+      } catch { return { error: true, region, temp: 23, description: '맑음' }; }
+    }
+  };
+
+  // 실시간 데이터 파이프라인 출력 처리
+  const renderAllComponents = async (categoryKeyword = '전체 뉴스') => {
+    let query = "보험 금융 경제";
+    if (categoryKeyword !== '전체 뉴스' && categoryKeyword !== '전체') {
+        query = categoryKeyword;
+    }
+
+    const loaderTarget = document.getElementById('news-live-feed-target-container');
+    if(loaderTarget) loaderTarget.innerHTML = `<div style="text-align:center;padding:40px 0;color:#3182F6;"><i class="bi bi-arrow-clockwise-spin"></i> 로딩 중...</div>`;
+
+    // 병렬 데이터 패치 가동
+    const [newsItems, fxItems, mktItems] = await Promise.all([
+        api.news(query, 8),
+        api.exchange(),
+        api.market()
+    ]);
+
+    // 1. 좌측 MORNING NEWS 지면 매핑
+    const paperHeadline = document.getElementById('paper-main-headline-body');
+    if (paperHeadline && newsItems.length > 0) {
+        paperHeadline.innerHTML = `
+            <strong>"${clean(newsItems[0].title)}"</strong>
+            <span style="font-size:11px;color:#8B95A1;display:block;margin-bottom:8px;">발행처: 네이버 뉴스 &middot; 스크랩: ${fmtDate(newsItems[0].pubDate)}</span>
+            ${clean(newsItems[0].description)}
+        `;
+    }
+
+    // 2. 신문 상단 미니 지표 전산 연동
+    const miniIndexBox = document.getElementById('paper-mini-index-box');
+    if (miniIndexBox) {
+        const usd = fxItems.find(i => i.label === 'USD') || { value: 1514.60, change: 5.20, direction: 'down' };
+        const kospi = mktItems.find(i => i.label === '코스피') || { value: 8545.98, change: 422.36, direction: 'up' };
+        const kosdaq = mktItems.find(i => i.label === '코스닥') || { value: 1034.03, change: 14.98, direction: 'up' };
+
+        miniIndexBox.innerHTML = `
+            <a href="https://m.stock.naver.com/marketindex/exchange/FX_USDKRW" target="_blank" class="p-idx-link">
+                <div class="p-idx-item">
+                    <div class="t">USD / KRW</div>
+                    <div class="v">${Number(usd.value).toFixed(2)}</div>
+                    <div class="c ${usd.direction}">${usd.direction === 'up' ? '▲' : '▼'} ${Math.abs(usd.change).toFixed(2)}</div>
+                </div>
+            </a>
+            <a href="https://m.stock.naver.com/domestic/index/KOSPI/total" target="_blank" class="p-idx-link" style="border-left:1px solid #334155; border-right:1px solid #334155;">
+                <div class="p-idx-item">
+                    <div class="t">KOSPI</div>
+                    <div class="v">${Number(kospi.value).toLocaleString('ko-KR', {maximumFractionDigits:2})}</div>
+                    <div class="c ${kospi.direction}">${kospi.direction === 'up' ? '▲' : '▼'} ${Math.abs(kospi.change).toFixed(2)}</div>
+                </div>
+            </a>
+            <a href="https://m.stock.naver.com/domestic/index/KOSDAQ/total" target="_blank" class="p-idx-link">
+                <div class="p-idx-item">
+                    <div class="t">KOSDAQ</div>
+                    <div class="v">${Number(kosdaq.value).toLocaleString('ko-KR', {maximumFractionDigits:2})}</div>
+                    <div class="c ${kosdaq.direction}">${kosdaq.direction === 'up' ? '▲' : '▼'} ${Math.abs(kosdaq.change).toFixed(2)}</div>
+                </div>
+            </a>
+        `;
+    }
+
+    // 3. 우측 실시간 카드 속보 피드 매핑 가동
+    if (loaderTarget) {
+        loaderTarget.innerHTML = '';
+        if (newsItems.length <= 1) {
+            loaderTarget.innerHTML = `<div style="text-align:center;padding:30px;color:#8B95A1;">표시할 라이브 뉴스가 없습니다.</div>`;
+        } else {
+            const restFeed = newsItems.slice(1, 5);
+            restFeed.forEach((item, idx) => {
+                const isTop = idx === 0;
+                const html = `
+                    <div class="feed-card" ${isTop ? 'style="border-left: 4px solid #FF4D52;"' : ''}>
+                        <span class="feed-badge ${isTop ? 'alert-type' : ''}">${isTop ? '주요속보' : '속보'}</span>
+                        <span style="font-size:11px;color:#8B95A1;float:right;font-weight:500;">${fmtDate(item.pubDate)}</span>
+                        <h3 class="feed-title">${clean(item.title)}</h3>
+                        <p class="feed-desc">${clean(item.description)}</p>
+                        <a href="${item.link || item.originallink}" target="_blank" rel="noopener noreferrer" class="feed-link">기사 원문 보기 <i class="bi bi-chevron-right"></i></a>
+                    </div>`;
+                loaderTarget.insertAdjacentHTML('beforeend', html);
+            });
         }
-        .header-title { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: #1E293B; }
-        .header-title span { font-size: 12px; font-weight: 500; color: #64748B; background: #F1F5F9; padding: 3px 8px; border-radius: 4px; }
-        .btn-back-home { background: #F1F5F9; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; color: #475569; display: flex; align-items: center; gap: 6px; transition: background 0.2s; text-decoration: none; }
-        .btn-back-home:hover { background: #E2E8F0; }
+    }
 
-        /* 메인 wrapper */
-        .main-wrapper { max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+    // 4. 하단 실시간 종합 전산 금융판 매핑 가동
+    const bottomGrid = document.getElementById('news-bottom-market-grid');
+    if (bottomGrid) {
+        const usd = fxItems.find(i => i.label === 'USD') || { value: 1512.40, change: 1.40, direction: 'up' };
+        const jpy = fxItems.find(i => i.label === 'JPY') || { value: 943.63, change: 1.78, direction: 'up' };
+        const kospi = mktItems.find(i => i.label === '코스피') || { value: 8864.24, change: 137.84, direction: 'up' };
+        const gold = mktItems.find(i => i.label === '국내 금 (원/g)') || { value: 209700, change: 80, direction: 'up' };
 
-        /* 날씨 띠 배너 */
-        .weather-strip {
-            display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px;
-            white-space: nowrap; -ms-overflow-style: none; scrollbar-width: none;
-        }
-        .weather-strip::-webkit-scrollbar { display: none; }
-        .weather-pill { background: white; border: 1px solid #E2E8F0; padding: 8px 16px; border-radius: 30px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-
-        /* 검색바 및 카테고리 태그 탭 */
-        .search-area-box { background: white; padding: 20px; border-radius: 14px; border: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 14px; }
-        .search-input-wrap { position: relative; }
-        .search-input-wrap i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94A3B8; }
-        .search-bar { width: 100%; padding: 12px 16px 12px 45px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 14px; outline: none; }
-        .search-bar:focus { border-color: #2563EB; }
-        
-        .tag-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
-        .tag-btn { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; color: #64748B; cursor: pointer; transition: all 0.2s; }
-        .tag-btn.active, .tag-btn:hover { background: #1E293B; color: white; border-color: #1E293B; }
-
-        /* 뉴스 그리드 레이아웃 */
-        .news-grid-body { display: flex; gap: 24px; flex-wrap: wrap; }
-        .paper-section { flex: 1.1; min-width: 340px; background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
-        .feed-section { flex: 1.4; min-width: 360px; display: flex; flex-direction: column; gap: 16px; }
-
-        /* 신문 지면 디자인 */
-        .paper-header { text-align: center; border-bottom: 2px solid #1E293B; padding-bottom: 12px; margin-bottom: 20px; }
-        .paper-brand { font-size: 12px; font-weight: 700; color: #10B981; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 4px; }
-        .paper-title { font-size: 32px; font-weight: 900; color: #1E293B; margin: 4px 0; font-family: 'Times New Roman', serif; }
-        .paper-date { font-size: 12px; color: #64748B; text-align: right; font-weight: 500; }
-        
-        /* 경제지표 상단 박스 (클릭 링크형 변경) */
-        .paper-top-index { background: linear-gradient(135deg, #0F172A, #1E293B); color: white; padding: 14px; border-radius: 10px; display: flex; justify-content: space-between; margin-bottom: 20px; text-align: center; }
-        .p-idx-link { flex: 1; text-decoration: none; color: white; transition: background 0.2s; border-radius: 6px; padding: 4px 0; }
-        .p-idx-link:hover { background: rgba(255,255,255,0.08); }
-        .p-idx-item .t { font-size: 10px; color: #94A3B8; font-weight: 500; }
-        .p-idx-item .v { font-size: 16px; font-weight: 700; margin: 2px 0; }
-        .p-idx-item .c { font-size: 11px; font-weight: 600; }
-        .p-idx-item .c.up, .p-idx-item .c.상승 { color: #F87171; }
-        .p-idx-item .c.down, .p-idx-item .c.하락 { color: #60A5FA; }
-
-        .paper-body-text { font-size: 14px; line-height: 1.7; color: #334155; text-align: justify; margin-bottom: 20px; border-bottom: 1px dashed #E2E8F0; padding-bottom: 20px; }
-        .paper-body-text strong { font-size: 15px; color: #1E293B; display: block; margin-bottom: 6px; }
-
-        .paper-footer-widgets { display: flex; gap: 12px; }
-        .widget-card { flex: 1; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 8px; }
-        .widget-card .w-title { font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px; text-align: center; }
-        .widget-card .w-content { font-size: 15px; font-weight: 700; text-align: center; color: #1E293B; }
-
-        /* 우측 피드 섹션 */
-        .section-header-title { font-size: 16px; font-weight: 700; color: #1E293B; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .btn-refresh { background: #white; border: 1px solid #E2E8F0; padding: 5px 12px; border-radius: 6px; color: #64748B; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: background 0.2s; }
-        .btn-refresh:hover { background: #F1F5F9; }
-
-        .feed-card { background: white; border-radius: 14px; padding: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px rgba(0,0,0,0.01); }
-        .feed-badge { font-size: 11px; font-weight: 700; color: #2563EB; background: #EFF6FF; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-bottom: 10px; }
-        .feed-badge.alert-type { background: #FEF2F2; color: #EF4444; }
-        .feed-title { font-size: 16px; font-weight: 700; color: #1E293B; line-height: 1.4; margin-bottom: 8px; }
-        .feed-desc { font-size: 13.5px; color: #475569; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .feed-link { font-size: 12px; color: #2563EB; font-weight: 600; text-decoration: none; display: inline-block; margin-top: 12px; }
-
-        /* 하단 종합 전산판 그리드 (클릭형 링크 변경) */
-        .indicator-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
-        .ind-card-link { text-decoration: none; display: block; }
-        .ind-card { background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.01); transition: transform 0.2s, box-shadow 0.2s; }
-        .ind-card-link:hover .ind-card { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.05); border-color: #CBD5E1; }
-        .ind-card .lbl { font-size: 12px; color: #64748B; font-weight: 500; }
-        .ind-card .price { font-size: 18px; font-weight: 700; color: #1E293B; margin: 6px 0; }
-        .ind-card .state { font-size: 12px; font-weight: 600; color: #EF4444; display: flex; align-items: center; gap: 4px; }
-        .ind-card .state.down, .ind-card .state.하락 { color: #2563EB; }
-    </style>
-</head>
-<body>
-
-    <div class="news-header-bar">
-        <div class="header-title">
-            <i class="bi bi-newspaper" style="color: #2563EB;"></i> 오늘의 뉴스 <span>포탈 스크랩</span>
-        </div>
-        <a href="./index.html" class="btn-back-home">
-            <i class="bi bi-arrow-left"></i> 가온포탈 메인으로
-        </a>
-    </div>
-
-    <div class="main-wrapper">
-        
-        <div class="weather-strip">
-            <div class="weather-pill">서울 <i class="bi bi-cloud-arrow-down"></i> 로딩 중...</div>
-        </div>
-
-        <div class="search-area-box">
-            <div class="search-input-wrap">
-                <i class="bi bi-search"></i>
-                <input type="text" class="search-bar" placeholder="뉴스 키워드, 보험 트렌드를 검색한 후 엔터를 누르세요">
-            </div>
-            <div class="tag-wrap">
-                <button class="tag-btn active">전체 뉴스</button>
-                <button class="tag-btn">보험정보</button>
-                <button class="tag-btn">금융경제</button>
-                <button class="tag-btn">손해생보</button>
-                <button class="tag-btn">금감원 공시</button>
-            </div>
-        </div>
-
-        <div class="news-grid-body">
-            
-            <div class="paper-section">
-                <div class="paper-header">
-                    <div class="paper-brand"><i class="bi bi-tree-fill"></i> INSURANCE TREE</div>
-                    <div class="paper-title">MORNING NEWS</div>
-                    <div class="paper-date">2026년 6월 17일 (수)</div>
-                </div>
-
-                <div class="paper-top-index">
-                    <a href="https://m.stock.naver.com/marketindex/exchange/FX_USDKRW" target="_blank" class="p-idx-link">
-                        <div class="p-idx-item">
-                            <div class="t">USD / KRW</div>
-                            <div class="v" id="paper-usd-val">1,514.60</div>
-                            <div class="c down" id="paper-usd-chg"><i class="bi bi-caret-down-fill"></i> 5.20</div>
-                        </div>
-                    </a>
-                    <a href="https://m.stock.naver.com/domestic/index/KOSPI/total" target="_blank" class="p-idx-link" style="border-left:1px solid #334155; border-right:1px solid #334155;">
-                        <div class="p-idx-item">
-                            <div class="t">KOSPI</div>
-                            <div class="v" id="paper-kospi-val">8,545.98</div>
-                            <div class="c up" id="paper-kospi-chg"><i class="bi bi-caret-up-fill"></i> 422.36</div>
-                        </div>
-                    </a>
-                    <a href="https://m.stock.naver.com/domestic/index/KOSDAQ/total" target="_blank" class="p-idx-link">
-                        <div class="p-idx-item">
-                            <div class="t">KOSDAQ</div>
-                            <div class="v" id="paper-kosdaq-val">1,034.03</div>
-                            <div class="c up" id="paper-kosdaq-chg"><i class="bi bi-caret-up-fill"></i> 14.98</div>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="paper-body-text">
-                    <div style="text-align:center; padding:30px 0; color:#94A3B8;"><i class="bi bi-arrow-clockwise"></i> 헤드라인 스크랩 분석 중...</div>
-                </div>
-
-                <div class="paper-footer-widgets">
-                    <div class="widget-card">
-                        <span class="w-title">오늘의 날씨</span>
-                        <div class="w-content" id="paper-weather-txt">22° ☀️</div>
-                    </div>
-                    <div class="widget-card" style="flex: 1.6;">
-                        <span class="w-title">오늘의 명언</span>
-                        <div class="w-content" style="font-size:11px; color:#475569; font-weight:500; text-align:justify; line-height:1.4;">
-                            스스로 생각하는 능력이 모자라면 유능한 스승의 제자가 되어봤자 자격미달이다. - 에피카르모스
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="feed-section">
-                <div class="section-header-title">
-                    최신 속보 피드 
-                    <button class="btn-refresh" id="manual-refresh-news-btn"><i class="bi bi-arrow-clockwise"></i> 실시간 뉴스 새로고침</button>
-                </div>
-                <div style="padding:5px 0;" id="live-feed-loader-box">
-                    </div>
-            </div>
-
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; margin-bottom:5px;">
-            <div style="font-size: 15px; font-weight: 700; color: #1E293B;">오늘의 시장 지표 (네이버 증권 실시간 연동)</div>
-            <button class="btn-refresh" id="manual-refresh-market-btn"><i class="bi bi-arrow-clockwise"></i> 금융지표 새로고침</button>
-        </div>
-        
-        <div class="indicator-grid">
+        bottomGrid.innerHTML = `
             <a href="https://m.stock.naver.com/marketindex/exchange/FX_USDKRW" target="_blank" class="ind-card-link">
                 <div class="ind-card">
                     <div class="lbl">USD / KRW (원/달러 환율)</div>
-                    <div class="price" id="m-usd-price">1,512.40</div>
-                    <div class="state" id="m-usd-state"><i class="bi bi-caret-up-fill"></i> 1.40 (상승)</div>
+                    <div class="price">${Number(usd.value).toFixed(2)}</div>
+                    <div class="state ${usd.direction}">${usd.direction === 'up' ? '▲' : '▼'} ${Math.abs(usd.change).toFixed(2)} (${usd.direction === 'up' ? '상승' : '하락'})</div>
                 </div>
             </a>
-            
             <a href="https://m.stock.naver.com/marketindex/exchange/FX_JPYKRW" target="_blank" class="ind-card-link">
                 <div class="ind-card">
                     <div class="lbl">JPY / KRW (100엔 환율)</div>
-                    <div class="price" id="m-jpy-price">943.63</div>
-                    <div class="state" id="m-jpy-state"><i class="bi bi-caret-up-fill"></i> 1.78 (상승)</div>
+                    <div class="price">${Number(jpy.value).toFixed(2)}</div>
+                    <div class="state ${jpy.direction}">${jpy.direction === 'up' ? '▲' : '▼'} ${Math.abs(jpy.change).toFixed(2)} (${jpy.direction === 'up' ? '상승' : '하락'})</div>
                 </div>
             </a>
-            
             <a href="https://m.stock.naver.com/domestic/index/KOSPI/total" target="_blank" class="ind-card-link">
                 <div class="ind-card">
                     <div class="lbl">KOSPI 종합지수</div>
-                    <div class="price" id="m-kospi-price">8,864.24</div>
-                    <div class="state" id="m-kospi-state"><i class="bi bi-caret-up-fill"></i> 137.84 (상승)</div>
+                    <div class="price">${Number(kospi.value).toLocaleString('ko-KR', {maximumFractionDigits:2})}</div>
+                    <div class="state ${kospi.direction}">${kospi.direction === 'up' ? '▲' : '▼'} ${Math.abs(kospi.change).toFixed(2)} (${kospi.direction === 'up' ? '상승' : '하락'})</div>
                 </div>
             </a>
-            
             <a href="https://m.stock.naver.com/marketindex/metals/M04020000" target="_blank" class="ind-card-link">
                 <div class="ind-card">
                     <div class="lbl">국내 금시세 (g당)</div>
-                    <div class="price" id="m-gold-price">209,700</div>
-                    <div class="state" id="m-gold-state"><i class="bi bi-caret-up-fill"></i> 80 (상승)</div>
+                    <div class="price">${Number(gold.value).toLocaleString('ko-KR', {maximumFractionDigits:0})}</div>
+                    <div class="state ${gold.direction}">${gold.direction === 'up' ? '▲' : '▼'} ${Math.abs(gold.change).toLocaleString('ko-KR', {maximumFractionDigits:0})} (${gold.direction === 'up' ? '상승' : '하락'})</div>
                 </div>
             </a>
-        </div>
+        `;
+    }
+  };
 
-    </div>
+  const init = async () => {
+    // 1. 전국 주요 도시 실시간 기상청 스크롤 바인딩
+    const regions = ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '제주'];
+    Promise.all(regions.map(r => api.weather(r))).then(results => {
+        const el = document.getElementById('news-weather-strip-line');
+        if (el) {
+            el.innerHTML = results.filter(r => !r.error).map(w => `
+                <div class="weather-pill">${w.region} ${weatherEmoji(w.description)} <span style="font-weight:700;">${w.temp || 23}°</span></div>
+            `).join('');
+        }
+        // 신문지면 미니 날씨 위젯 연동
+        const paperWeather = document.getElementById('paper-weather-widget-val');
+        if(paperWeather && results.length > 0) paperWeather.textContent = `${results[0].temp || 23}° ${weatherEmoji(results[0].description)}`;
+    });
 
-    <script src="js/news.js"></script>
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            // 외부 news.js 모듈 엔진 가동 및 리스너 위임 통합
-            if (typeof NewsWidget !== 'undefined') {
-                NewsWidget.init();
-            }
-            
-            // 수동 새로고침 버튼에 대한 상호 연동 장치 추가 바인딩
-            const refreshNews = document.getElementById('manual-refresh-news-btn');
-            const refreshMarket = document.getElementById('manual-refresh-market-btn');
-            
-            if (refreshNews) {
-                refreshNews.addEventListener('click', () => {
-                    const activeTab = document.querySelector('.tag-wrap .tag-btn.active')?.textContent || '전체 뉴스';
-                    if(typeof NewsWidget !== 'undefined') NewsWidget.init();
-                });
-            }
-            if (refreshMarket) {
-                refreshMarket.addEventListener('click', () => {
-                    if(typeof NewsWidget !== 'undefined') NewsWidget.init();
-                });
+    // 2. 검색 인풋 및 메뉴 태그 탭 전산 결합 활성화
+    const tagButtons = document.querySelectorAll('#news-tag-btn-group .tag-btn');
+    const searchInput = document.getElementById('news-inner-search-input');
+
+    tagButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tagButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (searchInput) searchInput.value = '';
+            renderAllComponents(btn.textContent);
+        });
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const val = searchInput.value.trim();
+                if (val.length > 0) renderAllComponents(val);
             }
         });
-    </script>
-</body>
-</html>
+    }
+
+    // 3. 수동 새로고침 버튼 위임 연동
+    const manualRefreshBtn = document.getElementById('news-feed-manual-refresh-btn');
+    if(manualRefreshBtn) {
+        manualRefreshBtn.addEventListener('click', () => {
+            const activeText = document.querySelector('#news-tag-btn-group .tag-btn.active')?.textContent || '전체 뉴스';
+            renderAllComponents(activeText);
+        });
+    }
+
+    // 메인 오케스트레이션 1회차 호출 개시
+    await renderAllComponents('전체 뉴스');
+  };
+
+  return { init };
+})();
