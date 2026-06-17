@@ -377,6 +377,65 @@
         <a href="#" class="footer-link"><i class="bi bi-cpu"></i> AI 엔진 가동중</a>
     </div>
 
+    <div id="portal-global-modal" class="portal-modal" onclick="window.closePortalModal()">
+        <div class="modal-body" onclick="event.stopPropagation()">
+            <h3 style="font-size:18px; font-weight:700; margin-bottom:15px;" id="modal-title-area">종합 정보 열람</h3>
+            <div id="portal-modal-content-area" class="modal-text-view"></div>
+            <div style="display:flex; gap:10px;" id="modal-action-btn-layout"></div>
+        </div>
+    </div>
+
+    <div id="help-modal" class="portal-modal" onclick="document.getElementById('help-modal').style.display='none'">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+        </div>
+        <div class="modal-body" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <h3 style="font-size:18px; font-weight:700;"><i class="bi bi-question-circle-fill" style="color:var(--main-blue);"></i> 도움말</h3>
+                <button onclick="document.getElementById('help-modal').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted);">&times;</button>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">고객 정보 입력 시 붙여넣기 양식</p>
+            <textarea id="help-template-text" class="form-control" style="height:350px; font-size:13px; line-height:1.6; resize:none; background:#F8FAFC;" readonly>보험료 산출을 위한 개인정보
+1. 성명 :  
+2. 주민번호 : 
+3. 휴대폰번호 : 
+4. 주소 : 
+5. 직업(회사명) : 
+6. 5년간의 병원치료내용
+-병력고지-
+3개월 이내 의료 행위를 받은적이 있습니까 ?
+1년 이내 마약, 정신과 질환 약물을 복용한 사실이 있습니까 ? 
+최근 1년 기존 병력에 대한 추가 검사를 받은 사실이 있습니까? 
+최근 5년 입원, 수술, 7일이상치료, 30일이상 투약 한 사실이 있습니까?
+최근 5년 아래 질병으로 진단 받은적 있습니까?
+-암, 백혈병, 고혈압, 협심증, 심근경색, 심장판막증, 간경화증, 뇌졸중증(뇌출혈, 뇌경색), 당뇨, 에이즈, 항문 관련 질환 
+7. 운전여부 :</textarea>
+            <button class="btn-action" style="margin-top:15px;" onclick="window.copyHelpTemplate()"><i class="bi bi-clipboard-check"></i> 양식 복사하기</button>
+        </div>
+    </div>
+
+    <div id="notice-modal" class="portal-modal" style="z-index: 3000;">
+        <div class="modal-body" style="max-width: 400px; padding: 25px;" onclick="event.stopPropagation()">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 2px solid var(--main-blue); padding-bottom:10px;">
+                <h3 style="font-size:18px; font-weight:700; color:var(--text-dark); margin:0;"><i class="bi bi-megaphone-fill" style="color:var(--main-blue);"></i> 보험가온포탈 공지사항</h3>
+            </div>
+            <div class="modal-text-view" style="max-height: 1000px; background:#fff; border:none; padding:0; margin-bottom:15px; font-size:14px; color:#334155; line-height:1.6;">
+<b>[업데이트 안내]</b><br>
+- 5세대 실비 계산기가 추가되었습니다.<br>
+- 자료 폴더가 신설 되었습니다.<br>
+- 가온사업단 오피스가 추가되었습니다. &lt;비밀번호 문의&gt;<br><br>
+           추가 건의사항은 언제든 문의주세요. 
+                   오늘도 화이팅입니다! 😊
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#F8FAFC; padding:10px 15px; border-radius:8px; border:1px solid #E2E8F0;">
+                <label style="font-size:13px; color:var(--text-muted); display:flex; align-items:center; gap:6px; cursor:pointer; margin:0;">
+                    <input type="checkbox" id="hide-notice-chk" style="width:16px; height:16px; cursor:pointer;">
+                    하루 동안 보지 않기
+                </label>
+                <button class="btn-action" style="width:auto; padding:6px 16px; font-size:13px; background:#64748B;" onclick="window.closeNotice()">닫기</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/news.js"></script>
     <script>
         // 1. 단독 컴포넌트식 화면 전환 로직 (토스 앱 레이아웃 규격)
