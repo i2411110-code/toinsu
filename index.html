@@ -78,38 +78,21 @@
             width: 32px;
             height: 18px;
         }
-        .pwa-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+        .pwa-switch input { opacity: 0; width: 0; height: 0; }
         .pwa-slider {
-            position: absolute;
-            cursor: pointer;
+            position: absolute; cursor: pointer;
             top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #CBD5E1;
-            transition: .3s;
-            border-radius: 18px;
+            background-color: #CBD5E1; transition: .3s; border-radius: 18px;
         }
         .pwa-slider:before {
-            position: absolute;
-            content: "";
-            height: 12px;
-            width: 12px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
+            position: absolute; content: "";
+            height: 12px; width: 12px; left: 3px; bottom: 3px;
+            background-color: white; transition: .3s; border-radius: 50%;
         }
-        .pwa-switch input:checked + .pwa-slider {
-            background-color: #2563EB;
-        }
-        .pwa-switch input:checked + .pwa-slider:before {
-            transform: translateX(14px);
-        }
+        .pwa-switch input:checked + .pwa-slider { background-color: #2563EB; }
+        .pwa-switch input:checked + .pwa-slider:before { transform: translateX(14px); }
 
-        /* ── 플로팅 버튼 구조 고도화 CSS ── */
+        /* ── 플로팅 버튼 및 호버 확장 구조 ── */
         .float-btn-container {
             position: relative;
             display: inline-block;
@@ -176,90 +159,66 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             transition: transform 0.2s;
         }
-        .sub-float-btn:hover {
-            transform: scale(1.1);
-        }
+        .sub-float-btn:hover { transform: scale(1.1); }
         .btn-pwa-download { background: #2563EB !important; color: white !important; }
         .btn-icd-search { background: #00D4B2 !important; color: white !important; }
+        
+        /* ✅ 신규 추가: 오늘의 뉴스 버튼 색상 스타일 (노란색) */
+        .btn-news-open { background: #FACC15 !important; color: #1E293B !important; }
 
         /* ── 상병코드 검색 모달 스타일 ── */
         .icd-modal-header {
-            background: #1E293B;
-            color: white;
-            padding: 16px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-radius: 12px 12px 0 0;
+            background: #1E293B; color: white; padding: 16px 20px;
+            display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0;
         }
-        .icd-search-box {
-            position: relative;
-            margin: 20px;
-        }
-        .icd-search-box i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #94A3B8;
-            font-size: 16px;
-        }
+        .icd-search-box { position: relative; margin: 20px; }
+        .icd-search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94A3B8; font-size: 16px; }
         .icd-search-input {
-            width: 100%;
-            padding: 12px 12px 12px 45px;
-            border: 1px solid #E2E8F0;
-            border-radius: 50px;
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s;
-            box-sizing: border-box;
+            width: 100%; padding: 12px 12px 12px 45px; border: 1px solid #E2E8F0;
+            border-radius: 50px; font-size: 14px; outline: none; box-sizing: border-box;
         }
-        .icd-search-input:focus {
-            border-color: #2563EB;
-        }
-        .icd-meta-info {
-            padding: 0 24px;
-            font-size: 13px;
-            color: #64748B;
-            margin-bottom: 15px;
-        }
-        .icd-table-container {
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 0 20px;
-        }
-        .icd-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            text-align: left;
-        }
-        .icd-table th {
-            color: #64748B;
-            font-weight: 500;
-            padding: 12px 8px;
-            border-bottom: 1px solid #E2E8F0;
-            position: sticky;
-            top: 0;
-            background: white;
-        }
-        .icd-table td {
-            padding: 14px 8px;
-            border-bottom: 1px solid #F1F5F9;
-            vertical-align: middle;
-        }
-        .icd-code-text {
-            color: #2563EB;
-            font-weight: 700;
-        }
-        .icd-footer-notice {
-            padding: 15px 24px;
-            font-size: 11px;
-            color: #94A3B8;
-            border-top: 1px solid #F1F5F9;
-            margin-top: 15px;
-            line-height: 1.5;
-        }
+        .icd-meta-info { padding: 0 24px; font-size: 13px; color: #64748B; margin-bottom: 15px; }
+        .icd-table-container { max-height: 400px; overflow-y: auto; padding: 0 20px; }
+        .icd-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        .icd-table th { color: #64748B; font-weight: 500; padding: 12px 8px; border-bottom: 1px solid #E2E8F0; position: sticky; top: 0; background: white; }
+        .icd-table td { padding: 14px 8px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+        .icd-code-text { color: #2563EB; font-weight: 700; }
+        .icd-footer-notice { padding: 15px 24px; font-size: 11px; color: #94A3B8; border-top: 1px solid #F1F5F9; margin-top: 15px; line-height: 1.5; }
+
+        /* ── ✅ 신규 추가: 캡처 이미지 기반 오늘의 뉴스 내부 레이아웃 CSS ── */
+        .news-container { display: flex; gap: 24px; padding: 20px; flex-wrap: wrap; background: #F8FAFC; }
+        .news-left-paper { flex: 1.2; min-width: 320px; background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .news-right-feed { flex: 1.5; min-width: 350px; display: flex; flex-direction: column; gap: 16px; }
+        
+        /* 모닝뉴스 신문 양식 헤더 */
+        .paper-header { text-align: center; border-bottom: 2px solid #1E293B; padding-bottom: 10px; margin-bottom: 15px; }
+        .paper-brand { font-size: 12px; font-weight: 700; color: #64748B; letter-spacing: 1px; }
+        .paper-title { font-size: 28px; font-weight: 900; color: #1E293B; margin: 4px 0; font-family: serif; }
+        .paper-date { font-size: 12px; color: #475569; text-align: right; }
+        
+        /* 신문 경제 지표 파트 */
+        .paper-index-box { background: linear-gradient(135deg, #0F172A, #1E293B); color: white; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; margin-bottom: 15px; text-align: center; }
+        .index-item { flex: 1; }
+        .index-item .title { font-size: 10px; color: #94A3B8; }
+        .index-item .val { font-size: 15px; font-weight: 700; margin: 2px 0; }
+        .index-item .change { font-size: 11px; color: #EF4444; }
+        .index-item .change.up { color: #F87171; }
+        .index-item .change.down { color: #60A5FA; }
+
+        /* 최신뉴스 카드 양식 */
+        .news-card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .news-card-badge { font-size: 11px; font-weight: 700; color: #2563EB; background: #EFF6FF; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
+        .news-card-title { font-size: 15px; font-weight: 700; color: #1E293B; line-height: 1.4; margin-bottom: 6px; }
+        .news-card-desc { font-size: 13px; color: #64748B; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .news-more-lnk { font-size: 12px; color: #2563EB; font-weight: 500; text-decoration: none; display: inline-block; margin-top: 10px; }
+
+        /* 하단 종합 환율판 그리드 */
+        .market-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 11fr)); gap: 12px; padding: 0 20px 20px 20px; background: #F8FAFC; }
+        .market-card { background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px; }
+        .market-card .lbl { font-size: 11px; color: #64748B; font-weight: 500; }
+        .market-card .price { font-size: 16px; font-weight: 700; color: #1E293B; margin: 4px 0; }
+        .market-card .fluc { font-size: 11px; font-weight: 600; color: #EF4444; }
+        .market-card .fluc.down { color: #2563EB; }
     </style>
 </head>
 <body>
@@ -338,6 +297,9 @@
     <div class="floating-contact-wrap" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
         <div class="pwa-menu-wrapper">
             <div class="pwa-sub-menu">
+                <div class="float-btn-container" data-tooltip="오늘의 뉴스">
+                    <button class="sub-float-btn btn-news-open" onclick="window.openNewsModal()"><i class="bi bi-newspaper"></i></button>
+                </div>
                 <div class="float-btn-container" data-tooltip="상병 검색 (신규)">
                     <button class="sub-float-btn btn-icd-search" onclick="window.openIcdModal()"><i class="bi bi-search"></i></button>
                 </div>
@@ -354,6 +316,108 @@
         </div>
         <div class="float-btn-container" data-tooltip="인스타그램">
             <a href="https://www.instagram.com/insu_coco?igsh=OWhuc2VlYWs4M3Zi" target="_blank" class="float-btn float-instagram"><i class="bi bi-instagram"></i></a>
+        </div>
+    </div>
+
+    <div id="news-portal-modal" class="portal-modal" style="z-index: 5000; display: none;" onclick="window.closeNewsModal()">
+        <div class="modal-body" style="max-width: 1050px; width: 95%; padding: 0; background: white; border-radius: 16px; overflow: hidden;" onclick="event.stopPropagation()">
+            <div class="icd-modal-header" style="background: #2563EB;">
+                <div style="display:flex; align-items:center; gap:8px; font-size:16px; font-weight:700;">
+                    <i class="bi bi-newspaper"></i> 오늘의 뉴스 통합 전산망
+                </div>
+                <button onclick="window.closeNewsModal()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            
+            <div class="news-container">
+                <div class="news-left-paper">
+                    <div class="paper-header">
+                        <div class="paper-brand"><i class="bi bi-tree-fill" style="color:#10B981;"></i> INSURANCE TREE</div>
+                        <div class="paper-title">MORNING NEWS</div>
+                        <div class="paper-date">2026년 6월 17일 (수)</div>
+                    </div>
+                    
+                    <div class="paper-index-box">
+                        <div class="index-item">
+                            <div class="title">USD/KRW</div>
+                            <div class="val">1,514.60</div>
+                            <div class="change down"><i class="bi bi-caret-down-fill"></i> 5.20 (0.34%)</div>
+                        </div>
+                        <div class="index-item" style="border-left: 1px solid #334155; border-right: 1px solid #334155;">
+                            <div class="title">KOSPI</div>
+                            <div class="val">8,545.98</div>
+                            <div class="change up"><i class="bi bi-caret-up-fill"></i> 422.36 (5.20%)</div>
+                        </div>
+                        <div class="index-item">
+                            <div class="title">KOSDAQ</div>
+                            <div class="val">1,034.03</div>
+                            <div class="change up"><i class="bi bi-caret-up-fill"></i> 14.98 (1.48%)</div>
+                        </div>
+                    </div>
+                    
+                    <div style="font-size:13px; line-height:1.6; color:#334155; text-align:justify; margin-bottom:15px; border-bottom:1px dashed #CBD5E1; padding-bottom:15px;">
+                        <strong>"변액보험 수익률 보고 깼다가 후회... 신중해라 주의보"</strong><br><br>
+                        증시 증세로 변액보험 관심이 증대되며 노후 준비 목적의 변액연금보험 수요가 늘고 있습니다. 1분기 변액연금보험 신계약은 전 분기보다 15.8% 증가하며 판매 성장세를 이끌었습니다. 반면 일반보험은 감소했으며 고객 저축성 상품보다 연금형 중심으로 수요가 이동했습니다. 변액보험은 사업비 등을 제외하고 투자해 펀드 수익률과 실제 환급금이 다를 수 있기 때문에 가입 초기에는 단기 수익률만 보고 해지하기보다 원금확보와 장기 유지 효과를 살펴봐야 합니다. 급격한 중도해지 손실과 불완전판매 가능성을 경고하며 판매 모니터링을 강화할 예정입니다.
+                    </div>
+                    
+                    <div style="display:flex; gap:10px; font-size:12px;">
+                        <div style="flex:1; background:#F8FAFC; padding:10px; border-radius:6px; text-align:center;">
+                            <span style="font-weight:700; color:#475569; display:block; margin-bottom:4px;">오늘의 날씨</span>
+                            <span style="font-size:16px; font-weight:700; color:#1E293B;">22° <i class="bi bi-cloud-sun-fill" style="color:#F59E0B;"></i></span>
+                        </div>
+                        <div style="flex:1.5; background:#F8FAFC; padding:10px; border-radius:6px;">
+                            <span style="font-weight:700; color:#475569; display:block; margin-bottom:2px; text-align:center;">오늘의 명언</span>
+                            <span style="font-size:10px; color:#64748B; line-height:1.3; display:block; text-align:justify;">스스로 생각하는 능력이 모자라면 유능한 스승의 제자가 되어봤자 자격미달이다. - 에피카르모스</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="news-right-feed">
+                    <div class="news-card" style="border-left:4px solid #EF4444;">
+                        <div class="news-card-badge" style="background:#FEF2F2; color:#EF4444;">주요뉴스</div>
+                        <div class="news-card-title">[속보] 특검 오세훈 징역 1년 6월 구형 "법질서 신뢰훼손"</div>
+                        <div class="news-card-desc">특허 결정 과정에서는 느리게 배정배당 회원보장 조치를 마련하고 있다. 배정 상태의 안위 여부나 학력, 직업, 재산 등 핵심 정보에 오류가 확인될 경우...</div>
+                        <a href="#" class="news-more-lnk">기사 원문 보기</a>
+                    </div>
+                    
+                    <div class="news-card">
+                        <div class="news-card-badge">의료보건</div>
+                        <div class="news-card-title">상급종합병원이 더 우월한 병원 아니다... '상급' 명칭 개편 추진</div>
+                        <div class="news-card-desc">특히 이번 세칭안은 의료법상의 명칭 변경에 맞춰 각 병원과의 정당성을 확보하기 위해 보건복지부가 주도하여 추진단을 구성하였습니다.</div>
+                        <a href="#" class="news-more-lnk">자세히 보기</a>
+                    </div>
+
+                    <div class="news-card">
+                        <div class="news-card-badge">금융경제</div>
+                        <div class="news-card-title">신한금융 '슈퍼SOL' 공개... "다른 금융앱은 다 잊게 될 것"</div>
+                        <div class="news-card-desc">사전 배당 행사 영상 캡처 | 뉴스워치 신한금융그룹이 17일 은행, 카드, 증권, 보험 등 핵심 금융 기능을 한 데 모은 통합 앱을 출시했습니다.</div>
+                        <a href="#" class="news-more-lnk">자세히 보기</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="font-size:12px; font-weight:700; padding:10px 20px 0 20px; background:#F8FAFC; color:#475569;">오늘의 실시간 지표 요약</div>
+            <div class="market-grid">
+                <div class="market-card">
+                    <div class="lbl">USD / KRW</div>
+                    <div class="price">1,512.40</div>
+                    <div class="fluc"><i class="bi bi-caret-up-fill"></i> 1.40</div>
+                </div>
+                <div class="market-card">
+                    <div class="lbl">JPY / KRW (100엔)</div>
+                    <div class="price">943.63</div>
+                    <div class="fluc"><i class="bi bi-caret-up-fill"></i> 1.78</div>
+                </div>
+                <div class="market-card">
+                    <div class="lbl">KOSPI 종합</div>
+                    <div class="price">8,864.24</div>
+                    <div class="fluc"><i class="bi bi-caret-up-fill"></i> 137.84</div>
+                </div>
+                <div class="market-card">
+                    <div class="lbl">국내 금 (g당)</div>
+                    <div class="price">209,700</div>
+                    <div class="fluc"><i class="bi bi-caret-up-fill"></i> 80</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -429,62 +493,28 @@
         <a href="#" class="footer-link"><i class="bi bi-cpu"></i> AI 엔진 가동중</a>
     </div>
 
-    <div id="portal-global-modal" class="portal-modal" onclick="window.closePortalModal()">
-        <div class="modal-body" onclick="event.stopPropagation()">
-            <h3 style="font-size:18px; font-weight:700; margin-bottom:15px;" id="modal-title-area">종합 정보 열람</h3>
-            <div id="portal-modal-content-area" class="modal-text-view"></div>
-            <div style="display:flex; gap:10px;" id="modal-action-btn-layout"></div>
-        </div>
-    </div>
+    <script>
+        const observer = new MutationObserver(() => {
+            const src    = document.getElementById('user-display-email');
+            const mobile = document.getElementById('user-display-email-mobile');
+            if (src && mobile) mobile.textContent = src.textContent;
+        });
+        window.addEventListener('DOMContentLoaded', () => {
+            const el = document.getElementById('user-display-email');
+            if (el) observer.observe(el, { childList: true, subtree: true, characterData: true });
+        });
+    </script>
 
-    <div id="help-modal" class="portal-modal" onclick="document.getElementById('help-modal').style.display='none'">
-        <div class="modal-body" onclick="event.stopPropagation()">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                <h3 style="font-size:18px; font-weight:700;"><i class="bi bi-question-circle-fill" style="color:var(--main-blue);"></i> 도움말</h3>
-                <button onclick="document.getElementById('help-modal').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted);">&times;</button>
-            </div>
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">고객 정보 입력 시 붙여넣기 양식</p>
-            <textarea id="help-template-text" class="form-control" style="height:350px; font-size:13px; line-height:1.6; resize:none; background:#F8FAFC;" readonly>보험료 산출을 위한 개인정보
-1. 성명 :  
-2. 주민번호 : 
-3. 휴대폰번호 : 
-4. 주소 : 
-5. 직업(회사명) : 
-6. 5년간의 병원치료내용
--병력고지-
-3개월 이내 의료 행위를 받은적이 있습니까 ?
-1년 이내 마약, 정신과 질환 약물을 복용한 사실이 있습니까 ? 
-최근 1년 기존 병력에 대한 추가 검사를 받은 사실이 있습니까? 
-최근 5년 입원, 수술, 7일이상치료, 30일이상 투약 한 사실이 있습니까?
-최근 5년 아래 질병으로 진단 받은적 있습니까?
--암, 백혈병, 고혈압, 협심증, 심근경색, 심장판막증, 간경화증, 뇌졸중증(뇌출혈, 뇌경색), 당뇨, 에이즈, 항문 관련 질환 
-7. 운전여부 :</textarea>
-            <button class="btn-action" style="margin-top:15px;" onclick="window.copyHelpTemplate()"><i class="bi bi-clipboard-check"></i> 양식 복사하기</button>
-        </div>
-    </div>
-
-    <div id="notice-modal" class="portal-modal" style="z-index: 3000;">
-        <div class="modal-body" style="max-width: 400px; padding: 25px;" onclick="event.stopPropagation()">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 2px solid var(--main-blue); padding-bottom:10px;">
-                <h3 style="font-size:18px; font-weight:700; color:var(--text-dark); margin:0;"><i class="bi bi-megaphone-fill" style="color:var(--main-blue);"></i> 보험가온포탈 공지사항</h3>
-            </div>
-            <div class="modal-text-view" style="max-height: 1000px; background:#fff; border:none; padding:0; margin-bottom:15px; font-size:14px; color:#334155; line-height:1.6;">
-<b>[업데이트 안내]</b><br>
-- 5세대 실비 계산기가 추가되었습니다.<br>
-- 자료 폴더가 신설 되었습니다.<br>
-- 가온사업단 오피스가 추가되었습니다. &lt;비밀번호 문의&gt;<br><br>
-           추가 건의사항은 언제든 문의주세요. 
-                   오늘도 화이팅입니다! 😊
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; background:#F8FAFC; padding:10px 15px; border-radius:8px; border:1px solid #E2E8F0;">
-                <label style="font-size:13px; color:var(--text-muted); display:flex; align-items:center; gap:6px; cursor:pointer; margin:0;">
-                    <input type="checkbox" id="hide-notice-chk" style="width:16px; height:16px; cursor:pointer;">
-                    하루 동안 보지 않기
-                </label>
-                <button class="btn-action" style="width:auto; padding:6px 16px; font-size:13px; background:#64748B;" onclick="window.closeNotice()">닫기</button>
-            </div>
-        </div>
-    </div>
+    <script>
+        window.openNewsModal = function() {
+            var modal = document.getElementById('news-portal-modal');
+            if(modal) modal.style.display = 'flex';
+        };
+        window.closeNewsModal = function() {
+            var modal = document.getElementById('news-portal-modal');
+            if(modal) modal.style.display = 'none';
+        };
+    </script>
 
     <script>
         window.openIcdModal = function() {
@@ -499,7 +529,6 @@
             if(modal) modal.style.display = 'none';
         };
         
-        // 실시간 연동 핵심 로직
         var icdTimeout = null;
         window.filterIcdTable = function() {
             clearTimeout(icdTimeout);
@@ -514,7 +543,6 @@
 
             tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#2563EB; padding:40px 0;"><i class="bi bi-arrow-clockwise-spin"></i> 심평원 마스터 검색 중...</td></tr>`;
 
-            // 디바운싱: 타자가 끝난 후 300ms 뒤에 API 요청을 보냅니다 (서버 부하 방지)
             icdTimeout = setTimeout(async function() {
                 try {
                     const response = await fetch(`/api/search-icd?query=${encodeURIComponent(input)}`);
@@ -604,7 +632,6 @@
                     alert('앱 설치가 불가능한 브라우저 환경이거나 이미 설치가 완료된 기기입니다.');
                     return;
                 }
-                
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then(function (result) {
                     if (result.outcome === 'accepted') {
@@ -615,40 +642,10 @@
             });
         }
 
-        if (toggleBtn) {
-            toggleBtn.addEventListener('change', function () {
-                if (this.checked) {
-                    if (!deferredPrompt) {
-                        alert('앱 설치를 진행할 수 없는 브라우저 환경이거나 이미 독립형 앱이 설치된 상태입니다.');
-                        this.checked = false;
-                        return;
-                    }
-                    
-                    deferredPrompt.prompt();
-                    deferredPrompt.userChoice.then(function (choiceResult) {
-                        if (choiceResult.outcome === 'accepted') {
-                            if (floatWrap) floatWrap.style.display = 'none';
-                            if (toggleWrap) toggleWrap.style.display = 'none';
-                        }
-                        if (toggleBtn) toggleBtn.checked = false; 
-                    });
-                }
-            });
-        }
-
-        window.addEventListener('appinstalled', function () {
-            if (toggleWrap) toggleWrap.style.display = 'none';
-            if (floatWrap) floatWrap.style.display = 'none';
-            deferredPrompt = null;
-        });
-
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
                 navigator.serviceWorker.register('./sw.js?v=20260617', { scope: './' })
-                    .then(function (reg) { 
-                        console.log('[SW] 등록 성공, scope:', reg.scope); 
-                        reg.update();
-                    })
+                    .then(function (reg) { reg.update(); })
                     .catch(function (err) { console.error('[SW] 등록 실패:', err); });
             });
         }
