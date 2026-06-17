@@ -13,7 +13,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Noto Sans KR', sans-serif; }
         body { background: #F1F5F9; color: #1E293B; padding-bottom: 6px; }
 
-        /* 대화형 메인 상단 헤더 전산 구역 */
+        /* 상단 헤더 바 */
         .news-header-bar {
             background: white; padding: 16px 24px; display: flex; align-items: center; 
             justify-content: space-between; border-bottom: 1px solid #E2E8F0; position: sticky; top: 0; z-index: 100;
@@ -23,17 +23,16 @@
         .btn-back-home { background: #F1F5F9; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; color: #475569; display: flex; align-items: center; gap: 6px; transition: background 0.2s; text-decoration: none; }
         .btn-back-home:hover { background: #E2E8F0; }
 
-        /* 메인 콘텐츠 허브 컨테이너 */
+        /* 메인 wrapper */
         .main-wrapper { max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
 
-        /* 상단 날씨판 띠 배너 */
+        /* 날씨 띠 배너 */
         .weather-strip {
             display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px;
             white-space: nowrap; -ms-overflow-style: none; scrollbar-width: none;
         }
         .weather-strip::-webkit-scrollbar { display: none; }
         .weather-pill { background: white; border: 1px solid #E2E8F0; padding: 8px 16px; border-radius: 30px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .weather-pill i { font-size: 14px; }
 
         /* 검색바 및 카테고리 태그 탭 */
         .search-area-box { background: white; padding: 20px; border-radius: 14px; border: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 14px; }
@@ -41,28 +40,31 @@
         .search-input-wrap i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94A3B8; }
         .search-bar { width: 100%; padding: 12px 16px 12px 45px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 14px; outline: none; }
         .search-bar:focus { border-color: #2563EB; }
+        
         .tag-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
         .tag-btn { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; color: #64748B; cursor: pointer; transition: all 0.2s; }
         .tag-btn.active, .tag-btn:hover { background: #1E293B; color: white; border-color: #1E293B; }
 
-        /* 뉴스 투트랙 레이아웃 파트 */
+        /* 뉴스 그리드 레이아웃 */
         .news-grid-body { display: flex; gap: 24px; flex-wrap: wrap; }
         .paper-section { flex: 1.1; min-width: 340px; background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
         .feed-section { flex: 1.4; min-width: 360px; display: flex; flex-direction: column; gap: 16px; }
 
-        /* 좌측 MORNING NEWS 지면 폼 디자인 */
+        /* 신문 지면 디자인 */
         .paper-header { text-align: center; border-bottom: 2px solid #1E293B; padding-bottom: 12px; margin-bottom: 20px; }
         .paper-brand { font-size: 12px; font-weight: 700; color: #10B981; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 4px; }
         .paper-title { font-size: 32px; font-weight: 900; color: #1E293B; margin: 4px 0; font-family: 'Times New Roman', serif; }
         .paper-date { font-size: 12px; color: #64748B; text-align: right; font-weight: 500; }
         
+        /* 경제지표 상단 박스 (클릭 링크형 변경) */
         .paper-top-index { background: linear-gradient(135deg, #0F172A, #1E293B); color: white; padding: 14px; border-radius: 10px; display: flex; justify-content: space-between; margin-bottom: 20px; text-align: center; }
-        .p-idx-item { flex: 1; }
+        .p-idx-link { flex: 1; text-decoration: none; color: white; transition: background 0.2s; border-radius: 6px; padding: 4px 0; }
+        .p-idx-link:hover { background: rgba(255,255,255,0.08); }
         .p-idx-item .t { font-size: 10px; color: #94A3B8; font-weight: 500; }
         .p-idx-item .v { font-size: 16px; font-weight: 700; margin: 2px 0; }
         .p-idx-item .c { font-size: 11px; font-weight: 600; }
-        .p-idx-item .c.up { color: #F87171; }
-        .p-idx-item .c.down { color: #60A5FA; }
+        .p-idx-item .c.up, .p-idx-item .c.상승 { color: #F87171; }
+        .p-idx-item .c.down, .p-idx-item .c.하락 { color: #60A5FA; }
 
         .paper-body-text { font-size: 14px; line-height: 1.7; color: #334155; text-align: justify; margin-bottom: 20px; border-bottom: 1px dashed #E2E8F0; padding-bottom: 20px; }
         .paper-body-text strong { font-size: 15px; color: #1E293B; display: block; margin-bottom: 6px; }
@@ -72,35 +74,35 @@
         .widget-card .w-title { font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px; text-align: center; }
         .widget-card .w-content { font-size: 15px; font-weight: 700; text-align: center; color: #1E293B; }
 
-        /* 우측 라이브 카드 뉴스 피드 디자인 */
+        /* 우측 피드 섹션 */
         .section-header-title { font-size: 16px; font-weight: 700; color: #1E293B; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .btn-refresh { background: none; border: none; color: #64748B; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .btn-refresh { background: #white; border: 1px solid #E2E8F0; padding: 5px 12px; border-radius: 6px; color: #64748B; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: background 0.2s; }
+        .btn-refresh:hover { background: #F1F5F9; }
 
-        .feed-card { background: white; border-radius: 14px; padding: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px rgba(0,0,0,0.01); transition: transform 0.2s; }
-        .feed-card:hover { transform: translateY(-2px); }
+        .feed-card { background: white; border-radius: 14px; padding: 18px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px rgba(0,0,0,0.01); }
         .feed-badge { font-size: 11px; font-weight: 700; color: #2563EB; background: #EFF6FF; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-bottom: 10px; }
         .feed-badge.alert-type { background: #FEF2F2; color: #EF4444; }
         .feed-title { font-size: 16px; font-weight: 700; color: #1E293B; line-height: 1.4; margin-bottom: 8px; }
         .feed-desc { font-size: 13.5px; color: #475569; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .feed-link { font-size: 12px; color: #2563EB; font-weight: 600; text-decoration: none; display: inline-block; margin-top: 12px; }
 
-        /* 하단 멀티 금융 외환 지표 리스트 */
+        /* 하단 종합 전산판 그리드 (클릭형 링크 변경) */
         .indicator-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
-        .ind-card { background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.01); }
+        .ind-card-link { text-decoration: none; display: block; }
+        .ind-card { background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.01); transition: transform 0.2s, box-shadow 0.2s; }
+        .ind-card-link:hover .ind-card { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.05); border-color: #CBD5E1; }
         .ind-card .lbl { font-size: 12px; color: #64748B; font-weight: 500; }
         .ind-card .price { font-size: 18px; font-weight: 700; color: #1E293B; margin: 6px 0; }
         .ind-card .state { font-size: 12px; font-weight: 600; color: #EF4444; display: flex; align-items: center; gap: 4px; }
-        .ind-card .state.down { color: #2563EB; }
+        .ind-card .state.down, .ind-card .state.하락 { color: #2563EB; }
     </style>
 </head>
 <body>
 
-    <!-- 뉴스 전용 단독 상단 내비게이션 바 -->
     <div class="news-header-bar">
         <div class="header-title">
             <i class="bi bi-newspaper" style="color: #2563EB;"></i> 오늘의 뉴스 <span>포탈 스크랩</span>
         </div>
-        <!-- 메인 전산 메인화면으로 돌아가기 버튼 -->
         <a href="./index.html" class="btn-back-home">
             <i class="bi bi-arrow-left"></i> 가온포탈 메인으로
         </a>
@@ -108,24 +110,14 @@
 
     <div class="main-wrapper">
         
-        <!-- 날씨 지표 멀티 스크롤 라인 -->
         <div class="weather-strip">
-            <div class="weather-pill">서울 <i class="bi bi-cloud" style="color:#64748B;"></i> 32°</div>
-            <div class="weather-pill">부산 <i class="bi bi-sun-fill" style="color:#F59E0B;"></i> 25°</div>
-            <div class="weather-pill">대구 <i class="bi bi-cloud-sun" style="color:#F59E0B;"></i> 29°</div>
-            <div class="weather-pill">인천 <i class="bi bi-sun-fill" style="color:#F59E0B;"></i> 26°</div>
-            <div class="weather-pill">광주 <i class="bi bi-cloud-rain" style="color:#3B82F6;"></i> 24°</div>
-            <div class="weather-pill">대전 <i class="bi bi-cloud-sun" style="color:#F59E0B;"></i> 23°</div>
-            <div class="weather-pill">울산 <i class="bi bi-cloud" style="color:#64748B;"></i> 26°</div>
-            <div class="weather-pill">세종 <i class="bi bi-cloud-fog" style="color:#94A3B8;"></i> 28°</div>
-            <div class="weather-pill">제주 <i class="bi bi-sun-fill" style="color:#F59E0B;"></i> 25°</div>
+            <div class="weather-pill">서울 <i class="bi bi-cloud-arrow-down"></i> 로딩 중...</div>
         </div>
 
-        <!-- 실시간 검색 제어 구역 -->
         <div class="search-area-box">
             <div class="search-input-wrap">
                 <i class="bi bi-search"></i>
-                <input type="text" class="search-bar" placeholder="뉴스 키워드, 보험 트렌드를 검색해 보세요">
+                <input type="text" class="search-bar" placeholder="뉴스 키워드, 보험 트렌드를 검색한 후 엔터를 누르세요">
             </div>
             <div class="tag-wrap">
                 <button class="tag-btn active">전체 뉴스</button>
@@ -136,10 +128,8 @@
             </div>
         </div>
 
-        <!-- 메인 뉴스 그리드 -->
         <div class="news-grid-body">
             
-            <!-- 좌측 신문형 지면 요약 보드 -->
             <div class="paper-section">
                 <div class="paper-header">
                     <div class="paper-brand"><i class="bi bi-tree-fill"></i> INSURANCE TREE</div>
@@ -148,32 +138,37 @@
                 </div>
 
                 <div class="paper-top-index">
-                    <div class="p-idx-item">
-                        <div class="t">USD / KRW</div>
-                        <div class="v">1,514.60</div>
-                        <div class="c down"><i class="bi bi-caret-down-fill"></i> 5.20 (0.34%)</div>
-                    </div>
-                    <div class="p-idx-item" style="border-left:1px solid #334155; border-right:1px solid #334155;">
-                        <div class="t">KOSPI</div>
-                        <div class="v">8,545.98</div>
-                        <div class="c up"><i class="bi bi-caret-up-fill"></i> 422.36 (5.20%)</div>
-                    </div>
-                    <div class="p-idx-item">
-                        <div class="t">KOSDAQ</div>
-                        <div class="v">1,034.03</div>
-                        <div class="c up"><i class="bi bi-caret-up-fill"></i> 14.98 (1.48%)</div>
-                    </div>
+                    <a href="https://m.stock.naver.com/marketindex/exchange/FX_USDKRW" target="_blank" class="p-idx-link">
+                        <div class="p-idx-item">
+                            <div class="t">USD / KRW</div>
+                            <div class="v" id="paper-usd-val">1,514.60</div>
+                            <div class="c down" id="paper-usd-chg"><i class="bi bi-caret-down-fill"></i> 5.20</div>
+                        </div>
+                    </a>
+                    <a href="https://m.stock.naver.com/domestic/index/KOSPI/total" target="_blank" class="p-idx-link" style="border-left:1px solid #334155; border-right:1px solid #334155;">
+                        <div class="p-idx-item">
+                            <div class="t">KOSPI</div>
+                            <div class="v" id="paper-kospi-val">8,545.98</div>
+                            <div class="c up" id="paper-kospi-chg"><i class="bi bi-caret-up-fill"></i> 422.36</div>
+                        </div>
+                    </a>
+                    <a href="https://m.stock.naver.com/domestic/index/KOSDAQ/total" target="_blank" class="p-idx-link">
+                        <div class="p-idx-item">
+                            <div class="t">KOSDAQ</div>
+                            <div class="v" id="paper-kosdaq-val">1,034.03</div>
+                            <div class="c up" id="paper-kosdaq-chg"><i class="bi bi-caret-up-fill"></i> 14.98</div>
+                        </div>
+                    </a>
                 </div>
 
                 <div class="paper-body-text">
-                    <strong>"변액보험 수익률 보고 깼다가 후회... 신중해라 주의보"</strong>
-                    증시 증세로 변액보험 관심이 증대되며 노후 준비 목적의 변액연금보험 수요가 늘고 있습니다. 1분기 변액연금보험 신계약은 전 분기보다 15.8% 증가하며 판매 성장세를 이끌었습니다. 반면 일반보험은 감소했으며 고객 저축성 상품보다 연금형 중심으로 수요가 이동했습니다. 변액보험은 사업비 등을 제외하고 투자해 펀드 수익률과 실제 환급금이 다를 수 있기 때문에 가입 초기에는 단기 수익률만 보고 해지하기보다 원금확보와 장기 유지 효과를 살펴봐야 합니다. 급격한 중도해지 손실과 불완전판매 가능성을 경고하며 판매 모니터링을 강화할 예정입니다.
+                    <div style="text-align:center; padding:30px 0; color:#94A3B8;"><i class="bi bi-arrow-clockwise"></i> 헤드라인 스크랩 분석 중...</div>
                 </div>
 
                 <div class="paper-footer-widgets">
                     <div class="widget-card">
                         <span class="w-title">오늘의 날씨</span>
-                        <div class="w-content">22° <i class="bi bi-cloud-sun-fill" style="color:#F59E0B;"></i></div>
+                        <div class="w-content" id="paper-weather-txt">22° ☀️</div>
                     </div>
                     <div class="widget-card" style="flex: 1.6;">
                         <span class="w-title">오늘의 명언</span>
@@ -184,62 +179,82 @@
                 </div>
             </div>
 
-            <!-- 우측 최신 라이브 피드 리스트 -->
             <div class="feed-section">
                 <div class="section-header-title">
-                    최신 속보 피드 <button class="btn-refresh"><i class="bi bi-arrow-clockwise"></i> 새로고정</button>
+                    최신 속보 피드 
+                    <button class="btn-refresh" id="manual-refresh-news-btn"><i class="bi bi-arrow-clockwise"></i> 실시간 뉴스 새로고침</button>
                 </div>
-
-                <div class="feed-card" style="border-left: 4px solid #EF4444;">
-                    <span class="feed-badge alert-type">주요뉴스</span>
-                    <h3 class="feed-title">[속보] 특검 오세훈 징역 1년 6월 구형 "법질서 신뢰훼손"</h3>
-                    <p class="feed-desc">특허 결정 과정에서는 느리게 배정배당 회원보장 조치를 마련하고 있다. 배정 상태의 안위 여부나 학력, 직업, 재산 등 핵심 정보에 오류가 확인될 경우...</p>
-                    <a href="#" class="feed-link">기사 원문 보기</a>
-                </div>
-
-                <div class="feed-card">
-                    <span class="feed-badge">의료보건</span>
-                    <h3 class="feed-title">상급종합병원이 더 우월한 병원 아니다... '상급' 명칭 개편 추진</h3>
-                    <p class="feed-desc">특히 이번 세칭안은 의료법상의 명칭 변경에 맞춰 각 병원과의 정당성을 확보하기 위해 보건복지부가 주도하여 추진단을 구성하였습니다.</p>
-                    <a href="#" class="feed-link">자세히 보기</a>
-                </div>
-
-                <div class="feed-card">
-                    <span class="feed-badge">금융경제</span>
-                    <h3 class="feed-title">신한금융 '슈퍼SOL' 공개... "다른 금융앱은 다 잊게 될 것"</h3>
-                    <p class="feed-desc">사전 배당 행사 영상 캡처 | 뉴스워치 신한금융그룹이 17일 은행, 카드, 증권, 보험 등 핵심 금융 기능을 한 데 모은 통합 앱을 출시했습니다.</p>
-                    <a href="#" class="feed-link">자세히 보기</a>
-                </div>
+                <div style="padding:5px 0;" id="live-feed-loader-box">
+                    </div>
             </div>
 
         </div>
 
-        <!-- 하단 환율 및 시장 종합 지표 전산판 -->
-        <div style="font-size: 15px; font-weight: 700; color: #1E293B; margin-top: 10px;">오늘의 시장 지표 (네이버 증권 기준)</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; margin-bottom:5px;">
+            <div style="font-size: 15px; font-weight: 700; color: #1E293B;">오늘의 시장 지표 (네이버 증권 실시간 연동)</div>
+            <button class="btn-refresh" id="manual-refresh-market-btn"><i class="bi bi-arrow-clockwise"></i> 금융지표 새로고침</button>
+        </div>
+        
         <div class="indicator-grid">
-            <div class="ind-card">
-                <div class="lbl">USD / KRW (원/달러 환율)</div>
-                <div class="price">1,512.40</div>
-                <div class="state"><i class="bi bi-caret-up-fill"></i> 1.40 (상승)</div>
-            </div>
-            <div class="ind-card">
-                <div class="lbl">JPY / KRW (100엔 환율)</div>
-                <div class="price">943.63</div>
-                <div class="state"><i class="bi bi-caret-up-fill"></i> 1.78 (상승)</div>
-            </div>
-            <div class="ind-card">
-                <div class="lbl">KOSPI 종합지수</div>
-                <div class="price">8,864.24</div>
-                <div class="state"><i class="bi bi-caret-up-fill"></i> 137.84 (상승)</div>
-            </div>
-            <div class="ind-card">
-                <div class="lbl">국내 금시세 (g당)</div>
-                <div class="price">209,700</div>
-                <div class="state"><i class="bi bi-caret-up-fill"></i> 80 (상승)</div>
-            </div>
+            <a href="https://m.stock.naver.com/marketindex/exchange/FX_USDKRW" target="_blank" class="ind-card-link">
+                <div class="ind-card">
+                    <div class="lbl">USD / KRW (원/달러 환율)</div>
+                    <div class="price" id="m-usd-price">1,512.40</div>
+                    <div class="state" id="m-usd-state"><i class="bi bi-caret-up-fill"></i> 1.40 (상승)</div>
+                </div>
+            </a>
+            
+            <a href="https://m.stock.naver.com/marketindex/exchange/FX_JPYKRW" target="_blank" class="ind-card-link">
+                <div class="ind-card">
+                    <div class="lbl">JPY / KRW (100엔 환율)</div>
+                    <div class="price" id="m-jpy-price">943.63</div>
+                    <div class="state" id="m-jpy-state"><i class="bi bi-caret-up-fill"></i> 1.78 (상승)</div>
+                </div>
+            </a>
+            
+            <a href="https://m.stock.naver.com/domestic/index/KOSPI/total" target="_blank" class="ind-card-link">
+                <div class="ind-card">
+                    <div class="lbl">KOSPI 종합지수</div>
+                    <div class="price" id="m-kospi-price">8,864.24</div>
+                    <div class="state" id="m-kospi-state"><i class="bi bi-caret-up-fill"></i> 137.84 (상승)</div>
+                </div>
+            </a>
+            
+            <a href="https://m.stock.naver.com/marketindex/metals/M04020000" target="_blank" class="ind-card-link">
+                <div class="ind-card">
+                    <div class="lbl">국내 금시세 (g당)</div>
+                    <div class="price" id="m-gold-price">209,700</div>
+                    <div class="state" id="m-gold-state"><i class="bi bi-caret-up-fill"></i> 80 (상승)</div>
+                </div>
+            </a>
         </div>
 
     </div>
 
+    <script src="js/news.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            // 외부 news.js 모듈 엔진 가동 및 리스너 위임 통합
+            if (typeof NewsWidget !== 'undefined') {
+                NewsWidget.init();
+            }
+            
+            // 수동 새로고침 버튼에 대한 상호 연동 장치 추가 바인딩
+            const refreshNews = document.getElementById('manual-refresh-news-btn');
+            const refreshMarket = document.getElementById('manual-refresh-market-btn');
+            
+            if (refreshNews) {
+                refreshNews.addEventListener('click', () => {
+                    const activeTab = document.querySelector('.tag-wrap .tag-btn.active')?.textContent || '전체 뉴스';
+                    if(typeof NewsWidget !== 'undefined') NewsWidget.init();
+                });
+            }
+            if (refreshMarket) {
+                refreshMarket.addEventListener('click', () => {
+                    if(typeof NewsWidget !== 'undefined') NewsWidget.init();
+                });
+            }
+        });
+    </script>
 </body>
 </html>
