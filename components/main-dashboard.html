@@ -117,6 +117,268 @@
     </div>
 </div>
 
+<!-- 상단 히어로 -->
+<div class="toss-hero" style="background: linear-gradient(135deg, #1D4ED8 0%, #3182F6 100%); margin-bottom: 20px; padding: 20px; color: white;">
+    <div class="toss-hero-tag">보험가온포탈</div>
+    <p class="toss-hero-sub" id="current-date"></p>
+    <h1 class="toss-hero-title">안녕하세요 👋<br><span id="main-user-name">설계사님</span></h1>
+    <div style="display:flex; gap:10px; margin-top:20px; flex-wrap:wrap;">
+        <div class="hero-banner-btn" onclick="window.navigateTo('page-insure', 'nonlife')">
+            <img src="아이콘/main.png" class="hero-banner-img" alt="보험사 전산">
+            <div style="font-size:13px; font-weight:800; color:white;">보험사 전산</div>
+            <div style="font-size:11px; color:rgba(255,255,255,0.7); margin-top:2px;">손해·생명보험 시스템</div>
+        </div>
+        <div class="hero-banner-btn" onclick="window.navigateTo('page-private')">
+            <img src="아이콘/main2.png" class="hero-banner-img" alt="전산 관리실">
+            <div style="font-size:13px; font-weight:800; color:white;">전산 관리실</div>
+            <div style="font-size:11px; color:rgba(255,255,255,0.7); margin-top:2px;">AI 분석기 · DB 연동</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== PC 전용 업무 메뉴 (모바일에서 숨김) ===== -->
+<div class="pc-only" style="background:white; border-radius:20px; padding:22px 20px; border:1px solid #F2F4F6; margin-bottom:16px;">
+    <div style="font-size:17px; font-weight:800; color:#191F28; margin-bottom:16px;">업무 메뉴</div>
+    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;">
+        <div class="toss-menu-item" onclick="window.navigateTo('page-claim-main')">
+            <div class="toss-menu-icon" style="background:#FFF0F0; color:#E11D48;"><i class="bi bi-send-fill"></i></div>
+            <span>청구의 모든것</span>
+        </div>
+        <div class="toss-menu-item" onclick="window.open('https://naver.me/xNpxyjvi', '_blank')">
+    <div class="toss-menu-icon" style="background:#FEF3C7; color:#D97706;"><i class="bi bi-folder-fill"></i></div>
+    <span>자료폴더</span>
+    </div>
+        <div class="toss-menu-item" onclick="window.navigateTo('page-recruit')">
+            <div class="toss-menu-icon" style="background:#F0FDF4; color:#16A34A;"><i class="bi bi-briefcase-fill"></i></div>
+            <span>이직 컨설팅</span>
+        </div>
+        <div class="toss-menu-item" onclick="window.navigateTo('page-calculator')">
+            <div class="toss-menu-icon" style="background:#E0F2FE; color:#0284C7;"><i class="bi bi-calculator-fill"></i></div>
+            <span>재무 계산기</span>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 모바일 전용 퀵메뉴 (4개만) ===== -->
+<div class="mobile-only mobile-quickmenu">
+    <div class="mobile-quickmenu-title">바로가기</div>
+    <div class="mobile-quickmenu-grid">
+        <!-- 종합 고객 데이터 리스트 -->
+        <div class="mobile-quick-item" onclick="window.navigateTo('page-private')">
+            <div class="mobile-quick-icon" style="background:#EFF6FF; color:#2563EB;">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <span>고객 데이터</span>
+        </div>
+        <!-- 재무 계산기 -->
+        <div class="mobile-quick-item" onclick="window.navigateTo('page-calculator')">
+            <div class="mobile-quick-icon" style="background:#E0F2FE; color:#0284C7;">
+                <i class="bi bi-calculator-fill"></i>
+            </div>
+            <span>재무 계산기</span>
+        </div>
+        <!-- 약관조회 -->
+        <div class="mobile-quick-item" onclick="window.navigateTo('page-terms')">
+            <div class="mobile-quick-icon" style="background:#F0FDF4; color:#16A34A;">
+                <i class="bi bi-file-text-fill"></i>
+            </div>
+            <span>약관조회</span>
+        </div>
+        <!-- 실비계산기 -->
+        <div class="mobile-quick-item" onclick="window.navigateTo('page-silbi')">
+            <div class="mobile-quick-icon" style="background:#FFF7ED; color:#EA580C;">
+                <i class="bi bi-heart-pulse-fill"></i>
+            </div>
+            <span>실비계산기</span>
+        </div>
+    </div>
+</div>
+
+<!-- 가온 오피스 -->
+<div onclick="window.navigateTo('page-가온 오피스')" style="background:white; border-radius:20px; padding:20px; border:1px solid #F2F4F6; margin-bottom:16px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:all 0.15s;" onmouseover="this.style.borderColor='#3182F6'" onmouseout="this.style.borderColor='#F2F4F6'">
+    <div style="display:flex; align-items:center; gap:14px;">
+        <div style="width:48px; height:48px; background:#EFF6FF; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px;">🔒</div>
+        <div>
+            <div style="font-size:15px; font-weight:800; color:#191F28;">가온사업단 전용 오피스</div>
+            <div style="font-size:12px; color:#8B95A1; margin-top:2px;">인가된 담당자 전용 보안 영역</div>
+        </div>
+    </div>
+    <i class="bi bi-chevron-right" style="color:#B0B8C1; font-size:18px;"></i>
+</div>
+
+<!-- 서비스 카드 (PC에서만 전체 표시, 모바일에서는 활성 항목만) -->
+<div style="background:white; border-radius:20px; padding:22px 20px; border:1px solid #F2F4F6; margin-bottom:16px;">
+    <div style="font-size:17px; font-weight:800; color:#191F28; margin-bottom:16px;">서비스</div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+        <div onclick="window.navigateTo('page-claim-main')" style="background:#EFF6FF; border-radius:16px; padding:20px; cursor:pointer; border:1px solid #DBEAFE; transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size:11px; font-weight:800; color:#3182F6; background:#DBEAFE; display:inline-block; padding:3px 10px; border-radius:20px; margin-bottom:10px;">활성</div>
+            <div style="font-size:18px; font-weight:900; color:#191F28; margin-bottom:6px;">청구의<br>모든것</div>
+            <div style="font-size:12px; color:#8B95A1;">다종 보험사 청구 자동처리</div>
+        </div>
+        <div class="pc-only" style="background:#F9FAFB; border-radius:16px; padding:20px; border:1px solid #F2F4F6; position:relative; overflow:hidden;">
+            <div style="font-size:11px; font-weight:800; color:#8B95A1; background:#F2F4F6; display:inline-block; padding:3px 10px; border-radius:20px; margin-bottom:10px;">출시예정</div>
+            <div style="font-size:18px; font-weight:900; color:#C4CBD6; margin-bottom:6px;">고등의<br>모든것</div>
+            <div style="font-size:12px; color:#C4CBD6;">고객등록 자동화</div>
+            <i class="bi bi-lock-fill" style="position:absolute; bottom:16px; right:16px; color:#E2E8F0; font-size:22px;"></i>
+        </div>
+        <div class="pc-only" style="background:#F9FAFB; border-radius:16px; padding:20px; border:1px solid #F2F4F6; position:relative; overflow:hidden;">
+            <div style="font-size:11px; font-weight:800; color:#8B95A1; background:#F2F4F6; display:inline-block; padding:3px 10px; border-radius:20px; margin-bottom:10px;">출시예정</div>
+            <div style="font-size:18px; font-weight:900; color:#C4CBD6; margin-bottom:6px;">심사의<br>모든것</div>
+            <div style="font-size:12px; color:#C4CBD6;">HIRA 자동 연동</div>
+            <i class="bi bi-lock-fill" style="position:absolute; bottom:16px; right:16px; color:#E2E8F0; font-size:22px;"></i>
+        </div>
+        <div class="pc-only" style="background:#F9FAFB; border-radius:16px; padding:20px; border:1px solid #F2F4F6; position:relative; overflow:hidden;">
+            <div style="font-size:11px; font-weight:800; color:#8B95A1; background:#F2F4F6; display:inline-block; padding:3px 10px; border-radius:20px; margin-bottom:10px;">출시예정</div>
+            <div style="font-size:18px; font-weight:900; color:#C4CBD6; margin-bottom:6px;">설계의<br>모든것</div>
+            <div style="font-size:12px; color:#C4CBD6;">보험 설계 자동화</div>
+            <i class="bi bi-lock-fill" style="position:absolute; bottom:16px; right:16px; color:#E2E8F0; font-size:22px;"></i>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 메인 대시보드용 toss 스타일 */
+.toss-menu-item {
+    background: white; border-radius: 18px; padding: 20px 8px;
+    text-align:center; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    border: 1px solid #F2F4F6; transition: all 0.15s;
+}
+.toss-menu-item:hover { background:#F9FAFB; transform: translateY(-2px); }
+.toss-menu-icon {
+    width:46px; height:46px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+}
+.toss-menu-item span { font-size:13px; font-weight:700; color:#191F28; }
+.toss-hero {
+    border-radius: 24px; padding: 28px 24px 32px;
+    color: white; position: relative; margin-bottom: 16px;
+}
+.toss-hero-tag { font-size:14px; font-weight:700; opacity:0.85; margin-bottom:4px; }
+.toss-hero-sub { font-size:13px; opacity:0.7; margin-bottom:16px; }
+.toss-hero-title { font-size:26px; font-weight:800; line-height:1.4; letter-spacing:-0.5px; }
+
+.hero-banner-btn {
+    background: rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+    flex: 1;
+    min-width: 140px;
+    transition: background 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+.hero-banner-btn:hover { background: rgba(255,255,255,0.25); }
+.hero-banner-img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s;
+}
+.hero-banner-btn:hover .hero-banner-img {
+    transform: scale(1.35) translateY(-8px);
+    filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.2));
+}
+
+/* ===== 모바일 퀵메뉴 스타일 ===== */
+.mobile-quickmenu {
+    background: white;
+    border-radius: 20px;
+    padding: 18px 16px;
+    border: 1px solid #F2F4F6;
+    margin-bottom: 16px;
+}
+.mobile-quickmenu-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #191F28;
+    margin-bottom: 14px;
+}
+.mobile-quickmenu-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.mobile-quick-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 12px 4px;
+    border-radius: 14px;
+    border: 1px solid #F2F4F6;
+    background: #FAFAFA;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+.mobile-quick-item:active {
+    transform: scale(0.95);
+    background: #F0F4FF;
+}
+.mobile-quick-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+.mobile-quick-item span {
+    font-size: 11px;
+    font-weight: 700;
+    color: #191F28;
+    text-align: center;
+    line-height: 1.3;
+    word-break: keep-all;
+}
+
+/* ===== 반응형: PC / 모바일 가시성 ===== */
+.pc-only { display: block; }
+.mobile-only { display: none; }
+
+@media (max-width: 768px) {
+    .pc-only { display: none !important; }
+    .mobile-only { display: block !important; }
+
+    /* 히어로 모바일 최적화 */
+    .toss-hero {
+        padding: 18px 16px 22px !important;
+        margin-bottom: 12px !important;
+    }
+    .toss-hero-title {
+        font-size: 20px !important;
+    }
+    .hero-banner-btn {
+        min-width: 0 !important;
+        padding: 12px 14px !important;
+        flex: 1 !important;
+    }
+    .hero-banner-img {
+        width: 36px !important;
+        height: 36px !important;
+    }
+
+    /* 서비스 카드 모바일 */
+    .toss-hero + div + div + div {
+        border-radius: 16px;
+    }
+}
+</style>
+
+<script>
+    // 오늘 날짜를 가져와 포맷팅합니다
+    const today = new Date();
+    const formattedDate = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
+    
+    // 해당 ID를 가진 요소에 날짜를 출력합니다
+    document.getElementById('current-date').innerText = formattedDate;
+</script>
+
 <style>
 /* 메인 대시보드용 toss 스타일 */
 .toss-menu-item {
