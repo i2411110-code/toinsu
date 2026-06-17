@@ -737,57 +737,102 @@ window.copyKakaoMsg = function() {
 };
 
 
- // =====================================================
-// 실손 계산기
+ 
+// =====================================================
+// 실손 계산기 (5세대 로직 포함)
 // =====================================================
 (function() {
   const GENERATIONS = [
-    { id:"1gen", label:"1세대", period:"~2009.09", coverGubun:100, coverNonGubun:100, inpatientLimit:5e7, has3Types:false, limitOptions:[{label:"10만원",outpatientLimit:1e5,prescriptionLimit:0},{label:"30만원",outpatientLimit:3e5,prescriptionLimit:0},{label:"50만원",outpatientLimit:5e5,prescriptionLimit:0}], deductible:{clinic:5000,hospital:10000,general:10000,prescription:0} },
-    { id:"2gen", label:"2세대", period:"2009.10~2013.03", coverGubun:90, coverNonGubun:90, inpatientLimit:5e7, has3Types:false, limitOptions:[{label:"외래 20만원 / 약제 10만원",outpatientLimit:2e5,prescriptionLimit:1e5},{label:"외래 25만원 / 약제 5만원",outpatientLimit:25e4,prescriptionLimit:5e4}], deductible:{clinic:10000,hospital:15000,general:20000,prescription:8000} },
-    { id:"2gen2", label:"2세대", period:"2013.04~2017.03", coverGubun:90, coverNonGubun:80, inpatientLimit:5e7, has3Types:false, limitOptions:[{label:"외래 20만원 / 약제 10만원",outpatientLimit:2e5,prescriptionLimit:1e5},{label:"외래 25만원 / 약제 5만원",outpatientLimit:25e4,prescriptionLimit:5e4}], deductible:{clinic:10000,hospital:15000,general:20000,prescription:8000} },
-    { id:"3gen", label:"3세대", period:"2017.04~2021.06", coverGubun:90, coverNonGubun:80, inpatientLimit:5e7, has3Types:true, type3SelfRate:30, limitOptions:[{label:"외래 20만원 / 약제 10만원",outpatientLimit:2e5,prescriptionLimit:1e5},{label:"외래 25만원 / 약제 5만원",outpatientLimit:25e4,prescriptionLimit:5e4}], deductible:{clinic:10000,hospital:15000,general:20000,prescription:8000}, type3Deductible:{injection:20000,manual:20000,mri:20000} },
-    { id:"4gen", label:"4세대", period:"2021.07~2026.04", coverGubun:80, coverNonGubun:70, inpatientLimit:5e7, has3Types:true, type3SelfRate:30, is4gen:true, limitOptions:[{label:"20만원(외래+약제)",outpatientLimit:2e5,prescriptionLimit:0}], deductible:{clinic:10000,hospital:15000,general:20000}, type3Deductible:{injection:30000,manual:30000,mri:30000} },
-    { id:"5gen", label:"5세대", period:"2026.05~", is5gen:true, inpatientLimit:5e7 },
-    { id:"sick", label:"유병자실손", period:"", coverGubun:70, coverNonGubun:70, inpatientLimit:5e7, has3Types:false, limitOptions:[{label:"20만원",outpatientLimit:2e5,prescriptionLimit:0}], deductible:{clinic:20000,hospital:20000,general:20000,prescription:0} }
+    { id:"1gen",  label:"1세대",    period:"~2009.09",       note:"자기부담금 0%",            coverGubun:100, coverNonGubun:100, inpatientLimit:5e7, has3Types:false,
+      limitOptions:[{label:"10만원",outpatientLimit:1e5,prescriptionLimit:0},{label:"30만원",outpatientLimit:3e5,prescriptionLimit:0},{label:"50만원",outpatientLimit:5e5,prescriptionLimit:0}],
+      deductible:{clinic:5000,hospital:10000,general:10000,prescription:0} },
+    { id:"2gen",  label:"2세대",    period:"2009.10~2012.12", note:"급여 90%",                coverGubun:90,  coverNonGubun:90,  inpatientLimit:5e7, has3Types:false,
+      limitOptions:[{label:"외래 20만 / 약제 10만",outpatientLimit:2e5,prescriptionLimit:1e5},{label:"외래 25만 / 약제 5만",outpatientLimit:25e4,prescriptionLimit:5e4}],
+      deductible:{clinic:10000,hospital:15000,general:20000,prescription:8000} },
+    { id:"2gen2", label:"2세대",    period:"2013.01~2015.08", note:"급여 80%",                coverGubun:80,  coverNonGubun:80,  inpatientLimit:5e7, has3Types:false,
+      limitOptions:[{label:"외래 20만 / 약제 10만",outpatientLimit:2e5,prescriptionLimit:1e5},{label:"외래 25만 / 약제 5만",outpatientLimit:25e4,prescriptionLimit:5e4}],
+      deductible:{clinic:10000,hospital:15000,general:20000,prescription:8000} },
+    { id:"2gen3", label:"2세대",    period:"2015.09~2017.03", note:"급여 90% · 비급여 80%",   coverGubun:90,  coverNonGubun:80,  inpatientLimit:5e7, has3Types:false,
+      limitOptions:[{label:"외래 20만 / 약제 10만",outpatientLimit:2e5,prescriptionLimit:1e5},{label:"외래 25만 / 약제 5만",outpatientLimit:25e4,prescriptionLimit:5e4}],
+      deductible:{clinic:10000,hospital:15000,general:20000,prescription:8000} },
+    { id:"3gen",  label:"3세대",    period:"2017.04~2021.06", note:"급여 90% · 비급여 80%",   coverGubun:90,  coverNonGubun:80,  inpatientLimit:5e7, has3Types:true,  type3SelfRate:30,
+      limitOptions:[{label:"외래 20만 / 약제 10만",outpatientLimit:2e5,prescriptionLimit:1e5},{label:"외래 25만 / 약제 5만",outpatientLimit:25e4,prescriptionLimit:5e4}],
+      deductible:{clinic:10000,hospital:15000,general:20000,prescription:8000},
+      type3Deductible:{injection:20000,manual:20000,mri:20000} },
+    { id:"4gen",  label:"4세대",    period:"2021.07~2026.04", note:"급여 80% · 비급여 70%",   coverGubun:80,  coverNonGubun:70,  inpatientLimit:5e7, has3Types:true,  type3SelfRate:30, is4gen:true,
+      limitOptions:[{label:"20만원 (외래+약제)",outpatientLimit:2e5,prescriptionLimit:0}],
+      deductible:{clinic:10000,hospital:15000,general:20000},
+      type3Deductible:{injection:30000,manual:30000,mri:30000} },
+    { id:"5gen",  label:"5세대",    period:"2026.05~",        note:"중증·비중증 비급여 분리",  is5gen:true, inpatientLimit:5e7 },
+    { id:"sick",  label:"유병자실손",period:"",               note:"약제비·비급여3종 제외",    coverGubun:70,  coverNonGubun:70,  inpatientLimit:5e7, has3Types:false,
+      limitOptions:[{label:"20만원",outpatientLimit:2e5,prescriptionLimit:0}],
+      deductible:{clinic:20000,hospital:20000,general:20000,prescription:0} }
   ];
 
-  window.silsonState = { genId:'4gen', type:'outpatient', grade:'clinic', limitIdx:0 };
-  const n = (v) => Number(v) || 0;
-  const fmt = (v) => Math.round(Math.max(0, v)).toLocaleString();
+  window.silsonState = { genId:'4gen', type:'outpatient', grade:'clinic', limitIdx:0, g5Type3OutMode:'severe', g5Type3InpMode:'severe' };
+  const n = v => Number(v) || 0;
+  const fmt = v => Math.round(Math.max(0, v)).toLocaleString();
+  const gv = id => n(document.getElementById(id)?.value);
 
-  // window에 직접 등록해서 initSilsonPage에서 호출 가능하게
+  // ── 세대 버튼 렌더 ──
   window._sg_renderGenGrid = function() {
     const grid = document.getElementById('silson-gen-grid');
     if (!grid) return;
     grid.innerHTML = GENERATIONS.map(g => `
       <button class="silson-gen-btn ${window.silsonState.genId===g.id?'active':''}" onclick="window.selectSilsonGen('${g.id}')">
         <span class="gen-label">${g.label}</span>
-        ${g.period?`<span class="gen-period">${g.period}</span>`:''}
+        ${g.period ? `<span class="gen-period">${g.period}</span>` : ''}
+        ${g.note   ? `<span class="gen-note">${g.note}</span>` : ''}
       </button>`).join('');
   };
 
+  // ── UI 표시/숨김 제어 ──
   window._sg_updateUI = function() {
     const g = GENERATIONS.find(x => x.id === window.silsonState.genId);
     if (!g) return;
+    const is5 = !!g.is5gen;
+
+    // 한도 셀렉트
     const limitSel = document.getElementById('silson-limit-select');
     const limitGroup = document.getElementById('silson-limit-group');
-    if (g.limitOptions && limitGroup && limitSel) {
-      limitGroup.style.display = '';
-      limitSel.innerHTML = g.limitOptions.map((opt,i) => `<option value="${i}">${opt.label}</option>`).join('');
+    if (limitGroup) limitGroup.style.display = (!is5 && g.limitOptions) ? '' : 'none';
+    if (limitSel && g.limitOptions) {
+      limitSel.innerHTML = g.limitOptions.map((o,i) => `<option value="${i}">${o.label}</option>`).join('');
       limitSel.value = window.silsonState.limitIdx;
-    } else if (limitGroup) { limitGroup.style.display = 'none'; }
-    const hint = document.getElementById('silson-nongubun-hint');
-    if (hint) hint.style.display = g.is4gen ? '' : 'none';
-    const showPresc = !g.is4gen && !g.is5gen && g.id!=='sick' && g.limitOptions && g.limitOptions[0]?.prescriptionLimit > 0;
+    }
+
+    // 통원 카드 전환
+    const legacyOut = document.getElementById('silson-outpatient-legacy-card');
+    const g5Out     = document.getElementById('silson-gen5-outpatient-area');
+    if (legacyOut) legacyOut.style.display = is5 ? 'none' : '';
+    if (g5Out)     g5Out.style.display     = is5 ? '' : 'none';
+
+    // 입원 카드 전환
+    const legacyInp = document.getElementById('silson-inpatient-legacy-card');
+    const g5Inp     = document.getElementById('silson-gen5-inpatient-area');
+    if (legacyInp) legacyInp.style.display = is5 ? 'none' : '';
+    if (g5Inp)     g5Inp.style.display     = is5 ? '' : 'none';
+
+    // 약제비 (2세대, 3세대만)
+    const showPresc = !is5 && !g.is4gen && g.id!=='sick' && (g.limitOptions?.[0]?.prescriptionLimit > 0);
     const pc = document.getElementById('silson-prescription-card');
     if (pc) pc.style.display = showPresc ? '' : 'none';
-    const show3 = g.has3Types && !g.is5gen;
-    const t3 = document.getElementById('silson-type3-card');
-    const t3i = document.getElementById('silson-inp-type3-card');
-    if (t3) t3.style.display = show3 ? '' : 'none';
-    if (t3i) t3i.style.display = show3 ? '' : 'none';
+
+    // 비급여 3종 (3세대, 4세대)
+    const show3 = !is5 && !!g.has3Types;
+    const t3out = document.getElementById('silson-type3-card');
+    const t3inp = document.getElementById('silson-inp-type3-card');
+    if (t3out) t3out.style.display = show3 ? '' : 'none';
+    if (t3inp) t3inp.style.display = show3 ? '' : 'none';
+
+    // 5세대 비급여 3종
+    const g5t3out = document.getElementById('silson-g5-type3-out-card');
+    const g5t3inp = document.getElementById('silson-g5-type3-inp-card');
+    if (g5t3out) g5t3out.style.display = is5 ? '' : 'none';
+    if (g5t3inp) g5t3inp.style.display = is5 ? '' : 'none';
   };
 
+  // ── 세대 선택 ──
   window.selectSilsonGen = function(id) {
     window.silsonState.genId = id;
     window.silsonState.limitIdx = 0;
@@ -796,168 +841,556 @@ window.copyKakaoMsg = function() {
     window.renderSilsonResult();
   };
 
+  // ── 병원 등급 선택 ──
   window.selectSilsonGrade = function(grade) {
     window.silsonState.grade = grade;
     document.querySelectorAll('.silson-grade-btn').forEach(b => b.classList.toggle('active', b.dataset.grade===grade));
     window.renderSilsonResult();
   };
 
+  // ── 통원/입원 전환 ──
   window.switchSilsonType = function(type) {
     window.silsonState.type = type;
     document.getElementById('btn-outpatient').classList.toggle('active', type==='outpatient');
     document.getElementById('btn-inpatient').classList.toggle('active', type==='inpatient');
     document.getElementById('silson-outpatient-area').style.display = type==='outpatient' ? '' : 'none';
-    document.getElementById('silson-inpatient-area').style.display = type==='inpatient' ? '' : 'none';
+    document.getElementById('silson-inpatient-area').style.display  = type==='inpatient'  ? '' : 'none';
     document.getElementById('silson-total-label').textContent = type==='outpatient' ? '통원 예상 보험금' : '입원 예상 보험금';
     window.renderSilsonResult();
   };
 
+  // ── 5세대 비급여 3종 중증/비중증 전환 ──
+  window.switchG5Type3 = function(area, mode) {
+    const key = area==='out' ? 'g5Type3OutMode' : 'g5Type3InpMode';
+    window.silsonState[key] = mode;
+    const sevBtn  = document.getElementById(`g5-type3-${area}-severe-btn`);
+    const mildBtn = document.getElementById(`g5-type3-${area}-mild-btn`);
+    const sevArea = document.getElementById(`g5-type3-${area}-severe-area`);
+    const mildArea= document.getElementById(`g5-type3-${area}-mild-area`);
+    if(sevBtn)  sevBtn.classList.toggle('active', mode==='severe');
+    if(mildBtn) mildBtn.classList.toggle('active', mode==='mild');
+    if(sevArea) sevArea.style.display  = mode==='severe' ? '' : 'none';
+    if(mildArea)mildArea.style.display = mode==='mild'   ? '' : 'none';
+    window.renderSilsonResult();
+  };
+
+  // ====================================================
+  // ── 계산 함수들 ──
+  // ====================================================
+
+  // 1~4세대, 유병자 통원 계산
   function calcOutpatient(g, grade, limitIdx) {
-    if (g.is5gen) return {total:0,deduct:0,result:0};
-    const lo = g.limitOptions ? (g.limitOptions[limitIdx]||g.limitOptions[0]) : null;
+    const lo = g.limitOptions ? (g.limitOptions[limitIdx] || g.limitOptions[0]) : null;
     const outLimit = lo ? lo.outpatientLimit : 0;
-    const covered = n(document.getElementById('silson-gubun')?.value);
-    const nonCovered = n(document.getElementById('silson-nongubun')?.value);
+    const covered    = gv('silson-gubun');
+    const nonCovered = gv('silson-nongubun');
     const total = covered + nonCovered;
-    const deductAmt = g.deductible[grade] || 0;
+
     if (g.is4gen) {
-      const cd = covered>0 ? Math.max(deductAmt, covered*(1-g.coverGubun/100)) : 0;
-      const nd = nonCovered>0 ? Math.max(30000, nonCovered*(1-g.coverNonGubun/100)) : 0;
-      return {total, deduct:cd+nd, result:Math.max(0,Math.min(covered-cd,outLimit/2))+Math.max(0,Math.min(nonCovered-nd,outLimit/2))};
+      const deductClinic = (grade==='clinic') ? 10000 : 20000;
+      const cd = covered    > 0 ? Math.max(deductClinic, Math.round(covered    * 0.2)) : 0;
+      const nd = nonCovered > 0 ? Math.max(30000,        Math.round(nonCovered * 0.3)) : 0;
+      const pay = Math.max(0, Math.min(covered - cd, outLimit)) + Math.max(0, Math.min(nonCovered - nd, outLimit));
+      return { total, deduct: cd + nd, result: pay };
     }
-    const selfPay = covered*(1-g.coverGubun/100) + nonCovered*(1-g.coverNonGubun/100);
+    if (g.id === 'sick') {
+      const deductAmt = 20000;
+      const selfRate  = 0.3;
+      const deduct = Math.max(deductAmt, Math.round(total * selfRate));
+      const pay    = Math.max(0, Math.min(total - deduct, outLimit));
+      return { total, deduct, result: pay };
+    }
+    const deductAmt = g.deductible[grade] || 0;
+    const selfPay   = Math.round(covered * (1 - g.coverGubun/100) + nonCovered * (1 - g.coverNonGubun/100));
     const fd = Math.max(deductAmt, selfPay);
-    return {total, deduct:fd, result:Math.max(0,Math.min(total-fd,outLimit))};
+    return { total, deduct: fd, result: Math.max(0, Math.min(total - fd, outLimit)) };
   }
 
+  // 2~3세대 약제비
   function calcPrescription(g, limitIdx) {
-    if (g.is5gen||g.is4gen||g.id==='sick') return null;
-    const lo = g.limitOptions ? (g.limitOptions[limitIdx]||g.limitOptions[0]) : null;
+    if (g.is4gen || g.is5gen || g.id==='sick') return null;
+    const lo = g.limitOptions ? (g.limitOptions[limitIdx] || g.limitOptions[0]) : null;
     const prescLimit = lo ? lo.prescriptionLimit : 0;
     if (!prescLimit) return null;
-    const covered = n(document.getElementById('silson-presc-gubun')?.value);
-    const nonCovered = n(document.getElementById('silson-presc-nongubun')?.value);
-    const total = covered + nonCovered;
-    const deductAmt = g.deductible.prescription || 0;
-    return {total, deduct:deductAmt, result:Math.max(0,Math.min(total-deductAmt,prescLimit))};
+    const covered    = gv('silson-presc-gubun');
+    const nonCovered = gv('silson-presc-nongubun');
+    const total      = covered + nonCovered;
+    const deductAmt  = g.deductible.prescription || 0;
+    const selfPay    = Math.round(covered*(1-g.coverGubun/100) + nonCovered*(1-g.coverNonGubun/100));
+    const fd = Math.max(deductAmt, selfPay);
+    return { total, deduct: fd, result: Math.max(0, Math.min(total - fd, prescLimit)) };
   }
 
+  // 3~4세대 비급여 3종
   function calcType3(g, isInpatient) {
-    if (!g.has3Types||g.is5gen) return null;
-    const sr = g.type3SelfRate/100;
-    const d = g.type3Deductible;
+    if (!g.has3Types || g.is5gen) return null;
+    const sr = g.type3SelfRate / 100;
+    const d  = g.type3Deductible;
     const pfx = isInpatient ? 'silson-inp-' : 'silson-';
-    const inj = n(document.getElementById(`${pfx}injection`)?.value);
-    const man = n(document.getElementById(`${pfx}manual`)?.value);
-    const mri = n(document.getElementById(`${pfx}mri`)?.value);
-    const id2 = Math.max(d.injection, inj*sr), md = Math.max(d.manual, man*sr), rd = Math.max(d.mri, mri*sr);
-    return {injDeduct:id2,manDeduct:md,mriDeduct:rd, injResult:Math.max(0,inj-id2), manResult:Math.max(0,man-md), mriResult:Math.max(0,mri-rd), total:Math.max(0,inj-id2)+Math.max(0,man-md)+Math.max(0,mri-rd)};
+    const inj = gv(`${pfx}injection`), man = gv(`${pfx}manual`), mri = gv(`${pfx}mri`);
+    const injD = Math.max(d.injection, Math.round(inj*sr));
+    const manD = Math.max(d.manual,    Math.round(man*sr));
+    const mriD = Math.max(d.mri,       Math.round(mri*sr));
+    const injR = Math.max(0,inj-injD), manR = Math.max(0,man-manD), mriR = Math.max(0,mri-mriD);
+    return { injDeduct:injD, manDeduct:manD, mriDeduct:mriD, injResult:injR, manResult:manR, mriResult:mriR, total:injR+manR+mriR };
   }
 
+  // 1~4세대, 유병자 입원 계산
   function calcInpatient(g) {
-    if (g.is5gen) return {total:0,gubunPay:0,nonGubunPay:0,roomPay:0,result:0};
-    const covered = n(document.getElementById('silson-inp-gubun')?.value);
-    const nonCovered = n(document.getElementById('silson-inp-nongubun')?.value);
-    const days = Math.max(1, n(document.getElementById('silson-days')?.value));
-    const room = document.getElementById('silson-room')?.value;
-    const roomDiff = room==='premium' ? n(document.getElementById('silson-room-diff')?.value) : 0;
-    const gp = covered*(g.coverGubun/100), np = nonCovered*(g.coverNonGubun/100);
-    const rpd = roomDiff*0.5/days;
-    const rp = (g.id==='1gen' ? rpd : Math.min(rpd,100000)) * days;
-    return {total:covered+nonCovered, gubunPay:gp, nonGubunPay:np, roomPay:rp, result:Math.min(gp+np+rp,g.inpatientLimit)};
+    const covered    = gv('silson-inp-gubun');
+    const nonCovered = gv('silson-inp-nongubun');
+    const days    = Math.max(1, gv('silson-days') || 1);
+    const room    = document.getElementById('silson-room')?.value;
+    const roomDiff= (room==='premium') ? gv('silson-room-diff') : 0;
+
+    if (g.id === 'sick') {
+      const deduct = Math.max(100000, Math.round((covered+nonCovered)*0.3));
+      const pay    = Math.max(0, Math.min(covered+nonCovered - deduct, 5e7));
+      const rp     = Math.min(roomDiff*0.5, 100000) * days;
+      return { total:covered+nonCovered, gubunPay:0, nonGubunPay:pay, roomPay:rp, result:Math.min(pay+rp,5e7) };
+    }
+    const gp = Math.round(covered    * (g.coverGubun/100));
+    const np = Math.round(nonCovered * (g.coverNonGubun/100));
+    const rpd = roomDiff * 0.5;
+    const rp  = Math.min(g.id==='1gen' ? rpd : Math.min(rpd, 100000), 100000) * days;
+    return { total:covered+nonCovered, gubunPay:gp, nonGubunPay:np, roomPay:rp, result:Math.min(gp+np+rp, g.inpatientLimit) };
   }
 
+  // ── 5세대 통원 계산 ──
+  function calc5GenOutpatient(grade) {
+    const gubun   = gv('silson-g5-out-gubun');
+    const severe  = gv('silson-g5-out-severe');
+    const mild    = gv('silson-g5-out-mild');
+    const deductG = (grade==='clinic') ? 10000 : 20000;
+    const gPay    = Math.max(0, gubun   - Math.max(deductG, Math.round(gubun*0.2)));
+    const sPay    = Math.max(0, severe  - Math.max(30000,   Math.round(severe*0.3)));
+    const mPay    = Math.max(0, mild    - Math.max(50000,   Math.round(mild*0.5)));
+    const nonPay  = Math.min(sPay + mPay, 200000); // 비급여 회당 20만 한도
+    return {
+      total: gubun+severe+mild,
+      gubunPay: gPay,
+      severePay: sPay,
+      mildPay: mPay,
+      nonPay,
+      result: gPay + nonPay,
+      gubunDeduct: Math.max(deductG, Math.round(gubun*0.2)),
+      severeDeduct: Math.max(30000, Math.round(severe*0.3)),
+      mildDeduct:  Math.max(50000, Math.round(mild*0.5))
+    };
+  }
+
+  // ── 5세대 입원 계산 ──
+  function calc5GenInpatient(grade) {
+    const gubun  = gv('silson-g5-inp-gubun');
+    const severe = gv('silson-g5-inp-severe');
+    const mild   = gv('silson-g5-inp-mild');
+    const gDeduct  = Math.min(Math.round(gubun*0.2 + severe*0.3), (grade==='general'||grade==='hospital') ? 5000000 : 2000000);
+    const gPay     = Math.max(0, gubun+severe - gDeduct);
+    const mDeduct  = Math.round(mild*0.5);
+    const mPay     = Math.min(Math.max(0, mild - mDeduct), 3000000);
+    return {
+      total: gubun+severe+mild,
+      gubunPay: gPay,
+      mildPay: mPay,
+      gDeduct, mDeduct,
+      result: Math.min(gPay + mPay, 5e7)
+    };
+  }
+
+  // ── 5세대 비급여 3종 ──
+  function calc5GenType3(area) {
+    const mode = area==='out' ? window.silsonState.g5Type3OutMode : window.silsonState.g5Type3InpMode;
+    const pfx  = `silson-g5-${area}-`;
+    if (mode==='severe') {
+      const man = gv(`${pfx}manual`), inj = gv(`${pfx}injection`), mri = gv(`${pfx}mri`);
+      const manD = Math.max(30000, Math.round(man*0.3));
+      const injD = Math.max(30000, Math.round(inj*0.3));
+      const mriD = Math.max(30000, Math.round(mri*0.3));
+      const manR = Math.min(Math.max(0,man-manD), 3500000);
+      const injR = Math.min(Math.max(0,inj-injD), 2500000);
+      const mriR = Math.min(Math.max(0,mri-mriD), 3000000);
+      return { mode:'severe', manDeduct:manD, injDeduct:injD, mriDeduct:mriD, manResult:manR, injResult:injR, mriResult:mriR, total:manR+injR+mriR };
+    } else {
+      const mriM = gv(`${pfx}mri-mild`);
+      const mriD = Math.max(50000, Math.round(mriM*0.5));
+      const mriR = Math.min(Math.max(0, mriM-mriD), 2000000);
+      return { mode:'mild', mriMildDeduct:mriD, mriMildResult:mriR, total:mriR };
+    }
+  }
+
+  // ── 화면 렌더 ──
   window.renderSilsonResult = function() {
     const g = GENERATIONS.find(x => x.id===window.silsonState.genId);
     if (!g) return;
-    const {limitIdx, grade, type} = window.silsonState;
+    const { limitIdx, grade, type } = window.silsonState;
+    const sv = (id, v) => { const el=document.getElementById(id); if(el) el.value=`${fmt(v)}원`; };
+
     if (type==='outpatient') {
-      const out=calcOutpatient(g,grade,limitIdx), presc=calcPrescription(g,limitIdx), t3=calcType3(g,false);
-      const oe=document.getElementById('silson-outpatient-result');
-      if(oe) oe.innerHTML=`<table><tr><td>병원비</td><td>${fmt(out.total)}원</td></tr><tr><td>공제액</td><td>${fmt(out.deduct)}원</td></tr><tr><td>추산보험금</td><td>${fmt(out.result)}원</td></tr></table>`;
-      const pe=document.getElementById('silson-prescription-result');
-      if(pe&&presc) pe.innerHTML=`<table><tr><td>약제비</td><td>${fmt(presc.total)}원</td></tr><tr><td>공제액</td><td>${fmt(presc.deduct)}원</td></tr><tr><td>추산보험금</td><td>${fmt(presc.result)}원</td></tr></table>`;
-      if(t3){
-        const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=`${fmt(v)}원`;};
-        sv('silson-injection-deduct',t3.injDeduct); sv('silson-manual-deduct',t3.manDeduct); sv('silson-mri-deduct',t3.mriDeduct);
-        const t3e=document.getElementById('silson-type3-result');
-        if(t3e) t3e.innerHTML=`<table><tr><td>주사제</td><td>${fmt(t3.injResult)}원</td></tr><tr><td>도수/체외충격파</td><td>${fmt(t3.manResult)}원</td></tr><tr><td>MRI/MRA</td><td>${fmt(t3.mriResult)}원</td></tr><tr><td>비급여3종 합계</td><td>${fmt(t3.total)}원</td></tr></table>`;
+      if (g.is5gen) {
+        const out = calc5GenOutpatient(grade);
+        const t3  = calc5GenType3('out');
+        const e1 = document.getElementById('silson-g5-out-gubun-result');
+        if(e1) e1.innerHTML=`<table><tr><td>급여 금액</td><td>${fmt(out.total-gv('silson-g5-out-severe')-gv('silson-g5-out-mild'))}원</td></tr><tr><td>공제액</td><td>${fmt(out.gubunDeduct)}원</td></tr><tr><td>급여 예상보험금</td><td>${fmt(out.gubunPay)}원</td></tr></table>`;
+        const e2 = document.getElementById('silson-g5-out-nongubun-result');
+        if(e2) e2.innerHTML=`<table><tr><td>중증 비급여 공제</td><td>${fmt(out.severeDeduct)}원</td></tr><tr><td>비중증 비급여 공제</td><td>${fmt(out.mildDeduct)}원</td></tr><tr><td>비급여 예상보험금</td><td>${fmt(out.nonPay)}원</td></tr></table>`;
+        // 3종 렌더
+        if (t3.mode==='severe') {
+          sv('silson-g5-out-manual-deduct',    t3.manDeduct);
+          sv('silson-g5-out-injection-deduct', t3.injDeduct);
+          sv('silson-g5-out-mri-deduct',       t3.mriDeduct);
+        } else {
+          sv('silson-g5-out-mri-mild-deduct',  t3.mriMildDeduct);
+        }
+        const e3 = document.getElementById('silson-g5-type3-out-result');
+        if(e3) {
+          if(t3.mode==='severe') e3.innerHTML=`<table><tr><td>도수치료</td><td>${fmt(t3.manResult)}원</td></tr><tr><td>비급여주사제</td><td>${fmt(t3.injResult)}원</td></tr><tr><td>MRI/MRA</td><td>${fmt(t3.mriResult)}원</td></tr><tr><td>3종 합계</td><td>${fmt(t3.total)}원</td></tr></table>`;
+          else e3.innerHTML=`<table><tr><td>MRI/MRA (비중증)</td><td>${fmt(t3.mriMildResult)}원</td></tr><tr><td>3종 합계</td><td>${fmt(t3.total)}원</td></tr></table>`;
+        }
+        const te = document.getElementById('silson-total-amount');
+        if(te) te.textContent = `${fmt(out.result + t3.total)}원`;
+      } else {
+        const out   = calcOutpatient(g, grade, limitIdx);
+        const presc = calcPrescription(g, limitIdx);
+        const t3    = calcType3(g, false);
+        const oe = document.getElementById('silson-outpatient-result');
+        if(oe) oe.innerHTML=`<table><tr><td>병원비 합계</td><td>${fmt(out.total)}원</td></tr><tr><td>공제액</td><td>${fmt(out.deduct)}원</td></tr><tr><td>예상보험금</td><td>${fmt(out.result)}원</td></tr></table>`;
+        const pe = document.getElementById('silson-prescription-result');
+        if(pe&&presc) pe.innerHTML=`<table><tr><td>약제비</td><td>${fmt(presc.total)}원</td></tr><tr><td>공제액</td><td>${fmt(presc.deduct)}원</td></tr><tr><td>예상보험금</td><td>${fmt(presc.result)}원</td></tr></table>`;
+        if(t3) {
+          sv('silson-injection-deduct', t3.injDeduct);
+          sv('silson-manual-deduct',    t3.manDeduct);
+          sv('silson-mri-deduct',       t3.mriDeduct);
+          const t3e = document.getElementById('silson-type3-result');
+          if(t3e) t3e.innerHTML=`<table><tr><td>비급여주사제</td><td>${fmt(t3.injResult)}원</td></tr><tr><td>도수/체외충격파</td><td>${fmt(t3.manResult)}원</td></tr><tr><td>MRI/MRA</td><td>${fmt(t3.mriResult)}원</td></tr><tr><td>3종 합계</td><td>${fmt(t3.total)}원</td></tr></table>`;
+        }
+        const te = document.getElementById('silson-total-amount');
+        if(te) te.textContent=`${fmt(out.result+(presc?.result||0)+(t3?.total||0))}원`;
       }
-      const te=document.getElementById('silson-total-amount');
-      if(te) te.textContent=`${fmt(out.result+(presc?.result||0)+(t3?.total||0))}원`;
     } else {
-      const inp=calcInpatient(g), t3=calcType3(g,true);
-      const ie=document.getElementById('silson-inpatient-result');
-      if(ie){
-        const rr=document.getElementById('silson-room')?.value==='premium'?`<tr><td>상급병실료 지급</td><td>${fmt(inp.roomPay)}원</td></tr>`:'';
-        ie.innerHTML=`<table><tr><td>급여 지급 (${g.coverGubun||0}%)</td><td>${fmt(inp.gubunPay)}원</td></tr><tr><td>비급여 지급 (${g.coverNonGubun||0}%)</td><td>${fmt(inp.nonGubunPay)}원</td></tr>${rr}<tr><td>예상보험금</td><td>${fmt(inp.result)}원</td></tr></table>`;
+      // 입원
+      if (g.is5gen) {
+        const inp = calc5GenInpatient(grade);
+        const t3  = calc5GenType3('inp');
+        const e1 = document.getElementById('silson-g5-inp-gubun-result');
+        if(e1) e1.innerHTML=`<table><tr><td>급여+중증비급여</td><td>${fmt(gv('silson-g5-inp-gubun')+gv('silson-g5-inp-severe'))}원</td></tr><tr><td>공제액</td><td>${fmt(inp.gDeduct)}원</td></tr><tr><td>예상보험금</td><td>${fmt(inp.gubunPay)}원</td></tr></table>`;
+        const e2 = document.getElementById('silson-g5-inp-nongubun-result');
+        if(e2) e2.innerHTML=`<table><tr><td>비중증 비급여</td><td>${fmt(gv('silson-g5-inp-mild'))}원</td></tr><tr><td>공제액 (50%)</td><td>${fmt(inp.mDeduct)}원</td></tr><tr><td>예상보험금</td><td>${fmt(inp.mildPay)}원</td></tr></table>`;
+        if (t3.mode==='severe') {
+          sv('silson-g5-inp-manual-deduct',    t3.manDeduct);
+          sv('silson-g5-inp-injection-deduct', t3.injDeduct);
+          sv('silson-g5-inp-mri-deduct',       t3.mriDeduct);
+        } else {
+          sv('silson-g5-inp-mri-mild-deduct',  t3.mriMildDeduct);
+        }
+        const e3 = document.getElementById('silson-g5-type3-inp-result');
+        if(e3) {
+          if(t3.mode==='severe') e3.innerHTML=`<table><tr><td>도수치료</td><td>${fmt(t3.manResult)}원</td></tr><tr><td>비급여주사제</td><td>${fmt(t3.injResult)}원</td></tr><tr><td>MRI/MRA</td><td>${fmt(t3.mriResult)}원</td></tr><tr><td>3종 합계</td><td>${fmt(t3.total)}원</td></tr></table>`;
+          else e3.innerHTML=`<table><tr><td>MRI/MRA (비중증)</td><td>${fmt(t3.mriMildResult)}원</td></tr><tr><td>3종 합계</td><td>${fmt(t3.total)}원</td></tr></table>`;
+        }
+        const te = document.getElementById('silson-total-amount');
+        if(te) te.textContent=`${fmt(inp.result + t3.total)}원`;
+      } else {
+        const inp = calcInpatient(g);
+        const t3  = calcType3(g, true);
+        const ie = document.getElementById('silson-inpatient-result');
+        if(ie) {
+          const roomRow = (document.getElementById('silson-room')?.value==='premium') ? `<tr><td>상급병실료 지급</td><td>${fmt(inp.roomPay)}원</td></tr>` : '';
+          ie.innerHTML=`<table><tr><td>급여 지급 (${g.coverGubun||0}%)</td><td>${fmt(inp.gubunPay)}원</td></tr><tr><td>비급여 지급 (${g.coverNonGubun||0}%)</td><td>${fmt(inp.nonGubunPay)}원</td></tr>${roomRow}<tr><td>예상보험금</td><td>${fmt(inp.result)}원</td></tr></table>`;
+        }
+        if(t3) {
+          sv('silson-inp-injection-deduct', t3.injDeduct);
+          sv('silson-inp-manual-deduct',    t3.manDeduct);
+          sv('silson-inp-mri-deduct',       t3.mriDeduct);
+          const t3e = document.getElementById('silson-inp-type3-result');
+          if(t3e) t3e.innerHTML=`<table><tr><td>비급여주사제</td><td>${fmt(t3.injResult)}원</td></tr><tr><td>도수/체외충격파</td><td>${fmt(t3.manResult)}원</td></tr><tr><td>MRI/MRA</td><td>${fmt(t3.mriResult)}원</td></tr><tr><td>3종 합계</td><td>${fmt(t3.total)}원</td></tr></table>`;
+        }
+        const te = document.getElementById('silson-total-amount');
+        if(te) te.textContent=`${fmt(inp.result+(t3?.total||0))}원`;
       }
-      if(t3){
-        const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=`${fmt(v)}원`;};
-        sv('silson-inp-injection-deduct',t3.injDeduct); sv('silson-inp-manual-deduct',t3.manDeduct); sv('silson-inp-mri-deduct',t3.mriDeduct);
-        const t3e=document.getElementById('silson-inp-type3-result');
-        if(t3e) t3e.innerHTML=`<table><tr><td>주사제</td><td>${fmt(t3.injResult)}원</td></tr><tr><td>도수/체외충격파</td><td>${fmt(t3.manResult)}원</td></tr><tr><td>MRI/MRA</td><td>${fmt(t3.mriResult)}원</td></tr><tr><td>비급여3종 합계</td><td>${fmt(t3.total)}원</td></tr></table>`;
-      }
-      const te=document.getElementById('silson-total-amount');
-      if(te) te.textContent=`${fmt(inp.result+(t3?.total||0))}원`;
     }
   };
 
+  // ── 초기화 ──
   window.initSilsonPage = function() {
-    window.silsonState = {genId:'4gen', type:'outpatient', grade:'clinic', limitIdx:0};
-    window._sg_renderGenGrid();   // ← 핵심: window에 등록된 함수 호출
-    window._sg_updateUI();        // ← 핵심
+    window.silsonState = { genId:'4gen', type:'outpatient', grade:'clinic', limitIdx:0, g5Type3OutMode:'severe', g5Type3InpMode:'severe' };
+    window._sg_renderGenGrid();
+    window._sg_updateUI();
     window.renderSilsonResult();
-    const rs=document.getElementById('silson-room');
-    if(rs) rs.addEventListener('change',function(){
-      document.getElementById('silson-room-extra').style.display=this.value==='premium'?'':'none';
-      window.renderSilsonResult();
-    });
-    const ls=document.getElementById('silson-limit-select');
-    if(ls) ls.addEventListener('change',function(){
-      window.silsonState.limitIdx=Number(this.value);
+    const rs = document.getElementById('silson-room');
+    if(rs) rs.addEventListener('change', function(){
+      document.getElementById('silson-room-extra').style.display = this.value==='premium' ? '' : 'none';
       window.renderSilsonResult();
     });
   };
 
 })();
 
-window.switchGongsilTab = function(type) {
-    const nonlifeTab = document.getElementById('gongsil-tab-nonlife');
-    const lifeTab    = document.getElementById('gongsil-tab-life');
-    const gridNon    = document.getElementById('gongsil-grid-nonlife');
-    const gridLife   = document.getElementById('gongsil-grid-life');
-    if (type === 'nonlife') {
-        nonlifeTab.style.background = 'white'; nonlifeTab.style.color = '#2563EB';
-        lifeTab.style.background = 'transparent'; lifeTab.style.color = '#64748B';
-        gridNon.style.display = 'grid'; gridLife.style.display = 'none';
-    } else {
-        lifeTab.style.background = 'white'; lifeTab.style.color = '#2563EB';
-        nonlifeTab.style.background = 'transparent'; nonlifeTab.style.color = '#64748B';
-        gridNon.style.display = 'none'; gridLife.style.display = 'grid';
+
+// =====================================================
+// 실손 사전
+// =====================================================
+(function() {
+  const DICT_DATA = {
+    '1세대': {
+      info: [
+        ['구분','표준화 이전 (구실손)'],['보험기간','80세, 100세'],['갱신주기','5년, 3년'],
+        ['본인부담한도','없음'],['상급병실','병실료 차액 50%'],
+        ['가입금액','입원 최대 1억 / 통원 10만~50만 (상품별 상이)']
+      ],
+      selfpay: [
+        ['입원','자기부담금 0%'],['통원','상품별 5천원 또는 1만원 공제'],
+        ['약제비','통원 한도 내 포함 또는 상품별 상이'],['비급여3종','해당 없음']
+      ],
+      waiting: [
+        ['상해입원','365일 보장'],['질병입원','365일 보장 후 180일 면책 가능'],
+        ['통원','30회 보장 후 180일 면책 가능']
+      ],
+      exclude: [
+        ['미용·성형','제외','치료 목적 제외'],['건강검진','일부 가능','이상소견 추가검사 가능'],
+        ['예방접종','제외','예방 목적 제외'],['임신·출산','제외','관련 질환 제외'],
+        ['한방','제한','급여 일부 가능'],['치과','제한','급여 치료 일부 가능'],
+        ['정신질환','제한','대부분 제한'],['안과','제한','비급여 시력교정 제외'],
+        ['해외치료','일부 가능','구실손 일부 상품 가능']
+      ]
+    },
+    '2세대 1차': {
+      info: [
+        ['구분','표준화 Ⅰ'],['보험기간','100세'],['갱신주기','3년'],
+        ['본인부담한도','입원 자기부담금 연 200만원'],['상급병실','병실료 차액 50% (1일 10만원 한도)'],
+        ['가입금액','입원 최대 5천만원 / 통원 최대 30만원']
+      ],
+      selfpay: [
+        ['입원','급여·비급여 90% 보장 (자기부담 10%)'],
+        ['통원','의원 1만 / 병원 1.5만 / 종합병원 2만원 공제'],
+        ['약제비','8천원 공제'],['비급여3종','해당 없음']
+      ],
+      waiting: [
+        ['입원','최초 입원일부터 365일 보장 후 90일 면책'],
+        ['통원','1년 내 180회 보장']
+      ],
+      exclude: [
+        ['미용·성형','제외','치료 목적 제외'],['건강검진','일부 가능','이상소견 추가검사 가능'],
+        ['예방접종','제외','예방 목적 제외'],['임신·출산','제외','관련 질환 제외'],
+        ['한방','제한','급여 일부 가능'],['치과','제한','급여 치료 일부 가능'],
+        ['정신질환','제한','대부분 제한'],['안과','제한','비급여 시력교정 제외'],
+        ['해외치료','제외','국내 치료 중심']
+      ]
+    },
+    '2세대 2차': {
+      info: [
+        ['구분','표준화 Ⅱ'],['보험기간','15년 재가입'],['갱신주기','1년'],
+        ['본인부담한도','입원 자기부담금 연 200만원'],['상급병실','병실료 차액 50% (1일 10만원 한도)'],
+        ['가입금액','입원 최대 5천만원 / 통원 최대 30만원']
+      ],
+      selfpay: [
+        ['입원','표준형 20% / 선택형 10% 자기부담'],
+        ['통원','의원 1만, 병원 1.5만, 종합병원 2만원 또는 20% 중 큰 금액'],
+        ['약제비','8천원 또는 20% 중 큰 금액'],['비급여3종','해당 없음']
+      ],
+      waiting: [
+        ['입원','최초 입원일부터 365일 보장 후 90일 면책'],
+        ['통원','1년 내 180회 보장'],
+        ['동일 질병·상해','퇴원 후 180일 이내 재입원 시 같은 사고로 볼 수 있음']
+      ],
+      exclude: [
+        ['미용·성형','제외','치료 목적 제외'],['예방접종','제외','예방 목적 제외'],
+        ['임신·출산','제외','관련 질환 제외'],['한방','제한','급여 일부 가능'],
+        ['치과','제한','급여 치료 일부 가능'],['정신질환','제한','대부분 제한'],
+        ['안과','제한','비급여 시력교정 제외'],['해외치료','제외','국내 치료 중심']
+      ]
+    },
+    '2세대 3차': {
+      info: [
+        ['구분','표준화 Ⅲ'],['보험기간','15년 재가입'],['갱신주기','1년'],
+        ['본인부담한도','입원 자기부담금 연 200만원'],['상급병실','병실료 차액 50% (1일 10만원 한도)'],
+        ['가입금액','입원 최대 5천만원 / 통원 최대 30만원']
+      ],
+      selfpay: [
+        ['입원','급여 10% / 비급여 20% 자기부담'],
+        ['통원','1만·1.5만·2만원 또는 급여 10%+비급여 20% 중 큰 금액'],
+        ['약제비','8천원 또는 급여 10%+비급여 20% 중 큰 금액'],['비급여3종','해당 없음']
+      ],
+      waiting: [
+        ['입원','275일 초과 시 90일 면책 / 이하 시 잔여일 면책'],
+        ['통원','1년 내 180회 보장']
+      ],
+      exclude: [
+        ['미용·성형','제외','치료 목적 제외'],['임신·출산','제외','관련 질환 제외'],
+        ['한방','제한','급여 일부 가능'],['치과','일부 가능','K09~K14 급여 일부 가능'],
+        ['정신질환','일부 가능','2016년 이후 급여 일부 가능'],
+        ['안과','제한','비급여 시력교정 제외'],['해외치료','제외','국내 치료 중심']
+      ]
+    },
+    '3세대': {
+      info: [
+        ['구분','착한실손'],['보험기간','15년 재가입'],['갱신주기','1년'],
+        ['본인부담한도','입원 자기부담금 연 200만원'],['상급병실','병실료 차액 50% (1일 10만원 한도)'],
+        ['가입금액','입원 5천만 / 통원 최대 30만 / 도수 350만 / 주사 250만 / MRI 300만']
+      ],
+      selfpay: [
+        ['입원','급여 10% / 비급여 20% 자기부담'],
+        ['통원','1만·1.5만·2만원 또는 급여 10%+비급여 20% 중 큰 금액'],
+        ['약제비','8천원 또는 급여 10%+비급여 20% 중 큰 금액'],
+        ['비급여3종','2만원 또는 30% 중 큰 금액']
+      ],
+      waiting: [
+        ['입원','한도 소진 시 다음 계약해당일부터 보장'],
+        ['통원','1년 내 180회 보장'],
+        ['비급여3종','도수 50회 / 비급여주사 50회 / MRI 연 300만원']
+      ],
+      exclude: [
+        ['미용·성형','제외','치료 목적 제외'],['비만','제외','치료 목적 제외'],
+        ['임신·출산','제외','관련 질환 제외'],['한방','제한','급여 일부 가능'],
+        ['치과','일부 가능','급여 치료 일부 가능'],['정신질환','일부 가능','급여 일부 보장'],
+        ['안과','제한','비급여 시력교정 제외'],['도수치료','제한','치료 효과 입증 필요'],
+        ['영양주사','제한','치료 목적 확인 필요'],['해외치료','제외','국내 치료 중심']
+      ]
+    },
+    '4세대': {
+      info: [
+        ['구분','보험료 차등제'],['보험기간','5년 재가입'],['갱신주기','1년'],
+        ['본인부담한도','급여 입원 자기부담금 연 200만원'],['상급병실','병실료 차액 50% (1일 10만원 한도)'],
+        ['가입금액','급여 5천만 / 비급여 5천만 / 통원 회당 20만 / 도수 350만 / 주사 250만 / MRI 300만']
+      ],
+      selfpay: [
+        ['입원 급여','20% 자기부담'],['입원 비급여','30% 자기부담'],
+        ['통원 급여','병·의원 1만 / 상급·종합 2만 또는 20% 중 큰 금액'],
+        ['통원 비급여','3만원 또는 30% 중 큰 금액'],
+        ['약제비','통원 급여에 포함'],['비급여3종','3만원 또는 30% 중 큰 금액']
+      ],
+      waiting: [
+        ['입원','한도 소진 시 다음 계약해당일부터 보장'],
+        ['통원','회당 20만원 / 비급여 통원 연 100회'],
+        ['비급여3종','한도 또는 횟수 소진 시 다음 계약해당일까지']
+      ],
+      exclude: [
+        ['미용·성형','제외','치료 목적 제외'],['비만','제외','치료 목적 제외'],
+        ['임신·출산','제외','관련 질환 제외'],['한방','제한','급여 일부 가능'],
+        ['치과','일부 가능','급여 치료 일부 가능'],['정신질환','일부 가능','급여 일부 보장'],
+        ['안과','제한','비급여 시력교정 제외'],['비급여 백내장','제한','심사 강화'],
+        ['영양주사','제한','치료 목적 확인 필요'],['해외치료','제외','국내 치료 중심']
+      ]
+    },
+    '5세대': {
+      info: [
+        ['구분','중증·비중증 비급여 분리'],['적용기간','2026.05~'],
+        ['보험기간','5년 재가입'],['갱신주기','1년'],
+        ['본인부담한도','급여 200만 / 중증 비급여 상급·종합 연 500만'],
+        ['상급병실','병실료 차액 50% (1일 10만원 한도)'],
+        ['가입금액','급여 5천만 / 중증비급여 5천만 / 비중증비급여 1천만 / 중증 3종: 도수 350만·주사 250만·MRI 300만 / 비중증 MRI 200만']
+      ],
+      selfpay: [
+        ['입원 급여','20% 자기부담'],['입원 중증 비급여','30% 자기부담'],
+        ['입원 비중증 비급여','50% 자기부담'],
+        ['통원 급여','병·의원 1만 / 상급·종합 2만 또는 20% 중 큰 금액'],
+        ['통원 중증 비급여','3만원 또는 30% 중 큰 금액'],
+        ['통원 비중증 비급여','5만원 또는 50% 중 큰 금액'],
+        ['3종 중증 (도수·주사·MRI)','3만원 또는 30% 중 큰 금액'],
+        ['3종 비중증 (MRI만)','5만원 또는 50% 중 큰 금액']
+      ],
+      waiting: [
+        ['입원','한도 소진 시 다음 계약해당일부터 보장'],
+        ['통원','통원 일당 20만원'],
+        ['비급여3종','각 항목 한도 소진 시 다음 계약해당일까지']
+      ],
+      exclude: [
+        ['미용·성형','제외','치료 목적 제외'],['비만','제외','치료 목적 제외'],
+        ['한방','제한','급여 일부 가능'],['치과','일부 가능','급여 치료 일부 가능'],
+        ['정신질환','일부 가능','급여 일부 보장'],
+        ['안과','제한','비급여 시력교정 제외'],['해외치료','제외','국내 치료 중심'],
+        ['근골격계 비중증','제한','비중증 비급여 50% 본인부담'],
+        ['비급여 도수·주사','제한','중증·비중증 구분 적용'],
+        ['비급여 백내장','제한','심사 강화']
+      ]
+    },
+    '유병자': {
+      info: [
+        ['구분','간편심사 실손'],['보험기간','3년 재가입'],['갱신주기','1년'],
+        ['상급병실','병실료 차액 50% (1일 10만원 한도)'],
+        ['가입금액','입원 5천만원 / 통원 회당 20만원']
+      ],
+      selfpay: [
+        ['입원','10만원 또는 30% 중 큰 금액'],
+        ['통원','2만원 또는 30% 중 큰 금액'],
+        ['약제비','보장 제외'],['비급여3종','보장 제외']
+      ],
+      waiting: [
+        ['입원','365일 보장 후 90일 면책'],
+        ['통원','연 180회 보장']
+      ],
+      exclude: [
+        ['처방조제','제외','약제비 보장 제외'],['도수치료','제외','비급여 3종 제외'],
+        ['비급여주사','제외','비급여 3종 제외'],['MRI/MRA','제외','비급여 3종 제외'],
+        ['한방','제한','급여 일부 가능'],['치과','제한','급여 치료 일부 가능'],
+        ['정신질환','제한','대부분 제한'],['안과','제한','비급여 시력교정 제외'],
+        ['미용·성형','제외','치료 목적 제외'],['비만','제외','치료 목적 제외']
+      ]
     }
-};
+  };
 
-window.switchTermsTab = function(type) {
-    const nonlifeTab = document.getElementById('terms-tab-nonlife');
-    const lifeTab    = document.getElementById('terms-tab-life');
-    const gridNon    = document.getElementById('terms-grid-nonlife');
-    const gridLife   = document.getElementById('terms-grid-life');
-    if (type === 'nonlife') {
-        nonlifeTab.classList.add('active'); lifeTab.classList.remove('active');
-        gridNon.style.display = 'grid'; gridLife.style.display = 'none';
+  let _dictGen = '1세대', _dictTab = 'info';
+
+  window.openSilsonDict = function() {
+    document.getElementById('silson-dict-modal').style.display = 'flex';
+    window.switchDictGen('1세대');
+  };
+  window.closeSilsonDict = function() {
+    document.getElementById('silson-dict-modal').style.display = 'none';
+  };
+
+  window.switchDictGen = function(gen) {
+    _dictGen = gen;
+    document.querySelectorAll('.dict-gen-btn').forEach(b => b.classList.toggle('active', b.textContent.trim()===gen));
+    const lbl = document.getElementById('silson-dict-gen-label');
+    const periods = { '1세대':'~2009.09', '2세대 1차':'2009.10~2012.12', '2세대 2차':'2013.01~2015.08', '2세대 3차':'2015.09~2017.03', '3세대':'2017.04~2021.06', '4세대':'2021.07~2026.04', '5세대':'2026.05~', '유병자':'유병자 실손' };
+    if(lbl) lbl.textContent = periods[gen] || '';
+    window.switchDictTab(_dictTab);
+  };
+
+  window.switchDictTab = function(tab) {
+    _dictTab = tab;
+    ['info','selfpay','waiting','exclude'].forEach(t => {
+      document.getElementById(`dict-tab-${t}`)?.classList.toggle('active', t===tab);
+    });
+    const body = document.getElementById('silson-dict-body');
+    if (!body) return;
+    const data = DICT_DATA[_dictGen];
+    if (!data) { body.innerHTML='<p style="color:#8B95A1; text-align:center; padding:30px;">데이터 준비중입니다.</p>'; return; }
+
+    if (tab==='info' || tab==='selfpay' || tab==='waiting') {
+      const key = tab==='info' ? 'info' : tab==='selfpay' ? 'selfpay' : 'waiting';
+      body.innerHTML = (data[key]||[]).map(([k,v]) => `
+        <div class="dict-item">
+          <div class="dict-item-key">${k}</div>
+          <div class="dict-item-val">${v}</div>
+        </div>`).join('');
     } else {
-        lifeTab.classList.add('active'); nonlifeTab.classList.remove('active');
-        gridNon.style.display = 'none'; gridLife.style.display = 'grid';
+      body.innerHTML = `
+        <div style="overflow:hidden; border-radius:14px; border:1px solid #F2F4F6;">
+          <table style="width:100%; border-collapse:collapse; font-size:13px;">
+            <thead><tr style="background:#F9FAFB;">
+              <th style="padding:12px 14px; text-align:left; font-weight:800; color:#4E5968;">항목</th>
+              <th style="padding:12px 8px; text-align:center; font-weight:800; color:#4E5968;">구분</th>
+              <th style="padding:12px 14px; text-align:left; font-weight:800; color:#4E5968;">비고</th>
+            </tr></thead>
+            <tbody>${(data.exclude||[]).map(([item,status,note]) => {
+              const cls = status.includes('제외') ? 'badge-exclude' : status.includes('가능') ? 'badge-possible' : 'badge-limit';
+              return `<tr style="border-top:1px solid #F2F4F6;">
+                <td style="padding:11px 14px; color:#191F28; font-weight:700;">${item}</td>
+                <td style="padding:11px 8px; text-align:center;"><span class="dict-exclude-badge ${cls}">${status}</span></td>
+                <td style="padding:11px 14px; color:#8B95A1;">${note||''}</td>
+              </tr>`;
+            }).join('')}</tbody>
+          </table>
+        </div>`;
     }
-};
+  };
 
-
-(function(){
-    const days = ['일','월','화','수','목','금','토'];
-    const now = new Date();
-    const el = document.getElementById('claim-main-date');
-    if(el) el.innerText = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+  // 모달 외부 클릭 시 닫기
+  document.addEventListener('click', function(e) {
+    const modal = document.getElementById('silson-dict-modal');
+    if (modal && e.target === modal) window.closeSilsonDict();
+  });
 })();
 
 // =========================================

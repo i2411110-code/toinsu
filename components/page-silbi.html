@@ -1,16 +1,10 @@
-<!-- 
-  실손 예상 보험금 계산기 (토스풍)
-  components/ 폴더 안에 page-silbi.html 로 저장하세요.
-  app.js의 window.calculateSilson / silson 관련 함수는 기존 그대로 사용합니다.
--->
-
 <section class="silson-wrap toss">
   <div class="silson-box">
 
     <!-- 헤더 -->
     <div class="toss-hero" style="padding:24px 24px 26px; margin-bottom:16px;">
       <button class="toss-home-btn" onclick="window.navigateTo('page-claim-main')">
-    <i class="bi bi-arrow-left"></i> 청구의 모든것
+        <i class="bi bi-arrow-left"></i> 청구의 모든것
       </button>
       <div class="toss-hero-tag"><i class="bi bi-calculator-fill"></i> 실비계산기</div>
       <p class="toss-hero-sub">세대별 실손 예상 보험금을 한눈에</p>
@@ -20,9 +14,7 @@
     <!-- 세대 선택 -->
     <div class="toss-card">
       <div class="toss-card-title" style="margin-bottom:16px;">세대 선택</div>
-      <div class="silson-gen-grid" id="silson-gen-grid">
-        <!-- JS로 렌더링 -->
-      </div>
+      <div class="silson-gen-grid" id="silson-gen-grid"></div>
     </div>
 
     <!-- 통원/입원 탭 -->
@@ -34,31 +26,24 @@
       </div>
     </div>
 
-    <!-- 통원 입력 영역 -->
+    <!-- ===== 통원 입력 영역 ===== -->
     <div id="silson-outpatient-area">
 
-      <!-- 통원 외래 -->
-      <div class="toss-card">
+      <!-- 통원 외래 (1~4세대, 유병자) -->
+      <div class="toss-card" id="silson-outpatient-legacy-card">
         <div class="toss-card-title" style="margin-bottom:16px;">통원 (외래)</div>
-
-        <!-- 통원 한도 선택 -->
         <div class="silson-group" id="silson-limit-group">
           <label>통원비 한도</label>
-          <select id="silson-limit-select" class="silson-select" onchange="window.silsonState.limitIdx=Number(this.value); window.renderSilsonResult()">
-          </select>
+          <select id="silson-limit-select" class="silson-select" onchange="window.silsonState.limitIdx=Number(this.value); window.renderSilsonResult()"></select>
         </div>
-
-        <!-- 병원 등급 -->
         <div class="silson-group">
-          <label>병원 등급 <span id="silson-nongubun-hint" class="silson-hint" style="display:none;">비급여: 병원등급 무관 (30% 또는 최소 30,000원)</span></label>
+          <label>병원 등급</label>
           <div class="silson-grade-btns">
             <button class="silson-grade-btn active" data-grade="clinic" onclick="window.selectSilsonGrade('clinic')">병·의원</button>
             <button class="silson-grade-btn" data-grade="hospital" onclick="window.selectSilsonGrade('hospital')">종합병원</button>
             <button class="silson-grade-btn" data-grade="general" onclick="window.selectSilsonGrade('general')">상급종합병원</button>
           </div>
         </div>
-
-        <!-- 급여 / 비급여 입력 -->
         <div class="silson-row">
           <div class="silson-group">
             <label>급여</label>
@@ -69,12 +54,44 @@
             <input type="number" id="silson-nongubun" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
           </div>
         </div>
-
-        <!-- 외래 결과 -->
         <div class="silson-result-mini" id="silson-outpatient-result"></div>
       </div>
 
-      <!-- 약제비 (1세대, 4세대, 유병자 제외) -->
+      <!-- 5세대 통원 전용 UI -->
+      <div id="silson-gen5-outpatient-area" style="display:none;">
+        <div class="toss-card">
+          <div class="toss-card-title" style="margin-bottom:16px;">통원 (급여)</div>
+          <div class="silson-group">
+            <label>병원 등급</label>
+            <div class="silson-grade-btns">
+              <button class="silson-grade-btn active" data-grade="clinic" onclick="window.selectSilsonGrade('clinic')">병·의원</button>
+              <button class="silson-grade-btn" data-grade="hospital" onclick="window.selectSilsonGrade('hospital')">종합병원</button>
+              <button class="silson-grade-btn" data-grade="general" onclick="window.selectSilsonGrade('general')">상급종합병원</button>
+            </div>
+          </div>
+          <div class="silson-group">
+            <label>급여 금액</label>
+            <input type="number" id="silson-g5-out-gubun" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
+          </div>
+          <div class="silson-result-mini" id="silson-g5-out-gubun-result"></div>
+        </div>
+        <div class="toss-card">
+          <div class="toss-card-title" style="margin-bottom:16px;">통원 (비급여)</div>
+          <div class="silson-row">
+            <div class="silson-group">
+              <label>중증 비급여</label>
+              <input type="number" id="silson-g5-out-severe" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
+            </div>
+            <div class="silson-group">
+              <label>비중증 비급여</label>
+              <input type="number" id="silson-g5-out-mild" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
+            </div>
+          </div>
+          <div class="silson-result-mini" id="silson-g5-out-nongubun-result"></div>
+        </div>
+      </div>
+
+      <!-- 약제비 (2세대, 3세대만) -->
       <div class="toss-card" id="silson-prescription-card" style="display:none;">
         <div class="toss-card-title" style="margin-bottom:16px;">통원 (약제)</div>
         <div class="silson-row">
@@ -90,63 +107,68 @@
         <div class="silson-result-mini" id="silson-prescription-result"></div>
       </div>
 
-      <!-- 비급여 3종 (3세대, 4세대) -->
+      <!-- 비급여 3종 통원 (3세대, 4세대) -->
       <div class="toss-card" id="silson-type3-card" style="display:none;">
-        <div class="toss-card-title" style="margin-bottom:16px;">비급여 3종</div>
+        <div class="toss-card-title" style="margin-bottom:16px;">비급여 3종 (통원)</div>
         <div class="silson-row">
-          <div class="silson-group">
-            <label>비급여 주사제</label>
-            <input type="number" id="silson-injection" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
-          </div>
-          <div class="silson-group">
-            <label>공제액</label>
-            <input type="text" id="silson-injection-deduct" class="silson-input silson-readonly" readonly>
-          </div>
+          <div class="silson-group"><label>비급여 주사제</label><input type="number" id="silson-injection" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+          <div class="silson-group"><label>공제액</label><input type="text" id="silson-injection-deduct" class="silson-input silson-readonly" readonly></div>
         </div>
         <div class="silson-row">
-          <div class="silson-group">
-            <label>도수치료 / 체외충격파</label>
-            <input type="number" id="silson-manual" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
-          </div>
-          <div class="silson-group">
-            <label>공제액</label>
-            <input type="text" id="silson-manual-deduct" class="silson-input silson-readonly" readonly>
-          </div>
+          <div class="silson-group"><label>도수치료 / 체외충격파</label><input type="number" id="silson-manual" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+          <div class="silson-group"><label>공제액</label><input type="text" id="silson-manual-deduct" class="silson-input silson-readonly" readonly></div>
         </div>
         <div class="silson-row">
-          <div class="silson-group">
-            <label>MRI / MRA</label>
-            <input type="number" id="silson-mri" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
-          </div>
-          <div class="silson-group">
-            <label>공제액</label>
-            <input type="text" id="silson-mri-deduct" class="silson-input silson-readonly" readonly>
-          </div>
+          <div class="silson-group"><label>MRI / MRA</label><input type="number" id="silson-mri" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+          <div class="silson-group"><label>공제액</label><input type="text" id="silson-mri-deduct" class="silson-input silson-readonly" readonly></div>
         </div>
         <div class="silson-result-mini" id="silson-type3-result"></div>
       </div>
 
-    </div><!-- /outpatient-area -->
-
-    <!-- 입원 입력 영역 -->
-    <div id="silson-inpatient-area" style="display:none;">
-      <div class="toss-card">
-        <div class="toss-card-title" style="margin-bottom:16px;">입원</div>
-        <div class="silson-row">
-          <div class="silson-group">
-            <label>급여</label>
-            <input type="number" id="silson-inp-gubun" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
+      <!-- 5세대 비급여 3종 통원 -->
+      <div class="toss-card" id="silson-g5-type3-out-card" style="display:none;">
+        <div class="toss-card-title" style="margin-bottom:16px;">비급여 3종 (통원)</div>
+        <div style="display:flex; gap:8px; margin-bottom:14px;">
+          <button class="silson-grade-btn active" id="g5-type3-out-severe-btn" onclick="window.switchG5Type3('out','severe')">중증</button>
+          <button class="silson-grade-btn" id="g5-type3-out-mild-btn" onclick="window.switchG5Type3('out','mild')">비중증</button>
+        </div>
+        <div id="g5-type3-out-severe-area">
+          <div class="silson-row">
+            <div class="silson-group"><label>도수치료</label><input type="number" id="silson-g5-out-manual" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+            <div class="silson-group"><label>공제액</label><input type="text" id="silson-g5-out-manual-deduct" class="silson-input silson-readonly" readonly></div>
           </div>
-          <div class="silson-group">
-            <label>비급여</label>
-            <input type="number" id="silson-inp-nongubun" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
+          <div class="silson-row">
+            <div class="silson-group"><label>비급여 주사제</label><input type="number" id="silson-g5-out-injection" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+            <div class="silson-group"><label>공제액</label><input type="text" id="silson-g5-out-injection-deduct" class="silson-input silson-readonly" readonly></div>
+          </div>
+          <div class="silson-row">
+            <div class="silson-group"><label>MRI / MRA</label><input type="number" id="silson-g5-out-mri" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+            <div class="silson-group"><label>공제액</label><input type="text" id="silson-g5-out-mri-deduct" class="silson-input silson-readonly" readonly></div>
           </div>
         </div>
-        <div class="silson-row">
-          <div class="silson-group">
-            <label>입원일수</label>
-            <input type="number" id="silson-days" class="silson-input" placeholder="1" value="1" oninput="window.renderSilsonResult()">
+        <div id="g5-type3-out-mild-area" style="display:none;">
+          <div class="silson-row">
+            <div class="silson-group"><label>MRI / MRA (비중증)</label><input type="number" id="silson-g5-out-mri-mild" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+            <div class="silson-group"><label>공제액</label><input type="text" id="silson-g5-out-mri-mild-deduct" class="silson-input silson-readonly" readonly></div>
           </div>
+        </div>
+        <div class="silson-result-mini" id="silson-g5-type3-out-result"></div>
+      </div>
+
+    </div><!-- /outpatient-area -->
+
+    <!-- ===== 입원 입력 영역 ===== -->
+    <div id="silson-inpatient-area" style="display:none;">
+
+      <!-- 1~4세대, 유병자 입원 -->
+      <div class="toss-card" id="silson-inpatient-legacy-card">
+        <div class="toss-card-title" style="margin-bottom:16px;">입원</div>
+        <div class="silson-row">
+          <div class="silson-group"><label>급여</label><input type="number" id="silson-inp-gubun" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+          <div class="silson-group"><label>비급여</label><input type="number" id="silson-inp-nongubun" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+        </div>
+        <div class="silson-row">
+          <div class="silson-group"><label>입원일수</label><input type="number" id="silson-days" class="silson-input" placeholder="1" value="1" oninput="window.renderSilsonResult()"></div>
           <div class="silson-group">
             <label>병실</label>
             <select id="silson-room" class="silson-select" onchange="window.renderSilsonResult()">
@@ -156,15 +178,40 @@
           </div>
         </div>
         <div id="silson-room-extra" style="display:none;">
-          <div class="silson-group">
-            <label>상급병실료 차액</label>
-            <input type="number" id="silson-room-diff" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
-          </div>
+          <div class="silson-group"><label>상급병실료 차액 (1일)</label><input type="number" id="silson-room-diff" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
         </div>
         <div class="silson-result-mini" id="silson-inpatient-result"></div>
       </div>
 
-      <!-- 입원 비급여 3종 -->
+      <!-- 5세대 입원 전용 UI -->
+      <div id="silson-gen5-inpatient-area" style="display:none;">
+        <div class="toss-card">
+          <div class="toss-card-title" style="margin-bottom:16px;">입원 (급여)</div>
+          <div class="silson-group">
+            <label>병원 등급</label>
+            <div class="silson-grade-btns">
+              <button class="silson-grade-btn active" data-grade="clinic" onclick="window.selectSilsonGrade('clinic')">병·의원</button>
+              <button class="silson-grade-btn" data-grade="hospital" onclick="window.selectSilsonGrade('hospital')">종합병원</button>
+              <button class="silson-grade-btn" data-grade="general" onclick="window.selectSilsonGrade('general')">상급종합병원</button>
+            </div>
+          </div>
+          <div class="silson-group">
+            <label>급여 금액</label>
+            <input type="number" id="silson-g5-inp-gubun" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
+          </div>
+          <div class="silson-result-mini" id="silson-g5-inp-gubun-result"></div>
+        </div>
+        <div class="toss-card">
+          <div class="toss-card-title" style="margin-bottom:16px;">입원 (비급여)</div>
+          <div class="silson-row">
+            <div class="silson-group"><label>중증 비급여</label><input type="number" id="silson-g5-inp-severe" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+            <div class="silson-group"><label>비중증 비급여</label><input type="number" id="silson-g5-inp-mild" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+          </div>
+          <div class="silson-result-mini" id="silson-g5-inp-nongubun-result"></div>
+        </div>
+      </div>
+
+      <!-- 비급여 3종 입원 (3세대, 4세대) -->
       <div class="toss-card" id="silson-inp-type3-card" style="display:none;">
         <div class="toss-card-title" style="margin-bottom:16px;">비급여 3종 (입원)</div>
         <div class="silson-row">
@@ -181,6 +228,37 @@
         </div>
         <div class="silson-result-mini" id="silson-inp-type3-result"></div>
       </div>
+
+      <!-- 5세대 비급여 3종 입원 -->
+      <div class="toss-card" id="silson-g5-type3-inp-card" style="display:none;">
+        <div class="toss-card-title" style="margin-bottom:16px;">비급여 3종 (입원)</div>
+        <div style="display:flex; gap:8px; margin-bottom:14px;">
+          <button class="silson-grade-btn active" id="g5-type3-inp-severe-btn" onclick="window.switchG5Type3('inp','severe')">중증</button>
+          <button class="silson-grade-btn" id="g5-type3-inp-mild-btn" onclick="window.switchG5Type3('inp','mild')">비중증</button>
+        </div>
+        <div id="g5-type3-inp-severe-area">
+          <div class="silson-row">
+            <div class="silson-group"><label>도수치료</label><input type="number" id="silson-g5-inp-manual" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+            <div class="silson-group"><label>공제액</label><input type="text" id="silson-g5-inp-manual-deduct" class="silson-input silson-readonly" readonly></div>
+          </div>
+          <div class="silson-row">
+            <div class="silson-group"><label>비급여 주사제</label><input type="number" id="silson-g5-inp-injection" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+            <div class="silson-group"><label>공제액</label><input type="text" id="silson-g5-inp-injection-deduct" class="silson-input silson-readonly" readonly></div>
+          </div>
+          <div class="silson-row">
+            <div class="silson-group"><label>MRI / MRA</label><input type="number" id="silson-g5-inp-mri" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+            <div class="silson-group"><label>공제액</label><input type="text" id="silson-g5-inp-mri-deduct" class="silson-input silson-readonly" readonly></div>
+          </div>
+        </div>
+        <div id="g5-type3-inp-mild-area" style="display:none;">
+          <div class="silson-row">
+            <div class="silson-group"><label>MRI / MRA (비중증)</label><input type="number" id="silson-g5-inp-mri-mild" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
+            <div class="silson-group"><label>공제액</label><input type="text" id="silson-g5-inp-mri-mild-deduct" class="silson-input silson-readonly" readonly></div>
+          </div>
+        </div>
+        <div class="silson-result-mini" id="silson-g5-type3-inp-result"></div>
+      </div>
+
     </div><!-- /inpatient-area -->
 
     <!-- 최종 결과 -->
@@ -193,80 +271,108 @@
   </div>
 </section>
 
+<!-- ===== 실손 사전 플로팅 버튼 ===== -->
+<button onclick="window.openSilsonDict()" style="
+  position:fixed; left:20px; bottom:100px; z-index:200;
+  width:52px; height:52px; border-radius:50%; border:none;
+  background:#191F28; color:white; font-size:20px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 16px rgba(0,0,0,0.18); cursor:pointer;">
+  <i class="bi bi-book"></i>
+</button>
+
+<!-- ===== 실손 사전 모달 ===== -->
+<div id="silson-dict-modal" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.45); align-items:flex-end; justify-content:center;">
+  <div style="background:white; width:100%; max-width:600px; border-radius:24px 24px 0 0; max-height:88vh; display:flex; flex-direction:column; overflow:hidden;">
+    <!-- 모달 헤더 -->
+    <div style="padding:20px 20px 0; flex-shrink:0;">
+      <div style="width:40px; height:4px; background:#E5E8EB; border-radius:2px; margin:0 auto 16px;"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div>
+          <div style="font-size:18px; font-weight:800; color:#191F28;">📖 실손 사전</div>
+          <div style="font-size:12px; color:#8B95A1; margin-top:2px;" id="silson-dict-gen-label">세대를 선택하면 정보가 표시됩니다</div>
+        </div>
+        <button onclick="window.closeSilsonDict()" style="background:none; border:none; font-size:22px; color:#8B95A1; cursor:pointer;"><i class="bi bi-x"></i></button>
+      </div>
+      <!-- 세대 선택 -->
+      <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:12px; -webkit-overflow-scrolling:touch;">
+        <button class="dict-gen-btn active" onclick="window.switchDictGen('1세대')" style="white-space:nowrap;">1세대</button>
+        <button class="dict-gen-btn" onclick="window.switchDictGen('2세대 1차')" style="white-space:nowrap;">2세대 1차</button>
+        <button class="dict-gen-btn" onclick="window.switchDictGen('2세대 2차')" style="white-space:nowrap;">2세대 2차</button>
+        <button class="dict-gen-btn" onclick="window.switchDictGen('2세대 3차')" style="white-space:nowrap;">2세대 3차</button>
+        <button class="dict-gen-btn" onclick="window.switchDictGen('3세대')" style="white-space:nowrap;">3세대</button>
+        <button class="dict-gen-btn" onclick="window.switchDictGen('4세대')" style="white-space:nowrap;">4세대</button>
+        <button class="dict-gen-btn" onclick="window.switchDictGen('5세대')" style="white-space:nowrap;">5세대</button>
+        <button class="dict-gen-btn" onclick="window.switchDictGen('유병자')" style="white-space:nowrap;">유병자</button>
+      </div>
+      <!-- 탭 -->
+      <div style="display:flex; background:#F2F4F6; padding:4px; border-radius:12px; gap:4px; margin-bottom:0;">
+        <button class="dict-tab-btn active" id="dict-tab-info" onclick="window.switchDictTab('info')">실손정보</button>
+        <button class="dict-tab-btn" id="dict-tab-selfpay" onclick="window.switchDictTab('selfpay')">자기부담금</button>
+        <button class="dict-tab-btn" id="dict-tab-waiting" onclick="window.switchDictTab('waiting')">면책기간</button>
+        <button class="dict-tab-btn" id="dict-tab-exclude" onclick="window.switchDictTab('exclude')">면책사항</button>
+      </div>
+    </div>
+    <!-- 모달 바디 -->
+    <div id="silson-dict-body" style="padding:16px 20px 30px; overflow-y:auto; flex:1;"></div>
+  </div>
+</div>
+
 <style>
-/* ============ TOSS STYLE OVERRIDES (실비계산기) ============ */
 .silson-wrap.toss { padding: 0 0 30px; }
-.silson-wrap.toss .silson-box { max-width: 680px; margin: 0 auto; display:flex; flex-direction:column; gap:16px; }
+.silson-wrap.toss .silson-box { max-width:680px; margin:0 auto; display:flex; flex-direction:column; gap:16px; }
+.silson-wrap.toss .toss-card { padding:22px 20px; }
 
-.silson-wrap.toss .toss-card { padding: 22px 20px; }
-
-/* 세대 선택 버튼 */
-.silson-wrap.toss .silson-gen-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; }
-@media (min-width:500px) { .silson-wrap.toss .silson-gen-grid { grid-template-columns: repeat(4, 1fr); } }
-.silson-wrap.toss .silson-gen-btn {
-    background:#F9FAFB; border:1.5px solid #F2F4F6; border-radius:14px;
-    padding:12px 8px; text-align:left; cursor:pointer; transition:all 0.15s;
-    display:flex; flex-direction:column; gap:3px;
-}
+.silson-wrap.toss .silson-gen-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+@media(min-width:500px){ .silson-wrap.toss .silson-gen-grid { grid-template-columns:repeat(4,1fr); } }
+.silson-wrap.toss .silson-gen-btn { background:#F9FAFB; border:1.5px solid #F2F4F6; border-radius:14px; padding:12px 8px; text-align:left; cursor:pointer; transition:all 0.15s; display:flex; flex-direction:column; gap:3px; }
 .silson-wrap.toss .silson-gen-btn:hover { border-color:#3182F6; }
 .silson-wrap.toss .silson-gen-btn.active { background:#EFF6FF; border-color:#3182F6; }
 .silson-wrap.toss .silson-gen-btn .gen-label { font-size:13px; font-weight:800; color:#191F28; }
 .silson-wrap.toss .silson-gen-btn.active .gen-label { color:#3182F6; }
 .silson-wrap.toss .silson-gen-btn .gen-period { font-size:10px; color:#8B95A1; font-weight:600; }
+.silson-wrap.toss .silson-gen-btn .gen-note { font-size:10px; color:#3182F6; font-weight:700; }
 
-/* 통원/입원 토글 */
-.silson-wrap.toss .silson-type-toggle {
-    display:grid; grid-template-columns:1fr 1fr; background:#F2F4F6;
-    border-radius:14px; padding:4px; gap:4px;
-}
-.silson-wrap.toss .silson-type-btn {
-    border:none; border-radius:11px; padding:13px; font-size:14px; font-weight:800;
-    cursor:pointer; background:transparent; color:#8B95A1; transition:all 0.15s;
-    font-family:'Noto Sans KR', sans-serif;
-}
+.silson-wrap.toss .silson-type-toggle { display:grid; grid-template-columns:1fr 1fr; background:#F2F4F6; border-radius:14px; padding:4px; gap:4px; }
+.silson-wrap.toss .silson-type-btn { border:none; border-radius:11px; padding:13px; font-size:14px; font-weight:800; cursor:pointer; background:transparent; color:#8B95A1; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; }
 .silson-wrap.toss .silson-type-btn.active { background:white; color:#3182F6; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
 
-/* 입력 그룹 */
 .silson-wrap.toss .silson-group { margin-bottom:14px; display:flex; flex-direction:column; gap:6px; }
 .silson-wrap.toss .silson-group:last-child { margin-bottom:0; }
 .silson-wrap.toss .silson-group label { font-size:12px; font-weight:800; color:#8B95A1; }
-.silson-wrap.toss .silson-hint { font-size:11px; font-weight:700; color:#3182F6; margin-left:6px; }
 .silson-wrap.toss .silson-select,
-.silson-wrap.toss .silson-input {
-    width:100%; padding:13px 14px; border:1.5px solid #F2F4F6; border-radius:12px;
-    font-size:15px; font-family:'Noto Sans KR', sans-serif; outline:none;
-    background:#F9FAFB; color:#191F28; transition:border-color 0.15s, background 0.15s;
-}
+.silson-wrap.toss .silson-input { width:100%; padding:13px 14px; border:1.5px solid #F2F4F6; border-radius:12px; font-size:15px; font-family:'Noto Sans KR',sans-serif; outline:none; background:#F9FAFB; color:#191F28; transition:border-color 0.15s,background 0.15s; }
 .silson-wrap.toss .silson-select:focus,
 .silson-wrap.toss .silson-input:focus { border-color:#3182F6; background:white; }
 .silson-wrap.toss .silson-readonly { background:#F2F4F6; color:#8B95A1; cursor:default; }
-
 .silson-wrap.toss .silson-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 
-/* 병원 등급 버튼 */
 .silson-wrap.toss .silson-grade-btns { display:flex; gap:8px; flex-wrap:wrap; }
-.silson-wrap.toss .silson-grade-btn {
-    flex:1; min-width:70px; padding:11px 6px; border:1.5px solid #F2F4F6; border-radius:12px;
-    background:#F9FAFB; font-size:13px; font-weight:800; color:#8B95A1; cursor:pointer;
-    transition:all 0.15s; font-family:'Noto Sans KR', sans-serif;
-}
+.silson-wrap.toss .silson-grade-btn { flex:1; min-width:70px; padding:11px 6px; border:1.5px solid #F2F4F6; border-radius:12px; background:#F9FAFB; font-size:13px; font-weight:800; color:#8B95A1; cursor:pointer; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; }
 .silson-wrap.toss .silson-grade-btn.active { background:#EFF6FF; border-color:#3182F6; color:#3182F6; }
 
-/* 결과 미니 테이블 */
-.silson-wrap.toss .silson-result-mini {
-    margin-top:14px; background:#F9FAFB; border-radius:14px; border:1px solid #F2F4F6; overflow:hidden;
-}
+.silson-wrap.toss .silson-result-mini { margin-top:14px; background:#F9FAFB; border-radius:14px; border:1px solid #F2F4F6; overflow:hidden; }
 .silson-wrap.toss .silson-result-mini table { width:100%; border-collapse:collapse; font-size:13px; }
 .silson-wrap.toss .silson-result-mini td { padding:11px 14px; border-bottom:1px solid #F2F4F6; color:#4E5968; }
 .silson-wrap.toss .silson-result-mini td:last-child { text-align:right; font-weight:800; color:#191F28; }
 .silson-wrap.toss .silson-result-mini tr:last-child td { border-bottom:none; background:#EFF6FF; color:#3182F6; font-weight:900; font-size:14px; }
 .silson-wrap.toss .silson-result-mini tr:last-child td:first-child { color:#3182F6; }
 
-/* 최종 결과 카드 */
-.silson-wrap.toss .silson-total {
-    background:#3182F6; border-radius:20px; padding:28px 24px; color:white; text-align:center;
-}
+.silson-wrap.toss .silson-total { background:#3182F6; border-radius:20px; padding:28px 24px; color:white; text-align:center; }
 .silson-wrap.toss .silson-total-label { font-size:13px; opacity:0.85; margin-bottom:8px; font-weight:700; }
 .silson-wrap.toss .silson-total-amount { font-size:34px; font-weight:900; letter-spacing:-1px; margin-bottom:12px; }
 .silson-wrap.toss .silson-total-notice { font-size:11px; opacity:0.75; line-height:1.5; }
+
+/* 실손 사전 */
+.dict-gen-btn { padding:8px 14px; border:1.5px solid #E5E8EB; border-radius:20px; background:white; font-size:12px; font-weight:700; color:#4E5968; cursor:pointer; transition:all 0.15s; flex-shrink:0; }
+.dict-gen-btn.active { background:#191F28; border-color:#191F28; color:white; }
+.dict-tab-btn { flex:1; padding:11px 4px; border:none; border-radius:10px; background:transparent; font-size:12px; font-weight:800; color:#8B95A1; cursor:pointer; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; }
+.dict-tab-btn.active { background:white; color:#3182F6; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+.dict-item { background:#F9FAFB; border-radius:14px; padding:14px 16px; margin-bottom:10px; }
+.dict-item-key { font-size:13px; font-weight:800; color:#191F28; margin-bottom:4px; }
+.dict-item-val { font-size:13px; color:#4E5968; line-height:1.6; }
+.dict-exclude-badge { display:inline-block; font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px; margin-right:6px; }
+.badge-exclude { background:#F2F4F6; color:#8B95A1; }
+.badge-possible { background:#EFF6FF; color:#3182F6; }
+.badge-limit { background:#FFF7E6; color:#D97706; }
 </style>
