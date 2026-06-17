@@ -218,32 +218,48 @@ window.loadComponent = async function(pageId, extraAction) {
             });
         }
 
+        // ✅ 약관조회 탭 초기 상태 세팅
+        window.switchTermsTab = function(type) {
+    const nonlifeTab = document.getElementById('terms-tab-nonlife');
+    const lifeTab    = document.getElementById('terms-tab-life');
+    const gridNon    = document.getElementById('terms-grid-nonlife');
+    const gridLife   = document.getElementById('terms-grid-life');
+    if (!nonlifeTab || !lifeTab) return;
+    if (type === 'nonlife') {
+        nonlifeTab.style.background = 'white'; nonlifeTab.style.color = '#2563EB';
+        lifeTab.style.background = 'transparent'; lifeTab.style.color = '#64748B';
+        gridNon.style.display = 'grid'; gridLife.style.display = 'none';
+    } else {
+        lifeTab.style.background = 'white'; lifeTab.style.color = '#2563EB';
+        nonlifeTab.style.background = 'transparent'; nonlifeTab.style.color = '#64748B';
+        gridNon.style.display = 'none'; gridLife.style.display = 'grid';
+    }
+};
+
         // ✅ 공시실 탭 초기 상태 세팅
-if (pageId === 'page-gongsil') {
-    requestAnimationFrame(() => {
-        const nonlifeTab = document.getElementById('gongsil-tab-nonlife');
-        const lifeTab    = document.getElementById('gongsil-tab-life');
-        const gridNon    = document.getElementById('gongsil-grid-nonlife');
-        const gridLife   = document.getElementById('gongsil-grid-life');
-
-        function switchGongsilTab(type) {
-            if (type === 'nonlife') {
-                nonlifeTab.style.background = 'white'; nonlifeTab.style.color = '#2563EB';
-                lifeTab.style.background = 'transparent'; lifeTab.style.color = '#64748B';
-                gridNon.style.display = 'grid'; gridLife.style.display = 'none';
-            } else {
-                lifeTab.style.background = 'white'; lifeTab.style.color = '#2563EB';
-                nonlifeTab.style.background = 'transparent'; nonlifeTab.style.color = '#64748B';
-                gridNon.style.display = 'none'; gridLife.style.display = 'grid';
-            }
+        if (pageId === 'page-gongsil') {
+            requestAnimationFrame(() => {
+                const nonlifeTab = document.getElementById('gongsil-tab-nonlife');
+                const lifeTab    = document.getElementById('gongsil-tab-life');
+                const gridNon    = document.getElementById('gongsil-grid-nonlife');
+                const gridLife   = document.getElementById('gongsil-grid-life');
+                function switchGongsilTab(type) {
+                    if (type === 'nonlife') {
+                        nonlifeTab.style.background = 'white'; nonlifeTab.style.color = '#2563EB';
+                        lifeTab.style.background = 'transparent'; lifeTab.style.color = '#64748B';
+                        gridNon.style.display = 'grid'; gridLife.style.display = 'none';
+                    } else {
+                        lifeTab.style.background = 'white'; lifeTab.style.color = '#2563EB';
+                        nonlifeTab.style.background = 'transparent'; nonlifeTab.style.color = '#64748B';
+                        gridNon.style.display = 'none'; gridLife.style.display = 'grid';
+                    }
+                }
+                if (nonlifeTab && lifeTab) {
+                    nonlifeTab.addEventListener('click', () => switchGongsilTab('nonlife'));
+                    lifeTab.addEventListener('click', () => switchGongsilTab('life'));
+                }
+            });
         }
-
-        if (nonlifeTab && lifeTab) {
-            nonlifeTab.addEventListener('click', () => switchGongsilTab('nonlife'));
-            lifeTab.addEventListener('click', () => switchGongsilTab('life'));
-        }
-    });
-}
 
         // ✅ 메인 대시보드 이름 표시
         if (pageId === 'main-dashboard') {
