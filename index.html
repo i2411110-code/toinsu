@@ -91,9 +91,8 @@
         }
         .pwa-ios-hint b { color: #2563EB; }
 
-        /* ── 신규 추가: 토글 스위치 커스텀 디자인 ── */
         .pwa-toggle-container {
-            display: none; /* 최상단 스크립트가 지원 가능 여부 판별 후 노출 */
+            display: none; 
             align-items: center;
             gap: 6px;
             padding: 4px 8px;
@@ -136,6 +135,46 @@
         .pwa-switch input:checked + .pwa-slider:before {
             transform: translateX(14px);
         }
+
+        /* ── ✅ 신규 수정: 플로팅 버튼 앱 다운로드 커서 호버 툴팁 CSS ── */
+        .float-btn-container {
+            position: relative;
+            display: inline-block;
+        }
+        /* 마우스 커서 올리면 텍스트가 보이게 처리 */
+        .float-btn-container::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            right: 55px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(25, 31, 40, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .float-btn-container:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+        /* 앱 다운로드 전용 플로팅 버튼 스타일 지정 */
+        .float-pwa-install {
+            background: #2563EB !important;
+            color: white !important;
+            display: none; /* 지원 브라우저일 때 스크립트로 노출 */
+        }
+        .float-pwa-install:hover {
+            background: #1D4ED8 !important;
+            transform: scale(1.08);
+        }
     </style>
 </head>
 <body>
@@ -173,7 +212,6 @@
         </div>
     </div>
 
-    <!-- PC 전용 navbar -->
     <div class="navbar navbar-pc">
         <div class="nav-logo">
             <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue)"></i> <b>보험<span>가온</span>포탈</b>
@@ -186,7 +224,6 @@
         </div>
     </div>
 
-    <!-- 모바일 전용 slim navbar (✅ 토글 인터페이스 배치 완료) -->
     <div class="navbar navbar-mobile">
         <div class="nav-logo" style="font-size:15px;">
             <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue); font-size:14px;"></i>
@@ -195,7 +232,6 @@
         <div style="display:flex; align-items:center; gap:8px;">
             <span style="font-size:11px; color:var(--text-muted);" id="user-display-email-mobile">확인 중...</span>
             
-            <!-- 앱 설치 기능이 지원될 때 레이아웃 제어로 나타날 스위치 구역 -->
             <div id="pwa-toggle-wrap" class="pwa-toggle-container">
                 <span style="font-size:10px; font-weight:700; color:#1D4ED8; white-space:nowrap;">앱 다운</span>
                 <label class="pwa-switch">
@@ -214,9 +250,18 @@
         <div id="app-root"></div>
     </div>
 
-    <div class="floating-contact-wrap">
-        <a href="https://open.kakao.com/o/sZoxSRGh" target="_blank" class="float-btn float-kakao" title="카카오톡 문의"><i class="bi bi-chat-fill"></i></a>
-        <a href="https://www.instagram.com/insu_coco?igsh=OWhuc2VlYWs4M3Zi" target="_blank" class="float-btn float-instagram" title="인스타그램"><i class="bi bi-instagram"></i></a>
+    <!-- ✅ 수정: 오른쪽 구석 플로팅 버튼 영역 구조 고도화 (+ 버튼 및 호버 툴팁 탑재) -->
+    <div class="floating-contact-wrap" style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- 신규 추가된 앱 다운로드 단독 플로팅 버튼 -->
+        <div id="pwa-float-wrap" class="float-btn-container" data-tooltip="앱 다운로드">
+            <button id="pwa-float-btn" class="float-btn float-pwa-install"><i class="bi bi-plus-circle-fill"></i></button>
+        </div>
+        <div class="float-btn-container" data-tooltip="카카오톡 문의">
+            <a href="https://open.kakao.com/o/sZoxSRGh" target="_blank" class="float-btn float-kakao"><i class="bi bi-chat-fill"></i></a>
+        </div>
+        <div class="float-btn-container" data-tooltip="인스타그램">
+            <a href="https://www.instagram.com/insu_coco?igsh=OWhuc2VlYWs4M3Zi" target="_blank" class="float-btn float-instagram"><i class="bi bi-instagram"></i></a>
+        </div>
     </div>
 
     <div id="pwa-banner">
@@ -320,7 +365,6 @@
         });
     </script>
 
-    <!-- ✅ 토글 제어 시스템 탑재 전용 로직 -->
     <script>
     (function () {
         var ua           = navigator.userAgent;
@@ -345,7 +389,6 @@
             try { localStorage.setItem(key, Date.now() + ms); } catch (e) {}
         }
 
-        // ── iOS Safari 전용 제어 ──
         if (isSafariIOS && !isDismissed('pwa-ios-dismissed')) {
             setTimeout(function () {
                 var b = document.getElementById('pwa-ios-banner');
@@ -362,17 +405,19 @@
             });
         }
 
-        // ── Android / Chrome: 토글 연동 설치 제어 ──
+        // ── Android / Chrome: 토글 및 플로팅 플러스 버튼 연동 ──
         var deferredPrompt = null;
         var toggleWrap     = document.getElementById('pwa-toggle-wrap');
         var toggleBtn      = document.getElementById('pwa-toggle-btn');
+        var floatBtn       = document.getElementById('pwa-float-btn');
 
         window.addEventListener('beforeinstallprompt', function (e) {
             e.preventDefault();
             deferredPrompt = e;
             
-            // 시스템이 PWA 설치 자격을 확인하면 토글 스위치 노출
+            // PWA 설치 인지 완료 시 상단 스위치와 플로팅 [+] 버튼 동시에 노출 활성화
             if (toggleWrap) toggleWrap.style.display = 'flex';
+            if (floatBtn) floatBtn.style.display = 'flex';
 
             if (!isDismissed('pwa-dismissed')) {
                 var b = document.getElementById('pwa-banner');
@@ -380,7 +425,26 @@
             }
         });
 
-        // 토글 조작 제어 연동
+        // ✅ 신규 기능: 플로팅 플러스(+) 버튼 터치/클릭 시 구동 처리
+        if (floatBtn) {
+            floatBtn.addEventListener('click', function () {
+                if (!deferredPrompt) {
+                    alert('앱 설치가 불가능한 브라우저 환경이거나 이미 설치가 완료된 기기입니다.');
+                    return;
+                }
+                var b = document.getElementById('pwa-banner');
+                if (b) b.classList.remove('show');
+                
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(function (result) {
+                    if (result.outcome === 'accepted') {
+                        if (floatBtn) floatBtn.style.display = 'none';
+                        if (toggleWrap) toggleWrap.style.display = 'none';
+                    }
+                });
+            });
+        }
+
         if (toggleBtn) {
             toggleBtn.addEventListener('change', function () {
                 if (this.checked) {
@@ -396,11 +460,10 @@
                     deferredPrompt.prompt();
                     deferredPrompt.userChoice.then(function (choiceResult) {
                         if (choiceResult.outcome === 'accepted') {
-                            console.log('[PWA] User accepted the install prompt');
-                        } else {
-                            console.log('[PWA] User dismissed the install prompt');
+                            if (floatBtn) floatBtn.style.display = 'none';
+                            if (toggleWrap) toggleWrap.style.display = 'none';
                         }
-                        if (toggleBtn) toggleBtn.checked = false; // 완료 후 원래대로 토글 복귀
+                        if (toggleBtn) toggleBtn.checked = false; 
                     });
                 }
             });
@@ -431,11 +494,11 @@
         window.addEventListener('appinstalled', function () {
             var b = document.getElementById('pwa-banner');
             if (b) b.classList.remove('show');
-            if (toggleWrap) toggleWrap.style.display = 'none'; // 설치 완료 시 스위치 숨김
+            if (toggleWrap) toggleWrap.style.display = 'none';
+            if (floatBtn) floatBtn.style.display = 'none';
             deferredPrompt = null;
         });
 
-        // ── Service Worker 등록 ──
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
                 navigator.serviceWorker.register('./sw.js?v=20260617', { scope: './' })
