@@ -64,33 +64,6 @@
             to   { transform: translateY(0);    opacity: 1; }
         }
 
-        .pwa-row { display: flex; align-items: center; gap: 12px; }
-        .pwa-icon { width: 42px; height: 42px; background: #EFF6FF; border-radius: 12px;
-                    display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .pwa-icon i { font-size: 20px; color: #2563EB; }
-        .pwa-text { flex: 1; min-width: 0; }
-        .pwa-title { font-size: 13px; font-weight: 800; color: #191F28; }
-        .pwa-sub   { font-size: 11px; color: #8B95A1; margin-top: 2px; line-height: 1.5; }
-        .pwa-install-btn {
-            background: #2563EB; color: white; border: none;
-            padding: 9px 16px; border-radius: 10px;
-            font-size: 13px; font-weight: 700; cursor: pointer;
-            white-space: nowrap; flex-shrink: 0;
-            font-family: 'Noto Sans KR', sans-serif;
-        }
-        .pwa-install-btn:active { background: #1D4ED8; }
-        .pwa-close-btn {
-            background: none; border: none; color: #CBD5E1;
-            font-size: 22px; cursor: pointer; padding: 0;
-            line-height: 1; flex-shrink: 0;
-        }
-        .pwa-ios-hint {
-            font-size: 12px; color: #64748B; text-align: center;
-            background: #F8FAFC; border-radius: 10px; padding: 10px 14px;
-            line-height: 1.6;
-        }
-        .pwa-ios-hint b { color: #2563EB; }
-
         .pwa-toggle-container {
             display: none; 
             align-items: center;
@@ -136,12 +109,11 @@
             transform: translateX(14px);
         }
 
-        /* ── ✅ 신규 수정: 플로팅 버튼 앱 다운로드 커서 호버 툴팁 CSS ── */
+        /* ── 플로팅 버튼 구조 고도화 CSS ── */
         .float-btn-container {
             position: relative;
             display: inline-block;
         }
-        /* 마우스 커서 올리면 텍스트가 보이게 처리 */
         .float-btn-container::after {
             content: attr(data-tooltip);
             position: absolute;
@@ -160,20 +132,131 @@
             transition: opacity 0.2s ease, visibility 0.2s ease;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             font-family: 'Noto Sans KR', sans-serif;
+            z-index: 2000;
         }
         .float-btn-container:hover::after {
             opacity: 1;
             visibility: visible;
         }
-        /* 앱 다운로드 전용 플로팅 버튼 스타일 지정 */
-        .float-pwa-install {
-            background: #2563EB !important;
-            color: white !important;
-            display: none; /* 지원 브라우저일 때 스크립트로 노출 */
+
+        /* ✅ 신규 추가: 플로팅 메뉴 호버 시 위로 확장 레이아웃 */
+        .pwa-menu-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .float-pwa-install:hover {
-            background: #1D4ED8 !important;
-            transform: scale(1.08);
+        .pwa-sub-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: absolute;
+            bottom: 55px;
+            right: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            transform: translateY(10px);
+            z-index: 1999;
+        }
+        .pwa-menu-wrapper:hover .pwa-sub-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .sub-float-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            transition: transform 0.2s;
+        }
+        .sub-float-btn:hover {
+            transform: scale(1.1);
+        }
+        .btn-pwa-download { background: #2563EB !important; color: white !important; }
+        .btn-icd-search { background: #00D4B2 !important; color: white !important; }
+
+        /* ✅ 신규 추가: 이미지 캡처본 기반 상병코드 검색 모달 스타일 */
+        .icd-modal-header {
+            background: #1E293B;
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 12px 12px 0 0;
+        }
+        .icd-search-box {
+            position: relative;
+            margin: 20px;
+        }
+        .icd-search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94A3B8;
+            font-size: 16px;
+        }
+        .icd-search-input {
+            width: 100%;
+            padding: 12px 12px 12px 45px;
+            border: 1px solid #E2E8F0;
+            border-radius: 50px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        .icd-search-input:focus {
+            border-color: #2563EB;
+        }
+        .icd-meta-info {
+            padding: 0 24px;
+            font-size: 13px;
+            color: #64748B;
+            margin-bottom: 15px;
+        }
+        .icd-table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 0 20px;
+        }
+        .icd-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+        .icd-table th {
+            color: #64748B;
+            font-weight: 500;
+            padding: 12px 8px;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .icd-table td {
+            padding: 14px 8px;
+            border-bottom: 1px solid #F1F5F9;
+            vertical-align: middle;
+        }
+        .icd-code-text {
+            color: #2563EB;
+            font-weight: 700;
+        }
+        .icd-footer-notice {
+            padding: 15px 24px;
+            font-size: 11px;
+            color: #94A3B8;
+            border-top: 1px solid #F1F5F9;
+            margin-top: 15px;
+            line-height: 1.5;
         }
     </style>
 </head>
@@ -212,6 +295,7 @@
         </div>
     </div>
 
+    <!-- PC 전용 navbar -->
     <div class="navbar navbar-pc">
         <div class="nav-logo">
             <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue)"></i> <b>보험<span>가온</span>포탈</b>
@@ -224,6 +308,7 @@
         </div>
     </div>
 
+    <!-- 모바일 전용 slim navbar -->
     <div class="navbar navbar-mobile">
         <div class="nav-logo" style="font-size:15px;">
             <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue); font-size:14px;"></i>
@@ -250,11 +335,22 @@
         <div id="app-root"></div>
     </div>
 
-    <!-- ✅ 수정: 오른쪽 구석 플로팅 버튼 영역 구조 고도화 (+ 버튼 및 호버 툴팁 탑재) -->
-    <div class="floating-contact-wrap" style="display: flex; flex-direction: column; gap: 10px;">
-        <!-- 신규 추가된 앱 다운로드 단독 플로팅 버튼 -->
-        <div id="pwa-float-wrap" class="float-btn-container" data-tooltip="앱 다운로드">
-            <button id="pwa-float-btn" class="float-btn float-pwa-install"><i class="bi bi-plus-circle-fill"></i></button>
+    <!-- ✅ 수정: 오른쪽 구석 플로팅 메뉴 구조 고도화 (+ 버튼 마우스 호버 시 위로 서브 메뉴 확장) -->
+    <div class="floating-contact-wrap" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
+        <div class="pwa-menu-wrapper">
+            <!-- 마우스를 올리면 위로 팝업되는 서브 버튼 세트 -->
+            <div class="pwa-sub-menu">
+                <div class="float-btn-container" data-tooltip="상병 검색 (신규)">
+                    <button class="sub-float-btn btn-icd-search" onclick="window.openIcdModal()"><i class="bi bi-search"></i></button>
+                </div>
+                <div id="pwa-float-wrap" class="float-btn-container" data-tooltip="앱 다운로드" style="display: none;">
+                    <button id="pwa-float-btn" class="sub-float-btn btn-pwa-download"><i class="bi bi-download"></i></button>
+                </div>
+            </div>
+            <!-- 메인 컨트롤 트리거 [+] 버튼 -->
+            <div class="float-btn-container" data-tooltip="메뉴 확장">
+                <button class="float-btn" style="background:#191F28; color:white;"><i class="bi bi-plus-lg"></i></button>
+            </div>
         </div>
         <div class="float-btn-container" data-tooltip="카카오톡 문의">
             <a href="https://open.kakao.com/o/sZoxSRGh" target="_blank" class="float-btn float-kakao"><i class="bi bi-chat-fill"></i></a>
@@ -264,6 +360,92 @@
         </div>
     </div>
 
+    <!-- ✅ 신규 추가: 이미지 기반 상병코드 검색 전용 종합 모달 레이아웃 -->
+    <div id="icd-search-modal" class="portal-modal" style="z-index: 4000; display: none;" onclick="window.closeIcdModal()">
+        <div class="modal-body" style="max-width: 900px; width: 90%; padding: 0; background: white; border-radius: 12px; overflow: hidden;" onclick="event.stopPropagation()">
+            <div class="icd-modal-header">
+                <div style="display:flex; align-items:center; gap:8px; font-size:16px; font-weight:700;">
+                    <i class="bi bi-file-earmark-text-fill"></i> 상병코드 검색
+                </div>
+                <button onclick="window.closeIcdModal()" style="background:none; border:none; color:white; font-size:22px; cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            <div class="icd-search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="icd-input" class="icd-search-input" placeholder="상병코드 또는 질병명을 검색하세요" oninput="window.filterIcdTable()">
+            </div>
+            <div class="icd-meta-info">
+                전체 <span id="icd-total-count">72,822</span>개 · 검색 결과 <span id="icd-result-count" style="color:#2563EB; font-weight:700;">8</span>개
+            </div>
+            <div class="icd-table-container">
+                <table class="icd-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 12%;">코드</th>
+                            <th style="width: 43%;">질병명</th>
+                            <th style="width: 33%;">영문명</th>
+                            <th style="width: 12%;">법정감염병</th>
+                        </tr>
+                    </thead>
+                    <tbody id="icd-table-body">
+                        <!-- 마스터 데이터 매칭 구역 -->
+                        <tr>
+                            <td><span class="icd-code-text">A000</span></td>
+                            <td>비브리오 콜레라 01 콜레라형균에 의한 콜레라</td>
+                            <td style="color:#64748B;">Cholera due to Vibrio cholerae 01, biovar cholerae</td>
+                            <td>제2급</td>
+                        </tr>
+                        <tr>
+                            <td><span class="icd-code-text">A000</span></td>
+                            <td>고전적 콜레라</td>
+                            <td style="color:#64748B;">Classical cholera</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td><span class="icd-code-text">A001</span></td>
+                            <td>비브리오 콜레라 01 멜토르형균에 의한 콜레라</td>
+                            <td style="color:#64748B;">Cholera due to Vibrio cholerae 01, biovar eltor</td>
+                            <td>제2급</td>
+                        </tr>
+                        <tr>
+                            <td><span class="icd-code-text">A001</span></td>
+                            <td>엘토르 콜레라</td>
+                            <td style="color:#64748B;">Cholera eltor</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td><span class="icd-code-text">A009</span></td>
+                            <td>상세불명의 콜레라</td>
+                            <td style="color:#64748B;">Cholera, unspecified</td>
+                            <td>제2급</td>
+                        </tr>
+                        <tr>
+                            <td><span class="icd-code-text">A010</span></td>
+                            <td>장티푸스</td>
+                            <td style="color:#64748B;">Typhoid fever</td>
+                            <td>제2급</td>
+                        </tr>
+                        <tr>
+                            <td><span class="icd-code-text">A010</span></td>
+                            <td>장티푸스균에 의한 감염</td>
+                            <td style="color:#64748B;">Infection due to Salmonella typhi</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td><span class="icd-code-text">A011</span></td>
+                            <td>파라티푸스 A</td>
+                            <td style="color:#64748B;">Paratyphoid fever A</td>
+                            <td>제2급</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="icd-footer-notice">
+                상병코드는 건강보험심사평가원에서 배포한 상병마스터(26.03) 기준으로 제공되며, 실제 보험금 청구 및 보험사 심사 결과와 다를 수 있습니다.
+            </div>
+        </div>
+    </div>
+
+    <!-- 임시 유지 배너 -->
     <div id="pwa-banner">
         <div class="pwa-row" style="flex:1; min-width:0;">
             <div class="pwa-icon"><i class="bi bi-grid-1x2-fill"></i></div>
@@ -353,6 +535,7 @@
         </div>
     </div>
 
+    <!-- 모바일 알림 바 동기화 로직 -->
     <script>
         const observer = new MutationObserver(() => {
             const src    = document.getElementById('user-display-email');
@@ -365,6 +548,41 @@
         });
     </script>
 
+    <!-- ✅ 신규 추가: 상병코드 모달 제어 및 실시간 클라이언트 필터링 자바스크립트 -->
+    <script>
+        window.openIcdModal = function() {
+            var modal = document.getElementById('icd-search-modal');
+            if(modal) {
+                modal.style.display = 'flex';
+                document.getElementById('icd-input').focus();
+            }
+        };
+        window.closeIcdModal = function() {
+            var modal = document.getElementById('icd-search-modal');
+            if(modal) modal.style.display = 'none';
+        };
+        window.filterIcdTable = function() {
+            var input = document.getElementById('icd-input').value.toLowerCase();
+            var rows = document.querySelectorAll('#icd-table-body tr');
+            var visibleCount = 0;
+
+            rows.forEach(function(row) {
+                var code = row.cells[0].textContent.toLowerCase();
+                var name = row.cells[1].textContent.toLowerCase();
+                var eng  = row.cells[2].textContent.toLowerCase();
+
+                if(code.includes(input) || name.includes(input) || eng.includes(input)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            document.getElementById('icd-result-count').textContent = visibleCount;
+        };
+    </script>
+
+    <!-- PWA 및 통합 제어 스크립트 -->
     <script>
     (function () {
         var ua           = navigator.userAgent;
@@ -409,36 +627,28 @@
         var deferredPrompt = null;
         var toggleWrap     = document.getElementById('pwa-toggle-wrap');
         var toggleBtn      = document.getElementById('pwa-toggle-btn');
+        var floatWrap      = document.getElementById('pwa-float-wrap');
         var floatBtn       = document.getElementById('pwa-float-btn');
 
         window.addEventListener('beforeinstallprompt', function (e) {
             e.preventDefault();
             deferredPrompt = e;
             
-            // PWA 설치 인지 완료 시 상단 스위치와 플로팅 [+] 버튼 동시에 노출 활성화
             if (toggleWrap) toggleWrap.style.display = 'flex';
-            if (floatBtn) floatBtn.style.display = 'flex';
-
-            if (!isDismissed('pwa-dismissed')) {
-                var b = document.getElementById('pwa-banner');
-                if (b) b.classList.add('show');
-            }
+            if (floatWrap) floatWrap.style.display = 'block'; // 자격 충족 시 다운로드 서브버튼 노출 활성화
         });
 
-        // ✅ 신규 기능: 플로팅 플러스(+) 버튼 터치/클릭 시 구동 처리
         if (floatBtn) {
             floatBtn.addEventListener('click', function () {
                 if (!deferredPrompt) {
                     alert('앱 설치가 불가능한 브라우저 환경이거나 이미 설치가 완료된 기기입니다.');
                     return;
                 }
-                var b = document.getElementById('pwa-banner');
-                if (b) b.classList.remove('show');
                 
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then(function (result) {
                     if (result.outcome === 'accepted') {
-                        if (floatBtn) floatBtn.style.display = 'none';
+                        if (floatWrap) floatWrap.style.display = 'none';
                         if (toggleWrap) toggleWrap.style.display = 'none';
                     }
                 });
@@ -454,13 +664,10 @@
                         return;
                     }
                     
-                    var b = document.getElementById('pwa-banner');
-                    if (b) b.classList.remove('show');
-                    
                     deferredPrompt.prompt();
                     deferredPrompt.userChoice.then(function (choiceResult) {
                         if (choiceResult.outcome === 'accepted') {
-                            if (floatBtn) floatBtn.style.display = 'none';
+                            if (floatWrap) floatWrap.style.display = 'none';
                             if (toggleWrap) toggleWrap.style.display = 'none';
                         }
                         if (toggleBtn) toggleBtn.checked = false; 
@@ -469,33 +676,9 @@
             });
         }
 
-        var installBtn = document.getElementById('pwa-install-btn');
-        if (installBtn) {
-            installBtn.addEventListener('click', function () {
-                if (!deferredPrompt) return;
-                var b = document.getElementById('pwa-banner');
-                if (b) b.classList.remove('show');
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then(function () {
-                    deferredPrompt = null;
-                });
-            });
-        }
-
-        var closeBtn = document.getElementById('pwa-close-btn');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', function () {
-                var b = document.getElementById('pwa-banner');
-                if (b) b.classList.remove('show');
-                setDismissed('pwa-dismissed', 86400000);
-            });
-        }
-
         window.addEventListener('appinstalled', function () {
-            var b = document.getElementById('pwa-banner');
-            if (b) b.classList.remove('show');
             if (toggleWrap) toggleWrap.style.display = 'none';
-            if (floatBtn) floatBtn.style.display = 'none';
+            if (floatWrap) floatWrap.style.display = 'none';
             deferredPrompt = null;
         });
 
