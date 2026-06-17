@@ -22,6 +22,27 @@
     <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144.png">
     <link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128.png">
 
+    <script>
+        window.switchToNewsView = function() {
+            const mainView = document.getElementById('pwa-main-content-view');
+            const newsView = document.getElementById('pwa-news-view');
+            if (mainView) mainView.style.display = 'none';
+            if (newsView) {
+                newsView.style.display = 'flex';
+                // 로드 시점에 news.js 엔진 인스턴스가 존재하면 즉시 라이브 연동 작동
+                if (typeof NewsWidget !== 'undefined') {
+                    NewsWidget.init();
+                }
+            }
+        };
+        window.switchToMainView = function() {
+            const mainView = document.getElementById('pwa-main-content-view');
+            const newsView = document.getElementById('pwa-news-view');
+            if (newsView) newsView.style.display = 'none';
+            if (mainView) mainView.style.display = 'block';
+        };
+    </script>
+
     <style>
         /* ── PWA 안드로이드 설치 배너 ── */
         #pwa-banner {
@@ -47,7 +68,7 @@
         .pwa-switch input:checked + .pwa-slider { background-color: #2563EB; }
         .pwa-switch input:checked + .pwa-slider:before { transform: translateX(14px); }
 
-        /* ── 플로팅 버튼 및 호버 뷰 레이아웃 ── */
+        /* ── 플로팅 메뉴 디자인 ── */
         .float-btn-container { position: relative; display: inline-block; }
         .float-btn-container::after {
             content: attr(data-tooltip); position: absolute; right: 55px; top: 50%; transform: translateY(-50%);
@@ -78,23 +99,23 @@
         .icd-code-text { color: #2563EB; font-weight: 700; }
         .icd-footer-notice { padding: 15px 24px; font-size: 11px; color: #94A3B8; border-top: 1px solid #F1F5F9; margin-top: 15px; line-height: 1.5; }
 
-        /* ── ✅ 토스 스타일 기반 오늘의 뉴스 전산 뷰 디자인 정의 ── */
-        #pwa-news-view { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* ── 토스인슈어런스 스타일 뉴스 레이아웃 ── */
+        #pwa-news-view { display: none; flex-direction: column; gap: 18px; animation: slideUp 0.25s ease-out; margin-top: 12px; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         
         .news-top-navbar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 16px 20px; border-radius: 16px; border: 1px solid #F2F4F6; }
-        .weather-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+        .weather-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
         .weather-strip::-webkit-scrollbar { display: none; }
-        .weather-pill { background: #F8FAFC; border: 1px solid #F2F4F6; padding: 6px 14px; border-radius: 30px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+        .weather-pill { background: #F2F4F6; color: #333D4B; padding: 6px 14px; border-radius: 30px; font-size: 13px; font-weight: 500; white-space: nowrap; }
 
         .search-area-box { background: white; padding: 20px; border-radius: 16px; border: 1px solid #F2F4F6; display: flex; flex-direction: column; gap: 14px; }
         .search-input-wrap { position: relative; }
-        .search-input-wrap i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94A3B8; }
-        .search-bar { width: 100%; padding: 12px 16px 12px 45px; border: 1px solid #E5E8EB; border-radius: 10px; font-size: 14px; outline: none; background: #F9FAFB; }
-        .search-bar:focus { border-color: #2563EB; background: white; }
+        .search-input-wrap i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #8B95A1; }
+        .search-bar { width: 100%; padding: 12px 16px 12px 45px; border: 1px solid #E5E8EB; border-radius: 10px; font-size: 14px; outline: none; background: #F9FAFB; transition: all 0.2s; }
+        .search-bar:focus { border-color: #3182F6; background: white; box-shadow: 0 0 0 3px rgba(49,130,246,0.1); }
         
-        .tag-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
-        .tag-btn { background: #F2F4F6; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; color: #4E5936; cursor: pointer; transition: all 0.2s; }
+        .tag-wrap { display: flex; gap: 6px; flex-wrap: wrap; }
+        .tag-btn { background: #F2F4F6; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #4E5968; cursor: pointer; transition: all 0.15s; }
         .tag-btn.active, .tag-btn:hover { background: #191F28; color: white; }
 
         .news-grid-body { display: flex; gap: 20px; flex-wrap: wrap; }
@@ -103,17 +124,17 @@
 
         .paper-header { text-align: center; border-bottom: 2px solid #191F28; padding-bottom: 12px; margin-bottom: 18px; }
         .paper-brand { font-size: 11px; font-weight: 700; color: #10B981; letter-spacing: 0.5px; }
-        .paper-title { font-size: 30px; font-weight: 900; color: #191F28; margin: 4px 0; font-family: 'Times New Roman', serif; }
+        .paper-title { font-size: 28px; font-weight: 900; color: #191F28; margin: 4px 0; font-family: serif; }
         .paper-date { font-size: 11px; color: #8B95A1; text-align: right; }
         
-        .paper-top-index { background: #191F28; color: white; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; text-align: center; margin-bottom: 18px; }
-        .p-idx-link { flex: 1; text-decoration: none; color: white; border-radius: 8px; padding: 4px 0; }
-        .p-idx-link:hover { background: rgba(255,255,255,0.1); }
-        .p-idx-item .t { font-size: 10px; color: #8B95A1; }
-        .p-idx-item .v { font-size: 15px; font-weight: 700; margin: 2px 0; }
-        .p-idx-item .c { font-size: 11px; }
-        .p-idx-item .c.up { color: #FF4D52; }
-        .p-idx-item .c.down { color: #3182F6; }
+        .paper-top-index { background: #F9FAFB; border: 1px solid #F2F4F6; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; text-align: center; margin-bottom: 18px; }
+        .p-idx-link { flex: 1; text-decoration: none; color: #191F28; border-radius: 8px; padding: 4px 0; transition: background 0.15s; }
+        .p-idx-link:hover { background: #F2F4F6; }
+        .p-idx-item .t { font-size: 11px; color: #6B7684; font-weight: 500; }
+        .p-idx-item .v { font-size: 15px; font-weight: 700; margin: 2px 0; color: #191F28; }
+        .p-idx-item .c { font-size: 11px; font-weight: 600; }
+        .p-idx-item .c.up { color: #E11D48; }
+        .p-idx-item .c.down { color: #2563EB; }
 
         .paper-body-text { font-size: 14px; line-height: 1.65; color: #333D4B; text-align: justify; border-bottom: 1px dashed #E5E8EB; padding-bottom: 16px; margin-bottom: 16px; }
         .paper-body-text strong { font-size: 16px; color: #191F28; display: block; margin-bottom: 8px; font-weight: 700; }
@@ -123,16 +144,20 @@
         .widget-card .w-title { font-size: 11px; font-weight: 700; color: #8B95A1; display: block; margin-bottom: 4px; }
         .widget-card .w-content { font-size: 14px; font-weight: 700; color: #191F28; }
 
-        .feed-card { background: white; border-radius: 16px; padding: 20px; border: 1px solid #F2F4F6; display: flex; flex-direction: column; gap: 6px; position: relative; }
+        .section-header-title { font-size: 16px; font-weight: 700; color: #191F28; display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+        .btn-refresh { background: white; border: 1px solid #E5E8EB; padding: 6px 12px; border-radius: 8px; color: #4E5968; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: background 0.15s; }
+        .btn-refresh:hover { background: #F2F4F6; }
+
+        .feed-card { background: white; border-radius: 16px; padding: 20px; border: 1px solid #F2F4F6; display: flex; flex-direction: column; gap: 6px; }
         .feed-badge { font-size: 11px; font-weight: 700; color: #3182F6; background: #E8F3FF; padding: 4px 8px; border-radius: 6px; align-self: flex-start; }
         .feed-badge.alert-type { background: #FEEBEE; color: #FF4D52; }
         .feed-title { font-size: 16px; font-weight: 700; color: #191F28; line-height: 1.4; }
-        .feed-desc { font-size: 13px; color: #4E5936; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .feed-desc { font-size: 13.3px; color: #4E5968; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .feed-link { font-size: 12px; color: #3182F6; font-weight: 700; text-decoration: none; margin-top: 6px; display: inline-flex; align-items: center; gap: 2px; }
 
         .indicator-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
         .ind-card-link { text-decoration: none; color: inherit; }
-        .ind-card { background: white; border: 1px solid #F2F4F6; border-radius: 16px; padding: 18px; transition: all 0.2s; }
+        .ind-card { background: white; border: 1px solid #F2F4F6; border-radius: 16px; padding: 18px; transition: transform 0.2s, box-shadow 0.2s; }
         .ind-card-link:hover .ind-card { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.04); }
         .ind-card .lbl { font-size: 12px; color: #8B95A1; font-weight: 500; }
         .ind-card .price { font-size: 20px; font-weight: 700; color: #191F28; margin: 4px 0; }
@@ -141,42 +166,10 @@
     </style>
 </head>
 <body>
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <script src="https://unpkg.com/@pdf-lib/fontkit@0.0.4/dist/fontkit.umd.min.js"></script>
-    <script type="module" src="js/app.js"></script>
     
-    <div id="auth-overlay">
-        <div class="auth-box">
-            <i class="bi bi-grid-1x2-fill" style="font-size:40px; color:var(--main-blue);"></i>
-            <h2 id="auth-title" style="font-size:22px; font-weight:700; margin:15px 0 25px 0;">보험가온포탈 로그인</h2>
-            <div class="auth-tab">
-                <button id="tab-login-btn" class="active" onclick="window.toggleAuthTab('login')">로그인</button>
-                <button id="tab-register-btn" onclick="window.toggleAuthTab('register')">회원가입</button>
-            </div>
-            <div class="form-group" id="name-input-group" style="text-align:left; display:none; margin-bottom:20px;">
-                <label>이름 (표시될 이름)</label>
-                <input type="text" id="auth-name" class="form-control" placeholder="예: 김가온">
-            </div>
-            <div class="form-group" style="text-align:left;">
-                <label>이메일 주소</label>
-                <input type="email" id="auth-email" class="form-control" placeholder="example@email.com">
-            </div>
-            <div class="form-group" style="text-align:left;">
-                <label>비밀번호 (6자리 이상)</label>
-                <input type="password" id="auth-password" class="form-control" placeholder="비밀번호 입력">
-            </div>
-            <div class="form-group" id="invite-code-group" style="text-align:left; display:none; margin-bottom:25px;">
-                <label>가온사업단 인증 추천인 코드</label>
-                <input type="text" id="auth-invite-code" class="form-control" placeholder="추천인 코드 입력">
-            </div>
-            <button id="auth-submit-btn" class="btn-action" style="margin-top:10px;" onclick="window.handleAuthSubmit()">포탈 접속하기</button>
-            <p id="auth-error-msg" style="color:#EF4444; font-size:13px; margin-top:15px; display:none; font-weight:500;"></p>
-        </div>
-    </div>
-
     <div class="navbar navbar-pc">
         <div class="nav-logo" style="cursor: pointer;" onclick="window.switchToMainView()">
-            <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue)"></i> <b>보험<span>가온</span>포탈</b>
+            <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue)"></i> <b>보험<span>가온포탈</span></b>
         </div>
         <div class="nav-right">
             <div class="user-badge user-pill"><i class="bi bi-person-badge-fill"></i> <span id="user-display-email">인증 확인 중...</span></div>
@@ -189,7 +182,7 @@
     <div class="navbar navbar-mobile">
         <div class="nav-logo" style="font-size:15px; cursor: pointer;" onclick="window.switchToMainView()">
             <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue); font-size:14px;"></i>
-            <b>보험<span>가온</span>포탈</b>
+            <b>보험<span>가온포탈</span></b>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
             <span style="font-size:11px; color:var(--text-muted);" id="user-display-email-mobile">확인 중...</span>
@@ -215,19 +208,19 @@
             <div style="font-size:18px; font-weight:700; color:#191F28; display:flex; align-items:center; gap:6px;">
                 <i class="bi bi-newspaper" style="color:#3182F6;"></i> 오늘의 뉴스 <span>포탈 스크랩</span>
             </div>
-            <button class="btn-refresh" style="background:#F2F4F6; border:none; color:#4E5936; font-weight:700;" onclick="window.switchToMainView()">
-                <i class="bi bi-arrow-left"></i> 대시보드로 돌아가기
+            <button class="btn-refresh" style="background:#F2F4F6; border:none; color:#4E5968; font-weight:700;" onclick="window.switchToMainView()">
+                <i class="bi bi-arrow-left"></i> 가온포탈 메인으로
             </button>
         </div>
 
         <div class="weather-strip" id="news-weather-strip-line">
-            <div class="weather-pill">서울 연동 중...</div>
+            <div class="weather-pill">전국 기상전산망 연결 중...</div>
         </div>
 
         <div class="search-area-box">
             <div class="search-input-wrap">
                 <i class="bi bi-search"></i>
-                <input type="text" id="news-inner-search-input" class="search-bar" placeholder="뉴스 키워드 및 보험 트렌드 실시간 검색 (입력 후 엔터)">
+                <input type="text" id="news-inner-search-input" class="search-bar" placeholder="뉴스 키워드, 보험 트렌드를 검색한 후 엔터를 누르세요">
             </div>
             <div class="tag-wrap" id="news-tag-btn-group">
                 <button class="tag-btn active">전체 뉴스</button>
@@ -245,11 +238,9 @@
                     <div class="paper-title">MORNING NEWS</div>
                     <div class="paper-date" id="paper-live-date">2026년 6월 17일 (수)</div>
                 </div>
-                <div class="paper-top-index" id="paper-mini-index-box">
-                    </div>
+                <div class="paper-top-index" id="paper-mini-index-box"></div>
                 <div class="paper-body-text" id="paper-main-headline-body">
-                    <strong>헤드라인 분석 중...</strong>
-                    실시간 뉴스를 가져오고 있습니다. 잠시만 대기해 주세요.
+                    <strong>헤드라인 스크랩 분석 중...</strong>
                 </div>
                 <div class="paper-footer-widgets">
                     <div class="widget-card">
@@ -258,7 +249,7 @@
                     </div>
                     <div class="widget-card" style="flex: 1.6;">
                         <span class="w-title">오늘의 명언</span>
-                        <div class="w-content" style="font-size:11px; color:#4E5936; font-weight:500; text-align:justify; line-height:1.4;">
+                        <div class="w-content" style="font-size:11px; color:#4E5968; font-weight:500; text-align:justify; line-height:1.4;">
                             스스로 생각하는 능력이 모자라면 유능한 스승의 제자가 되어봤자 자격미달이다. - 에피카르모스
                         </div>
                     </div>
@@ -267,17 +258,15 @@
 
             <div class="feed-section">
                 <div class="section-header-title">
-                    최신 속보 라이브 피드
-                    <button class="btn-refresh" id="news-feed-manual-refresh-btn"><i class="bi bi-arrow-clockwise"></i> 새로고침</button>
+                    최신 속보 피드
+                    <button class="btn-refresh" id="news-feed-manual-refresh-btn"><i class="bi bi-arrow-clockwise"></i> 실시간 뉴스 새로고침</button>
                 </div>
-                <div id="news-live-feed-target-container" style="display:flex; flex-direction:column; gap:12px;">
-                    </div>
+                <div id="news-live-feed-target-container" style="display:flex; flex-direction:column; gap:12px;"></div>
             </div>
         </div>
 
-        <div style="font-size: 15px; font-weight: 700; color: #191F28; margin-top: 10px; margin-bottom: 2px;">오늘의 시장 지표 (네이버 증권 실시간 데이터 연동)</div>
-        <div class="indicator-grid" id="news-bottom-market-grid">
-            </div>
+        <div style="font-size: 15px; font-weight: 700; color: #191F28; margin-top: 10px; margin-bottom: 2px;">오늘의 시장 지표 (네이버 증권 기준)</div>
+        <div class="indicator-grid" id="news-bottom-market-grid"></div>
     </div>
 
     <div class="floating-contact-wrap" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
@@ -377,33 +366,7 @@
         <a href="#" class="footer-link"><i class="bi bi-cpu"></i> AI 엔진 가동중</a>
     </div>
 
-    <script src="js/news.js"></script>
     <script>
-        // 1. 단독 컴포넌트식 화면 전환 로직 (토스 앱 레이아웃 규격)
-        window.switchToNewsView = function() {
-            document.getElementById('pwa-main-content-view').style.display = 'none';
-            document.getElementById('pwa-news-view').style.display = 'flex';
-            if (typeof NewsWidget !== 'undefined') {
-                NewsWidget.init();
-            }
-        };
-        window.switchToMainView = function() {
-            document.getElementById('pwa-news-view').style.display = 'none';
-            document.getElementById('pwa-main-content-view').style.display = 'block';
-        };
-
-        // 모바일 헤더 동기화 로직
-        const observer = new MutationObserver(() => {
-            const src    = document.getElementById('user-display-email');
-            const mobile = document.getElementById('user-display-email-mobile');
-            if (src && mobile) mobile.textContent = src.textContent;
-        });
-        window.addEventListener('DOMContentLoaded', () => {
-            const el = document.getElementById('user-display-email');
-            if (el) observer.observe(el, { childList: true, subtree: true, characterData: true });
-        });
-
-        // 2. 실시간 심평원 상병 마스터 API 통신 로직
         window.openIcdModal = function() {
             var modal = document.getElementById('icd-search-modal');
             if(modal) { modal.style.display = 'flex'; document.getElementById('icd-input').focus(); }
@@ -455,7 +418,6 @@
     <script>
     (function () {
         var ua = navigator.userAgent;
-        var isIOS = /iphone|ipad|ipod/i.test(ua);
         var isStandalone = (window.navigator.standalone === true) || window.matchMedia('(display-mode: standalone)').matches;
         if (isStandalone) return;
 
