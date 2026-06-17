@@ -2,15 +2,19 @@
 
     <img src="dummy" onerror="window.initClaimCanvas(); this.style.display='none';" style="display:none;">
 
+    <!-- 상단 헤더 -->
+    <div class="toss-hero" style="background:#3182F6;">
+        <button class="toss-home-btn" onclick="window.goBack()">
+            <i class="bi bi-arrow-left"></i> 청구의 모든것
+        </button>
+        <div class="toss-hero-tag"><i class="bi bi-file-earmark-text"></i> 청구서 작성</div>
+        <p class="toss-hero-sub">보험금 청구서를 작성해주세요</p>
+        <h1 class="toss-hero-title" style="font-size:22px;">청구서를<br>작성해주세요</h1>
+    </div>
+
     <div style="background: #E8F3FF; color: #3182F6; font-size: 12px; font-weight: 600; text-align: center; padding: 10px; display: flex; justify-content: center; align-items: center; gap: 6px;">
         <i class="bi bi-wifi"></i> 안정적인 전송을 위해 와이파이 환경에서 진행을 권장해요
     </div>
-
-    <header style="background: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
-        <button onclick="window.goBack()" style="background: none; border: none; font-size: 20px; color: #191F28; cursor: pointer;"><i class="bi bi-chevron-left"></i></button>
-        <h2 id="claim-form-title" style="font-size: 18px; font-weight: 700; margin: 0;">청구서 작성</h2>
-        <div style="width:24px;"></div>
-    </header>
 
     <style>
         /* [Design System & Reset] */
@@ -60,19 +64,23 @@
         <div class="card-title"><div class="icon-box"><i class="bi bi-person"></i></div> 피보험자 정보</div>
         <div class="form-group">
             <label class="form-label">이름 <span class="required">*</span></label>
-            <input type="text" id="form-name" class="input-base" placeholder="홍길동">
+            <input type="text" id="form-name" class="input-base" placeholder="홍길동"
+                   autocomplete="off">
         </div>
         <div class="form-group">
             <label class="form-label">주민등록번호 <span class="required">*</span></label>
             <div class="input-row">
-                <input type="tel" id="form-jumin-front" class="input-base" placeholder="생년월일" maxlength="6">
+                <input type="tel" id="form-jumin-front" class="input-base" placeholder="생년월일" maxlength="6"
+                       autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')">
                 <span>-</span>
-                <input type="password" id="form-jumin-back" class="input-base" placeholder="뒷자리" maxlength="7">
+                <input type="password" id="form-jumin-back" class="input-base" placeholder="뒷자리" maxlength="7"
+                       autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')">
             </div>
         </div>
         <div class="form-group">
             <label class="form-label">연락처 <span class="required">*</span></label>
-            <input type="tel" id="form-phone" class="input-base" placeholder="010-0000-0000">
+            <input type="tel" id="form-phone" class="input-base" placeholder="010-0000-0000"
+                   autocomplete="off">
         </div>
         <div class="form-group">
             <label class="form-label">직업 <span class="required">*</span></label>
@@ -100,14 +108,14 @@
         <div class="form-group">
             <label class="form-label">진료(사고)일자 <span class="required">*</span></label>
             <div class="input-row">
-                <input type="tel" id="form-year" class="input-base" placeholder="년" maxlength="4">
-                <input type="tel" id="form-month" class="input-base" placeholder="월" maxlength="2">
-                <input type="tel" id="form-day" class="input-base" placeholder="일" maxlength="2">
+                <input type="tel" id="form-year" class="input-base" placeholder="년" maxlength="4" autocomplete="off">
+                <input type="tel" id="form-month" class="input-base" placeholder="월" maxlength="2" autocomplete="off">
+                <input type="tel" id="form-day" class="input-base" placeholder="일" maxlength="2" autocomplete="off">
             </div>
         </div>
         <div class="form-group">
             <label class="form-label">질병/사고내용 <span class="required">*</span></label>
-            <textarea id="form-content" class="input-base" placeholder="질병(사고)내용을 간단히 작성해 주세요" style="height:80px; resize:none;"></textarea>
+            <textarea id="form-content" class="input-base" placeholder="질병(사고)내용을 간단히 작성해 주세요" style="height:80px; resize:none;" autocomplete="off"></textarea>
         </div>
     </div>
 
@@ -171,4 +179,5 @@
             </button>
         </div>
     </div>
-  </div>
+
+</div>
