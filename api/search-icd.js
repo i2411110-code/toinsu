@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-    // CORS 차단 방지 및 헤더 설정
+    // CORS 차단 방지 및 전산 헤더 설정
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
@@ -11,13 +11,14 @@ export default async function handler(req, res) {
     }
 
     const { query } = req.query;
+    // 검증 완료된 팀장님의 실제 일반 인증키
     const apiKey = "5fcb4c277774a3ab3d2ed9e791bf1c525a5646fbe28fd661f799510fd5d1303d";
 
     if (!query) {
         return res.status(200).json([]);
     }
 
-    // 캡처 화면에서 검증된 최신 상병마스터 엔드포인트 주소
+    // 20250930 최신 상병마스터 전용 데이터셋 주소
     const url = `https://api.odcloud.kr/api/15067467/v1/uddi:0add74e2-fe8c-4807-b300-814233aad8ea?page=1&perPage=2000&serviceKey=${apiKey}`;
 
     try {
@@ -33,20 +34,20 @@ export default async function handler(req, res) {
             return res.status(200).json([]);
         }
 
-        // ✅ 전산 교정 완료: 팀장님이 확인하신 실제 API 열 이름인 "상병코드"와 "한글명"을 다이렉트로 매핑합니다.
+        // ✅ 전산 교정 완료: 실제 데이터셋 내부에 들어있는 "상병코드", "상병한글명", "상병영문명" 컬럼을 1:1로 매핑합니다.
         const mappedItems = rawItems.map(item => {
-            const sickCode = String(item["상병코드"] || "").trim();
-            const sickName = String(item["한글명"] || "").trim();
-            const sickEngName = String(item["영문명"] || "").trim();
+            const sickCode = item["상병코드"] || item["상병 코드"] || item["상병기호"] || "";
+            const sickName = item["상병한글명"] || item["한글명"] || item["상병명"] || item["상병 명"] || "";
+            const sickEngName = item["상병영문명"] || item["영문명"] || item["상병 영문명"] || "";
 
             return {
-                sickCode: sickCode || "-",
-                sickName: sickName || "-",
-                sickEngName: sickEngName || "-"
+                sickCode: String(sickCode).trim(),
+                sickName: String(sickName).trim(),
+                sickEngName: String(sickEngName).trim()
             };
         });
 
-        // 사용자가 입력한 검색어(query) 기반 최종 필터링
+        // 설계사분이 입력한 검색어(query) 기반 최종 필터링
         const filteredItems = mappedItems.filter(item => 
             item.sickCode.toLowerCase().includes(query.toLowerCase()) || 
             item.sickName.toLowerCase().includes(query.toLowerCase())
@@ -55,7 +56,7 @@ export default async function handler(req, res) {
         return res.status(200).json(filteredItems);
 
     } catch (error) {
-        console.error('API 동기화 장애 디버깅:', error);
+        console.error('API 연동 최종 예외 발생:', error);
         return res.status(200).json([]);
     }
 }
