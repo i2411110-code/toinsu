@@ -1,9 +1,13 @@
 <div class="sub-page toss" style="display:block; padding: 0; background:transparent; box-shadow:none; padding-bottom:80px;">
 
-    <div class="toss-hero" style="background:white; color:#191F28; border-bottom:1px solid #F2F4F6; border-radius:0; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; margin-bottom:0;">
-        <button onclick="window.navigateTo('page-claim-main')" style="background:transparent; border:none; font-size:20px; cursor:pointer; color:#191F28;"><i class="bi bi-chevron-left"></i></button>
-        <h2 style="font-size:18px; font-weight:800; margin:0;">보험사 선택</h2>
-        <button style="background:#EFF6FF; color:#3182F6; border:none; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;"><i class="bi bi-link-45deg"></i> 청구링크</button>
+    <!-- 상단 헤더 -->
+    <div class="toss-hero" style="background:#3182F6;">
+        <button class="toss-home-btn" onclick="window.navigateTo('page-claim-main')">
+            <i class="bi bi-arrow-left"></i> 청구의 모든것
+        </button>
+        <div class="toss-hero-tag"><i class="bi bi-building"></i> 보험사 선택</div>
+        <p class="toss-hero-sub">청구할 보험사를 선택해주세요</p>
+        <h1 class="toss-hero-title" style="font-size:22px;">보험사를<br>선택해주세요</h1>
     </div>
 
     <div style="padding: 15px 20px;">
@@ -94,7 +98,6 @@
                 <img src="보험사 로고/hanwha.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="한화" onerror="this.style.display='none'">
                 <div style="font-size:12px; font-weight:700; color:#4E5968;">한화손해보험</div>
             </div>
-           
             <div class="ins-select-card" onclick="window.selectClaimCompany(this, '흥국화재')" style="background:white; border:1px solid #E5E8EB; border-radius:12px; padding:15px 5px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative;">
                 <div style="width:5px; height:5px; background:#FF6B6B; border-radius:50%; position:absolute; top:8px; right:8px;"></div>
                 <img src="보험사 로고/heungkuk.png" style="height:24px; object-fit:contain; margin-bottom:10px;" alt="흥국화재" onerror="this.style.display='none'">
@@ -218,3 +221,5 @@
     <div style="position:sticky; bottom:75px; background:white; padding:15px 20px; border-top:1px solid #F2F4F6; z-index:100; box-shadow: 0 -4px 12px rgba(0,0,0,0.03);">
         <button id="next-step-btn" disabled style="width:100%; padding:16px; background:#E5E8EB; color:#8B95A1; border:none; border-radius:12px; font-size:16px; font-weight:800; cursor:not-allowed; transition:all 0.2s;">보험사를 선택해주세요</button>
     </div>
+
+</div>
