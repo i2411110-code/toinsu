@@ -294,30 +294,32 @@
         <div id="app-root"></div>
     </div>
 
-    <div class="floating-contact-wrap" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
-        <div class="pwa-menu-wrapper">
-            <div class="pwa-sub-menu">
-                <div class="float-btn-container" data-tooltip="오늘의 뉴스">
-                    <button class="sub-float-btn btn-news-open" onclick="window.openNewsModal()"><i class="bi bi-newspaper"></i></button>
-                </div>
-                <div class="float-btn-container" data-tooltip="상병 검색 (신규)">
-                    <button class="sub-float-btn btn-icd-search" onclick="window.openIcdModal()"><i class="bi bi-search"></i></button>
-                </div>
-                <div id="pwa-float-wrap" class="float-btn-container" data-tooltip="앱 다운로드" style="display: none;">
-                    <button id="pwa-float-btn" class="sub-float-btn btn-pwa-download"><i class="bi bi-download"></i></button>
-                </div>
+    <!-- 오른쪽 구석 플로팅 메뉴 구조 (새 창으로 news.html 열리도록 전산 변경) -->
+<div class="floating-contact-wrap" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
+    <div class="pwa-menu-wrapper">
+        <div class="pwa-sub-menu">
+            <!-- ✅ 변경: 클릭 시 팝업 대신 news.html 주소가 새 탭으로 열립니다 -->
+            <div class="float-btn-container" data-tooltip="오늘의 뉴스">
+                <a href="./components/page-news.html" target="_blank" class="sub-float-btn btn-news-open" style="text-decoration: none;"><i class="bi bi-newspaper"></i></a>
             </div>
-            <div class="float-btn-container" data-tooltip="메뉴 확장">
-                <button class="float-btn" style="background:#191F28; color:white;"><i class="bi bi-plus-lg"></i></button>
+            <div class="float-btn-container" data-tooltip="상병 검색 (신규)">
+                <button class="sub-float-btn btn-icd-search" onclick="window.openIcdModal()"><i class="bi bi-search"></i></button>
+            </div>
+            <div id="pwa-float-wrap" class="float-btn-container" data-tooltip="앱 다운로드" style="display: none;">
+                <button id="pwa-float-btn" class="sub-float-btn btn-pwa-download"><i class="bi bi-download"></i></button>
             </div>
         </div>
-        <div class="float-btn-container" data-tooltip="카카오톡 문의">
-            <a href="https://open.kakao.com/o/sZoxSRGh" target="_blank" class="float-btn float-kakao"><i class="bi bi-chat-fill"></i></a>
-        </div>
-        <div class="float-btn-container" data-tooltip="인스타그램">
-            <a href="https://www.instagram.com/insu_coco?igsh=OWhuc2VlYWs4M3Zi" target="_blank" class="float-btn float-instagram"><i class="bi bi-instagram"></i></a>
+        <div class="float-btn-container" data-tooltip="메뉴 확장">
+            <button class="float-btn" style="background:#191F28; color:white;"><i class="bi bi-plus-lg"></i></button>
         </div>
     </div>
+    <div class="float-btn-container" data-tooltip="카카오톡 문의">
+        <a href="https://open.kakao.com/o/sZoxSRGh" target="_blank" class="float-btn float-kakao"><i class="bi bi-chat-fill"></i></a>
+    </div>
+    <div class="float-btn-container" data-tooltip="인스타그램">
+        <a href="https://www.instagram.com/insu_coco?igsh=OWhuc2VlYWs4M3Zi" target="_blank" class="float-btn float-instagram"><i class="bi bi-instagram"></i></a>
+    </div>
+</div>
 
     <div id="news-portal-modal" class="portal-modal" style="z-index: 5000; display: none;" onclick="window.closeNewsModal()">
         <div class="modal-body" style="max-width: 1050px; width: 95%; padding: 0; background: white; border-radius: 16px; overflow: hidden;" onclick="event.stopPropagation()">
