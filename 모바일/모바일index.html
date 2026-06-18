@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-    <!-- PWA - 절대경로 (루트 기준) -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#2563EB">
     <meta name="mobile-web-app-capable" content="yes">
@@ -54,7 +53,6 @@
         .auth-tab button.active { background: white; color: var(--blue); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
         .auth-field { text-align: left; margin-bottom: 14px; }
         .auth-field label { font-size: 12px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; }
-        /* ✅ font-size: 16px → iOS 자동 확대 방지 */
         .auth-input { width: 100%; padding: 13px 14px; border: 1.5px solid #E2E8F0; border-radius: 10px; font-size: 16px; outline: none; font-family: 'Noto Sans KR', sans-serif; transition: border-color 0.2s; }
         .auth-input:focus { border-color: var(--blue); }
         .auth-btn { width: 100%; padding: 15px; background: var(--blue); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 6px; font-family: 'Noto Sans KR', sans-serif; }
@@ -72,9 +70,9 @@
         .m-logo { font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 7px; }
         .m-logo-img { width: 26px; height: 26px; object-fit: contain; }
         .m-logo span { color: var(--blue); }
-        .m-header-right { display: flex; align-items: center; gap: 8px; }
-        .m-user-email { font-size: 11px; color: var(--muted); max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .m-logout { background: #FEF2F2; border: none; color: #EF4444; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .m-header-right { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .m-user-email { font-size: 11px; color: var(--muted); max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .m-logout { background: #FEF2F2; border: none; color: #EF4444; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 
         /* 콘텐츠 */
         .m-body { padding: 14px 14px 0; }
@@ -86,27 +84,31 @@
         .m-hero-date { font-size: 12px; opacity: 0.6; margin-bottom: 10px; }
         .m-hero-title { font-size: 22px; font-weight: 800; line-height: 1.4; margin-bottom: 16px; }
         .m-hero-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .m-hero-btn { background: rgba(255,255,255,0.14); border-radius: 14px; padding: 14px 12px; cursor: pointer; display: flex; flex-direction: column; gap: 5px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* 텍스트 넘침 방지 개선 패치 */
+        .m-hero-btn { background: rgba(255,255,255,0.14); border-radius: 14px; padding: 12px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; border: 1px solid rgba(255,255,255,0.1); min-width: 0; }
         .m-hero-btn:active { background: rgba(255,255,255,0.24); }
-        .m-hero-btn-img { width: 30px; height: 30px; object-fit: contain; }
-        .m-hero-btn-title { font-size: 13px; font-weight: 800; color: white; }
-        .m-hero-btn-sub { font-size: 10px; color: rgba(255,255,255,0.65); }
+        .m-hero-btn-img { width: 28px; height: 28px; object-fit: contain; }
+        .m-hero-btn-title { font-size: 13px; font-weight: 800; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .m-hero-btn-sub { font-size: 10px; color: rgba(255,255,255,0.65); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         /* 카드 */
         .m-card { background: white; border-radius: 18px; padding: 18px 16px; border: 1px solid var(--border); margin-bottom: 12px; }
         .m-card-title { font-size: 15px; font-weight: 800; margin-bottom: 14px; }
 
         /* 퀵메뉴 */
-        .m-grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-        .m-quick { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 4px; border-radius: 14px; background: #FAFAFA; border: 1px solid var(--border); cursor: pointer; }
+        .m-grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .m-quick { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 2px; border-radius: 14px; background: #FAFAFA; border: 1px solid var(--border); cursor: pointer; min-width: 0; }
         .m-quick:active { transform: scale(0.94); background: #EFF6FF; border-color: var(--blue); }
-        .m-quick-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-        .m-quick-label { font-size: 10px; font-weight: 700; text-align: center; line-height: 1.3; word-break: keep-all; color: var(--text); }
+        .m-quick-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .m-quick-label { font-size: 10px; font-weight: 700; text-align: center; line-height: 1.2; color: var(--text); white-space: nowrap; }
 
         /* 오피스 배너 */
-        .m-office { background: white; border-radius: 18px; padding: 16px; border: 1px solid var(--border); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .m-office { background: white; border-radius: 18px; padding: 16px; border: 1px solid var(--border); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; cursor: pointer; min-width: 0; }
         .m-office:active { background: var(--blue-light); border-color: var(--blue); }
         .m-office-icon { width: 44px; height: 44px; background: var(--blue-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .m-office-text-wrap { flex: 1; min-width: 0; }
+        .m-office-text-wrap > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         /* 서비스 */
         .m-service { background: var(--blue-light); border-radius: 14px; padding: 18px; border: 1px solid #DBEAFE; cursor: pointer; }
@@ -115,47 +117,22 @@
         .m-service-title { font-size: 20px; font-weight: 900; margin-bottom: 6px; }
         .m-service-desc { font-size: 12px; color: var(--muted); }
 
-        /* ── PWA 안드로이드 설치 배너 ── */
+        /* PWA 배너 */
         #pwa-banner {
-            display: none;
-            position: fixed;
-            bottom: calc(70px + env(safe-area-inset-bottom));
-            left: 12px; right: 12px;
-            background: white;
-            border-radius: 18px;
-            padding: 14px 16px;
-            box-shadow: 0 8px 32px rgba(37,99,235,0.2);
-            border: 1.5px solid #DBEAFE;
-            z-index: 500;
-            align-items: center;
-            gap: 12px;
-            animation: slideUp 0.3s ease;
+            display: none; position: fixed; bottom: calc(70px + env(safe-area-inset-bottom)); left: 12px; right: 12px;
+            background: white; border-radius: 18px; padding: 14px 16px; box-shadow: 0 8px 32px rgba(37,99,235,0.2);
+            border: 1.5px solid #DBEAFE; z-index: 500; align-items: center; gap: 12px; animation: slideUp 0.3s ease;
         }
         #pwa-banner.show { display: flex; }
 
-        /* ✅ 수정: iOS 배너를 바닥에 붙이고 safe-area 패딩으로 처리 */
         #pwa-ios-banner {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0; right: 0;
-            background: white;
-            border-radius: 20px 20px 0 0;
-            padding: 18px 18px calc(18px + env(safe-area-inset-bottom));
-            box-shadow: 0 -4px 30px rgba(37,99,235,0.15);
-            border-top: 1.5px solid #DBEAFE;
-            z-index: 500;
-            flex-direction: column;
-            gap: 10px;
-            animation: slideUp 0.3s ease;
+            display: none; position: fixed; bottom: 0; left: 0; right: 0; background: white; border-radius: 20px 20px 0 0;
+            padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 30px rgba(37,99,235,0.15);
+            border-top: 1.5px solid #DBEAFE; z-index: 500; flex-direction: column; gap: 10px; animation: slideUp 0.3s ease;
         }
         #pwa-ios-banner.show { display: flex; }
         .ios-banner-top { display: flex; align-items: center; gap: 12px; }
-        .ios-banner-hint {
-            font-size: 12px; color: #64748B;
-            background: #F8FAFC; border-radius: 10px;
-            padding: 10px 14px; text-align: center; line-height: 1.6;
-        }
+        .ios-banner-hint { font-size: 12px; color: #64748B; background: #F8FAFC; border-radius: 10px; padding: 10px 14px; text-align: center; line-height: 1.6; }
         .ios-banner-hint b { color: var(--blue); }
 
         @keyframes slideUp {
@@ -168,7 +145,6 @@
         .pwa-title { font-size: 13px; font-weight: 800; color: var(--text); }
         .pwa-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
         .pwa-install { background: var(--blue); color: white; border: none; padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; font-family: 'Noto Sans KR', sans-serif; }
-        .pwa-install:active { background: var(--blue-dark); }
         .pwa-close { background: none; border: none; color: #CBD5E1; font-size: 22px; cursor: pointer; padding: 0; line-height: 1; flex-shrink: 0; }
 
         /* 플로팅 버튼 */
@@ -194,7 +170,6 @@
 </head>
 <body>
 
-    <!-- 로그인 오버레이 -->
     <div id="auth-overlay">
         <div class="auth-box">
             <div class="auth-logo">
@@ -222,13 +197,11 @@
                 <label>추천인 코드</label>
                 <input type="text" id="auth-invite-code" class="auth-input" placeholder="가온사업단 인증 코드">
             </div>
-            <button class="auth-btn" id="auth-submit-btn"
-                onclick="window.handleAuthSubmit && window.handleAuthSubmit()">포탈 접속하기</button>
+            <button class="auth-btn" id="auth-submit-btn" onclick="window.handleAuthSubmit && window.handleAuthSubmit()">포탈 접속하기</button>
             <p id="auth-error-msg"></p>
         </div>
     </div>
 
-    <!-- 슬림 헤더 -->
     <div class="m-header">
         <div class="m-logo">
             <img src="/icons/icon-192.png" class="m-logo-img" alt="" onerror="this.style.display='none'">
@@ -242,10 +215,8 @@
         </div>
     </div>
 
-    <!-- 메인 콘텐츠 -->
     <div class="m-body">
 
-        <!-- 히어로 -->
         <div class="m-hero">
             <div class="m-hero-tag">보험가온포탈</div>
             <div class="m-hero-date" id="current-date"></div>
@@ -259,45 +230,42 @@
                 <div class="m-hero-btn" onclick="window.navigateTo && window.navigateTo('page-private')">
                     <img src="/아이콘/main2.png" class="m-hero-btn-img" alt="" onerror="this.style.display='none'">
                     <div class="m-hero-btn-title">전산 관리실</div>
-                    <div class="m-hero-btn-sub">AI 분석기 · DB 연동</div>
+                    <div class="m-hero-btn-sub">dlsqh814@naver.com</div>
                 </div>
             </div>
         </div>
 
-        <!-- 퀵메뉴 4개 -->
         <div class="m-card">
             <div class="m-card-title">바로가기</div>
             <div class="m-grid4">
                 <div class="m-quick" onclick="window.navigateTo && window.navigateTo('page-private')">
                     <div class="m-quick-icon" style="background:#EFF6FF;color:#2563EB;"><i class="bi bi-people-fill"></i></div>
-                    <span class="m-quick-label">고객<br>데이터</span>
+                    <span class="m-quick-label">고객 데이터</span>
                 </div>
                 <div class="m-quick" onclick="window.navigateTo && window.navigateTo('page-calculator')">
                     <div class="m-quick-icon" style="background:#E0F2FE;color:#0284C7;"><i class="bi bi-calculator-fill"></i></div>
-                    <span class="m-quick-label">재무<br>계산기</span>
+                    <span class="m-quick-label">재무 계산기</span>
                 </div>
                 <div class="m-quick" onclick="window.navigateTo && window.navigateTo('page-terms')">
                     <div class="m-quick-icon" style="background:#F0FDF4;color:#16A34A;"><i class="bi bi-file-text-fill"></i></div>
-                    <span class="m-quick-label">약관<br>조회</span>
+                    <span class="m-quick-label">약관 조회</span>
                 </div>
                 <div class="m-quick" onclick="window.navigateTo && window.navigateTo('page-silbi')">
                     <div class="m-quick-icon" style="background:#FFF7ED;color:#EA580C;"><i class="bi bi-heart-pulse-fill"></i></div>
-                    <span class="m-quick-label">실비<br>계산기</span>
+                    <span class="m-quick-label">실비 계산기</span>
                 </div>
             </div>
         </div>
 
-        <!-- 가온 오피스 -->
         <div class="m-office" onclick="window.navigateTo && window.navigateTo('page-가온 오피스')">
             <div class="m-office-icon">🔒</div>
-            <div style="flex:1;">
+            <div class="m-office-text-wrap">
                 <div style="font-size:14px;font-weight:800;">가온사업단 전용 오피스</div>
-                <div style="font-size:11px;color:var(--muted);margin-top:2px;">인가된 담당자 전용 보안 영역</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px;">양식 도움말 및 전용 라운지</div>
             </div>
             <i class="bi bi-chevron-right" style="color:#B0B8C1;font-size:16px;"></i>
         </div>
 
-        <!-- 서비스 -->
         <div class="m-card">
             <div class="m-card-title">서비스</div>
             <div class="m-service" onclick="window.navigateTo && window.navigateTo('page-claim-main')">
@@ -307,10 +275,7 @@
             </div>
         </div>
 
-    </div><!-- /m-body -->
-
-    <!-- ── 안드로이드 PWA 설치 배너 ── -->
-    <div id="pwa-banner">
+    </div><div id="pwa-banner">
         <div class="pwa-icon">
             <img src="/icons/icon-192.png" alt="가온포탈">
         </div>
@@ -322,7 +287,6 @@
         <button class="pwa-close" id="pwa-close-btn">&times;</button>
     </div>
 
-    <!-- ✅ 수정: iOS 배너 — 바닥 고정 + safe-area 패딩 + 안내 텍스트 강화 -->
     <div id="pwa-ios-banner">
         <div class="ios-banner-top">
             <div class="pwa-icon">
@@ -339,19 +303,16 @@
         </div>
     </div>
 
-    <!-- 플로팅 버튼 -->
     <div class="m-floats">
         <a href="https://open.kakao.com/o/sZoxSRGh" target="_blank" class="m-float m-float-kakao"><i class="bi bi-chat-fill"></i></a>
         <a href="https://www.instagram.com/insu_coco?igsh=OWhuc2VlYWs4M3Zi" target="_blank" class="m-float m-float-insta"><i class="bi bi-instagram"></i></a>
     </div>
 
-    <!-- 푸터 -->
     <div class="m-footer">
         <a href="#"><i class="bi bi-shield-lock"></i> 가온 보안전산</a>
         <a href="#"><i class="bi bi-cpu"></i> AI 엔진 가동중</a>
     </div>
 
-    <!-- 공지 모달 -->
     <div id="notice-modal">
         <div class="notice-body">
             <div class="notice-title"><i class="bi bi-megaphone-fill" style="color:#2563EB;"></i> 보험가온포탈 공지사항</div>
@@ -370,7 +331,6 @@
         </div>
     </div>
 
-    <!-- app.js 로드 (Firebase auth, navigateTo 등 공유) -->
     <script type="module" src="/js/app.js"></script>
 
     <script>
@@ -401,7 +361,37 @@
         }
         setTimeout(showNotice, 800);
 
-        // ✅ 수정: IIFE + isSafariIOS 판별 + 전체 로직 정비
+        // 가온오피스 내부 전용 탭 전환 핵심 자바스크립트 통합 제어 추가
+        window.switchPrivateTab = function(tabName) {
+            var dashApp = document.getElementById('dashboard-app');
+            var chkApp = document.getElementById('checklist-app');
+            var rptApp = document.getElementById('report-app');
+            
+            if(dashApp) dashApp.style.display = 'none';
+            if(chkApp) chkApp.style.display = 'none';
+            if(rptApp) rptApp.style.display = 'none';
+            
+            var btnDb = document.getElementById('btn-db-dash');
+            var btnChk = document.getElementById('btn-chk-list');
+            var btnRpt = document.getElementById('btn-rpt-gen');
+            
+            if(btnDb) btnDb.classList.remove('active');
+            if(btnChk) btnChk.classList.remove('active');
+            if(btnRpt) btnRpt.classList.remove('active');
+            
+            if (tabName === 'db' && dashApp) {
+                dashApp.style.display = 'grid';
+                if(btnDb) btnDb.classList.add('active');
+            } else if (tabName === 'chk' && chkApp) {
+                chkApp.style.display = 'block';
+                if(btnChk) btnChk.classList.add('active');
+            } else if (tabName === 'rpt' && rptApp) {
+                rptApp.style.display = 'block';
+                if(btnRpt) btnRpt.classList.add('active');
+            }
+        };
+
+        // PWA 로직 (IIFE)
         (function () {
             var ua           = navigator.userAgent;
             var isIOS        = /iphone|ipad|ipod/i.test(ua);
@@ -411,7 +401,6 @@
 
             if (isStandalone) return;
 
-            // Chrome for iOS / Firefox for iOS / 인앱 브라우저 제외
             var isSafariIOS = isIOS
                            && /safari/i.test(ua)
                            && !/crios|fxios|opios|mercury/i.test(ua);
@@ -424,7 +413,6 @@
                 try { localStorage.setItem(key, Date.now() + ms); } catch(e) {}
             }
 
-            // iOS Safari 배너: 공지(800ms) 이후 표시
             if (isSafariIOS && !isDismissed('pwa-ios-dismissed')) {
                 setTimeout(function () {
                     var b = document.getElementById('pwa-ios-banner');
@@ -441,9 +429,7 @@
                 });
             }
 
-            // Android beforeinstallprompt
             var deferredPrompt = null;
-
             window.addEventListener('beforeinstallprompt', function (e) {
                 e.preventDefault();
                 deferredPrompt = e;
@@ -479,7 +465,6 @@
                 deferredPrompt = null;
             });
 
-            // Service Worker 등록
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function () {
                     navigator.serviceWorker.register('/sw.js', { scope: '/' })
