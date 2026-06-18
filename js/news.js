@@ -147,10 +147,52 @@ const NewsWidget = (() => {
     });
   };
 
-  // 3. 좌측 MORNING NEWS 지면 데이터 매핑
+  /// 3. 좌측 MORNING NEWS 지면 데이터 매핑
   const renderMorningPaper = (topItem, fxList, mktList) => {
     const paperTitleEl = document.querySelector('.paper-body-text');
     const paperIndexEl = document.querySelector('.paper-top-index');
+    const paperDateEl = document.getElementById('paper-live-date'); // 날짜 요소 찾기
+    
+    // ✅ 오늘 날짜로 자동 업데이트
+    if (paperDateEl) {
+        const today = new Date();
+        paperDateEl.textContent = today.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+    }
+
+    // 메인 헤드라인 텍스트 배치
+    if (paperTitleEl && topItem) {
+        paperTitleEl.innerHTML = `
+            <strong>"${clean(topItem.title)}"</strong>
+            <span style="font-size:11px;color:#94A3B8;display:block;margin-bottom:10px;">발행처: NAVER NEWS HUB &middot; 스크랩: ${fmtDate(topItem.pubDate)}</span>
+            ${clean(topItem.description)}
+        `;
+    }
+
+    // 신문 상단 미니 경제 지표 매칭
+    if (paperIndexEl) {
+        const usd = fxList.find(i => i.label === 'USD') || { value: 1514.60, change: 5.20, direction: 'down' };
+        const kospi = mktList.find(i => i.label === '코스피') || { value: 8545.98, change: 422.36, direction: 'up' };
+        const kosdaq = mktList.find(i => i.label === '코스닥') || { value: 1034.03, change: 14.98, direction: 'up' };
+
+        paperIndexEl.innerHTML = `
+            <div class="p-idx-item">
+                <div class="t">USD / KRW</div>
+                <div class="v">${Number(usd.value).toFixed(2)}</div>
+                <div class="c ${usd.direction}"><i class="bi bi-caret-${usd.direction}-fill"></i> ${Math.abs(usd.change).toFixed(2)}</div>
+            </div>
+            <div class="p-idx-item" style="border-left:1px solid #334155; border-right:1px solid #334155;">
+                <div class="t">KOSPI</div>
+                <div class="v">${Number(kospi.value).toLocaleString('ko-KR', {maximumFractionDigits:2})}</div>
+                <div class="c ${kospi.direction}"><i class="bi bi-caret-${kospi.direction}-fill"></i> ${Math.abs(kospi.change).toFixed(2)}</div>
+            </div>
+            <div class="p-idx-item">
+                <div class="t">KOSDAQ</div>
+                <div class="v">${Number(kosdaq.value).toLocaleString('ko-KR', {maximumFractionDigits:2})}</div>
+                <div class="c ${kosdaq.direction}"><i class="bi bi-caret-${kosdaq.direction}-fill"></i> ${Math.abs(kosdaq.change).toFixed(2)}</div>
+            </div>
+        `;
+    }
+  };
     
     // 메인 헤드라인 텍스트 배치
     if (paperTitleEl && topItem) {
