@@ -3,7 +3,7 @@
 //  ✅ 배포 시마다 CACHE_VERSION 숫자만 +1 하세요
 //     → 아이콘·매니페스트 기존 사용자 기기에서도 강제 갱신됨
 // ════════════════════════════════════════════════════
-const CACHE_VERSION = 'v5';                        // ← 로고·매니페스트 변경 시 여기만 올리면 됩니다
+const CACHE_VERSION = 'v6';                        // ← 로고·매니페스트 변경 시 여기만 올리면 됩니다
 const CACHE_NAME    = `gaon-portal-${CACHE_VERSION}`;
 
 const ASSETS_TO_CACHE = [

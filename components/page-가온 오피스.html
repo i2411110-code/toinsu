@@ -225,7 +225,7 @@
         </div>
 
         <!-- ══════════════════════════════
-             탭 4: 원격 캘린더 (완전 재구현)
+             탭 4: 원격 캘린더 (FullCalendar v6 실제 연동)
         ══════════════════════════════ -->
         <div id="calendar-app" style="display:none;">
 
@@ -233,76 +233,45 @@
             <div class="cal-control-bar">
                 <!-- 뷰 스위치 -->
                 <div class="cal-view-switch">
-                    <button id="cal-view-month" class="cal-view-btn active" onclick="window.setCalView('month')">
+                    <button id="cal-view-month" class="cal-view-btn active" onclick="window.calSetView('month')">
                         <i class="bi bi-calendar3"></i> 월간
                     </button>
-                    <button id="cal-view-week" class="cal-view-btn" onclick="window.setCalView('week')">
+                    <button id="cal-view-week" class="cal-view-btn" onclick="window.calSetView('week')">
                         <i class="bi bi-calendar-week"></i> 주간
                     </button>
                 </div>
                 <!-- 년월 네비게이션 -->
                 <div class="cal-nav-group">
-                    <button onclick="window.calendarPrev()" class="cal-nav-btn" aria-label="이전">
+                    <button onclick="window.calPrev()" class="cal-nav-btn" aria-label="이전">
                         <i class="bi bi-chevron-left"></i>
                     </button>
-                    <div id="cal-year-month" class="cal-year-month-label"></div>
-                    <button onclick="window.calendarNext()" class="cal-nav-btn" aria-label="다음">
+                    <div id="cal-year-month" class="cal-year-month-label">불러오는 중...</div>
+                    <button onclick="window.calNext()" class="cal-nav-btn" aria-label="다음">
                         <i class="bi bi-chevron-right"></i>
                     </button>
                 </div>
-                <!-- 오늘 버튼 -->
-                <button onclick="window.calendarGoToday()" class="cal-today-btn">오늘</button>
-            </div>
-
-            <!-- ── 월간 보기 ── -->
-            <div id="cal-monthly-view" class="cal-card">
-                <div class="cal-dow-header">
-                    <div class="cal-dow sun">일</div>
-                    <div class="cal-dow">월</div>
-                    <div class="cal-dow">화</div>
-                    <div class="cal-dow">수</div>
-                    <div class="cal-dow">목</div>
-                    <div class="cal-dow">금</div>
-                    <div class="cal-dow sat">토</div>
+                <div style="display:flex; gap:8px;">
+                    <button onclick="window.calGoToday()" class="cal-today-btn">오늘</button>
+                    <button onclick="window.calOpenCreateModal()" class="cal-today-btn cal-today-btn-primary">
+                        <i class="bi bi-plus-lg"></i> 일정 등록
+                    </button>
                 </div>
-                <div id="cal-grid" class="cal-month-grid"></div>
             </div>
 
-            <!-- ── 주간 보기 ── -->
-            <div id="cal-weekly-view" class="cal-card" style="display:none; padding:0; overflow:hidden;">
-                <div id="cal-week-header" class="cal-week-header-row"></div>
-                <div id="cal-week-timeline" class="cal-week-timeline-wrap"></div>
+            <!-- 관리자 모드 안내 배너 -->
+            <div id="cal-admin-banner" class="cal-admin-banner" style="display:none;">
+                <i class="bi bi-shield-fill-check"></i> 관리자 모드 — 전 직원의 일정이 색상별로 모두 표시됩니다.
             </div>
 
-            <!-- ── 날짜 선택 패널 (일정 등록 + 목록) ── -->
-            <div id="cal-selected-info" class="cal-card cal-day-panel" style="display:none;">
-                <div class="cal-day-panel-header">
-                    <div id="cal-selected-date-label" class="cal-day-panel-label"></div>
-                    <button onclick="document.getElementById('cal-selected-info').style.display='none'"
-                        class="cal-panel-close-btn" aria-label="닫기">&times;</button>
-                </div>
-                <!-- 일정 입력 폼 -->
-                <div class="cal-event-form">
-                    <input id="cal-new-event-input" class="cal-event-input"
-                        placeholder="일정 제목을 입력하세요"
-                        onkeydown="if(event.key==='Enter') window.calendarAddEvent()">
-                    <div class="cal-event-form-row">
-                        <input id="cal-new-event-time" type="time" class="cal-time-input" value="09:00">
-                        <input id="cal-new-event-place" class="cal-event-input cal-input-sm" placeholder="장소 (선택)">
-                        <input id="cal-new-event-memo" class="cal-event-input cal-input-sm" placeholder="메모 (선택)">
-                        <button onclick="window.calendarAddEvent()" class="cal-add-btn">
-                            <i class="bi bi-plus-lg"></i> 등록
-                        </button>
-                    </div>
-                </div>
-                <!-- 일정 목록 -->
-                <div id="cal-event-list" class="cal-event-list"></div>
+            <!-- ── FullCalendar 마운트 지점 ── -->
+            <div class="cal-card" id="cal-fc-wrap">
+                <div id="calendarRoot"></div>
             </div>
 
-            <!-- ── 관리자 전용: 팀 전체 월간 일정 ── -->
-            <div id="cal-admin-all" class="cal-card" style="display:none;">
+            <!-- ── 관리자 전용: 팀 전체 일정 모아보기 ── -->
+            <div id="cal-admin-all" class="cal-card" style="display:none; margin-top:14px;">
                 <div class="cal-admin-panel-title">
-                    <i class="bi bi-people-fill"></i> 팀 전체 이번 달 일정
+                    <i class="bi bi-people-fill"></i> 팀 전체 일정 모아보기
                     <span id="cal-admin-badge" class="cal-admin-badge"></span>
                 </div>
                 <div id="cal-admin-list" class="cal-admin-list"></div>
@@ -310,26 +279,62 @@
 
         </div><!-- /#calendar-app -->
 
-        <!-- ── 일정 상세 모달 (전역 고정) ── -->
-        <div id="cal-detail-modal" class="cal-modal-backdrop" style="display:none;"
-             onclick="if(event.target===this) this.style.display='none'">
+        <!-- ── 일정 상세 모달 ── -->
+        <div id="calendarModal" class="cal-modal-backdrop" style="display:none;"
+             onclick="if(event.target===this) window.calCloseModal()">
             <div class="cal-modal-card">
-                <!-- 헤더 -->
                 <div class="cal-modal-header">
                     <div>
-                        <div id="cal-modal-date" class="cal-modal-date-label"></div>
-                        <div id="cal-modal-title" class="cal-modal-title-text"></div>
+                        <div id="calModalDate" class="cal-modal-date-label"></div>
+                        <div id="calModalTitle" class="cal-modal-title-text"></div>
                     </div>
-                    <button onclick="document.getElementById('cal-detail-modal').style.display='none'"
-                        class="cal-modal-close-btn" aria-label="닫기">&times;</button>
+                    <button onclick="window.calCloseModal()" class="cal-modal-close-btn" aria-label="닫기">&times;</button>
                 </div>
-                <!-- 상세 정보 그리드 -->
-                <div id="cal-modal-body" class="cal-modal-body"></div>
-                <!-- 삭제 버튼 (소유자/관리자만 노출) -->
-                <div id="cal-modal-actions" class="cal-modal-actions" style="display:none;">
-                    <button id="cal-modal-delete-btn" class="cal-modal-delete-btn">
+                <div id="calModalBody" class="cal-modal-body"></div>
+                <div class="cal-modal-actions">
+                    <button id="calModalDeleteBtn" class="cal-modal-delete-btn" style="display:none;">
                         <i class="bi bi-trash3"></i> 이 일정 삭제
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 일정 등록 모달 ── -->
+        <div id="calendarAddModal" class="cal-modal-backdrop" style="display:none;"
+             onclick="if(event.target===this) window.calCloseAddModal()">
+            <div class="cal-modal-card">
+                <div class="cal-modal-header">
+                    <div class="cal-modal-title-text">🗓️ 새 일정 등록</div>
+                    <button onclick="window.calCloseAddModal()" class="cal-modal-close-btn" aria-label="닫기">&times;</button>
+                </div>
+                <div class="cal-modal-body cal-add-form">
+                    <div class="form-group">
+                        <label>날짜</label>
+                        <input id="calAddDate" type="date" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>제목 (*)</label>
+                        <input id="calAddTitle" class="form-control" placeholder="예) 김가온 고객 방문상담"
+                            onkeydown="if(event.key==='Enter') window.calSubmitNewEvent()">
+                    </div>
+                    <div class="cal-add-form-row">
+                        <div class="form-group">
+                            <label>시간</label>
+                            <input id="calAddTime" type="time" class="form-control" value="09:00">
+                        </div>
+                        <div class="form-group">
+                            <label>장소 (선택)</label>
+                            <input id="calAddPlace" class="form-control" placeholder="예) 강남 사무실">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>메모 (선택)</label>
+                        <textarea id="calAddMemo" class="form-control" rows="2" placeholder="전달할 메모를 적어주세요"></textarea>
+                    </div>
+                    <label id="calAddGlobalWrap" class="cal-add-global-wrap" style="display:none;">
+                        <input type="checkbox" id="calAddGlobal"> 📢 전체 공지 일정으로 등록 (모든 직원에게 노출)
+                    </label>
+                    <button class="btn-action" style="background:#2563EB;" onclick="window.calSubmitNewEvent()">등록하기</button>
                 </div>
             </div>
         </div>
@@ -361,438 +366,416 @@
 
 
 <!-- ══════════════════════════════════════════════════════
-     JAVASCRIPT: 캘린더 완전 구현 v2
+     JAVASCRIPT: 원격 캘린더 — FullCalendar v6 실제 연동 엔진
+     (이전 버전은 직접 만든 격자 div였으나, 요청에 따라 진짜
+      FullCalendar 라이브러리의 changeView/prev/next/eventClick 등
+      내장 함수를 그대로 바인딩하는 방식으로 전부 새로 작성함)
 ══════════════════════════════════════════════════════ -->
+
+<!-- FullCalendar v6 본체(코어+dayGrid+timeGrid+interaction+list 전부 포함된 번들) + 한국어 로케일 -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.20/locales/ko.global.min.js"></script>
+
 <script>
 (function() {
     'use strict';
 
     // ──────────────────────────────────────────────────────
-    //  [1] 탭 전환은 app.js 공용 라우터(window.switchGaonOfficeTab)에 위임
+    //  [1] 상태 변수
     // ──────────────────────────────────────────────────────
+    let _fc = null;                 // FullCalendar.Calendar 인스턴스
+    let _fcInitialized = false;      // 최초 init 여부 (탭 재클릭 시 재생성 방지)
+    let _calUnsub = null;            // Firestore onSnapshot 구독 해제 함수
+    let _calCurrentUser = null;      // 현재 로그인 사용자 (Firebase Auth User)
+    let _calIsAdmin = false;         // 관리자 판정 결과 캐시
+    let _calCreateDateStr = null;    // 등록 모달에서 선택된 날짜
 
-    // ──────────────────────────────────────────────────────
-    //  [2] 캘린더 상태 변수 (Date 객체 기반 자동 연산)
-    // ──────────────────────────────────────────────────────
-
-    let _calYear  = new Date().getFullYear();
-    let _calMonth = new Date().getMonth(); // 0-based
-    let _calWeekStart = _getMonday(new Date());
-    let _calSelectedDate = null;
-    let _calViewMode = 'month';
-    // 상세 모달에서 삭제 버튼 연결용
-    let _modalEventMeta = null;
-
-    // 관리자 판별 (이메일 OR Firestore role='admin')
+    // 관리자 이메일 화이트리스트 (요청사항: 이메일 검증 1차 기준)
     const ADMIN_EMAILS = ['dlsqh814@naver.com'];
 
-    function isAdmin() {
-        const user = window._currentUser;
-        return user && ADMIN_EMAILS.includes(user.email);
-    }
-
-    // 월요일 기준 주 시작일 계산
-    function _getMonday(date) {
-        const d = new Date(date);
-        const day = d.getDay();
-        const diff = (day === 0) ? -6 : 1 - day;
-        d.setDate(d.getDate() + diff);
-        d.setHours(0, 0, 0, 0);
-        return d;
-    }
-
-    // 날짜 → 'YYYY-MM-DD' 문자열
-    function _dateStr(d) {
-        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    }
-
-    // 유저별 색상
+    // 등록자별 색상 매핑 (관리자 모아보기 화면에서 사용)
     const USER_COLORS = [
-        '#2563EB','#7C3AED','#DC2626','#059669','#D97706',
-        '#0891B2','#BE185D','#4338CA','#65A30D','#EA580C'
+        '#2563EB', '#7C3AED', '#DC2626', '#059669', '#D97706',
+        '#0891B2', '#BE185D', '#4338CA', '#65A30D', '#EA580C'
     ];
-    const _ucMap = {};
-    let _ucIdx = 0;
-    function getUserColor(uid) {
-        if (!_ucMap[uid]) { _ucMap[uid] = USER_COLORS[_ucIdx % USER_COLORS.length]; _ucIdx++; }
-        return _ucMap[uid];
+    const _colorMap = {};
+    let _colorIdx = 0;
+    function colorForUser(uid) {
+        const key = uid || 'unknown';
+        if (!_colorMap[key]) { _colorMap[key] = USER_COLORS[_colorIdx % USER_COLORS.length]; _colorIdx++; }
+        return _colorMap[key];
     }
 
-    // ── Storage helpers (Firestore 우선, localStorage 폴백) ──
-    async function loadEvents(dateStr) {
-        try {
-            if (window.db) {
-                const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-                const snap = await getDocs(collection(window.db, 'calendars', dateStr, 'events'));
-                return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // ──────────────────────────────────────────────────────
+    //  [2] 로그인 사용자 + 관리자 여부 판별
+    //      - 1차: Firebase Auth 이메일이 ADMIN_EMAILS에 포함되는지
+    //      - 2차: Firestore 'users_portal/{email}' 문서의 role 필드가 'admin'인지
+    // ──────────────────────────────────────────────────────
+    async function resolveUserAndAdmin() {
+        const { getAuth } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js');
+        const user = window._currentUser || getAuth().currentUser;
+        if (!user) return { user: null, isAdmin: false };
+
+        let admin = ADMIN_EMAILS.includes(user.email);
+
+        if (!admin && window.__firestoreDb) {
+            try {
+                const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js');
+                const snap = await getDoc(doc(window.__firestoreDb, 'users_portal', user.email));
+                if (snap.exists() && snap.data().role === 'admin') admin = true;
+            } catch (e) {
+                console.warn('[캘린더] 관리자 role 조회 실패:', e);
             }
-        } catch(e) {}
-        return JSON.parse(localStorage.getItem('gaon_cal_' + dateStr) || '[]');
-    }
-
-    async function saveEvent(dateStr, eventObj) {
-        try {
-            if (window.db) {
-                const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-                await addDoc(collection(window.db, 'calendars', dateStr, 'events'), {
-                    ...eventObj, timestamp: serverTimestamp()
-                });
-                return;
-            }
-        } catch(e) {}
-        const arr = JSON.parse(localStorage.getItem('gaon_cal_' + dateStr) || '[]');
-        arr.push({ ...eventObj, id: Date.now().toString(), timestamp: Date.now() });
-        localStorage.setItem('gaon_cal_' + dateStr, JSON.stringify(arr));
-    }
-
-    async function deleteEvent(dateStr, eventId) {
-        try {
-            if (window.db) {
-                const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-                await deleteDoc(doc(window.db, 'calendars', dateStr, 'events', eventId));
-                return;
-            }
-        } catch(e) {}
-        const arr = JSON.parse(localStorage.getItem('gaon_cal_' + dateStr) || '[]');
-        localStorage.setItem('gaon_cal_' + dateStr, JSON.stringify(arr.filter(e => e.id !== eventId)));
-    }
-
-    async function loadMonthEvents(year, month) {
-        const results = [];
-        const days = new Date(year, month + 1, 0).getDate();
-        for (let d = 1; d <= days; d++) {
-            const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const evs = await loadEvents(ds);
-            evs.forEach(e => results.push({ dateStr: ds, ...e }));
         }
-        return results;
+        return { user, isAdmin: admin };
     }
 
-    // ── 뷰 전환 (월간/주간) ──
-    window.setCalView = function(mode) {
-        _calViewMode = mode;
-        document.getElementById('cal-view-month').classList.toggle('active', mode === 'month');
-        document.getElementById('cal-view-week').classList.toggle('active',  mode === 'week');
-        document.getElementById('cal-monthly-view').style.display = (mode === 'month') ? '' : 'none';
-        document.getElementById('cal-weekly-view').style.display  = (mode === 'week')  ? '' : 'none';
-        window.calendarRender();
-    };
-
-    // ── 이전/다음 이동 ──
-    window.calendarPrev = function() {
-        if (_calViewMode === 'month') {
-            _calMonth--;
-            if (_calMonth < 0) { _calMonth = 11; _calYear--; }
+    // ──────────────────────────────────────────────────────
+    //  [3] Firestore 일정 데이터 ↔ FullCalendar 이벤트 객체 변환
+    //      컬렉션: calendarEvents (최상위, 문서 1개 = 일정 1건)
+    //      필드: uid, email, userName, title, start, end, allDay,
+    //            place, memo, isGlobal(공지 여부), createdAt
+    // ──────────────────────────────────────────────────────
+    function toFcEvent(e) {
+        const isOwn = _calCurrentUser && e.uid === _calCurrentUser.uid;
+        let color;
+        if (_calIsAdmin) {
+            color = e.isGlobal ? '#D97706' : colorForUser(e.uid);
         } else {
-            _calWeekStart = new Date(_calWeekStart.getTime() - 7 * 86400000);
+            color = e.isGlobal ? '#D97706' : '#2563EB';
         }
-        _calSelectedDate = null;
-        const info = document.getElementById('cal-selected-info');
-        if (info) info.style.display = 'none';
-        window.calendarRender();
-    };
-
-    window.calendarNext = function() {
-        if (_calViewMode === 'month') {
-            _calMonth++;
-            if (_calMonth > 11) { _calMonth = 0; _calYear++; }
-        } else {
-            _calWeekStart = new Date(_calWeekStart.getTime() + 7 * 86400000);
-        }
-        _calSelectedDate = null;
-        const info = document.getElementById('cal-selected-info');
-        if (info) info.style.display = 'none';
-        window.calendarRender();
-    };
-
-    // ── 통합 렌더 진입점 ──
-    window.calendarRender = async function() {
-        const labelEl = document.getElementById('cal-year-month');
-        if (!labelEl) return;
-
-        if (_calViewMode === 'month') {
-            labelEl.textContent = `${_calYear}년 ${_calMonth + 1}월`;
-            await _renderMonthGrid();
-            if (isAdmin()) await _renderAdminPanel();
-        } else {
-            const weekEnd = new Date(_calWeekStart.getTime() + 6 * 86400000);
-            labelEl.textContent = `${_calWeekStart.getMonth()+1}/${_calWeekStart.getDate()} ~ ${weekEnd.getMonth()+1}/${weekEnd.getDate()}`;
-            await _renderWeekTimeline();
-        }
-    };
-
-    // ── 월간 그리드 렌더 ──
-    async function _renderMonthGrid() {
-        const gridEl = document.getElementById('cal-grid');
-        if (!gridEl) return;
-        gridEl.innerHTML = '';
-
-        const firstDay    = new Date(_calYear, _calMonth, 1).getDay();
-        const daysInMonth = new Date(_calYear, _calMonth + 1, 0).getDate();
-        const todayStr    = _dateStr(new Date());
-
-        // 이번 달 이벤트 미리 로드 (도트 표시용)
-        const dotMap = {};
-        for (let d = 1; d <= daysInMonth; d++) {
-            const ds = `${_calYear}-${String(_calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const evs = await loadEvents(ds);
-            if (evs.length) dotMap[ds] = evs;
-        }
-
-        // 빈 칸
-        for (let i = 0; i < firstDay; i++) gridEl.appendChild(document.createElement('div'));
-
-        for (let d = 1; d <= daysInMonth; d++) {
-            const ds       = `${_calYear}-${String(_calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const isToday  = ds === todayStr;
-            const isSel    = ds === _calSelectedDate;
-            const dow      = new Date(_calYear, _calMonth, d).getDay();
-            const evArr    = dotMap[ds] || [];
-
-            // 월간에서 이벤트 제목 최대 2개 미리보기 (일반: 본인+공지, 관리자: 전체)
-            const user = window._currentUser;
-            const visible = evArr.filter(e =>
-                isAdmin() || (user && e.uid === user.uid) || e.isNotice
-            );
-
-            const cell = document.createElement('div');
-            cell.style.cssText = `
-                position:relative; text-align:center; padding:6px 2px 4px;
-                border-radius:10px; cursor:pointer; font-size:13px;
-                font-weight:${isToday ? '800' : '500'};
-                color:${isSel ? 'white' : isToday ? '#2563EB' : dow===0 ? '#EF4444' : dow===6 ? '#2563EB' : '#191F28'};
-                background:${isSel ? '#2563EB' : isToday ? '#EFF6FF' : 'transparent'};
-                border:${isToday && !isSel ? '1.5px solid #2563EB' : '1.5px solid transparent'};
-                min-height:52px; vertical-align:top; transition:background 0.15s;
-            `;
-
-            let innerHtml = `<div>${d}</div>`;
-            if (visible.length) {
-                // 일정 제목 + 등록자 최대 2개
-                innerHtml += visible.slice(0, 2).map(e => {
-                    const color = isAdmin() ? getUserColor(e.uid || 'x') : '#2563EB';
-                    const name  = isAdmin() && e.userName ? ` <span style="opacity:.7;font-size:9px;">${e.userName.slice(0,3)}</span>` : '';
-                    return `<div style="font-size:9px; font-weight:700; color:${isSel?'white':color};
-                        background:${isSel?'rgba(255,255,255,0.2)':'rgba(37,99,235,0.08)'};
-                        border-radius:4px; padding:1px 3px; margin:1px 1px 0; overflow:hidden;
-                        white-space:nowrap; text-overflow:ellipsis; text-align:left;">
-                        ${e.isNotice ? '📢' : ''}${e.title}${name}</div>`;
-                }).join('');
-                if (visible.length > 2) {
-                    innerHtml += `<div style="font-size:9px;color:${isSel?'white':'#8B95A1'};text-align:left;padding-left:3px;">+${visible.length - 2}</div>`;
-                }
+        return {
+            id: e.id,
+            title: e.title,
+            start: e.start,
+            end: e.end || undefined,
+            allDay: !!e.allDay,
+            backgroundColor: color,
+            borderColor: color,
+            extendedProps: {
+                uid: e.uid, email: e.email, userName: e.userName || e.email || '익명',
+                place: e.place || '', memo: e.memo || '', isGlobal: !!e.isGlobal, isOwn
             }
-
-            cell.innerHTML = innerHtml;
-            cell.onclick = () => _selectDate(ds);
-            gridEl.appendChild(cell);
-        }
+        };
     }
 
-    // ── 주간 타임라인 렌더 (24h) ──
-    async function _renderWeekTimeline() {
-        const headerEl   = document.getElementById('cal-week-header');
-        const timelineEl = document.getElementById('cal-week-timeline');
-        if (!headerEl || !timelineEl) return;
-
-        const days = [];
-        for (let i = 0; i < 7; i++) {
-            days.push(new Date(_calWeekStart.getTime() + i * 86400000));
-        }
-
-        const DAY_NAMES = ['월','화','수','목','금','토','일'];
-        const todayStr  = _dateStr(new Date());
-
-        // 헤더
-        headerEl.innerHTML = '<div style="font-size:11px;color:#8B95A1;padding:4px;text-align:center;">시간</div>';
-        days.forEach((d, i) => {
-            const ds     = _dateStr(d);
-            const isToday = ds === todayStr;
-            const isSun  = d.getDay() === 0;
-            const isSat  = d.getDay() === 6;
-            headerEl.innerHTML += `
-            <div style="text-align:center; font-size:12px; font-weight:700; padding:6px 2px;
-                 color:${isToday?'#2563EB':isSun?'#EF4444':isSat?'#2563EB':'#64748B'};
-                 background:${isToday?'#EFF6FF':'transparent'}; border-radius:8px; cursor:pointer;"
-                 onclick="_selectDate('${ds}')">
-                ${DAY_NAMES[i]}<br><span style="font-size:14px; font-weight:800;">${d.getDate()}</span>
-            </div>`;
-        });
-
-        // 이벤트 미리 로드
-        const eventsByDay = {};
-        for (const d of days) {
-            const ds = _dateStr(d);
-            const evs = await loadEvents(ds);
-            eventsByDay[ds] = evs;
-        }
-
-        // 타임라인 (0~23시)
-        let html = '<div style="display:grid; grid-template-columns:48px repeat(7,1fr); position:relative;">';
-        for (let h = 0; h < 24; h++) {
-            html += `<div style="font-size:10px; color:#94A3B8; padding:2px 4px; height:44px; border-top:1px solid #F1F5F9; display:flex; align-items:flex-start;">${String(h).padStart(2,'0')}:00</div>`;
-            days.forEach(d => {
-                const ds  = _dateStr(d);
-                const evs = (eventsByDay[ds] || []).filter(e => {
-                    const user = window._currentUser;
-                    return isAdmin() || (user && e.uid === user.uid) || e.isNotice;
-                });
-                // 시간 정보가 없는 이벤트는 h===8(오전 8시 슬롯)에 표시
-                const slotEvs = evs.filter(e => {
-                    if (e.hour !== undefined) return e.hour === h;
-                    return h === 8;
-                });
-                html += `<div style="height:44px; border-top:1px solid #F1F5F9; padding:1px 2px; cursor:pointer;" onclick="_selectDate('${ds}')">`;
-                slotEvs.forEach(e => {
-                    const color = isAdmin() ? getUserColor(e.uid || 'x') : '#2563EB';
-                    html += `<div onclick="event.stopPropagation(); _openDetailModal('${ds}','${e.id}')"
-                        style="font-size:10px; font-weight:700; color:white; background:${color};
-                               border-radius:4px; padding:2px 4px; margin-bottom:1px; overflow:hidden;
-                               white-space:nowrap; text-overflow:ellipsis; cursor:pointer;">
-                        ${e.isNotice ? '📢' : ''}${e.title}
-                    </div>`;
-                });
-                html += '</div>';
-            });
-        }
-        html += '</div>';
-        timelineEl.innerHTML = html;
+    // ──────────────────────────────────────────────────────
+    //  [4] 권한 필터링 — 요청사항의 핵심 로직
+    //      - 일반 사용자: 본인 일정(uid 일치) + isGlobal===true(공지)만 통과
+    //      - 관리자: 전부 통과 (전 직원 모아보기)
+    // ──────────────────────────────────────────────────────
+    function filterEventsForCurrentUser(allDocs) {
+        if (_calIsAdmin) return allDocs;
+        return allDocs.filter(e =>
+            (_calCurrentUser && e.uid === _calCurrentUser.uid) || e.isGlobal === true
+        );
     }
 
-    // ── 날짜 선택 ──
-    async function _selectDate(dateStr) {
-        _calSelectedDate = dateStr;
-        await window.calendarRender();
-
-        const [y, m, d] = dateStr.split('-');
-        const infoEl  = document.getElementById('cal-selected-info');
-        const labelEl = document.getElementById('cal-selected-date-label');
-        const listEl  = document.getElementById('cal-event-list');
-        if (!infoEl || !labelEl || !listEl) return;
-
-        labelEl.textContent = `📅 ${y}년 ${parseInt(m)}월 ${parseInt(d)}일 일정`;
-        infoEl.style.display = '';
-
-        await _renderEventList(dateStr, listEl);
-    }
-    // 외부에서도 접근 가능하도록
-    window._selectDate = _selectDate;
-
-    async function _renderEventList(dateStr, listEl) {
-        listEl.innerHTML = '<div style="color:#8B95A1;font-size:13px;">불러오는 중...</div>';
-        const events = await loadEvents(dateStr);
-        const user   = window._currentUser;
-        const admin  = isAdmin();
-
-        if (!events.length) {
-            listEl.innerHTML = '<div style="color:#8B95A1; font-size:13px; padding:10px 0;">등록된 일정이 없습니다.</div>';
+    // ──────────────────────────────────────────────────────
+    //  [5] Firestore 실시간 구독 (onSnapshot)
+    //      관리자는 전 직원 동선이 실시간으로 갱신되어야 하므로
+    //      1회성 getDocs가 아닌 onSnapshot 실시간 리스너를 사용한다.
+    // ──────────────────────────────────────────────────────
+    async function subscribeCalendarEvents() {
+        if (!window.__firestoreDb) {
+            console.error('[캘린더] Firestore(window.__firestoreDb)가 초기화되지 않았습니다.');
             return;
         }
+        const { collection, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js');
 
-        const visible = events.filter(e =>
-            admin || (user && e.uid === user.uid) || e.isNotice === true
+        // 이전 구독이 남아있으면 해제 (탭 재방문 시 리스너 중복 누적 방지)
+        if (_calUnsub) { _calUnsub(); _calUnsub = null; }
+
+        _calUnsub = onSnapshot(
+            collection(window.__firestoreDb, 'calendarEvents'),
+            (snap) => {
+                const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const visible = filterEventsForCurrentUser(all);
+
+                if (_fc) {
+                    _fc.removeAllEvents();
+                    visible.forEach(e => _fc.addEvent(toFcEvent(e)));
+                }
+                if (_calIsAdmin) _renderAdminAllList(visible);
+            },
+            (err) => {
+                console.error('[캘린더] 실시간 동기화 오류:', err);
+            }
         );
-
-        listEl.innerHTML = visible.map(e => {
-            const isOwner  = user && e.uid === user.uid;
-            const color    = admin && e.uid ? getUserColor(e.uid) : '#2563EB';
-            const noticeTag = e.isNotice ? '<span style="background:#FEF3C7;color:#D97706;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-right:6px;">공지</span>' : '';
-            const adminTag  = admin && e.userName ? `<span style="font-size:10px;color:${color};margin-right:4px;font-weight:700;">[${e.userName}]</span>` : '';
-
-            return `
-            <div style="display:flex; align-items:center; justify-content:space-between;
-                        padding:10px 12px; background:#F8FAFC; border-radius:10px;
-                        border-left:3px solid ${color}; cursor:pointer;"
-                 onclick="_openDetailModal('${dateStr}','${e.id}')">
-                <div style="flex:1; min-width:0;">
-                    <div style="font-size:13px;">${noticeTag}${adminTag}<span style="font-size:14px; color:#191F28;">${e.title}</span></div>
-                </div>
-                ${(isOwner || admin) ? `
-                <button onclick="event.stopPropagation(); window.calendarDeleteEvent('${dateStr}','${e.id}')"
-                    style="background:none;border:none;color:#CBD5E1;font-size:18px;cursor:pointer;flex-shrink:0;padding:0 4px;">&times;</button>
-                ` : ''}
-            </div>`;
-        }).join('');
     }
 
-    // ── 일정 상세 팝업 ──
-    window._openDetailModal = async function(dateStr, eventId) {
-        const events = await loadEvents(dateStr);
-        const e = events.find(x => x.id === eventId);
-        if (!e) return;
-
-        const [y, m, d] = dateStr.split('-');
-        document.getElementById('cal-modal-date').textContent  = `${y}년 ${parseInt(m)}월 ${parseInt(d)}일`;
-        document.getElementById('cal-modal-title').textContent = (e.isNotice ? '📢 ' : '') + e.title;
-        document.getElementById('cal-modal-body').innerHTML = [
-            e.userName ? `<b>등록자:</b> ${e.userName}` : '',
-            e.isNotice ? '<b style="color:#D97706;">공지 일정</b>' : '',
-            e.detail   ? `<br>${e.detail}` : ''
-        ].filter(Boolean).join('<br>') || '상세 내용 없음';
-
-        document.getElementById('cal-detail-modal').style.display = 'flex';
-    };
-
-    // ── 일정 등록 ──
-    window.calendarAddEvent = async function() {
-        if (!_calSelectedDate) return;
-        const input = document.getElementById('cal-new-event-input');
-        const title = (input.value || '').trim();
-        if (!title) { input.focus(); return; }
-
-        const user = window._currentUser;
-        await saveEvent(_calSelectedDate, {
-            uid:      user ? user.uid   : 'anonymous',
-            userName: user ? (user.displayName || user.email || '사용자') : '익명',
-            email:    user ? user.email : '',
-            title,
-            isNotice: isAdmin(),
-        });
-        input.value = '';
-
-        const listEl = document.getElementById('cal-event-list');
-        if (listEl) await _renderEventList(_calSelectedDate, listEl);
-        await window.calendarRender();
-        if (isAdmin()) await _renderAdminPanel();
-    };
-
-    // ── 일정 삭제 ──
-    window.calendarDeleteEvent = async function(dateStr, eventId) {
-        if (!confirm('이 일정을 삭제하시겠습니까?')) return;
-        await deleteEvent(dateStr, eventId);
-        const listEl = document.getElementById('cal-event-list');
-        if (listEl) await _renderEventList(dateStr, listEl);
-        await window.calendarRender();
-        if (isAdmin()) await _renderAdminPanel();
-    };
-
-    // ── 관리자: 팀 전체 월간 일정 패널 ──
-    async function _renderAdminPanel() {
+    // ──────────────────────────────────────────────────────
+    //  [6] 관리자 전용 — 팀 전체 일정 모아보기 리스트
+    // ──────────────────────────────────────────────────────
+    function _renderAdminAllList(visible) {
         const panel  = document.getElementById('cal-admin-all');
         const listEl = document.getElementById('cal-admin-list');
+        const badge  = document.getElementById('cal-admin-badge');
         if (!panel || !listEl) return;
         panel.style.display = '';
+        if (badge) badge.textContent = visible.length + '건';
 
-        const all = await loadMonthEvents(_calYear, _calMonth);
-        if (!all.length) {
-            listEl.innerHTML = '<div style="color:#8B95A1;font-size:13px;">이번 달 등록된 팀 일정이 없습니다.</div>';
+        if (!visible.length) {
+            listEl.innerHTML = '<div style="color:#8B95A1;font-size:13px;">등록된 일정이 없습니다.</div>';
             return;
         }
-        all.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
 
-        listEl.innerHTML = all.map(e => {
-            const [y, m, d] = e.dateStr.split('-');
-            const color = getUserColor(e.uid || e.email || 'x');
+        const sorted = [...visible].sort((a, b) => String(a.start).localeCompare(String(b.start)));
+        listEl.innerHTML = sorted.map(e => {
+            const d = new Date(e.start);
+            const color = e.isGlobal ? '#D97706' : colorForUser(e.uid);
+            const dateLabel = isNaN(d) ? '' : `${d.getMonth() + 1}/${d.getDate()}`;
             return `
             <div style="display:flex; align-items:center; gap:10px; padding:9px 12px;
-                        background:#F8FAFC; border-radius:10px; border-left:3px solid ${color};">
-                <div style="font-size:11px; font-weight:700; color:#64748B; white-space:nowrap;">${parseInt(m)}/${parseInt(d)}</div>
+                        background:#F8FAFC; border-radius:10px; border-left:3px solid ${color}; cursor:pointer;"
+                 onclick="window.calOpenModalById('${e.id}')">
+                <div style="font-size:11px; font-weight:700; color:#64748B; white-space:nowrap;">${dateLabel}</div>
                 <div style="font-size:13px; font-weight:700; color:${color}; flex-shrink:0;">${e.userName || e.email || '?'}</div>
                 <div style="font-size:13px; color:#191F28; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                    ${e.isNotice ? '📢 ' : ''}${e.title}
+                    ${e.isGlobal ? '📢 ' : ''}${e.title}
                 </div>
             </div>`;
         }).join('');
+    }
+
+    // ──────────────────────────────────────────────────────
+    //  [7] 라벨 포맷 (월간: "2026년 6월" / 주간: "6/15 ~ 6/21")
+    // ──────────────────────────────────────────────────────
+    function _updateLabel() {
+        const labelEl = document.getElementById('cal-year-month');
+        if (!labelEl || !_fc) return;
+        const view = _fc.view;
+        if (view.type === 'dayGridMonth') {
+            const d = view.currentStart;
+            labelEl.textContent = `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
+        } else {
+            const start = view.currentStart;
+            const end   = new Date(view.currentEnd.getTime() - 86400000);
+            labelEl.textContent = `${start.getMonth() + 1}/${start.getDate()} ~ ${end.getMonth() + 1}/${end.getDate()}`;
+        }
+    }
+
+    // ──────────────────────────────────────────────────────
+    //  [8] 캘린더 최초 초기화 — 탭을 처음 열 때 1회만 실행
+    // ──────────────────────────────────────────────────────
+    window.initGaonCalendar = async function() {
+        const mountEl = document.getElementById('calendarRoot');
+        if (!mountEl) return;
+
+        if (!window.FullCalendar) {
+            console.error('[캘린더] FullCalendar 라이브러리가 로드되지 않았습니다.');
+            mountEl.innerHTML = '<div style="padding:30px;text-align:center;color:#EF4444;">캘린더 라이브러리 로드에 실패했습니다. 새로고침 해주세요.</div>';
+            return;
+        }
+
+        // 권한 판별
+        const { user, isAdmin } = await resolveUserAndAdmin();
+        _calCurrentUser = user;
+        _calIsAdmin = isAdmin;
+
+        const adminBanner = document.getElementById('cal-admin-banner');
+        if (adminBanner) adminBanner.style.display = isAdmin ? '' : 'none';
+        const globalWrap = document.getElementById('calAddGlobalWrap');
+        if (globalWrap) globalWrap.style.display = isAdmin ? '' : 'none';
+
+        if (_fcInitialized && _fc) {
+            // 이미 만들어진 인스턴스가 있으면 크기만 재계산 (탭 전환 시 폭이 0이었을 수 있음)
+            _fc.updateSize();
+            _updateLabel();
+            await subscribeCalendarEvents();
+            return;
+        }
+
+        _fc = new FullCalendar.Calendar(mountEl, {
+            locale: 'ko',
+            firstDay: 0,                       // 일요일 시작
+            initialView: 'dayGridMonth',
+            headerToolbar: false,               // 자체 컨트롤 바 사용 (calSetView/calPrev/calNext/calGoToday)
+            height: 'auto',
+            dayMaxEventRows: 3,
+            navLinks: false,
+            nowIndicator: true,
+
+            // ── 월간/주간 보기별 개별 설정 ──
+            views: {
+                dayGridMonth: {
+                    displayEventTime: false     // 월간에서는 시간 숨기고 제목/등록자만 표시
+                },
+                timeGridWeek: {
+                    slotMinTime: '00:00:00',
+                    slotMaxTime: '24:00:00',     // 24시간 풀 타임라인
+                    slotDuration: '01:00:00',
+                    slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+                    displayEventTime: true,
+                    allDaySlot: true
+                }
+            },
+
+            // ── 일정 블록 커스텀 렌더 (제목 + 등록자명/공지뱃지) ──
+            eventContent: function(arg) {
+                const ep = arg.event.extendedProps || {};
+                const wrap = document.createElement('div');
+                wrap.style.overflow = 'hidden';
+                wrap.style.whiteSpace = 'nowrap';
+                wrap.style.textOverflow = 'ellipsis';
+                wrap.style.fontSize = '11px';
+                wrap.style.fontWeight = '700';
+                wrap.style.padding = '1px 2px';
+
+                const notice = ep.isGlobal ? '📢 ' : '';
+                const ownerTag = (_calIsAdmin && ep.userName)
+                    ? ` <span style="opacity:.75;font-weight:500;">· ${ep.userName}</span>`
+                    : '';
+                wrap.innerHTML = notice + arg.event.title + ownerTag;
+                return { domNodes: [wrap] };
+            },
+
+            datesSet: function() {
+                _updateLabel();
+            },
+
+            eventClick: function(info) {
+                openDetailModal(info.event);
+            },
+
+            dateClick: function(info) {
+                window.calOpenCreateModal(info.dateStr);
+            }
+        });
+
+        _fc.render();
+        _fcInitialized = true;
+        _updateLabel();
+
+        await subscribeCalendarEvents();
+    };
+
+    // ──────────────────────────────────────────────────────
+    //  [9] 뷰 전환 / 네비게이션 — FullCalendar 내장 함수 바인딩
+    // ──────────────────────────────────────────────────────
+    window.calSetView = function(mode) {
+        if (!_fc) return;
+        _fc.changeView(mode === 'week' ? 'timeGridWeek' : 'dayGridMonth');
+        document.getElementById('cal-view-month').classList.toggle('active', mode === 'month');
+        document.getElementById('cal-view-week').classList.toggle('active', mode === 'week');
+    };
+    window.calPrev     = function() { if (_fc) _fc.prev(); };
+    window.calNext     = function() { if (_fc) _fc.next(); };
+    window.calGoToday  = function() { if (_fc) _fc.today(); };
+
+    // ──────────────────────────────────────────────────────
+    //  [10] 상세 보기 모달 (eventClick)
+    // ──────────────────────────────────────────────────────
+    function openDetailModal(event) {
+        const ep = event.extendedProps || {};
+        const start = event.start;
+        const dateLabel = start
+            ? `${start.getFullYear()}년 ${start.getMonth() + 1}월 ${start.getDate()}일`
+            : '';
+        const timeLabel = event.allDay
+            ? '하루 종일'
+            : (start ? start.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-')
+              + (event.end ? ' ~ ' + event.end.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '');
+
+        document.getElementById('calModalDate').textContent  = dateLabel;
+        document.getElementById('calModalTitle').textContent = (ep.isGlobal ? '📢 ' : '') + event.title;
+        document.getElementById('calModalBody').innerHTML = `
+            <div style="margin-bottom:6px;"><b>시간:</b> ${timeLabel}</div>
+            <div style="margin-bottom:6px;"><b>등록자:</b> ${ep.userName || '-'}</div>
+            ${ep.place ? `<div style="margin-bottom:6px;"><b>장소:</b> ${ep.place}</div>` : ''}
+            ${ep.memo  ? `<div style="margin-bottom:6px;"><b>메모:</b> ${ep.memo}</div>`  : ''}
+            ${ep.isGlobal ? `<div style="color:#D97706; font-weight:700;">📢 전체 공지 일정</div>` : ''}
+        `;
+
+        const canDelete = _calIsAdmin || (_calCurrentUser && ep.uid === _calCurrentUser.uid);
+        const delBtn = document.getElementById('calModalDeleteBtn');
+        if (canDelete) {
+            delBtn.style.display = '';
+            delBtn.onclick = () => deleteEventById(event.id);
+        } else {
+            delBtn.style.display = 'none';
+        }
+
+        document.getElementById('calendarModal').style.display = 'flex';
+    }
+
+    window.calOpenModalById = function(id) {
+        if (!_fc) return;
+        const ev = _fc.getEventById(id);
+        if (ev) openDetailModal(ev);
+    };
+
+    window.calCloseModal = function() {
+        document.getElementById('calendarModal').style.display = 'none';
+    };
+
+    // ──────────────────────────────────────────────────────
+    //  [11] 일정 등록 모달
+    // ──────────────────────────────────────────────────────
+    window.calOpenCreateModal = function(dateStr) {
+        _calCreateDateStr = dateStr || new Date().toISOString().slice(0, 10);
+        document.getElementById('calAddDate').value  = _calCreateDateStr;
+        document.getElementById('calAddTitle').value = '';
+        document.getElementById('calAddTime').value  = '09:00';
+        document.getElementById('calAddPlace').value = '';
+        document.getElementById('calAddMemo').value  = '';
+        const gChk = document.getElementById('calAddGlobal');
+        if (gChk) gChk.checked = false;
+        document.getElementById('calendarAddModal').style.display = 'flex';
+    };
+
+    window.calCloseAddModal = function() {
+        document.getElementById('calendarAddModal').style.display = 'none';
+    };
+
+    window.calSubmitNewEvent = async function() {
+        if (!_calCurrentUser) { alert('로그인 정보를 확인할 수 없습니다.'); return; }
+
+        const dateStr = document.getElementById('calAddDate').value || _calCreateDateStr;
+        const title   = (document.getElementById('calAddTitle').value || '').trim();
+        const time    = document.getElementById('calAddTime').value || '09:00';
+        const place   = (document.getElementById('calAddPlace').value || '').trim();
+        const memo    = (document.getElementById('calAddMemo').value || '').trim();
+        const isGlobal = _calIsAdmin && document.getElementById('calAddGlobal') && document.getElementById('calAddGlobal').checked;
+
+        if (!title) { alert('일정 제목을 입력해주세요.'); return; }
+        if (!dateStr) { alert('날짜를 선택해주세요.'); return; }
+
+        try {
+            const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js');
+            await addDoc(collection(window.__firestoreDb, 'calendarEvents'), {
+                uid: _calCurrentUser.uid,
+                email: _calCurrentUser.email,
+                userName: window.currentUserDisplayName || _calCurrentUser.email,
+                title,
+                start: `${dateStr}T${time}:00`,
+                allDay: false,
+                place,
+                memo,
+                isGlobal: !!isGlobal,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            window.calCloseAddModal();
+        } catch (e) {
+            console.error('[캘린더] 일정 등록 실패:', e);
+            alert('일정 등록에 실패했습니다: ' + e.message);
+        }
+    };
+
+    // ──────────────────────────────────────────────────────
+    //  [12] 일정 삭제 (소유자 또는 관리자만 가능)
+    // ──────────────────────────────────────────────────────
+    async function deleteEventById(id) {
+        if (!confirm('이 일정을 삭제하시겠습니까?')) return;
+        try {
+            const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js');
+            await deleteDoc(doc(window.__firestoreDb, 'calendarEvents', id));
+            window.calCloseModal();
+        } catch (e) {
+            console.error('[캘린더] 일정 삭제 실패:', e);
+            alert('삭제에 실패했습니다: ' + e.message);
+        }
     }
 
 })();
@@ -861,8 +844,194 @@
 }
 .cal-nav-btn:active { background: #E2E8F0; }
 
-/* ── 캘린더 셀 hover ── */
-#cal-grid > div:hover { background: #EFF6FF !important; }
+/* ══════════════════════════════════════════
+   캘린더 컨트롤 바
+══════════════════════════════════════════ */
+.cal-control-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.cal-view-switch { display: flex; gap: 6px; }
+.cal-nav-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.cal-year-month-label {
+    font-size: 15px;
+    font-weight: 800;
+    color: #191F28;
+    min-width: 110px;
+    text-align: center;
+}
+.cal-today-btn {
+    padding: 7px 16px;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 20px;
+    background: white;
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    white-space: nowrap;
+}
+.cal-today-btn:hover { background: #F1F5F9; }
+.cal-today-btn-primary {
+    background: #2563EB;
+    color: white;
+    border-color: #2563EB;
+}
+.cal-today-btn-primary:hover { background: #1D4ED8; }
+
+.cal-admin-banner {
+    background: #FEF3C7;
+    color: #92400E;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 9px 14px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+}
+
+/* 카드 공통 컨테이너 */
+.cal-card {
+    background: white;
+    border-radius: 18px;
+    border: 1px solid #F2F4F6;
+    padding: 14px;
+}
+
+/* 관리자 전용 모아보기 패널 */
+.cal-admin-panel-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #191F28;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.cal-admin-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #2563EB;
+    background: #EFF6FF;
+    padding: 2px 9px;
+    border-radius: 20px;
+    margin-left: 4px;
+}
+.cal-admin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+/* ══════════════════════════════════════════
+   모달 (상세보기 / 일정등록 공용)
+══════════════════════════════════════════ */
+.cal-modal-backdrop {
+    position: fixed; inset: 0; background: rgba(15,23,42,0.55);
+    z-index: 2000; align-items: center; justify-content: center;
+    padding: 16px;
+}
+.cal-modal-card {
+    background: white;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 22px 20px 24px;
+}
+.cal-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.cal-modal-date-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #8B95A1;
+    margin-bottom: 4px;
+}
+.cal-modal-title-text {
+    font-size: 18px;
+    font-weight: 800;
+    color: #191F28;
+}
+.cal-modal-close-btn {
+    background: none; border: none; font-size: 22px; line-height: 1;
+    color: #8B95A1; cursor: pointer; padding: 0; flex-shrink: 0;
+}
+.cal-modal-body {
+    font-size: 14px;
+    color: #334155;
+    line-height: 1.6;
+}
+.cal-modal-actions { margin-top: 16px; }
+.cal-modal-delete-btn {
+    width: 100%;
+    background: #FEF2F2;
+    color: #DC2626;
+    border: 1px solid #FECACA;
+    border-radius: 12px;
+    padding: 11px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.cal-modal-delete-btn:hover { background: #FEE2E2; }
+
+/* 일정 등록 폼 */
+.cal-add-form { display: flex; flex-direction: column; gap: 14px; }
+.cal-add-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cal-add-global-wrap {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 700; color: #D97706;
+    background: #FFFBEB; padding: 9px 12px; border-radius: 10px; cursor: pointer;
+}
+
+/* ══════════════════════════════════════════
+   FullCalendar 테마 변수 — 앱 컬러(Toss Blue)에 맞춰 오버라이드
+══════════════════════════════════════════ */
+#calendarRoot {
+    --fc-border-color: #F1F5F9;
+    --fc-button-bg-color: #2563EB;
+    --fc-button-border-color: #2563EB;
+    --fc-button-hover-bg-color: #1D4ED8;
+    --fc-button-hover-border-color: #1D4ED8;
+    --fc-button-active-bg-color: #1D4ED8;
+    --fc-today-bg-color: #EFF6FF;
+    --fc-event-border-color: transparent;
+    --fc-page-bg-color: transparent;
+    font-family: 'Noto Sans KR', sans-serif;
+}
+#calendarRoot .fc-daygrid-day-number,
+#calendarRoot .fc-col-header-cell-cushion {
+    color: #191F28;
+    font-weight: 600;
+    text-decoration: none;
+}
+#calendarRoot .fc-event { cursor: pointer; border-radius: 6px; }
+#calendarRoot .fc-day-sun .fc-daygrid-day-number,
+#calendarRoot .fc-col-header-cell.fc-day-sun .fc-col-header-cell-cushion { color: #EF4444; }
+#calendarRoot .fc-day-sat .fc-daygrid-day-number,
+#calendarRoot .fc-col-header-cell.fc-day-sat .fc-col-header-cell-cushion { color: #2563EB; }
+
+/* ── 모바일: 컨트롤 바 줄바꿈 정리 ── */
+@media (max-width: 768px) {
+    .cal-control-bar { justify-content: center; }
+    .cal-nav-group { order: -1; width: 100%; justify-content: center; }
+    .cal-add-form-row { grid-template-columns: 1fr; }
+}
 
 /* ── 모바일: 2×2 탭 ── */
 @media (max-width: 768px) {
