@@ -147,7 +147,7 @@ const NewsWidget = (() => {
     });
   };
 
-  /// 3. 좌측 MORNING NEWS 지면 데이터 매핑
+  // 3. 좌측 MORNING NEWS 지면 데이터 매핑
   const renderMorningPaper = (topItem, fxList, mktList) => {
     const paperTitleEl = document.querySelector('.paper-body-text');
     const paperIndexEl = document.querySelector('.paper-top-index');
@@ -167,6 +167,7 @@ const NewsWidget = (() => {
             ${clean(topItem.description)}
         `;
     }
+    };
 
     // 신문 상단 미니 경제 지표 매칭
     if (paperIndexEl) {
