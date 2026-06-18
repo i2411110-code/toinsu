@@ -82,7 +82,6 @@
         #pwa-news-view { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .news-top-navbar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 16px 20px; border-radius: 16px; border: 1px solid #F2F4F6; }
         .weather-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
         .weather-strip::-webkit-scrollbar { display: none; }
         .weather-pill { background: #F8FAFC; border: 1px solid #F2F4F6; padding: 6px 14px; border-radius: 30px; font-size: 13px; font-weight: 500; white-space: nowrap; }
@@ -143,14 +142,14 @@
         
         .claim-tab-container { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; scrollbar-width: none; }
         .claim-tab-container::-webkit-scrollbar { display: none; }
-        .claim-tab-wrap { display: inline-flex; background: #E2E8F0; padding: 4px; border-radius: 12px; gap: 4px; min-width: 100%; }
-        .claim-tab-btn { flex: 1; text-align: center; padding: 12px 18px; border: none; background: transparent; border-radius: 10px; font-size: 14px; font-weight: 700; color: #64748B; cursor: pointer; transition: all 0.2s ease; }
-        .claim-tab-btn.active { background: white; color: #2563EB; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .claim-tab-wrap { display: inline-flex; background: #F2F4F6 !important; padding: 6px !important; border-radius: 16px !important; gap: 4px; min-width: 100%; }
+        .claim-tab-btn { flex: 1; text-align: center; padding: 12px 18px; border: none; background: transparent; border-radius: 12px !important; font-size: 14px; font-weight: 700; color: #4E5936 !important; cursor: pointer; transition: all 0.2s ease; }
+        .claim-tab-btn.active { background: white !important; color: #3182F6 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important; }
         
         .claim-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 10px; }
         @media (min-width: 768px) { .claim-grid { grid-template-columns: repeat(2, 1fr); } }
         
-        .claim-card { background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .claim-card { background: white; border: none !important; border-radius: 24px !important; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.04) !important; }
         .claim-card-title { font-size: 18px; font-weight: 800; color: #2563EB; margin-bottom: 18px; }
         .claim-list { display: flex; flex-direction: column; gap: 12px; }
         .claim-list-item { display: flex; gap: 10px; font-size: 14.5px; font-weight: 600; color: #334155; line-height: 1.5; }
@@ -176,11 +175,6 @@
             border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;
         }
         .toss-hero-home-btn:hover { background: rgba(255, 255, 255, 0.3); }
-
-        .claim-tab-wrap { background: #F2F4F6 !important; padding: 6px !important; border-radius: 16px !important; }
-        .claim-tab-btn { border-radius: 12px !important; color: #4E5936 !important; }
-        .claim-tab-btn.active { background: white !important; color: #3182F6 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important; }
-        .claim-card { border: none !important; border-radius: 24px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.04) !important; }
     </style>
 </head>
 <body>
@@ -253,14 +247,15 @@
         <div id="app-root"></div>
     </div>
 
-    <div class="toss-hero-header">
+    <div class="container" id="pwa-news-view">
+        <div class="toss-hero-header">
             <div class="toss-hero-top">
                 <div class="toss-hero-sub">포탈 스크랩<br>오늘의 실시간 뉴스</div>
                 <button class="toss-hero-home-btn" onclick="window.switchToMainView()">
                     <i class="bi bi-house-fill"></i> 메인화면
                 </button>
             </div>
-            <div class="toss-hero-main"><br>오늘도 좋은 하루 보내세요.</div>
+            <div class="toss-hero-main">심현진 팀장님,<br>오늘도 좋은 하루 보내세요.</div>
         </div>
 
         <div class="weather-strip" id="news-weather-strip-line">
@@ -322,6 +317,27 @@
         <div class="indicator-grid" id="news-bottom-market-grid">
             </div>
     </div>
+
+    <div class="container" id="pwa-claim-view">
+        <div class="toss-hero-header">
+            <div class="toss-hero-top">
+                <div class="toss-hero-sub">청구의 모든 것<br>보험금 청구 서류 안내 시스템</div>
+                <button class="toss-hero-home-btn" onclick="window.switchToMainView()">
+                    <i class="bi bi-house-fill"></i> 메인화면
+                </button>
+            </div>
+            <div class="toss-hero-main">심현진 팀장님,<br>어떤 서류가 필요하신가요?</div>
+        </div>
+
+        <div class="claim-tab-container">
+            <div class="claim-tab-wrap" id="claim-tab-wrap">
+                </div>
+        </div>
+
+        <div class="claim-grid" id="claim-content-grid">
+            </div>
+    </div>
+
 
     <div class="floating-contact-wrap" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
         <div class="pwa-menu-wrapper">
@@ -482,31 +498,12 @@
         </div>
     </div>
 
-    <div class="toss-hero-header">
-            <div class="toss-hero-top">
-                <div class="toss-hero-sub">청구의 모든 것<br>보험금 청구 서류 안내 시스템</div>
-                <button class="toss-hero-home-btn" onclick="window.switchToMainView()">
-                    <i class="bi bi-house-fill"></i> 메인화면
-                </button>
-            </div>
-            <div class="toss-hero-main"><br>어떤 서류가 필요하신가요?</div>
-        </div>
-
-        <div class="claim-tab-container">
-            <div class="claim-tab-wrap" id="claim-tab-wrap">
-                </div>
-        </div>
-
-        <div class="claim-grid" id="claim-content-grid">
-            </div>
-    </div>
-</div>
-
     <script src="js/news.js"></script>
     <script>
         // 1. 단독 컴포넌트식 화면 전환 로직 (토스 앱 레이아웃 규격)
         window.switchToNewsView = function() {
             document.getElementById('pwa-main-content-view').style.display = 'none';
+            document.getElementById('pwa-claim-view').style.display = 'none';
             document.getElementById('pwa-news-view').style.display = 'flex';
             if (typeof NewsWidget !== 'undefined') {
                 NewsWidget.init();
@@ -514,6 +511,7 @@
         };
         window.switchToMainView = function() {
             document.getElementById('pwa-news-view').style.display = 'none';
+            document.getElementById('pwa-claim-view').style.display = 'none';
             document.getElementById('pwa-main-content-view').style.display = 'block';
         };
 
@@ -616,20 +614,15 @@
     (function() {
         'use strict';
 
-        // ──────────────────────────────────────────────────────
-        //  [1] 상태 변수
-        // ──────────────────────────────────────────────────────
-        let _fc = null;                 // FullCalendar.Calendar 인스턴스
-        let _fcInitialized = false;      // 최초 init 여부 (탭 재클릭 시 재생성 방지)
-        let _calUnsub = null;            // Firestore onSnapshot 구독 해제 함수
-        let _calCurrentUser = null;      // 현재 로그인 사용자 (Firebase Auth User)
-        let _calIsAdmin = false;         // 관리자 판정 결과 캐시
-        let _calCreateDateStr = null;    // 등록 모달에서 선택된 날짜
+        let _fc = null;
+        let _fcInitialized = false;
+        let _calUnsub = null;
+        let _calCurrentUser = null;
+        let _calIsAdmin = false;
+        let _calCreateDateStr = null;
 
-        // 관리자 이메일 화이트리스트 (요청사항: 이메일 검증 1차 기준)
         const ADMIN_EMAILS = ['dlsqh814@naver.com'];
 
-        // 등록자별 색상 매핑 (관리자 모아보기 화면에서 사용)
         const USER_COLORS = [
             '#2563EB', '#7C3AED', '#DC2626', '#059669', '#D97706',
             '#0891B2', '#BE185D', '#4338CA', '#65A30D', '#EA580C'
@@ -642,9 +635,6 @@
             return _colorMap[key];
         }
 
-        // ──────────────────────────────────────────────────────
-        //  [2] 로그인 사용자 + 관리자 여부 판별
-        // ──────────────────────────────────────────────────────
         async function resolveUserAndAdmin() {
             const { getAuth } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js');
             const user = window._currentUser || getAuth().currentUser;
@@ -664,9 +654,6 @@
             return { user, isAdmin: admin };
         }
 
-        // ──────────────────────────────────────────────────────
-        //  [3] Firestore 일정 데이터 ↔ FullCalendar 이벤트 객체 변환
-        // ──────────────────────────────────────────────────────
         function toFcEvent(e) {
             const isOwn = _calCurrentUser && e.uid === _calCurrentUser.uid;
             let color;
@@ -690,9 +677,6 @@
             };
         }
 
-        // ──────────────────────────────────────────────────────
-        //  [4] 권한 필터링 — 요청사항 핵심 로직 완벽 연동
-        // ──────────────────────────────────────────────────────
         function filterEventsForCurrentUser(allDocs) {
             if (_calIsAdmin) return allDocs;
             return allDocs.filter(e =>
@@ -700,9 +684,6 @@
             );
         }
 
-        // ──────────────────────────────────────────────────────
-        //  [5] Firestore 실시간 구독 (onSnapshot)
-        // ──────────────────────────────────────────────────────
         async function subscribeCalendarEvents() {
             if (!window.__firestoreDb) {
                 console.error('[캘린더] Firestore(window.__firestoreDb)가 초기화되지 않았습니다.');
@@ -730,9 +711,6 @@
             );
         }
 
-        // ──────────────────────────────────────────────────────
-        //  [6] 관리자 전용 — 팀 전체 일정 모아보기 리스트
-        // ──────────────────────────────────────────────────────
         function _renderAdminAllList(visible) {
             const panel  = document.getElementById('cal-admin-all');
             const listEl = document.getElementById('cal-admin-list');
@@ -764,9 +742,6 @@
             }).join('');
         }
 
-        // ──────────────────────────────────────────────────────
-        //  [7] 라벨 포맷 (월간/주간 뷰 네비게이션 연동)
-        // ──────────────────────────────────────────────────────
         function _updateLabel() {
             const labelEl = document.getElementById('cal-year-month');
             if (!labelEl || !_fc) return;
@@ -781,9 +756,6 @@
             }
         }
 
-        // ──────────────────────────────────────────────────────
-        //  [8] 캘린더 최초 초기화
-        // ──────────────────────────────────────────────────────
         window.initGaonCalendar = async function() {
             const mountEl = document.getElementById('calendarRoot');
             if (!mountEl) return;
@@ -861,9 +833,6 @@
             await subscribeCalendarEvents();
         };
 
-        // ──────────────────────────────────────────────────────
-        //  [9] 뷰 전환 / 네비게이션 함수 바인딩
-        // ──────────────────────────────────────────────────────
         window.calSetView = function(mode) {
             if (!_fc) return;
             _fc.changeView(mode === 'week' ? 'timeGridWeek' : 'dayGridMonth');
@@ -874,9 +843,6 @@
         window.calNext     = function() { if (_fc) _fc.next(); };
         window.calGoToday  = function() { if (_fc) _fc.today(); };
 
-        // ──────────────────────────────────────────────────────
-        //  [10] 상세 보기 및 삭제 모달
-        // ──────────────────────────────────────────────────────
         function openDetailModal(event) {
             const ep = event.extendedProps || {};
             const start = event.start;
@@ -916,9 +882,6 @@
 
         window.calCloseModal = function() { document.getElementById('calendarModal').style.display = 'none'; };
 
-        // ──────────────────────────────────────────────────────
-        //  [11] 일정 등록 (파이어베이스 연동)
-        // ──────────────────────────────────────────────────────
         window.calOpenCreateModal = function(dateStr) {
             _calCreateDateStr = dateStr || new Date().toISOString().slice(0, 10);
             document.getElementById('calAddDate').value  = _calCreateDateStr;
