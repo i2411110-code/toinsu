@@ -99,7 +99,7 @@ const NewsWidget = (() => {
     `).join('');
   };
 
-  // 2. 우측 최신 속보 타일형 피드 연동
+  // 2. 우측 최신 속보 타일형 피드 연동 (높이 스크롤 기능 추가 완료)
   const renderNewsFeed = (items) => {
     const el = document.querySelector('.feed-section');
     if (!el) return;
@@ -109,7 +109,7 @@ const NewsWidget = (() => {
       return;
     }
 
-    // 구조 정의 초기화 및 헤더 복구 (토스 히어로 스타일 적용 완료)
+    // 토스 히어로 스타일 및 스크롤 박스 시작
     let html = `
       <div class="toss-hero-header" style="padding: 24px; margin-bottom: 16px;">
         <div class="toss-hero-top">
@@ -119,7 +119,9 @@ const NewsWidget = (() => {
             </button>
         </div>
         <div class="toss-hero-main" style="font-size: 20px;">최신 속보 피드</div>
-      </div>`;
+      </div>
+      <div style="max-height: 480px; overflow-y: auto; padding-right: 6px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: thin;">
+    `;
 
     // 인덱스 1번부터 끝까지는 피드 카드로 배치합니다.
     const feedItems = items.slice(1, 6);
@@ -135,6 +137,8 @@ const NewsWidget = (() => {
         </div>`;
     });
 
+    html += `</div>`; // 스크롤 박스 닫기
+
     el.innerHTML = html;
 
     // 실시간 리프레시 이벤트 핸들러 주입
@@ -143,7 +147,7 @@ const NewsWidget = (() => {
     });
   };
 
-  // 3. 좌측 MORNING NEWS 지면 데이터 매핑 (날짜 연동 및 꼬임 해결 완료)
+  // 3. 좌측 MORNING NEWS 지면 데이터 매핑
   const renderMorningPaper = (topItem, fxList, mktList) => {
     const paperTitleEl = document.querySelector('.paper-body-text');
     const paperIndexEl = document.querySelector('.paper-top-index');
@@ -155,7 +159,7 @@ const NewsWidget = (() => {
         paperDateEl.textContent = today.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
     }
 
-    // 메인 헤드라인 텍스트 배치 (여백 채우기 및 원문 버튼 추가)
+    // 메인 헤드라인 텍스트 배치
     if (paperTitleEl && topItem) {
         paperTitleEl.innerHTML = `
             <strong style="font-size: 18px; line-height: 1.4;">"${clean(topItem.title)}"</strong>
