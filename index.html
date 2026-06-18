@@ -357,9 +357,9 @@
          인증 오버레이
     ================================================================ -->
     <div id="auth-overlay">
-        <div class="auth-box">
-            <i class="bi bi-grid-1x2-fill" style="font-size:40px; color:var(--main-blue);"></i>
-            <h2 id="auth-title" style="font-size:22px; font-weight:700; margin:15px 0 25px 0;">보험가온포탈 로그인</h2>
+    <div class="auth-box">
+        <img src="icons/my-logo.png" alt="보험가온포탈 로고" style="height: 50px; margin-bottom: 15px;">
+        <h2 id="auth-title" style="font-size:22px; font-weight:700; margin:15px 0 25px 0;">보험가온포탈 로그인</h2>
             <div class="auth-tab">
                 <button id="tab-login-btn" class="active" onclick="window.toggleAuthTab('login')">로그인</button>
                 <button id="tab-register-btn" onclick="window.toggleAuthTab('register')">회원가입</button>
@@ -389,9 +389,9 @@
          PC 네비게이션
     ================================================================ -->
     <div class="navbar navbar-pc">
-        <div class="nav-logo" style="cursor: pointer;" onclick="window.switchToMainView()">
-            <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue)"></i> <b>보험<span>가온</span>포탈</b>
-        </div>
+    <div class="nav-logo" style="cursor: pointer; display: flex; align-items: center; gap: 8px;" onclick="window.switchToMainView()">
+        <img src="icons/my-logo.png" alt="로고" style="height: 24px;"> <b>보험<span>가온</span>포탈</b>
+    </div>
         <div class="nav-right">
             <div class="user-badge user-pill"><i class="bi bi-person-badge-fill"></i> <span id="user-display-email">인증 확인 중...</span></div>
             <button class="logout-btn" onclick="window.handleLogout()"><i class="bi bi-box-arrow-right"></i> 로그아웃</button>
@@ -404,10 +404,10 @@
          모바일 네비게이션
     ================================================================ -->
     <div class="navbar navbar-mobile">
-        <div class="nav-logo" style="font-size:15px; cursor: pointer;" onclick="window.switchToMainView()">
-            <i class="bi bi-grid-1x2-fill" style="color:var(--main-blue); font-size:14px;"></i>
-            <b>보험<span>가온</span>포탈</b>
-        </div>
+    <div class="nav-logo" style="font-size:15px; cursor: pointer; display: flex; align-items: center; gap: 6px;" onclick="window.switchToMainView()">
+        <img src="icons/my-logo.png" alt="로고" style="height: 20px;">
+        <b>보험<span>가온</span>포탈</b>
+    </div>
         <div style="display:flex; align-items:center; gap:8px;">
             <span style="font-size:11px; color:var(--text-muted);" id="user-display-email-mobile">확인 중...</span>
             <div id="pwa-toggle-wrap" class="pwa-toggle-container">
