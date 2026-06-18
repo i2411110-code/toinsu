@@ -155,6 +155,32 @@
         .claim-list { display: flex; flex-direction: column; gap: 12px; }
         .claim-list-item { display: flex; gap: 10px; font-size: 14.5px; font-weight: 600; color: #334155; line-height: 1.5; }
         .claim-list-num { color: #2563EB; font-weight: 800; flex-shrink: 0; }
+        
+        /* ── ✅ 토스 히어로 배너 & 카드 스타일 ── */
+        .toss-hero-header {
+            background: #3182F6;
+            border-radius: 24px;
+            padding: 30px 24px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            box-shadow: 0 10px 30px rgba(49, 130, 246, 0.2);
+            margin-bottom: 20px;
+        }
+        .toss-hero-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .toss-hero-sub { font-size: 13px; font-weight: 600; opacity: 0.9; line-height: 1.5; }
+        .toss-hero-main { font-size: 24px; font-weight: 800; line-height: 1.4; letter-spacing: -0.5px; }
+        .toss-hero-home-btn {
+            background: rgba(255, 255, 255, 0.2); color: white; border: none; padding: 8px 16px;
+            border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;
+        }
+        .toss-hero-home-btn:hover { background: rgba(255, 255, 255, 0.3); }
+
+        .claim-tab-wrap { background: #F2F4F6 !important; padding: 6px !important; border-radius: 16px !important; }
+        .claim-tab-btn { border-radius: 12px !important; color: #4E5936 !important; }
+        .claim-tab-btn.active { background: white !important; color: #3182F6 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important; }
+        .claim-card { border: none !important; border-radius: 24px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.04) !important; }
     </style>
 </head>
 <body>
@@ -227,14 +253,14 @@
         <div id="app-root"></div>
     </div>
 
-    <div class="container" id="pwa-news-view">
-        <div class="news-top-navbar">
-            <div style="font-size:18px; font-weight:700; color:#191F28; display:flex; align-items:center; gap:6px;">
-                <i class="bi bi-newspaper" style="color:#3182F6;"></i> 오늘의 뉴스 <span>포탈 스크랩</span>
+    <div class="toss-hero-header">
+            <div class="toss-hero-top">
+                <div class="toss-hero-sub">포탈 스크랩<br>오늘의 실시간 뉴스</div>
+                <button class="toss-hero-home-btn" onclick="window.switchToMainView()">
+                    <i class="bi bi-house-fill"></i> 메인화면
+                </button>
             </div>
-            <button class="btn-refresh" style="background:#F2F4F6; border:none; color:#4E5936; font-weight:700;" onclick="window.switchToMainView()">
-                <i class="bi bi-arrow-left"></i> 대시보드로 돌아가기
-            </button>
+            <div class="toss-hero-main"><br>오늘도 좋은 하루 보내세요.</div>
         </div>
 
         <div class="weather-strip" id="news-weather-strip-line">
@@ -456,14 +482,14 @@
         </div>
     </div>
 
-    <div class="container" id="pwa-claim-view">
-        <div class="news-top-navbar">
-            <div style="font-size:18px; font-weight:700; color:#191F28; display:flex; align-items:center; gap:6px;">
-                <i class="bi bi-file-earmark-medical-fill" style="color:#2563EB;"></i> 청구 서류 안내
+    <div class="toss-hero-header">
+            <div class="toss-hero-top">
+                <div class="toss-hero-sub">청구의 모든 것<br>보험금 청구 서류 안내 시스템</div>
+                <button class="toss-hero-home-btn" onclick="window.switchToMainView()">
+                    <i class="bi bi-house-fill"></i> 메인화면
+                </button>
             </div>
-            <button class="btn-refresh" style="background:#F1F5F9; border:none; color:#475569; font-weight:700;" onclick="window.switchToMainView()">
-                <i class="bi bi-arrow-left"></i> 대시보드
-            </button>
+            <div class="toss-hero-main"><br>어떤 서류가 필요하신가요?</div>
         </div>
 
         <div class="claim-tab-container">
