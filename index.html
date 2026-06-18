@@ -160,20 +160,32 @@
         .p-idx-item .c.down { color: #3182F6; }
 
         /* ================================================================
-           ✅ MORNING NEWS 본문 — 기사 전체 노출 + 원문 버튼
+           ✅ MORNING NEWS 본문 — 복수 기사 전체 노출 + 원문 버튼
         ================================================================ */
         .paper-body-text {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            flex: 1;
+            justify-content: space-between;
+        }
+
+        .paper-article-item {
             font-size: 14px;
             line-height: 1.65;
             color: #333D4B;
             display: flex;
             flex-direction: column;
             gap: 12px;
-            flex: 1;
+            padding: 18px 0;
+        }
+        .paper-article-item:first-child { padding-top: 0; }
+        .paper-article-item:not(:last-child) {
+            border-bottom: 1px dashed #E2E8F0;
         }
 
         /* 헤드라인 제목 */
-        .paper-body-text strong {
+        .paper-article-item strong {
             font-size: 16px;
             font-weight: 800;
             color: #191F28;
@@ -266,6 +278,8 @@
         .news-feed-hero-refresh:hover { background: rgba(255,255,255,0.28); }
         .news-feed-hero-refresh .spin { animation: feed-spin 0.8s linear infinite; }
         @keyframes feed-spin { to { transform: rotate(360deg); } }
+        @keyframes ind-spin { to { transform: rotate(360deg); } }
+        .spin { animation: ind-spin 0.7s linear infinite; }
 
         .feed-cards-wrap {
             display: flex;
@@ -473,19 +487,32 @@
                     <div class="paper-date" id="paper-live-date">날짜 불러오는 중...</div>
                 </div>
 
+                <!-- 실시간 환율·지수 헤더 + 새로고침 -->
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                    <div style="font-size:12px; font-weight:800; color:#191F28; display:flex; align-items:center; gap:5px;">
+                        <i class="bi bi-graph-up-arrow" style="color:#2563EB;"></i> 실시간 환율 · 지수
+                    </div>
+                    <button id="paper-index-refresh-btn"
+                        style="background:#EFF6FF; color:#2563EB; border:none; padding:6px 12px; border-radius:18px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px; font-family:inherit;">
+                        <i class="bi bi-arrow-clockwise"></i> 새로고침
+                    </button>
+                </div>
+
                 <!-- 미니 경제지표 바 -->
                 <div class="paper-top-index" id="paper-mini-index-box">
                     <!-- news.js 에서 동적 주입 -->
                 </div>
 
-                <!-- 기사 헤드라인 + 본문 전체 + 원문 버튼 -->
+                <!-- 기사 리스트 (전체 칸을 채우는 복수 기사 표시) -->
                 <div class="paper-body-text" id="paper-main-headline-body">
-                    <strong>헤드라인 분석 중...</strong>
-                    <span class="paper-meta">
-                        <i class="bi bi-clock" style="font-size:10px;"></i>
-                        실시간 뉴스를 불러오고 있습니다.
-                    </span>
-                    <p class="paper-content">잠시만 기다려 주세요.</p>
+                    <div class="paper-article-item">
+                        <strong>헤드라인 분석 중...</strong>
+                        <span class="paper-meta">
+                            <i class="bi bi-clock" style="font-size:10px;"></i>
+                            실시간 뉴스를 불러오고 있습니다.
+                        </span>
+                        <p class="paper-content">잠시만 기다려 주세요.</p>
+                    </div>
                 </div>
             </div>
 
