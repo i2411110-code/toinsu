@@ -200,37 +200,52 @@ const NewsWidget = (() => {
     }
   };
 
-  // 4. 하단 환율 및 종합 지표 종합판 매핑
+  // 4. 하단 시장 지표 종합판 (데이터 연동 및 클릭 링크 완벽 적용)
   const renderBottomIndicators = (fxList, mktList) => {
     const el = document.querySelector('.indicator-grid');
     if (!el) return;
 
-    const usd = fxList.find(i => i.label === 'USD') || { value: 1512.40, change: 1.40, direction: 'up' };
-    const jpy = fxList.find(i => i.label === 'JPY') || { value: 943.63, change: 1.78, direction: 'up' };
-    const kospi = mktList.find(i => i.label === '코스피') || { value: 8864.24, change: 137.84, direction: 'up' };
-    const gold = mktList.find(i => i.label === '국내 금 (원/g)') || { value: 209700, change: 80, direction: 'up' };
+    // 데이터가 안 올 경우를 대비한 비상 데이터
+    const fallbackFx = [{label: 'USD', value: 1385.50, change: 0, direction: 'up'}, {label: 'JPY', value: 890.30, change: 0, direction: 'down'}];
+    const fallbackMkt = [{label: '코스피', value: 2750.45, change: 0, direction: 'up'}, {label: '국내 금 (원/g)', value: 105400, change: 0, direction: 'up'}];
+    
+    const fx = fxList.length > 0 ? fxList : fallbackFx;
+    const mkt = mktList.length > 0 ? mktList : fallbackMkt;
+
+    const usd = fx.find(i => i.label === 'USD') || fallbackFx[0];
+    const jpy = fx.find(i => i.label === 'JPY') || fallbackFx[1];
+    const kospi = mkt.find(i => i.label === '코스피') || fallbackMkt[0];
+    const gold = mkt.find(i => i.label === '국내 금 (원/g)') || fallbackMkt[1];
 
     el.innerHTML = `
-        <div class="ind-card">
-            <div class="lbl">USD / KRW (원/달러 환율)</div>
-            <div class="price">${Number(usd.value).toFixed(2)}</div>
-            <div class="state ${usd.direction}"><i class="bi bi-caret-${usd.direction}-fill"></i> ${Math.abs(usd.change).toFixed(2)} (${usd.direction === 'up' ? '상승' : '하락'})</div>
-        </div>
-        <div class="ind-card">
-            <div class="lbl">JPY / KRW (100엔 환율)</div>
-            <div class="price">${Number(jpy.value).toFixed(2)}</div>
-            <div class="state ${jpy.direction}"><i class="bi bi-caret-${jpy.direction}-fill"></i> ${Math.abs(jpy.change).toFixed(2)} (${jpy.direction === 'up' ? '상승' : '하락'})</div>
-        </div>
-        <div class="ind-card">
-            <div class="lbl">KOSPI 종합지수</div>
-            <div class="price">${Number(kospi.value).toLocaleString('ko-KR', {maximumFractionDigits:2})}</div>
-            <div class="state ${kospi.direction}"><i class="bi bi-caret-${kospi.direction}-fill"></i> ${Math.abs(kospi.change).toFixed(2)} (${kospi.direction === 'up' ? '상승' : '하락'})</div>
-        </div>
-        <div class="ind-card">
-            <div class="lbl">국내 금시세 (g당)</div>
-            <div class="price">${Number(gold.value).toLocaleString('ko-KR', {maximumFractionDigits:0})}</div>
-            <div class="state ${gold.direction}"><i class="bi bi-caret-${gold.direction}-fill"></i> ${Math.abs(gold.change).toLocaleString('ko-KR', {maximumFractionDigits:0})} (${gold.direction === 'up' ? '상승' : '하락'})</div>
-        </div>
+        <a href="https://m.stock.naver.com/marketindex/exchange/FX_USDKRW" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
+            <div class="ind-card">
+                <div class="lbl">USD / KRW (원/달러 환율)</div>
+                <div class="price">${usd.value.toLocaleString()}</div>
+                <div class="state ${usd.direction}">${usd.direction === 'up' ? '▲' : '▼'} ${Math.abs(usd.change).toFixed(2)}</div>
+            </div>
+        </a>
+        <a href="https://m.stock.naver.com/marketindex/exchange/FX_JPYKRW" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
+            <div class="ind-card">
+                <div class="lbl">JPY / KRW (100엔 환율)</div>
+                <div class="price">${jpy.value.toLocaleString()}</div>
+                <div class="state ${jpy.direction}">${jpy.direction === 'up' ? '▲' : '▼'} ${Math.abs(jpy.change).toFixed(2)}</div>
+            </div>
+        </a>
+        <a href="https://m.stock.naver.com/domestic/index/KOSPI/total" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
+            <div class="ind-card">
+                <div class="lbl">KOSPI 종합지수</div>
+                <div class="price">${kospi.value.toLocaleString()}</div>
+                <div class="state ${kospi.direction}">${kospi.direction === 'up' ? '▲' : '▼'} ${Math.abs(kospi.change).toFixed(2)}</div>
+            </div>
+        </a>
+        <a href="https://m.stock.naver.com/marketindex/metals/M04020000" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
+            <div class="ind-card">
+                <div class="lbl">국내 금시세 (g당)</div>
+                <div class="price">${gold.value.toLocaleString()}</div>
+                <div class="state ${gold.direction}">${gold.direction === 'up' ? '▲' : '▼'} ${Math.abs(gold.change).toLocaleString()}</div>
+            </div>
+        </a>
     `;
   };
 
