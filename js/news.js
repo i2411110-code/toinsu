@@ -113,11 +113,16 @@ const NewsWidget = (() => {
       return;
     }
 
-    // 구조 정의 초기화 및 헤더 복구
+    // 구조 정의 초기화 및 헤더 복구 (토스 히어로 스타일 적용)
     let html = `
-      <div class="section-header-title">
-        최신 속보 피드 
-        <button class="btn-refresh" id="nw-btn-refresh-live"><i class="bi bi-arrow-clockwise"></i> 실시간 새로고침</button>
+      <div class="toss-hero-header" style="padding: 24px; margin-bottom: 16px;">
+        <div class="toss-hero-top">
+            <div class="toss-hero-sub" style="color: rgba(255,255,255,0.9);">LIVE NEWS FEED</div>
+            <button class="toss-hero-home-btn" id="nw-btn-refresh-live">
+                <i class="bi bi-arrow-clockwise"></i> 실시간 새로고침
+            </button>
+        </div>
+        <div class="toss-hero-main" style="font-size: 20px;">최신 속보 피드</div>
       </div>`;
 
     // 인덱스 1번부터 끝까지는 피드 카드로 배치합니다.
