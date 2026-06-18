@@ -154,36 +154,10 @@
      JAVASCRIPT: 탭 전환 (2개)
 ══════════════════════════════════════════════════════ -->
 <script>
-(function() {
-    'use strict';
-
-    const TAB_MAP = {
-        'input': 'office-sub-input-view',
-        'list':  'office-sub-list-view',
-    };
-
-    window.switchPrivateTab = function(tab) {
-        // 모든 뷰 숨김
-        Object.values(TAB_MAP).forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = 'none';
-        });
-        // 모든 탭 버튼 비활성화
-        Object.keys(TAB_MAP).forEach(k => {
-            const btn = document.getElementById('btn-tab-' + k);
-            if (btn) btn.classList.remove('active');
-        });
-        // 선택된 탭만 활성화
-        const viewId = TAB_MAP[tab];
-        if (viewId) {
-            const view = document.getElementById(viewId);
-            if (view) view.style.display = '';
-        }
-        const activeBtn = document.getElementById('btn-tab-' + tab);
-        if (activeBtn) activeBtn.classList.add('active');
-    };
-
-})();
+// page-private.html 탭 버튼은 app.js의 window.switchPrivateDataTab 으로 처리됩니다.
+// onclick="window.switchPrivateTab('input')" / onclick="window.switchPrivateTab('list')"
+// → app.js 공용 라우터가 'input'/'list' 키를 감지해 switchPrivateDataTab() 으로 위임합니다.
+// 여기서 재정의하지 않으면 app.js의 통합 버전이 그대로 적용됩니다.
 </script>
 
 <style>

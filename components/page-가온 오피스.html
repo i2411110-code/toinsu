@@ -336,44 +336,9 @@
     'use strict';
 
     // ──────────────────────────────────────────────────────
-    //  [1] 상단 탭 4개 전환 (겹침 완전 차단)
+    //  [1] 상단 탭 4개 전환은 app.js의 window.switchGaonOfficeTab / window.switchPrivateTab 으로 처리.
+    //      이 파일에서 재정의하지 않아야 app.js의 통합 라우터가 정상 동작합니다.
     // ──────────────────────────────────────────────────────
-    const PTAB_PANELS = {
-        'db':  'dashboard-app',
-        'chk': 'checklist-app',
-        'rpt': 'report-app',
-        'cal': 'calendar-app',
-    };
-
-    window.switchPrivateTab = function(tab) {
-        // 모든 패널 숨김
-        Object.values(PTAB_PANELS).forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = 'none';
-        });
-        // 모든 탭 버튼 비활성화
-        Object.keys(PTAB_PANELS).forEach(k => {
-            const btn = document.getElementById('btn-ptab-' + k);
-            if (btn) btn.classList.remove('active');
-        });
-
-        // 선택 패널만 표시
-        const panelId = PTAB_PANELS[tab];
-        if (panelId) {
-            const panel = document.getElementById(panelId);
-            if (panel) {
-                // DB 스크립트만 grid, 나머지 block
-                panel.style.display = (tab === 'db') ? 'grid' : 'block';
-            }
-        }
-        const activeBtn = document.getElementById('btn-ptab-' + tab);
-        if (activeBtn) activeBtn.classList.add('active');
-
-        // 캘린더 탭 진입 시 렌더
-        if (tab === 'cal') {
-            setTimeout(() => window.calendarRender(), 50);
-        }
-    };
 
     // ──────────────────────────────────────────────────────
     //  [2] 캘린더 (주간/월간, Firestore + localStorage 폴백)

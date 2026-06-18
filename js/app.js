@@ -324,20 +324,10 @@ window.saveMemo = async function() {
     }
 }
 
+// switchOfficeSubTab → switchPrivateDataTab 위임 (page-private.html 수정 탭 버튼과 호환)
 window.switchOfficeSubTab = function(target) {
-    const btnInput = document.getElementById('btn-tab-input');
-    const btnList = document.getElementById('btn-tab-list');
-    const viewInput = document.getElementById('office-sub-input-view');
-    const viewList = document.getElementById('office-sub-list-view');
-    if(target === 'input') {
-        btnInput.classList.add('active'); btnList.classList.remove('active');
-        viewInput.style.display = 'block'; viewList.style.display = 'none';
-    } else {
-        btnInput.classList.remove('active'); btnList.classList.add('active');
-        viewInput.style.display = 'none'; viewList.style.display = 'block';
-        window.renderCombinedCrmList();
-    }
-}
+    window.switchPrivateDataTab(target);
+};
 
 window.runAiTextParser = function() {
     const rawText = document.getElementById('ai-raw-textarea').value;
@@ -652,51 +642,82 @@ window.unlockPrivate = function() {
     }
 };
 
-// 2. 내부 탭 (대시보드 vs 체크리스트 vs 보장분석 리포트) 전환
-// ✅ 수정: 인라인 style.display 직접 조작 대신 'is-active' 클래스로 상태를 제어한다.
-//    - style.css 쪽에 #dashboard-app/#checklist-app/#report-app 기본값이
-//      display:none 이고 .is-active 일 때만 보이도록 정의되어 있어,
-//      모바일 미디어쿼리(@media max-width:1024px 등)가 어떤 display값을
-//      강제로 줘도 비활성 탭은 :not(.is-active) { display:none !important; }
-//      규칙에 의해 항상 가려진다. (이전 버그: 인라인 display와 미디어쿼리가
-//      충돌해 모바일에서 모든 탭 콘텐츠가 동시에 노출되던 문제 해결)
-window.switchPrivateTab = function(target) {
-    // 1) 모든 버튼 활성화 상태 끄기
-    const btnDb = document.getElementById('btn-db-dash');
-    const btnChk = document.getElementById('btn-chk-list');
-    const btnRpt = document.getElementById('btn-rpt-gen');
-    if(btnDb) btnDb.classList.remove('active');
-    if(btnChk) btnChk.classList.remove('active');
-    if(btnRpt) btnRpt.classList.remove('active');
+// 2. 내부 탭 전환 — 페이지별 라우터
+// ─────────────────────────────────────────────────────────────────────────────
+// ▶ page-가온_오피스 → switchGaonOfficeTab(tab)  (btn-ptab-* / dashboard-app 등)
+// ▶ page-private     → switchPrivateDataTab(tab)  (btn-tab-input|list)
+// ▶ window.switchPrivateTab 은 두 함수를 모두 위임하는 공용 라우터로 유지
+//   (HTML 인라인 onclick 호출이 섞여있어 하나의 이름으로 통일)
+// ─────────────────────────────────────────────────────────────────────────────
 
-    // 2) 모든 화면의 활성 클래스 제거 + 과거 인라인 display 잔여값 완전 제거
-    //    (이전 버전 HTML/JS에서 남아있을 수 있는 style="display:..." 충돌 방지)
-    const appDb = document.getElementById('dashboard-app');
-    const appChk = document.getElementById('checklist-app');
-    const appRpt = document.getElementById('report-app');
-    [appDb, appChk, appRpt].forEach(panel => {
-        if(!panel) return;
-        panel.classList.remove('is-active');
-        panel.style.display = '';
+// ── 가온 오피스 전용: 4탭 전환 (db / chk / rpt / cal) ──
+window.switchGaonOfficeTab = function(tab) {
+    const PTAB_PANELS = {
+        'db':  'dashboard-app',
+        'chk': 'checklist-app',
+        'rpt': 'report-app',
+        'cal': 'calendar-app',
+    };
+    // 모든 패널 숨김
+    Object.values(PTAB_PANELS).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.display = 'none'; el.classList.remove('is-active'); }
     });
-
-    // 3) 누른 탭만 켜기
-    if(target === 'db') {
-        if(btnDb) btnDb.classList.add('active');
-        if(appDb) appDb.classList.add('is-active');
-    } else if(target === 'chk') {
-        if(btnChk) btnChk.classList.add('active');
-        if(appChk) appChk.classList.add('is-active');
-    } else if(target === 'rpt') {
-        if(btnRpt) btnRpt.classList.add('active');
-        if(appRpt) appRpt.classList.add('is-active');
-
-        // 리포트 UI 생성 함수 실행
-        if(window.initRptModule) {
-            window.initRptModule();
-        } else {
-            alert("경고: report.js 파일을 아직 읽어오지 못했습니다.");
+    // 모든 탭 버튼 비활성화
+    Object.keys(PTAB_PANELS).forEach(k => {
+        const btn = document.getElementById('btn-ptab-' + k);
+        if (btn) btn.classList.remove('active');
+    });
+    // 선택 패널만 표시
+    const panelId = PTAB_PANELS[tab];
+    if (panelId) {
+        const panel = document.getElementById(panelId);
+        if (panel) {
+            panel.style.display = (tab === 'db') ? 'grid' : 'block';
+            panel.classList.add('is-active');
         }
+    }
+    const activeBtn = document.getElementById('btn-ptab-' + tab);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    // 리포트 탭: 초기화 함수 호출
+    if (tab === 'rpt' && window.initRptModule) window.initRptModule();
+    // 캘린더 탭: 렌더
+    if (tab === 'cal' && window.calendarRender) setTimeout(() => window.calendarRender(), 50);
+};
+
+// ── 개인공간 전산실 전용: 2탭 전환 (input / list) ──
+window.switchPrivateDataTab = function(tab) {
+    const TAB_MAP = {
+        'input': 'office-sub-input-view',
+        'list':  'office-sub-list-view',
+    };
+    Object.values(TAB_MAP).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    Object.keys(TAB_MAP).forEach(k => {
+        const btn = document.getElementById('btn-tab-' + k);
+        if (btn) btn.classList.remove('active');
+    });
+    const viewId = TAB_MAP[tab];
+    if (viewId) {
+        const view = document.getElementById(viewId);
+        if (view) view.style.display = '';
+    }
+    const activeBtn = document.getElementById('btn-tab-' + tab);
+    if (activeBtn) activeBtn.classList.add('active');
+    if (tab === 'list') window.renderCombinedCrmList && window.renderCombinedCrmList();
+};
+
+// ── 공용 라우터: HTML onclick="window.switchPrivateTab(...)" 을 모두 처리 ──
+window.switchPrivateTab = function(target) {
+    // 가온 오피스 탭 키 (db/chk/rpt/cal)
+    if (['db', 'chk', 'rpt', 'cal'].includes(target)) {
+        window.switchGaonOfficeTab(target);
+    // 개인공간 탭 키 (input/list)
+    } else if (['input', 'list'].includes(target)) {
+        window.switchPrivateDataTab(target);
     }
 };
 
