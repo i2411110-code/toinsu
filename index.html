@@ -138,6 +138,23 @@
         .ind-card .price { font-size: 20px; font-weight: 700; color: #191F28; margin: 4px 0; }
         .ind-card .state { font-size: 12px; font-weight: 600; color: #FF4D52; }
         .ind-card .state.down { color: #3182F6; }
+
+        #pwa-claim-view { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease; }
+        
+        .claim-tab-container { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; scrollbar-width: none; }
+        .claim-tab-container::-webkit-scrollbar { display: none; }
+        .claim-tab-wrap { display: inline-flex; background: #E2E8F0; padding: 4px; border-radius: 12px; gap: 4px; min-width: 100%; }
+        .claim-tab-btn { flex: 1; text-align: center; padding: 12px 18px; border: none; background: transparent; border-radius: 10px; font-size: 14px; font-weight: 700; color: #64748B; cursor: pointer; transition: all 0.2s ease; }
+        .claim-tab-btn.active { background: white; color: #2563EB; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        
+        .claim-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 10px; }
+        @media (min-width: 768px) { .claim-grid { grid-template-columns: repeat(2, 1fr); } }
+        
+        .claim-card { background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .claim-card-title { font-size: 18px; font-weight: 800; color: #2563EB; margin-bottom: 18px; }
+        .claim-list { display: flex; flex-direction: column; gap: 12px; }
+        .claim-list-item { display: flex; gap: 10px; font-size: 14.5px; font-weight: 600; color: #334155; line-height: 1.5; }
+        .claim-list-num { color: #2563EB; font-weight: 800; flex-shrink: 0; }
     </style>
 </head>
 <body>
@@ -283,6 +300,9 @@
     <div class="floating-contact-wrap" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
         <div class="pwa-menu-wrapper">
             <div class="pwa-sub-menu">
+                <div class="float-btn-container" data-tooltip="청구 서류 안내">
+                    <button class="sub-float-btn" style="background:#8B5CF6!important; color:white!important;" onclick="window.switchToClaimView()"><i class="bi bi-file-earmark-medical"></i></button>
+                </div>
                 <div class="float-btn-container" data-tooltip="오늘의 뉴스">
                     <button class="sub-float-btn btn-news-open" onclick="window.switchToNewsView()"><i class="bi bi-newspaper"></i></button>
                 </div>
@@ -435,6 +455,26 @@
             </div>
         </div>
     </div>
+
+    <div class="container" id="pwa-claim-view">
+        <div class="news-top-navbar">
+            <div style="font-size:18px; font-weight:700; color:#191F28; display:flex; align-items:center; gap:6px;">
+                <i class="bi bi-file-earmark-medical-fill" style="color:#2563EB;"></i> 청구 서류 안내
+            </div>
+            <button class="btn-refresh" style="background:#F1F5F9; border:none; color:#475569; font-weight:700;" onclick="window.switchToMainView()">
+                <i class="bi bi-arrow-left"></i> 대시보드
+            </button>
+        </div>
+
+        <div class="claim-tab-container">
+            <div class="claim-tab-wrap" id="claim-tab-wrap">
+                </div>
+        </div>
+
+        <div class="claim-grid" id="claim-content-grid">
+            </div>
+    </div>
+</div>
 
     <script src="js/news.js"></script>
     <script>
@@ -913,6 +953,130 @@
                 alert('삭제에 실패했습니다: ' + e.message);
             }
         }
+
+        // ── 청구 서류 데이터 및 렌더링 로직 ──
+        const claimData = {
+            "공통": [
+                { title: "본인 청구", items: ["보험금 청구서", "신분증 사본"] },
+                { title: "대리인(가족) 청구", items: ["위임장 (인감 날인)", "위임자 인감증명서 (또는 본인서명사실확인서)", "대리인 신분증", "가족관계증명서"] }
+            ],
+            "실손의료비": [
+                { title: "입원", items: ["진단서 또는 입퇴원확인서 (질병코드 필수)", "진료비 영수증", "진료비 세부내역서"] },
+                { title: "통원", items: ["진단서 또는 진료확인서 (질병코드 필수)", "진료비 영수증", "진료비 세부내역서", "약제비 영수증"] }
+            ],
+            "수술": [
+                { title: "1~5종 수술비", items: ["수술확인서"] },
+                { title: "N대 수술비", items: ["진단서 또는 진료확인서 (질병코드 필수)", "수술확인서"] }
+            ],
+            "골절/화상/응급": [
+                { title: "골절 진단비", items: ["진단서", "영상검사결과지 (CT, MRI, X-ray)"] },
+                { title: "화상 진단비", items: ["진단서 (심재성 2도 이상 여부 기재 필수)", "응급처치 기록지"] },
+                { title: "응급실 내원비", items: ["응급실 내원 확인서", "진료비 영수증"] }
+            ],
+            "치매/간병": [
+                { title: "치매 진단비", items: ["진단서 (CDR 척도 점수 기재 필수)", "CDR 검사 결과지", "뇌 영상 검사(MRI/CT) 판독지", "MMSE(간이정신상태) 검사 결과지"] },
+                { title: "간병인 (지원/사용)", items: ["간병인 사용 영수증", "간병인 자격증 사본 또는 사업자등록증", "간병 사실 확인서 (업체 양식)"] }
+            ],
+            "태아": [
+                { title: "출생 / 선천이상", items: ["출생증명서", "등본", "진단서", "입퇴원확인서"] },
+                { title: "유산 / 사산", items: ["진단서 또는 사산증명서", "의무기록사본"] },
+                { title: "응급 제왕절개", items: ["진단서 (응급 사유 기재)", "수술확인서", "진료비 영수증 및 세부내역서"] }
+            ],
+            "사망/장해": [
+                { title: "사망 보험금", items: ["사망진단서 (시체검안서) 원본", "피보험자 기본증명서", "가족관계증명서", "상속인 전원 인감증명서, 위임장, 신분증"] },
+                { title: "후유장해", items: ["후유장해 진단서", "사고 입증 서류 및 초진차트", "영상 CD (MRI, CT 등)"] }
+            ],
+            "운전자": [
+                { title: "자동차부상치료비", items: ["지급결의서", "진단서", "교통사고사실확인원 (경찰 신고 시)"] },
+                { title: "교통사고처리지원금", items: ["교통사고사실확인원", "피해자 진단서 또는 사망진단서", "형사합의서 원본"] },
+                { title: "변호사선임비용", items: ["교통사고사실확인원", "판결문, 공소장, 변호사가 발행한 세금계산서", "구속영장 또는 사건처분증명원", "재소 또는 출소증명원"] },
+                { title: "벌금", items: ["교통사고사실확인원", "벌금납부 영수증", "약식명령문 또는 법원 판결문"] },
+                { title: "면허정지/취소 위로금", items: ["교통사고사실확인원", "운전경력증명서", "면허정지확인원 (교육 이수 후)", "면허취소확인원"] }
+            ],
+            "치아": [
+                { title: "치아", items: ["치과치료확인서", "치과진료기록부 사본", "치료 전/후 파노라마 X-ray 사진"] }
+            ],
+            "배상/누수": [
+                { title: "일상생활배상책임", items: ["사고경위서 (자필, 6하원칙)", "등본 (거주지 확인)", "피해 입증 사진 (파손 부위)", "수리비 견적서 및 영수증", "피해자 통장사본"] },
+                { title: "급배수시설 누출손해", items: ["사고경위서", "기술소견서 (필수: 누수 원인이 노후가 아닌 사고임을 입증)", "수리비 견적서 및 영수증", "공사 전/중/후 사진"] }
+            ],
+            "펫": [
+                { title: "통원 / 입원 / 수술", items: ["진료비 영수증", "진료비 세부내역서", "초진차트 (또는 진료기록부)", "수술기록지 (수술시)"] }
+            ],
+            "기타": [
+                { title: "독감 / 대상포진", items: ["진단명/코드 기재된 서류 (처방전, 확인서 등)", "진료비 계산서", "(독감) 독감 검사 결과지"] },
+                { title: "고혈압 / 당뇨 / 통풍", items: ["처방전 (질병코드 포함)", "진료비 계산서", "(통풍) 요산 수치 검사 결과지"] }
+            ]
+        };
+
+        const claimCategories = Object.keys(claimData);
+
+        function renderClaimTabs() {
+            const wrap = document.getElementById('claim-tab-wrap');
+            wrap.innerHTML = '';
+            claimCategories.forEach((cat, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `claim-tab-btn ${idx === 0 ? 'active' : ''}`;
+                btn.innerText = cat;
+                btn.onclick = () => {
+                    document.querySelectorAll('.claim-tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderClaimContent(cat);
+                };
+                wrap.appendChild(btn);
+            });
+        }
+
+        function renderClaimContent(category) {
+            const grid = document.getElementById('claim-content-grid');
+            grid.innerHTML = '';
+            const items = claimData[category] || [];
+
+            items.forEach(block => {
+                const card = document.createElement('div');
+                card.className = 'claim-card';
+
+                const title = document.createElement('div');
+                title.className = 'claim-card-title';
+                title.innerText = block.title;
+                card.appendChild(title);
+
+                const list = document.createElement('div');
+                list.className = 'claim-list';
+
+                block.items.forEach((itemText, index) => {
+                    const li = document.createElement('div');
+                    li.className = 'claim-list-item';
+                    li.innerHTML = `<span class="claim-list-num">${index + 1}.</span> <span>${itemText}</span>`;
+                    list.appendChild(li);
+                });
+
+                card.appendChild(list);
+                grid.appendChild(card);
+            });
+        }
+
+        // 청구 뷰 열기
+        window.switchToClaimView = function() {
+            document.getElementById('pwa-main-content-view').style.display = 'none';
+            document.getElementById('pwa-news-view').style.display = 'none';
+            document.getElementById('pwa-claim-view').style.display = 'flex';
+            renderClaimTabs();
+            renderClaimContent('공통');
+        };
+
+        // 기존 뷰 전환 로직 수정 (다른 화면에서 대시보드 복귀 시 청구 뷰 닫기 추가)
+        const originalSwitchToMain = window.switchToMainView;
+        window.switchToMainView = function() {
+            originalSwitchToMain();
+            document.getElementById('pwa-claim-view').style.display = 'none';
+        };
+        
+        const originalSwitchToNews = window.switchToNewsView;
+        window.switchToNewsView = function() {
+            originalSwitchToNews();
+            document.getElementById('pwa-claim-view').style.display = 'none';
+        };
     })();
     </script>
 </body>
