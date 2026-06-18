@@ -1,12 +1,11 @@
 // ════════════════════════════════════════════════════
 //  보험가온포탈 Service Worker
-//  ✅ 캐시 버전을 올리면 아이콘·매니페스트 강제 갱신
-//     → 배포 시마다 CACHE_VERSION 숫자만 +1 하세요
+//  ✅ 배포 시마다 CACHE_VERSION 숫자만 +1 하세요
+//     → 아이콘·매니페스트 기존 사용자 기기에서도 강제 갱신됨
 // ════════════════════════════════════════════════════
-const CACHE_VERSION = 'v4';                       // ← 로고 변경 시 여기만 올리면 됩니다
+const CACHE_VERSION = 'v5';                        // ← 로고·매니페스트 변경 시 여기만 올리면 됩니다
 const CACHE_NAME    = `gaon-portal-${CACHE_VERSION}`;
 
-// 항상 최신 버전을 유지할 핵심 파일 목록
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -28,7 +27,6 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log(`[SW ${CACHE_VERSION}] 핵심 파일 캐싱 중...`);
-      // 개별 실패해도 SW 설치는 계속 진행
       return Promise.allSettled(
         ASSETS_TO_CACHE.map(url =>
           cache.add(url).catch(err =>
@@ -56,8 +54,15 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => {
       console.log(`[SW ${CACHE_VERSION}] 활성화 완료. 모든 클라이언트 즉시 제어.`);
-      // 열려 있는 탭을 새 SW로 즉시 전환
+      // ★ 열려 있는 탭을 새 SW로 즉시 전환 후 강제 새로고침 신호 송신
       return self.clients.claim();
+    }).then(() => {
+      // 활성화된 직후 열린 탭 전체에 UPDATE 메시지 → 앱이 받아서 새로고침 배너 표시
+      return self.clients.matchAll({ type: 'window' }).then(clients => {
+        clients.forEach(client => {
+          client.postMessage({ type: 'SW_UPDATED', version: CACHE_VERSION });
+        });
+      });
     })
   );
 });
@@ -75,22 +80,20 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request)
         .then(networkRes => {
-          // 새 응답을 캐시에 덮어쓰기
           const clone = networkRes.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
           return networkRes;
         })
-        .catch(() => caches.match(event.request))  // 오프라인 시 캐시 반환
+        .catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // 그 외 파일: 캐시 우선, 없으면 네트워크
+  // 그 외 파일: 캐시 우선, 없으면 네트워크 후 캐시 저장
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
       return fetch(event.request).then(networkRes => {
-        // GET 요청만 캐싱
         if (event.request.method === 'GET' && networkRes.status === 200) {
           const clone = networkRes.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));

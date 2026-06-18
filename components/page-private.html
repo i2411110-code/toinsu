@@ -9,44 +9,57 @@
         </div>
     </div>
 
-    <!-- ── 섹션 타이틀 (모바일 반응형) ── -->
+    <!-- ── 섹션 타이틀 (모바일 반응형 + 말줄임표 패치) ── -->
     <div class="section-title private-header-row" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
-        <div class="private-header-left" style="display:flex; align-items:center; gap:10px; min-width:0; flex:1;">
-            <!-- 이메일 말줄임표 처리 -->
-            <div class="private-header-title" style="font-size:15px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px;">
-                👤 개인공간 전산실 (<span id="user-private-title" style="font-size:13px;">조회중...</span>)
+        <div class="private-header-left" style="display:flex; align-items:center; gap:8px; min-width:0; flex:1; overflow:hidden;">
+            <div class="private-header-title"
+                style="font-size:14px; font-weight:800; white-space:nowrap; overflow:hidden;
+                       text-overflow:ellipsis; min-width:0; flex:1;">
+                👤 개인공간 전산실 (<span id="user-private-title" style="font-size:12px;">조회중...</span>)
             </div>
             <button class="inline-home-btn" onclick="window.goBack()" style="flex-shrink:0;">
                 <i class="bi bi-house-door-fill"></i> 메인
             </button>
         </div>
-        <!-- 양식 도움말 버튼: 모바일에서 슬림하게 -->
-        <button class="help-form-btn" onclick="document.getElementById('help-modal').style.display='flex'"
-            style="background:var(--main-blue); color:white; border:none; padding:7px 14px; border-radius:18px; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px; white-space:nowrap; flex-shrink:0;">
+        <!-- 양식 도움말: 모바일 슬림 -->
+        <button class="help-form-btn"
+            onclick="document.getElementById('help-modal').style.display='flex'"
+            style="background:var(--main-blue); color:white; border:none; padding:6px 12px; border-radius:16px;
+                   font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center;
+                   gap:4px; white-space:nowrap; flex-shrink:0;">
             <i class="bi bi-question-circle-fill"></i> 양식 도움말
         </button>
     </div>
 
     <!-- ══════════════════════════════════════════
-         오피스 탭 내비게이션 (4개)
-         DB 스크립트 / 체크리스트 / 보장분석 / 원격 캘린더
+         탭 내비게이션 (2개: DB 스크립트 / 고객 데이터)
     ══════════════════════════════════════════ -->
-    <div class="office-nav" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px;">
-        <button id="btn-tab-input"     class="active" onclick="window.switchPrivateTab('input')">DB 스크립트</button>
-        <button id="btn-tab-list"                     onclick="window.switchPrivateTab('list')">고객 데이터</button>
-        <button id="btn-tab-checklist"                onclick="window.switchPrivateTab('checklist')">상담 체크리스트</button>
-        <button id="btn-tab-calendar"                 onclick="window.switchPrivateTab('calendar')">🗓️ 원격 캘린더</button>
+    <div class="office-nav" style="margin-bottom:16px;">
+        <button id="btn-tab-input" class="active" onclick="window.switchPrivateTab('input')">
+            <i class="bi bi-magic"></i> 카톡 AI 정렬 + DB 스크립트
+        </button>
+        <button id="btn-tab-list" onclick="window.switchPrivateTab('list')">
+            <i class="bi bi-people-fill"></i> 고객 데이터
+        </button>
     </div>
 
     <!-- ══════════════════════════════════════
-         탭 1: DB 스크립트 (고객 정보 입력 + AI)
+         탭 1: 카톡 원문 통복사 붙여넣기 AI 정렬 장치 + 고객 정보 입력
     ══════════════════════════════════════ -->
     <div id="office-sub-input-view">
+
+        <!-- AI 정렬 박스 -->
         <div class="office-box" style="background:#EFF6FF; border:1px dashed #2563EB; margin-bottom:25px; padding:20px;">
             <h4 style="color:#2563EB;"><i class="bi bi-magic"></i> 카톡 원문 통복사 붙여넣기 AI 정렬 장치</h4>
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">상담이나 카톡방에서 전달받은 고객 원문 스크립트를 그대로 입력하세요.</p>
-            <textarea id="ai-raw-textarea" class="form-control" style="height:120px; background:white; margin-bottom:10px; font-size:13px;" placeholder="여기에 양식을 붙여넣으세요. &#10;1. 성명 : 김가온&#10;2. 주민번호 : 960814 - 1XXXXXX..."></textarea>
-            <button class="btn-action" style="background:#2563EB;" onclick="window.runAiTextParser()">📋 AI 텍스트 자동 분류 적용</button>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">
+                상담이나 카톡방에서 전달받은 고객 원문 스크립트를 그대로 입력하세요.
+            </p>
+            <textarea id="ai-raw-textarea" class="form-control"
+                style="height:120px; background:white; margin-bottom:10px; font-size:13px;"
+                placeholder="여기에 양식을 붙여넣으세요. &#10;1. 성명 : 김가온&#10;2. 주민번호 : 960814 - 1XXXXXX..."></textarea>
+            <button class="btn-action" style="background:#2563EB;" onclick="window.runAiTextParser()">
+                📋 AI 텍스트 자동 분류 적용
+            </button>
         </div>
 
         <div class="office-grid">
@@ -91,7 +104,7 @@
         <div class="office-box" style="margin-bottom:20px;">
             <h4><i class="bi bi-journal-text" style="color:#7C3AED;"></i> 진행 상황 및 실시간 메모</h4>
             <textarea id="c_progress" class="form-control" rows="3" placeholder="배정 특약 사항이나 누락된 서류 기록을 기재하세요."></textarea>
-            <button class="btn-action" style="background:var(--main-blue); margin-top:15px;" onclick="window.submitCrmData()"> 저장하기</button>
+            <button class="btn-action" style="background:var(--main-blue); margin-top:15px;" onclick="window.submitCrmData()">저장하기</button>
         </div>
     </div>
 
@@ -134,89 +147,19 @@
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════
-         탭 3: 상담 체크리스트
-    ══════════════════════════════════════ -->
-    <div id="office-sub-checklist-view" style="display:none;">
-        <div class="office-box">
-            <h4><i class="bi bi-card-checklist" style="color:#7C3AED;"></i> 상담 체크리스트</h4>
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">고객 상담 시 확인해야 할 항목을 체크하세요.</p>
-            <div id="checklist-items" style="display:flex; flex-direction:column; gap:10px;">
-                <!-- JS로 렌더링 -->
-            </div>
-            <button class="btn-action" style="background:#7C3AED; margin-top:16px;" onclick="window.resetChecklist()">체크리스트 초기화</button>
-        </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         탭 4: 원격 캘린더
-    ══════════════════════════════════════ -->
-    <div id="office-sub-calendar-view" style="display:none;">
-        <div class="office-box">
-
-            <!-- 캘린더 헤더 (년·월 이동) -->
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-                <button onclick="window.calendarPrev()" style="background:#F1F5F9; border:none; border-radius:10px; padding:8px 14px; font-size:16px; cursor:pointer;">‹</button>
-                <div id="cal-year-month" style="font-size:17px; font-weight:800; color:#191F28;"></div>
-                <button onclick="window.calendarNext()" style="background:#F1F5F9; border:none; border-radius:10px; padding:8px 14px; font-size:16px; cursor:pointer;">›</button>
-            </div>
-
-            <!-- 요일 헤더 -->
-            <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:4px;">
-                <div style="text-align:center; font-size:11px; font-weight:700; color:#EF4444; padding:6px 0;">일</div>
-                <div style="text-align:center; font-size:11px; font-weight:700; color:#64748B; padding:6px 0;">월</div>
-                <div style="text-align:center; font-size:11px; font-weight:700; color:#64748B; padding:6px 0;">화</div>
-                <div style="text-align:center; font-size:11px; font-weight:700; color:#64748B; padding:6px 0;">수</div>
-                <div style="text-align:center; font-size:11px; font-weight:700; color:#64748B; padding:6px 0;">목</div>
-                <div style="text-align:center; font-size:11px; font-weight:700; color:#64748B; padding:6px 0;">금</div>
-                <div style="text-align:center; font-size:11px; font-weight:700; color:#2563EB; padding:6px 0;">토</div>
-            </div>
-
-            <!-- 날짜 그리드 -->
-            <div id="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:3px;"></div>
-
-            <!-- 선택된 날짜 일정 -->
-            <div id="cal-selected-info" style="margin-top:16px; display:none;">
-                <div id="cal-selected-date-label" style="font-size:14px; font-weight:700; color:#191F28; margin-bottom:10px;"></div>
-
-                <!-- 일정 추가 입력 -->
-                <div style="display:flex; gap:8px; margin-bottom:10px;">
-                    <input id="cal-new-event-input" class="form-control" placeholder="일정 내용을 입력하세요" style="flex:1; padding:10px; font-size:14px;">
-                    <button onclick="window.calendarAddEvent()" style="background:#2563EB; color:white; border:none; border-radius:10px; padding:10px 16px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">등록</button>
-                </div>
-
-                <!-- 해당 날짜 일정 목록 -->
-                <div id="cal-event-list" style="display:flex; flex-direction:column; gap:8px;"></div>
-            </div>
-
-            <!-- 관리자 전용: 이번 달 전체 일정 요약 -->
-            <div id="cal-admin-all" style="display:none; margin-top:20px;">
-                <div style="font-size:14px; font-weight:800; color:#7C3AED; margin-bottom:10px;">
-                    <i class="bi bi-people-fill"></i> 팀 전체 이번 달 일정
-                </div>
-                <div id="cal-admin-list" style="display:flex; flex-direction:column; gap:8px;"></div>
-            </div>
-        </div>
-    </div>
-
 </div><!-- /sub-page -->
 
 
 <!-- ══════════════════════════════════════════════════════
-     JAVASCRIPT: 탭 전환 + 캘린더 + 체크리스트
+     JAVASCRIPT: 탭 전환 (2개)
 ══════════════════════════════════════════════════════ -->
 <script>
 (function() {
     'use strict';
 
-    // ──────────────────────────────────────────────
-    //  탭 전환 (4개 탭, 화면 겹침 없음)
-    // ──────────────────────────────────────────────
     const TAB_MAP = {
-        'input':     'office-sub-input-view',
-        'list':      'office-sub-list-view',
-        'checklist': 'office-sub-checklist-view',
-        'calendar':  'office-sub-calendar-view',
+        'input': 'office-sub-input-view',
+        'list':  'office-sub-list-view',
     };
 
     window.switchPrivateTab = function(tab) {
@@ -226,8 +169,8 @@
             if (el) el.style.display = 'none';
         });
         // 모든 탭 버튼 비활성화
-        ['input','list','checklist','calendar'].forEach(t => {
-            const btn = document.getElementById('btn-tab-' + t);
+        Object.keys(TAB_MAP).forEach(k => {
+            const btn = document.getElementById('btn-tab-' + k);
             if (btn) btn.classList.remove('active');
         });
         // 선택된 탭만 활성화
@@ -238,383 +181,23 @@
         }
         const activeBtn = document.getElementById('btn-tab-' + tab);
         if (activeBtn) activeBtn.classList.add('active');
-
-        // 캘린더 탭 진입 시 렌더
-        if (tab === 'calendar') window.calendarRender();
-        // 체크리스트 탭 진입 시 렌더
-        if (tab === 'checklist') window.renderChecklist();
     };
-
-    // 기존 호환성 유지 (office-nav에서 사용하던 switchOfficeSubTab)
-    window.switchOfficeSubTab = function(tab) {
-        // 'input' → 탭1, 'list' → 탭2 로 매핑
-        window.switchPrivateTab(tab);
-    };
-
-
-    // ──────────────────────────────────────────────
-    //  체크리스트
-    // ──────────────────────────────────────────────
-    const CHECKLIST_ITEMS = [
-        '고객 기본 인적 정보 수집 완료',
-        '주민등록번호 확인',
-        '병력 고지 사항 청취',
-        '운전 여부 확인',
-        '실비 보험 가입 여부 확인',
-        '계좌 지정 완료',
-        '증권 출력 및 전달 여부 확인',
-        '진행 상황 메모 저장',
-        '다음 상담 일정 등록',
-    ];
-
-    window.renderChecklist = function() {
-        const container = document.getElementById('checklist-items');
-        if (!container) return;
-        const saved = JSON.parse(localStorage.getItem('gaon_checklist') || '{}');
-        container.innerHTML = CHECKLIST_ITEMS.map((item, i) => `
-            <label style="display:flex; align-items:center; gap:12px; padding:12px 14px;
-                          background:${saved[i] ? '#F0FDF4' : '#F8FAFC'}; border-radius:12px;
-                          border:1px solid ${saved[i] ? '#BBF7D0' : '#E2E8F0'}; cursor:pointer;">
-                <input type="checkbox" ${saved[i] ? 'checked' : ''}
-                    onchange="window.toggleChecklistItem(${i}, this.checked)"
-                    style="width:18px; height:18px; accent-color:#16A34A; flex-shrink:0;">
-                <span style="font-size:14px; font-weight:500; color:${saved[i] ? '#15803D' : '#334155'};
-                             text-decoration:${saved[i] ? 'line-through' : 'none'};">${item}</span>
-            </label>
-        `).join('');
-    };
-
-    window.toggleChecklistItem = function(index, checked) {
-        const saved = JSON.parse(localStorage.getItem('gaon_checklist') || '{}');
-        saved[index] = checked;
-        localStorage.setItem('gaon_checklist', JSON.stringify(saved));
-        window.renderChecklist();
-    };
-
-    window.resetChecklist = function() {
-        localStorage.removeItem('gaon_checklist');
-        window.renderChecklist();
-    };
-
-
-    // ──────────────────────────────────────────────
-    //  캘린더 — Firebase Firestore 연동 구조
-    //  (Firestore 미초기화 시 localStorage 폴백)
-    // ──────────────────────────────────────────────
-
-    let _calYear  = new Date().getFullYear();
-    let _calMonth = new Date().getMonth(); // 0-based
-    let _calSelectedDate = null;           // 'YYYY-MM-DD'
-
-    // 관리자 이메일 목록
-    const ADMIN_EMAILS = ['dlsqh814@naver.com'];
-
-    function isAdmin() {
-        const user = window._currentUser;
-        return user && ADMIN_EMAILS.includes(user.email);
-    }
-
-    // ── 색상 팔레트 (관리자 뷰: 유저별 색상 구분) ──
-    const USER_COLORS = [
-        '#2563EB','#7C3AED','#DC2626','#059669','#D97706',
-        '#0891B2','#BE185D','#4338CA','#65A30D','#EA580C'
-    ];
-    const _userColorMap = {};
-    let _colorIdx = 0;
-    function getUserColor(uid) {
-        if (!_userColorMap[uid]) {
-            _userColorMap[uid] = USER_COLORS[_colorIdx % USER_COLORS.length];
-            _colorIdx++;
-        }
-        return _userColorMap[uid];
-    }
-
-    // ── Firestore 헬퍼 (window.db 가 없으면 localStorage 폴백) ──
-    function _storageKey(dateStr) {
-        return `gaon_cal_${dateStr}`;
-    }
-
-    // 특정 날짜의 이벤트 배열 로드
-    // Firestore 구조: /calendars/{YYYY-MM-DD}/events/{eventId}
-    //                 event: { uid, userName, email, title, isNotice, timestamp }
-    async function loadEvents(dateStr) {
-        try {
-            if (window.db && window.firebase_getCurrentUser) {
-                const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-                const snap = await getDocs(collection(window.db, 'calendars', dateStr, 'events'));
-                return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            }
-        } catch(e) { /* 폴백 */ }
-        // localStorage 폴백
-        return JSON.parse(localStorage.getItem(_storageKey(dateStr)) || '[]');
-    }
-
-    // 이벤트 추가
-    async function saveEvent(dateStr, eventObj) {
-        try {
-            if (window.db && window.firebase_getCurrentUser) {
-                const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-                await addDoc(collection(window.db, 'calendars', dateStr, 'events'), {
-                    ...eventObj,
-                    timestamp: serverTimestamp()
-                });
-                return;
-            }
-        } catch(e) { /* 폴백 */ }
-        const arr = JSON.parse(localStorage.getItem(_storageKey(dateStr)) || '[]');
-        arr.push({ ...eventObj, id: Date.now().toString(), timestamp: Date.now() });
-        localStorage.setItem(_storageKey(dateStr), JSON.stringify(arr));
-    }
-
-    // 이벤트 삭제
-    async function deleteEvent(dateStr, eventId) {
-        try {
-            if (window.db && window.firebase_getCurrentUser) {
-                const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-                await deleteDoc(doc(window.db, 'calendars', dateStr, 'events', eventId));
-                return;
-            }
-        } catch(e) { /* 폴백 */ }
-        const arr = JSON.parse(localStorage.getItem(_storageKey(dateStr)) || '[]');
-        const filtered = arr.filter(e => e.id !== eventId);
-        localStorage.setItem(_storageKey(dateStr), JSON.stringify(filtered));
-    }
-
-    // 이번 달 전체 이벤트 로드 (관리자용)
-    async function loadMonthEvents(year, month) {
-        const results = [];
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        for (let d = 1; d <= daysInMonth; d++) {
-            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const events = await loadEvents(dateStr);
-            events.forEach(e => results.push({ dateStr, ...e }));
-        }
-        return results;
-    }
-
-    // ── 달력 렌더링 ──
-    window.calendarRender = async function() {
-        const labelEl = document.getElementById('cal-year-month');
-        const gridEl  = document.getElementById('cal-grid');
-        if (!labelEl || !gridEl) return;
-
-        labelEl.textContent = `${_calYear}년 ${_calMonth + 1}월`;
-        gridEl.innerHTML = '';
-
-        const firstDay   = new Date(_calYear, _calMonth, 1).getDay(); // 0=일
-        const daysInMonth = new Date(_calYear, _calMonth + 1, 0).getDate();
-        const today      = new Date();
-        const todayStr   = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-
-        // 이번 달 이벤트 유무를 미리 확인 (도트 표시용)
-        const eventDates = {};
-        for (let d = 1; d <= daysInMonth; d++) {
-            const ds = `${_calYear}-${String(_calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const evs = await loadEvents(ds);
-            if (evs.length) eventDates[ds] = evs.length;
-        }
-
-        // 빈 칸 (월 시작 전)
-        for (let i = 0; i < firstDay; i++) {
-            gridEl.appendChild(Object.assign(document.createElement('div'), { style: '' }));
-        }
-
-        // 날짜 셀
-        for (let d = 1; d <= daysInMonth; d++) {
-            const ds = `${_calYear}-${String(_calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const isToday    = ds === todayStr;
-            const isSelected = ds === _calSelectedDate;
-            const dayOfWeek  = new Date(_calYear, _calMonth, d).getDay();
-            const isSun      = dayOfWeek === 0;
-            const isSat      = dayOfWeek === 6;
-            const hasEvent   = !!eventDates[ds];
-
-            const cell = document.createElement('div');
-            cell.style.cssText = `
-                position:relative; text-align:center; padding:8px 2px; border-radius:10px; cursor:pointer;
-                font-size:14px; font-weight:${isToday ? '800' : '500'};
-                color:${isSelected ? 'white' : isToday ? '#2563EB' : isSun ? '#EF4444' : isSat ? '#2563EB' : '#191F28'};
-                background:${isSelected ? '#2563EB' : isToday ? '#EFF6FF' : 'transparent'};
-                border:${isToday && !isSelected ? '1.5px solid #2563EB' : '1.5px solid transparent'};
-                transition:background 0.15s;
-            `;
-            cell.innerHTML = `${d}${hasEvent ? `<div style="width:5px;height:5px;background:${isSelected?'white':'#3182F6'};border-radius:50%;margin:2px auto 0;"></div>` : ''}`;
-            cell.onclick = () => selectCalendarDate(ds);
-            gridEl.appendChild(cell);
-        }
-
-        // 관리자: 팀 전체 일정 표시
-        if (isAdmin()) {
-            await renderAdminMonthView();
-        }
-    };
-
-    window.calendarPrev = function() {
-        _calMonth--;
-        if (_calMonth < 0) { _calMonth = 11; _calYear--; }
-        _calSelectedDate = null;
-        document.getElementById('cal-selected-info').style.display = 'none';
-        window.calendarRender();
-    };
-
-    window.calendarNext = function() {
-        _calMonth++;
-        if (_calMonth > 11) { _calMonth = 0; _calYear++; }
-        _calSelectedDate = null;
-        document.getElementById('cal-selected-info').style.display = 'none';
-        window.calendarRender();
-    };
-
-    async function selectCalendarDate(dateStr) {
-        _calSelectedDate = dateStr;
-        await window.calendarRender(); // 선택 표시 반영
-
-        const [y, m, d] = dateStr.split('-');
-        const infoEl   = document.getElementById('cal-selected-info');
-        const labelEl  = document.getElementById('cal-selected-date-label');
-        const listEl   = document.getElementById('cal-event-list');
-        if (!infoEl || !labelEl || !listEl) return;
-
-        labelEl.textContent = `📅 ${y}년 ${parseInt(m)}월 ${parseInt(d)}일 일정`;
-        infoEl.style.display = '';
-
-        await renderEventList(dateStr, listEl);
-    }
-
-    async function renderEventList(dateStr, listEl) {
-        listEl.innerHTML = '<div style="color:#8B95A1;font-size:13px;">불러오는 중...</div>';
-        const events = await loadEvents(dateStr);
-        const user   = window._currentUser;
-        const admin  = isAdmin();
-
-        if (!events.length) {
-            listEl.innerHTML = '<div style="color:#8B95A1; font-size:13px; padding:10px 0;">등록된 일정이 없습니다.</div>';
-            return;
-        }
-
-        // 일반 사용자: 본인 일정 + 공지(isNotice=true) 만 표시
-        const visible = events.filter(e =>
-            admin ||
-            (user && e.uid === user.uid) ||
-            e.isNotice === true
-        );
-
-        listEl.innerHTML = visible.map(e => {
-            const isOwner  = user && e.uid === user.uid;
-            const noticeTag = e.isNotice ? '<span style="background:#FEF3C7;color:#D97706;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-right:6px;">공지</span>' : '';
-            const adminTag  = admin && e.userName ? `<span style="font-size:10px;color:#8B95A1;margin-right:4px;">[${e.userName}]</span>` : '';
-            const dotColor  = admin && e.uid ? getUserColor(e.uid) : '#2563EB';
-
-            return `
-            <div style="display:flex; align-items:center; justify-content:space-between;
-                        padding:10px 12px; background:#F8FAFC; border-radius:10px;
-                        border-left:3px solid ${dotColor};">
-                <div style="flex:1; min-width:0;">
-                    ${noticeTag}${adminTag}
-                    <span style="font-size:14px; color:#191F28;">${e.title}</span>
-                </div>
-                ${isOwner || admin ? `
-                <button onclick="window.calendarDeleteEvent('${dateStr}','${e.id}')"
-                    style="background:none;border:none;color:#CBD5E1;font-size:18px;cursor:pointer;flex-shrink:0;padding:0 4px;">&times;</button>
-                ` : ''}
-            </div>`;
-        }).join('');
-    }
-
-    // 일정 등록
-    window.calendarAddEvent = async function() {
-        if (!_calSelectedDate) return;
-        const input = document.getElementById('cal-new-event-input');
-        const title = (input.value || '').trim();
-        if (!title) { input.focus(); return; }
-
-        const user = window._currentUser;
-        const eventObj = {
-            uid:      user ? user.uid   : 'anonymous',
-            userName: user ? (user.displayName || user.email || '사용자') : '익명',
-            email:    user ? user.email : '',
-            title:    title,
-            isNotice: isAdmin(), // 관리자 등록 일정 → 전체 공지
-        };
-
-        await saveEvent(_calSelectedDate, eventObj);
-        input.value = '';
-
-        const listEl = document.getElementById('cal-event-list');
-        if (listEl) await renderEventList(_calSelectedDate, listEl);
-        await window.calendarRender();
-
-        if (isAdmin()) await renderAdminMonthView();
-    };
-
-    // 일정 삭제
-    window.calendarDeleteEvent = async function(dateStr, eventId) {
-        if (!confirm('이 일정을 삭제하시겠습니까?')) return;
-        await deleteEvent(dateStr, eventId);
-        const listEl = document.getElementById('cal-event-list');
-        if (listEl) await renderEventList(dateStr, listEl);
-        await window.calendarRender();
-        if (isAdmin()) await renderAdminMonthView();
-    };
-
-    // 관리자: 이번 달 팀 전체 일정 패널
-    async function renderAdminMonthView() {
-        const panel   = document.getElementById('cal-admin-all');
-        const listEl  = document.getElementById('cal-admin-list');
-        if (!panel || !listEl) return;
-        panel.style.display = '';
-
-        const allEvents = await loadMonthEvents(_calYear, _calMonth);
-        if (!allEvents.length) {
-            listEl.innerHTML = '<div style="color:#8B95A1;font-size:13px;">이번 달 등록된 팀 일정이 없습니다.</div>';
-            return;
-        }
-
-        // 날짜순 정렬
-        allEvents.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
-
-        listEl.innerHTML = allEvents.map(e => {
-            const [y, m, d] = e.dateStr.split('-');
-            const color = getUserColor(e.uid || e.email || 'unknown');
-            return `
-            <div style="display:flex; align-items:center; gap:10px; padding:9px 12px;
-                        background:#F8FAFC; border-radius:10px; border-left:3px solid ${color};">
-                <div style="font-size:11px; font-weight:700; color:#64748B; white-space:nowrap;">
-                    ${parseInt(m)}/${parseInt(d)}
-                </div>
-                <div style="font-size:13px; font-weight:700; color:${color}; flex-shrink:0;">
-                    ${e.userName || e.email || '?'}
-                </div>
-                <div style="font-size:13px; color:#191F28; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                    ${e.isNotice ? '📢 ' : ''}${e.title}
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    // 초기: 캘린더 뷰가 열려 있으면 즉시 렌더
-    setTimeout(() => {
-        const calView = document.getElementById('office-sub-calendar-view');
-        if (calView && calView.style.display !== 'none') {
-            window.calendarRender();
-        }
-    }, 300);
 
 })();
 </script>
 
 <style>
-/* ── 오피스 탭 버튼: 4개 모바일 대응 ── */
+/* ── 오피스 탭 버튼: 2개 대응 ── */
 .office-nav {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     flex-wrap: wrap;
     margin-bottom: 16px;
 }
 .office-nav button {
     flex: 1 1 auto;
     min-width: 0;
-    padding: 9px 12px;
+    padding: 10px 14px;
     border: 1.5px solid #E2E8F0;
     border-radius: 12px;
     background: white;
@@ -626,6 +209,10 @@
     transition: all 0.15s;
     white-space: nowrap;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 .office-nav button.active {
     background: #2563EB;
@@ -637,39 +224,31 @@
     border-color: #CBD5E1;
 }
 
-/* ── 캘린더 셀 hover ── */
-#cal-grid > div:hover {
-    background: #EFF6FF !important;
-}
-
-/* ── 모바일: 헤더 텍스트 넘침 방지 ── */
+/* ── 모바일: 헤더 말줄임표 + 패딩 슬림 ── */
 @media (max-width: 768px) {
     .private-header-row {
-        flex-direction: column !important;
-        align-items: stretch !important;
-    }
-    .private-header-left {
-        width: 100%;
-    }
-    .private-header-title {
-        max-width: calc(100vw - 120px) !important;
-        font-size: 13px !important;
-    }
-    .help-form-btn {
-        align-self: flex-start;
-        padding: 6px 12px !important;
-        font-size: 11px !important;
-    }
-
-    /* 오피스 탭 4개: 2×2 그리드로 */
-    .office-nav {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
         gap: 6px !important;
     }
+    .private-header-left {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .private-header-title {
+        font-size: 12px !important;
+        max-width: 100% !important;
+    }
+    .help-form-btn {
+        padding: 5px 10px !important;
+        font-size: 11px !important;
+    }
+    /* 탭 버튼 모바일 소형화 */
     .office-nav button {
         font-size: 12px !important;
-        padding: 8px 6px !important;
+        padding: 8px 8px !important;
     }
 }
 </style>
