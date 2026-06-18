@@ -279,13 +279,10 @@ const NewsWidget = (() => {
   /* 종합 오케스트레이션 로더                                              */
   /* ------------------------------------------------------------------ */
   const loadAllData = async (keyword = '전체 뉴스') => {
-    // 키워드 변환 파싱
-    let apiQuery = "보험 금융 경제";
-    if (keyword !== '전체 뉴스' && keyword !== '전체') {
-        apiQuery = keyword;
-    }
+    // 1. 키워드 설정
+    let apiQuery = (keyword === '전체 뉴스' || keyword === '전체') ? "보험 금융 경제" : keyword;
 
-    // 병렬 패치 개시
+    // 2. 데이터 패치 (병렬)
     const [newsItems, fxData, mktItems] = await Promise.all([
         api.news(apiQuery, 10),
         api.exchange(),
@@ -293,6 +290,19 @@ const NewsWidget = (() => {
     ]);
 
     const fxList = fxData.items || [];
+
+    // 3. 렌더링 (순서 보장)
+    if (newsItems.length > 0) {
+        renderMorningPaper(newsItems[0], fxList, mktItems);
+        renderNewsFeed(newsItems);
+    } else {
+        // 혹시 뉴스 데이터가 없어도 지표는 그려야 하므로 예외 처리
+        console.warn("뉴스 데이터를 불러오지 못했습니다.");
+    }
+    
+    // 💡 시장 지표는 뉴스 데이터 유무와 상관없이 무조건 실행되도록 별도 배치 (데이터 갱신 핵심!)
+    renderBottomIndicators(fxList, mktItems);
+  };
 
     // 전산 바인딩 출력 실행
     if (newsItems.length > 0) {
