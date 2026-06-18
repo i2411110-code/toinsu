@@ -230,6 +230,17 @@
                         <i class="bi bi-chevron-right"></i>
                     </button>
                 </div>
+                <!-- 캘린더 영역 내에 추가하거나 별도 div로 배치 -->
+<div class="todo-panel" style="width: 300px; background: #fff; padding: 15px; border-radius: 18px; border: 1px solid #F2F4F6;">
+    <h3 style="font-size:16px; font-weight:800; margin-bottom:12px;">✅ 오늘 할 일</h3>
+    <div class="input-group" style="display:flex; gap:5px; margin-bottom:10px;">
+        <input type="text" id="todoInput" class="form-control" placeholder="할 일 추가...">
+        <button class="btn-action" style="width:50px;" onclick="window.addTodo()">+</button>
+    </div>
+    <ul id="todoList" style="list-style:none; padding:0;">
+        <!-- 할 일이 추가되는 영역 -->
+    </ul>
+</div>
                 <div style="display:flex; gap:8px;">
                     <button onclick="window.calGoToday()" class="cal-today-btn">오늘</button>
                     <button onclick="window.calOpenCreateModal()" class="cal-today-btn cal-today-btn-primary">
@@ -313,18 +324,6 @@
                     </label>
                     <button class="btn-action" style="background:#2563EB;" onclick="window.calSubmitNewEvent()">등록하기</button>
                 </div>
-
-                <!-- 캘린더 영역 내에 추가하거나 별도 div로 배치 -->
-<div class="todo-panel" style="width: 300px; background: #fff; padding: 15px; border-radius: 18px; border: 1px solid #F2F4F6;">
-    <h3 style="font-size:16px; font-weight:800; margin-bottom:12px;">✅ 오늘 할 일</h3>
-    <div class="input-group" style="display:flex; gap:5px; margin-bottom:10px;">
-        <input type="text" id="todoInput" class="form-control" placeholder="할 일 추가...">
-        <button class="btn-action" style="width:50px;" onclick="window.addTodo()">+</button>
-    </div>
-    <ul id="todoList" style="list-style:none; padding:0;">
-        <!-- 할 일이 추가되는 영역 -->
-    </ul>
-</div>
             </div>
         </div>
 
