@@ -506,11 +506,11 @@
             document.getElementById('pwa-claim-view').style.display = 'none';
             document.getElementById('pwa-news-view').style.display = 'flex';
             
-            // 데이터가 로드되지 않았을 경우를 대비해 초기화 함수를 확실히 호출
+            // 핵심: 뉴스 뷰가 보여질 때마다 위젯을 다시 초기화하여 요소를 정확히 찾게 함
             if (typeof NewsWidget !== 'undefined') {
                 NewsWidget.init(); 
             } else {
-                console.error("NewsWidget이 로드되지 않았습니다. js/news.js 파일을 확인하세요.");
+                console.error("NewsWidget이 로드되지 않았습니다.");
             }
         };
 
