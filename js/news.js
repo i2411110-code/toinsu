@@ -26,7 +26,7 @@ const NewsWidget = (() => {
   };
 
   /* ------------------------------------------------------------------ */
-  /* 전산 텍스트 유틸리티                                               */
+  /* 전산 텍스트 유틸리티                                                 */
   /* ------------------------------------------------------------------ */
   const clean = (str = '') =>
     str
@@ -42,20 +42,25 @@ const NewsWidget = (() => {
     });
   };
 
-  const splitNum = (val, label) => {
-    const isGold = label === '국내 금 (원/g)';
-    const digits = isGold ? 0 : 2;
-    const s = Number(val).toLocaleString('ko-KR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
-    const [int, dec] = s.split('.');
-    return { int, dec };
+  /* 실시간 오늘 날짜 포맷 (예: 2026년 06월 18일 (목)) */
+  const getTodayLabel = () => {
+    const now = new Date();
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const day = days[now.getDay()];
+    return `${y}년 ${m}월 ${d}일 (${day})`;
   };
 
   const weatherEmoji = (desc = '') =>
-    desc.includes('맑') || desc.includes('태양') ? '☀️' : desc.includes('구름') || desc.includes('흐림') ? '☁️' :
-    desc.includes('비') || desc.includes('소나기') ? '🌧️' : desc.includes('눈') ? '❄️' : '☀️';
+    desc.includes('맑') || desc.includes('태양') ? '☀️' :
+    desc.includes('구름') || desc.includes('흐림') ? '☁️' :
+    desc.includes('비') || desc.includes('소나기') ? '🌧️' :
+    desc.includes('눈') ? '❄️' : '☀️';
 
   /* ------------------------------------------------------------------ */
-  /* 네이버 증권 및 기상청 API 실시간 호출 연동                          */
+  /* 네이버 증권 및 기상청 API 실시간 호출 연동                           */
   /* ------------------------------------------------------------------ */
   const api = {
     news: async (query, display = 12) => {
@@ -88,14 +93,13 @@ const NewsWidget = (() => {
   };
 
   /* ------------------------------------------------------------------ */
-  /* news.html 전용 타겟 렌더링 파이프라인                             */
+  /* news.html 전용 타겟 렌더링 파이프라인                                */
   /* ------------------------------------------------------------------ */
-  
+
   // 1. 상단 스크롤 띠 배너 날씨 연동
   const renderWeatherStrip = (list) => {
     const el = document.querySelector('.weather-strip');
     if (!el || !list.length) return;
-    
     el.innerHTML = list.map(w => `
       <div class="weather-pill">
         ${w.region} ${weatherEmoji(w.description)} <span style="font-weight:700;margin-left:2px;">${w.temp || 24}°</span>
@@ -105,7 +109,6 @@ const NewsWidget = (() => {
 
   // 2. 우측 최신 속보 타일형 피드 연동
   const renderNewsFeed = (items) => {
-    // 카드 컨테이너만 타겟 (토스히어로 헤더는 HTML에 고정, 덮어쓰지 않음)
     const wrap = document.getElementById('news-live-feed-target-container');
     if (!wrap) return;
 
@@ -114,7 +117,6 @@ const NewsWidget = (() => {
       return;
     }
 
-    // 인덱스 0부터 5개 피드 카드
     const feedItems = items.slice(0, 5);
     wrap.innerHTML = feedItems.map((item, idx) => `
       <div class="feed-card">
@@ -132,41 +134,58 @@ const NewsWidget = (() => {
 
   // 3. 좌측 MORNING NEWS 지면 데이터 매핑
   const renderMorningPaper = (topItem, fxList, mktList) => {
-    const paperTitleEl = document.querySelector('.paper-body-text');
-    const paperIndexEl = document.querySelector('.paper-top-index');
-    
-    // 메인 헤드라인 텍스트 배치
-    if (paperTitleEl && topItem) {
-        paperTitleEl.innerHTML = `
-            <strong>"${clean(topItem.title)}"</strong>
-            <span style="font-size:11px;color:#94A3B8;display:block;margin-bottom:10px;">발행처: NAVER NEWS HUB &middot; 스크랩: ${fmtDate(topItem.pubDate)}</span>
-            ${clean(topItem.description)}
-        `;
+    /* ── 실시간 날짜 업데이트 ── */
+    const dateEl = document.getElementById('paper-live-date');
+    if (dateEl) dateEl.textContent = getTodayLabel();
+
+    const paperBodyEl  = document.getElementById('paper-main-headline-body');
+    const paperIndexEl = document.getElementById('paper-mini-index-box');
+
+    /* ── 메인 헤드라인 + 본문 전체 + 원문 버튼 ── */
+    if (paperBodyEl && topItem) {
+      const link = topItem.link || topItem.originallink || '#';
+      const desc = clean(topItem.description);
+
+      paperBodyEl.innerHTML = `
+        <strong>${clean(topItem.title)}</strong>
+        <span class="paper-meta">
+          <i class="bi bi-clock" style="font-size:10px;"></i>
+          ${fmtDate(topItem.pubDate)} &nbsp;·&nbsp; NAVER NEWS HUB
+        </span>
+        <p class="paper-content">${desc}</p>
+        <a href="${link}" target="_blank" rel="noopener noreferrer" class="paper-read-link">
+          <i class="bi bi-newspaper"></i> 기사 원문 전체 보기
+          <i class="bi bi-arrow-right-short" style="font-size:16px;"></i>
+        </a>
+      `;
     }
 
-    // 신문 상단 미니 경제 지표 매칭
+    /* ── 신문 상단 미니 경제 지표 (클릭 → 네이버 증권) ── */
     if (paperIndexEl) {
-        const usd = fxList.find(i => i.label === 'USD') || { value: 1514.60, change: 5.20, direction: 'down' };
-        const kospi = mktList.find(i => i.label === '코스피') || { value: 8545.98, change: 422.36, direction: 'up' };
-        const kosdaq = mktList.find(i => i.label === '코스닥') || { value: 1034.03, change: 14.98, direction: 'up' };
+      const usd   = fxList.find(i => i.label === 'USD')    || { value: 1514.60, change: 5.20,  direction: 'down' };
+      const kospi = mktList.find(i => i.label === '코스피') || { value: 8545.98, change: 422.36, direction: 'up'  };
+      const kosdaq= mktList.find(i => i.label === '코스닥') || { value: 1034.03, change: 14.98,  direction: 'up'  };
 
-        paperIndexEl.innerHTML = `
-            <div class="p-idx-item">
-                <div class="t">USD / KRW</div>
-                <div class="v">${Number(usd.value).toFixed(2)}</div>
-                <div class="c ${usd.direction}"><i class="bi bi-caret-${usd.direction}-fill"></i> ${Math.abs(usd.change).toFixed(2)}</div>
-            </div>
-            <div class="p-idx-item" style="border-left:1px solid #334155; border-right:1px solid #334155;">
-                <div class="t">KOSPI</div>
-                <div class="v">${Number(kospi.value).toLocaleString('ko-KR', {maximumFractionDigits:2})}</div>
-                <div class="c ${kospi.direction}"><i class="bi bi-caret-${kospi.direction}-fill"></i> ${Math.abs(kospi.change).toFixed(2)}</div>
-            </div>
-            <div class="p-idx-item">
-                <div class="t">KOSDAQ</div>
-                <div class="v">${Number(kosdaq.value).toLocaleString('ko-KR', {maximumFractionDigits:2})}</div>
-                <div class="c ${kosdaq.direction}"><i class="bi bi-caret-${kosdaq.direction}-fill"></i> ${Math.abs(kosdaq.change).toFixed(2)}</div>
-            </div>
-        `;
+      const idxItem = (href, label, val, dir, chg, borderStyle = '') => `
+        <a class="p-idx-link" href="${href}" target="_blank" rel="noopener noreferrer" style="${borderStyle}">
+          <div class="p-idx-item">
+            <div class="t">${label}</div>
+            <div class="v">${val}</div>
+            <div class="c ${dir}"><i class="bi bi-caret-${dir}-fill"></i> ${chg}</div>
+          </div>
+        </a>`;
+
+      paperIndexEl.innerHTML =
+        idxItem(EXCHANGE_LINKS.USD,        'USD / KRW',
+                Number(usd.value).toFixed(2),
+                usd.direction, Math.abs(usd.change).toFixed(2)) +
+        idxItem(MARKET_LINKS['코스피'],     'KOSPI',
+                Number(kospi.value).toLocaleString('ko-KR', { maximumFractionDigits: 2 }),
+                kospi.direction, Math.abs(kospi.change).toFixed(2),
+                'border-left:1px solid #334155; border-right:1px solid #334155;') +
+        idxItem(MARKET_LINKS['코스닥'],     'KOSDAQ',
+                Number(kosdaq.value).toLocaleString('ko-KR', { maximumFractionDigits: 2 }),
+                kosdaq.direction, Math.abs(kosdaq.change).toFixed(2));
     }
   };
 
@@ -193,53 +212,65 @@ const NewsWidget = (() => {
       </a>`;
 
     el.innerHTML =
-      card(EXCHANGE_LINKS.USD,              'USD / KRW (원/달러 환율)',
-           Number(usd.value).toFixed(2),   usd.direction,   Math.abs(usd.change).toFixed(2)) +
-      card(EXCHANGE_LINKS.JPY,              'JPY / KRW (100엔 환율)',
-           Number(jpy.value).toFixed(2),   jpy.direction,   Math.abs(jpy.change).toFixed(2)) +
-      card(MARKET_LINKS['코스피'],           'KOSPI 종합지수',
-           Number(kospi.value).toLocaleString('ko-KR', {maximumFractionDigits:2}),
+      card(EXCHANGE_LINKS.USD,
+           'USD / KRW (원/달러 환율)',
+           Number(usd.value).toFixed(2),
+           usd.direction, Math.abs(usd.change).toFixed(2)) +
+      card(EXCHANGE_LINKS.JPY,
+           'JPY / KRW (100엔 환율)',
+           Number(jpy.value).toFixed(2),
+           jpy.direction, Math.abs(jpy.change).toFixed(2)) +
+      card(MARKET_LINKS['코스피'],
+           'KOSPI 종합지수',
+           Number(kospi.value).toLocaleString('ko-KR', { maximumFractionDigits: 2 }),
            kospi.direction, Math.abs(kospi.change).toFixed(2)) +
-      card(MARKET_LINKS['국내 금 (원/g)'],   '국내 금시세 (원/g)',
-           Number(gold.value).toLocaleString('ko-KR', {maximumFractionDigits:0}),
-           gold.direction, Math.abs(gold.change).toLocaleString('ko-KR', {maximumFractionDigits:0}));
+      card(MARKET_LINKS['국내 금 (원/g)'],
+           '국내 금시세 (원/g)',
+           Number(gold.value).toLocaleString('ko-KR', { maximumFractionDigits: 0 }),
+           gold.direction, Math.abs(gold.change).toLocaleString('ko-KR', { maximumFractionDigits: 0 }));
   };
 
   /* ------------------------------------------------------------------ */
   /* 종합 오케스트레이션 로더                                              */
   /* ------------------------------------------------------------------ */
   const loadAllData = async (keyword = '전체 뉴스') => {
-    // 키워드 변환 파싱
-    let apiQuery = "보험 금융 경제";
+    let apiQuery = '보험 금융 경제';
     if (keyword !== '전체 뉴스' && keyword !== '전체') {
-        apiQuery = keyword;
+      apiQuery = keyword;
     }
 
-    // 병렬 패치 개시
     const [newsItems, fxData, mktItems] = await Promise.all([
-        api.news(apiQuery, 10),
-        api.exchange(),
-        api.market()
+      api.news(apiQuery, 10),
+      api.exchange(),
+      api.market()
     ]);
 
     const fxList = fxData.items || [];
 
-    // 전산 바인딩 출력 실행
     if (newsItems.length > 0) {
-        renderMorningPaper(newsItems[0], fxList, mktItems);
-        renderNewsFeed(newsItems);
+      renderMorningPaper(newsItems[0], fxList, mktItems);
+      renderNewsFeed(newsItems);
+    } else {
+      /* 뉴스가 없어도 날짜·지표는 업데이트 */
+      const dateEl = document.getElementById('paper-live-date');
+      if (dateEl) dateEl.textContent = getTodayLabel();
     }
+
     renderBottomIndicators(fxList, mktItems);
   };
 
   const init = async () => {
-    // 1. 날씨 데이터 우선 구동 및 상단 적용
+    /* ── 1. 날짜 즉시 반영 (API 응답 전에도 표시) ── */
+    const dateEl = document.getElementById('paper-live-date');
+    if (dateEl) dateEl.textContent = getTodayLabel();
+
+    /* ── 2. 날씨 데이터 우선 구동 ── */
     const regions = ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '제주'];
     Promise.all(regions.map(r => api.weather(r))).then(results => {
-        renderWeatherStrip(results.filter(r => !r.error));
+      renderWeatherStrip(results.filter(r => !r.error));
     });
 
-    // 2-0. 최신속보 새로고침 버튼 (토스히어로 헤더 버튼)
+    /* ── 3. 최신속보 새로고침 버튼 ── */
     const feedRefreshBtn = document.getElementById('news-feed-manual-refresh-btn');
     if (feedRefreshBtn) {
       feedRefreshBtn.addEventListener('click', async () => {
@@ -253,31 +284,29 @@ const NewsWidget = (() => {
       });
     }
 
-    // 2. 카테고리 태그 탭 클릭 이벤트 및 검색어 인풋 실시간 바인딩
+    /* ── 4. 카테고리 태그 탭 클릭 & 검색어 인풋 바인딩 ── */
     const tagButtons = document.querySelectorAll('.tag-wrap .tag-btn');
-    const searchBar = document.querySelector('.search-bar');
+    const searchBar  = document.querySelector('.search-bar');
 
     tagButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            tagButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            if (searchBar) searchBar.value = ''; // 탭 전환시 검색창 리셋
-            loadAllData(btn.textContent);
-        });
+      btn.addEventListener('click', () => {
+        tagButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (searchBar) searchBar.value = '';
+        loadAllData(btn.textContent.trim());
+      });
     });
 
     if (searchBar) {
-        searchBar.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const val = searchBar.value.trim();
-                if (val.length > 0) {
-                    loadAllData(val);
-                }
-            }
-        });
+      searchBar.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const val = searchBar.value.trim();
+          if (val.length > 0) loadAllData(val);
+        }
+      });
     }
 
-    // 2-1. 경제지표 새로고침 버튼
+    /* ── 5. 경제지표 새로고침 버튼 ── */
     const indRefreshBtn = document.getElementById('indicator-refresh-btn');
     if (indRefreshBtn) {
       indRefreshBtn.addEventListener('click', async () => {
@@ -289,7 +318,7 @@ const NewsWidget = (() => {
       });
     }
 
-    // 3. 메인 첫 실행 데이터 트랙 가동
+    /* ── 6. 메인 첫 실행 데이터 트랙 가동 ── */
     await loadAllData('전체 뉴스');
   };
 
