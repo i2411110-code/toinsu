@@ -96,9 +96,34 @@
         .tag-btn { background: #F2F4F6; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; color: #4E5936; cursor: pointer; transition: all 0.2s; }
         .tag-btn.active, .tag-btn:hover { background: #191F28; color: white; }
 
-        .news-grid-body { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
-        .paper-section { flex: 1.1; min-width: 330px; background: white; border: 1px solid #F2F4F6; border-radius: 16px; padding: 24px; }
-        .feed-section { flex: 1.4; min-width: 350px; display: flex; flex-direction: column; gap: 14px; }
+        /* ── 뉴스 그리드: 두 컬럼 높이 완전 동일 ── */
+        .news-grid-body {
+            display: grid;
+            grid-template-columns: 1fr 1.3fr;
+            gap: 20px;
+            align-items: stretch;   /* ← 핵심: 두 컬럼 높이 맞춤 */
+        }
+        @media (max-width: 768px) {
+            .news-grid-body { grid-template-columns: 1fr; }
+        }
+        .paper-section {
+            background: white;
+            border: 1px solid #F2F4F6;
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            /* 높이 고정 없음 → 내용에 따라 자동 확장 */
+        }
+        .feed-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            background: white;
+            border: 1px solid #F2F4F6;
+            border-radius: 20px;
+            overflow: hidden;
+        }
 
         .paper-header { text-align: center; border-bottom: 2px solid #191F28; padding-bottom: 12px; margin-bottom: 18px; }
         .paper-brand { font-size: 11px; font-weight: 700; color: #10B981; letter-spacing: 0.5px; }
@@ -114,7 +139,7 @@
         .p-idx-item .c.up { color: #FF4D52; }
         .p-idx-item .c.down { color: #3182F6; }
 
-        .paper-body-text { font-size: 14px; line-height: 1.65; color: #333D4B; text-align: justify; border-bottom: 1px dashed #E5E8EB; padding-bottom: 16px; margin-bottom: 16px; }
+        .paper-body-text { font-size: 14px; line-height: 1.65; color: #333D4B; text-align: justify; border-bottom: 1px dashed #E5E8EB; padding-bottom: 16px; margin-bottom: 16px; flex: 1; }
         .paper-body-text strong { font-size: 16px; color: #191F28; display: block; margin-bottom: 8px; font-weight: 700; }
 
         .paper-footer-widgets { display: flex; gap: 10px; }
@@ -126,7 +151,7 @@
         .feed-badge { font-size: 11px; font-weight: 700; color: #3182F6; background: #E8F3FF; padding: 4px 8px; border-radius: 6px; align-self: flex-start; }
         .feed-badge.alert-type { background: #FEEBEE; color: #FF4D52; }
         .feed-title { font-size: 16px; font-weight: 700; color: #191F28; line-height: 1.4; }
-        .feed-desc { font-size: 13px; color: #4E5936; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .feed-desc { font-size: 13px; color: #4E5936; line-height: 1.5; }
         .feed-link { font-size: 12px; color: #3182F6; font-weight: 700; text-decoration: none; margin-top: 6px; display: inline-flex; align-items: center; gap: 2px; }
 
         .indicator-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
@@ -155,6 +180,64 @@
         .claim-list-item { display: flex; gap: 10px; font-size: 14.5px; font-weight: 600; color: #334155; line-height: 1.5; }
         .claim-list-num { color: #2563EB; font-weight: 800; flex-shrink: 0; }
         
+        /* ── 최신 속보 피드 토스 히어로 헤더 ── */
+        .news-feed-hero {
+            background: linear-gradient(135deg, #1D4ED8 0%, #3182F6 100%);
+            padding: 20px 22px 18px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .news-feed-hero-left { display: flex; flex-direction: column; gap: 3px; }
+        .news-feed-hero-tag { font-size: 11px; font-weight: 700; opacity: 0.8; letter-spacing: 0.5px; text-transform: uppercase; }
+        .news-feed-hero-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+        .news-feed-hero-refresh {
+            background: rgba(255,255,255,0.18);
+            border: 1.5px solid rgba(255,255,255,0.35);
+            color: white;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            font-family: 'Noto Sans KR', sans-serif;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+        .news-feed-hero-refresh:hover { background: rgba(255,255,255,0.28); }
+        .news-feed-hero-refresh .spin { animation: feed-spin 0.8s linear infinite; }
+        @keyframes feed-spin { to { transform: rotate(360deg); } }
+
+        /* 피드 카드 리스트 영역 */
+        .feed-cards-wrap {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            gap: 12px;
+        }
+        .feed-card {
+            background: #F8FAFC;
+            border-radius: 14px;
+            padding: 18px;
+            border: 1px solid #F2F4F6;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+        .feed-card:first-child { background: #EFF6FF; border-color: #DBEAFE; }
+
+        /* section-header-title 기존 스타일 제거 대비 */
+        .section-header-title { display: none; }
+
         /* ── ✅ 토스 히어로 배너 & 카드 스타일 ── */
         .toss-hero-header {
             background: #3182F6;
@@ -293,36 +376,34 @@
             </div>
 
             <div class="feed-section">
-                <div class="section-header-title">
-                    최신 속보 라이브 피드
-                    <button class="btn-refresh" id="news-feed-manual-refresh-btn"><i class="bi bi-arrow-clockwise"></i> 새로고침</button>
-                </div>
-                <div id="news-live-feed-target-container" style="display:flex; flex-direction:column; gap:12px;">
+                <!-- 토스 히어로 헤더 -->
+                <div class="news-feed-hero">
+                    <div class="news-feed-hero-left">
+                        <div class="news-feed-hero-tag">📡 LIVE</div>
+                        <div class="news-feed-hero-title">최신 속보 피드</div>
                     </div>
+                    <button class="news-feed-hero-refresh" id="news-feed-manual-refresh-btn">
+                        <i class="bi bi-arrow-clockwise" id="feed-refresh-icon"></i> 실시간 새로고침
+                    </button>
+                </div>
+                <!-- 카드 리스트 -->
+                <div class="feed-cards-wrap" id="news-live-feed-target-container">
+                </div>
             </div>
         </div>
 
         <div id="news-bottom-market-grid" style="margin-top:20px;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-        <div style="font-size:15px; font-weight:800; color:#191F28;">
-            <i class="bi bi-bar-chart-fill" style="color:#2563EB;"></i> 오늘의 경제 지표
-        </div>
+        <div style="font-size:15px; font-weight:800; color:#191F28;"><i class="bi bi-bar-chart-fill" style="color:#2563EB;"></i> 오늘의 경제 지표</div>
         <button id="indicator-refresh-btn"
-            style="background:#EFF6FF; color:#2563EB; border:none; padding:7px 14px; border-radius:20px;
-                   font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px;
-                   font-family:inherit; transition:background 0.15s;"
-            onmouseover="this.style.background='#DBEAFE'"
-            onmouseout="this.style.background='#EFF6FF'">
+            style="background:#EFF6FF; color:#2563EB; border:none; padding:7px 14px; border-radius:20px; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px; font-family:inherit; transition:background 0.15s;"
+            onmouseover="this.style.background='#DBEAFE'" onmouseout="this.style.background='#EFF6FF'">
             <i class="bi bi-arrow-clockwise"></i> 새로고침
         </button>
     </div>
     <div class="indicator-grid" id="news-indicator-grid-inner">
-        <div style="grid-column:1/-1; padding:20px; text-align:center; color:#94A3B8; font-size:13px;">
-            <i class="bi bi-arrow-clockwise" style="animation:ind-spin 1s linear infinite; display:inline-block; margin-right:6px;"></i>
-            경제 지표 불러오는 중...
-        </div>
+        <div style="grid-column:1/-1; padding:20px; text-align:center; color:#94A3B8; font-size:13px;">경제 지표 불러오는 중...</div>
     </div>
-    <style>@keyframes ind-spin { to { transform: rotate(360deg); } }</style>
 </div>
     </div>
 

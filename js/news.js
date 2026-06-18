@@ -105,41 +105,29 @@ const NewsWidget = (() => {
 
   // 2. 우측 최신 속보 타일형 피드 연동
   const renderNewsFeed = (items) => {
-    const el = document.querySelector('.feed-section');
-    if (!el) return;
+    // 카드 컨테이너만 타겟 (토스히어로 헤더는 HTML에 고정, 덮어쓰지 않음)
+    const wrap = document.getElementById('news-live-feed-target-container');
+    if (!wrap) return;
 
     if (!items.length) {
-      el.innerHTML = `<div style="padding:40px;text-align:center;color:#94A3B8;">실시간 속보 데이터를 불러올 수 없습니다.</div>`;
+      wrap.innerHTML = `<div style="padding:40px;text-align:center;color:#94A3B8;font-size:14px;">실시간 속보 데이터를 불러올 수 없습니다.</div>`;
       return;
     }
 
-    // 구조 정의 초기화 및 헤더 복구
-    let html = `
-      <div class="section-header-title">
-        최신 속보 피드 
-        <button class="btn-refresh" id="nw-btn-refresh-live"><i class="bi bi-arrow-clockwise"></i> 실시간 새로고침</button>
-      </div>`;
-
-    // 인덱스 1번부터 끝까지는 피드 카드로 배치합니다.
-    const feedItems = items.slice(1, 6);
-    feedItems.forEach((item, idx) => {
-      const isFirst = idx === 0;
-      html += `
-        <div class="feed-card" ${isFirst ? 'style="border-left: 4px solid #EF4444;"' : ''}>
-          <span class="feed-badge ${isFirst ? 'alert-type' : ''}">${isFirst ? '주요속보' : '실시간뉴스'}</span>
-          <span style="font-size:11px;color:#94A3B8;float:right;font-weight:500;">${fmtDate(item.pubDate)}</span>
-          <h3 class="feed-title">${clean(item.title)}</h3>
-          <p class="feed-desc">${clean(item.description)}</p>
-          <a href="${item.link || item.originallink}" target="_blank" rel="noopener noreferrer" class="feed-link">기사 원문 보기 <i class="bi bi-arrow-right-short"></i></a>
-        </div>`;
-    });
-
-    el.innerHTML = html;
-
-    // 실시간 리프레시 이벤트 핸들러 주입
-    document.getElementById('nw-btn-refresh-live').addEventListener('click', () => {
-        loadAllData(document.querySelector('.tag-btn.active')?.textContent || '전체 뉴스');
-    });
+    // 인덱스 0부터 5개 피드 카드
+    const feedItems = items.slice(0, 5);
+    wrap.innerHTML = feedItems.map((item, idx) => `
+      <div class="feed-card">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px;">
+          <span class="feed-badge ${idx === 0 ? 'alert-type' : ''}">${idx === 0 ? '🔴 주요속보' : '실시간뉴스'}</span>
+          <span style="font-size:11px;color:#94A3B8;font-weight:500;">${fmtDate(item.pubDate)}</span>
+        </div>
+        <h3 class="feed-title">${clean(item.title)}</h3>
+        <p class="feed-desc">${clean(item.description)}</p>
+        <a href="${item.link || item.originallink}" target="_blank" rel="noopener noreferrer" class="feed-link">
+          기사 원문 보기 <i class="bi bi-arrow-right-short"></i>
+        </a>
+      </div>`).join('');
   };
 
   // 3. 좌측 MORNING NEWS 지면 데이터 매핑
@@ -187,35 +175,32 @@ const NewsWidget = (() => {
     const el = document.getElementById('news-indicator-grid-inner') || document.querySelector('.indicator-grid');
     if (!el) return;
 
-    const usd   = fxList.find(i => i.label === 'USD')            || { value: 1512.40, change: 1.40,   direction: 'up' };
-    const jpy   = fxList.find(i => i.label === 'JPY')            || { value: 943.63,  change: 1.78,   direction: 'up' };
-    const kospi = mktList.find(i => i.label === '코스피')         || { value: 2750.00, change: 12.00,  direction: 'up' };
-    const gold  = mktList.find(i => i.label === '국내 금 (원/g)') || { value: 105400,  change: 80,     direction: 'up' };
+    const usd   = fxList.find(i => i.label === 'USD')            || { value: 1512.40, change: 1.40,  direction: 'up' };
+    const jpy   = fxList.find(i => i.label === 'JPY')            || { value: 943.63,  change: 1.78,  direction: 'up' };
+    const kospi = mktList.find(i => i.label === '코스피')         || { value: 2750.00, change: 12.00, direction: 'up' };
+    const gold  = mktList.find(i => i.label === '국내 금 (원/g)') || { value: 105400,  change: 80,    direction: 'up' };
 
-    // 카드 helper: 네이버 링크 + 클릭 연결 포함
     const card = (link, lbl, price, dir, change) => `
       <a class="ind-card-link" href="${link}" target="_blank" rel="noopener noreferrer">
         <div class="ind-card">
           <div class="lbl">${lbl}</div>
           <div class="price">${price}</div>
           <div class="state ${dir}"><i class="bi bi-caret-${dir}-fill"></i> ${change} (${dir === 'up' ? '▲ 상승' : '▼ 하락'})</div>
-          <div style="font-size:10px; color:#B0B8C1; margin-top:6px; display:flex; align-items:center; gap:3px;">
+          <div style="font-size:10px;color:#B0B8C1;margin-top:6px;display:flex;align-items:center;gap:3px;">
             <i class="bi bi-box-arrow-up-right"></i> 네이버 증권 바로가기
           </div>
         </div>
       </a>`;
 
     el.innerHTML =
-      card(EXCHANGE_LINKS.USD,     'USD / KRW (원/달러 환율)',
-           Number(usd.value).toFixed(2),
-           usd.direction, Math.abs(usd.change).toFixed(2)) +
-      card(EXCHANGE_LINKS.JPY,     'JPY / KRW (100엔 환율)',
-           Number(jpy.value).toFixed(2),
-           jpy.direction, Math.abs(jpy.change).toFixed(2)) +
-      card(MARKET_LINKS['코스피'], 'KOSPI 종합지수',
+      card(EXCHANGE_LINKS.USD,              'USD / KRW (원/달러 환율)',
+           Number(usd.value).toFixed(2),   usd.direction,   Math.abs(usd.change).toFixed(2)) +
+      card(EXCHANGE_LINKS.JPY,              'JPY / KRW (100엔 환율)',
+           Number(jpy.value).toFixed(2),   jpy.direction,   Math.abs(jpy.change).toFixed(2)) +
+      card(MARKET_LINKS['코스피'],           'KOSPI 종합지수',
            Number(kospi.value).toLocaleString('ko-KR', {maximumFractionDigits:2}),
            kospi.direction, Math.abs(kospi.change).toFixed(2)) +
-      card(MARKET_LINKS['국내 금 (원/g)'], '국내 금시세 (원/g)',
+      card(MARKET_LINKS['국내 금 (원/g)'],   '국내 금시세 (원/g)',
            Number(gold.value).toLocaleString('ko-KR', {maximumFractionDigits:0}),
            gold.direction, Math.abs(gold.change).toLocaleString('ko-KR', {maximumFractionDigits:0}));
   };
@@ -254,6 +239,20 @@ const NewsWidget = (() => {
         renderWeatherStrip(results.filter(r => !r.error));
     });
 
+    // 2-0. 최신속보 새로고침 버튼 (토스히어로 헤더 버튼)
+    const feedRefreshBtn = document.getElementById('news-feed-manual-refresh-btn');
+    if (feedRefreshBtn) {
+      feedRefreshBtn.addEventListener('click', async () => {
+        const icon = feedRefreshBtn.querySelector('i');
+        if (icon) icon.classList.add('spin');
+        feedRefreshBtn.disabled = true;
+        const keyword = document.querySelector('.tag-btn.active')?.textContent?.trim() || '전체 뉴스';
+        await loadAllData(keyword);
+        if (icon) icon.classList.remove('spin');
+        feedRefreshBtn.disabled = false;
+      });
+    }
+
     // 2. 카테고리 태그 탭 클릭 이벤트 및 검색어 인풋 실시간 바인딩
     const tagButtons = document.querySelectorAll('.tag-wrap .tag-btn');
     const searchBar = document.querySelector('.search-bar');
@@ -278,19 +277,19 @@ const NewsWidget = (() => {
         });
     }
 
-    // 3. 경제 지표 새로고침 버튼 이벤트
+    // 2-1. 경제지표 새로고침 버튼
     const indRefreshBtn = document.getElementById('indicator-refresh-btn');
     if (indRefreshBtn) {
       indRefreshBtn.addEventListener('click', async () => {
         const icon = indRefreshBtn.querySelector('i');
-        if (icon) { icon.style.animation = 'ind-spin 0.6s linear infinite'; }
+        if (icon) icon.style.animation = 'ind-spin 0.6s linear infinite';
         const [fxData, mktItems] = await Promise.all([api.exchange(), api.market()]);
         renderBottomIndicators(fxData.items || [], mktItems);
-        if (icon) { icon.style.animation = ''; }
+        if (icon) icon.style.animation = '';
       });
     }
 
-    // 4. 메인 첫 실행 데이터 트랙 가동
+    // 3. 메인 첫 실행 데이터 트랙 가동
     await loadAllData('전체 뉴스');
   };
 
