@@ -109,24 +109,84 @@
             .news-grid-body { grid-template-columns: 1fr; }
         }
 
-        /* ── MORNING NEWS 신문지면 섹션 ── */
+        /* ── MORNING NEWS 신문지면 섹션 (토스 히어로 스타일 개편) ── */
         .paper-section {
-            background: white;
-            border: 1px solid #F2F4F6;
-            border-radius: 20px;
-            padding: 24px;
+            background: #3182F6;
+            box-shadow: 0 10px 30px rgba(49, 130, 246, 0.2);
+            border-radius: 24px;
+            padding: 30px 24px;
             display: flex;
             flex-direction: column;
             gap: 0;
+            color: white;
+            border: none;
         }
-        .feed-section {
+
+        .paper-header { text-align: left; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 12px; margin-bottom: 18px; position: relative; }
+        .paper-brand { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.8); letter-spacing: 0.5px; }
+        .paper-title { font-size: 26px; font-weight: 800; color: white; margin: 4px 0; font-family: 'Noto Sans KR', sans-serif; letter-spacing: -0.5px; }
+        .paper-date { font-size: 12px; color: rgba(255,255,255,0.7); position: absolute; right: 0; bottom: 12px; }
+
+        /* ── 미니 경제지표 바 (다크톤 반전) ── */
+        .paper-top-index {
+            background: rgba(0, 0, 0, 0.15);
+            color: white;
+            padding: 14px;
+            border-radius: 16px;
             display: flex;
-            flex-direction: column;
-            background: white;
-            border: 1px solid #F2F4F6;
-            border-radius: 20px;
-            overflow: hidden;
+            justify-content: space-between;
+            text-align: center;
+            margin-bottom: 20px;
         }
+        .p-idx-link { flex: 1; text-decoration: none; color: white; transition: background 0.15s; }
+        .p-idx-item .t { font-size: 11px; color: rgba(255,255,255,0.7); }
+        .p-idx-item .v { font-size: 16px; font-weight: 800; margin: 4px 0; }
+        .p-idx-item .c { font-size: 12px; font-weight: 600; }
+        .p-idx-item .c.up { color: #F87171; } /* 붉은색 밝게 */
+        .p-idx-item .c.down { color: #93C5FD; } /* 푸른색 밝게 */
+
+        /* ── 기사 본문 스타일 ── */
+        .paper-article-item { display: flex; flex-direction: column; gap: 12px; padding: 10px 0; }
+        .paper-article-item strong {
+            font-size: 17px;
+            font-weight: 800;
+            color: white;
+            line-height: 1.45;
+            display: block;
+            border-left: 4px solid #FACC15; /* 노란색 포인트 */
+            padding-left: 12px;
+        }
+        .paper-meta { font-size: 11px; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 4px; }
+        
+        .paper-content {
+            font-size: 14px;
+            line-height: 1.8;
+            color: white;
+            margin: 0;
+            word-break: keep-all;
+            background: rgba(255,255,255,0.1); /* 반투명 배경 */
+            border-radius: 12px;
+            padding: 16px;
+            border-left: 3px solid rgba(255,255,255,0.3);
+            min-height: 160px; /* 빈 공간을 채우기 위한 최소 높이 */
+        }
+
+        .paper-read-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            color: #3182F6;
+            font-size: 13px;
+            font-weight: 800;
+            padding: 12px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            align-self: flex-start;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+        .paper-read-link:hover { background: #F8FAFC; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
         .paper-header { text-align: center; border-bottom: 2px solid #191F28; padding-bottom: 12px; margin-bottom: 18px; }
         .paper-brand { font-size: 11px; font-weight: 700; color: #10B981; letter-spacing: 0.5px; }
@@ -160,32 +220,20 @@
         .p-idx-item .c.down { color: #3182F6; }
 
         /* ================================================================
-           ✅ MORNING NEWS 본문 — 복수 기사 전체 노출 + 원문 버튼
+           ✅ MORNING NEWS 본문 — 기사 전체 노출 + 원문 버튼
         ================================================================ */
         .paper-body-text {
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-            flex: 1;
-            justify-content: space-between;
-        }
-
-        .paper-article-item {
             font-size: 14px;
             line-height: 1.65;
             color: #333D4B;
             display: flex;
             flex-direction: column;
             gap: 12px;
-            padding: 18px 0;
-        }
-        .paper-article-item:first-child { padding-top: 0; }
-        .paper-article-item:not(:last-child) {
-            border-bottom: 1px dashed #E2E8F0;
+            flex: 1;
         }
 
         /* 헤드라인 제목 */
-        .paper-article-item strong {
+        .paper-body-text strong {
             font-size: 16px;
             font-weight: 800;
             color: #191F28;
@@ -278,8 +326,6 @@
         .news-feed-hero-refresh:hover { background: rgba(255,255,255,0.28); }
         .news-feed-hero-refresh .spin { animation: feed-spin 0.8s linear infinite; }
         @keyframes feed-spin { to { transform: rotate(360deg); } }
-        @keyframes ind-spin { to { transform: rotate(360deg); } }
-        .spin { animation: ind-spin 0.7s linear infinite; }
 
         .feed-cards-wrap {
             display: flex;
@@ -487,32 +533,19 @@
                     <div class="paper-date" id="paper-live-date">날짜 불러오는 중...</div>
                 </div>
 
-                <!-- 실시간 환율·지수 헤더 + 새로고침 -->
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-                    <div style="font-size:12px; font-weight:800; color:#191F28; display:flex; align-items:center; gap:5px;">
-                        <i class="bi bi-graph-up-arrow" style="color:#2563EB;"></i> 실시간 환율 · 지수
-                    </div>
-                    <button id="paper-index-refresh-btn"
-                        style="background:#EFF6FF; color:#2563EB; border:none; padding:6px 12px; border-radius:18px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px; font-family:inherit;">
-                        <i class="bi bi-arrow-clockwise"></i> 새로고침
-                    </button>
-                </div>
-
                 <!-- 미니 경제지표 바 -->
                 <div class="paper-top-index" id="paper-mini-index-box">
                     <!-- news.js 에서 동적 주입 -->
                 </div>
 
-                <!-- 기사 리스트 (전체 칸을 채우는 복수 기사 표시) -->
+                <!-- 기사 헤드라인 + 본문 전체 + 원문 버튼 -->
                 <div class="paper-body-text" id="paper-main-headline-body">
-                    <div class="paper-article-item">
-                        <strong>헤드라인 분석 중...</strong>
-                        <span class="paper-meta">
-                            <i class="bi bi-clock" style="font-size:10px;"></i>
-                            실시간 뉴스를 불러오고 있습니다.
-                        </span>
-                        <p class="paper-content">잠시만 기다려 주세요.</p>
-                    </div>
+                    <strong>헤드라인 분석 중...</strong>
+                    <span class="paper-meta">
+                        <i class="bi bi-clock" style="font-size:10px;"></i>
+                        실시간 뉴스를 불러오고 있습니다.
+                    </span>
+                    <p class="paper-content">잠시만 기다려 주세요.</p>
                 </div>
             </div>
 

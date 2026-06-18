@@ -59,7 +59,7 @@ const NewsWidget = (() => {
     desc.includes('비') || desc.includes('소나기') ? '🌧️' :
     desc.includes('눈') ? '❄️' : '☀️';
 
-  /* ------------------------------------------------------------------ */
+  //* ------------------------------------------------------------------ */
   /* 네이버 증권 및 기상청 API 실시간 호출 연동                           */
   /* ------------------------------------------------------------------ */
   const api = {
@@ -70,16 +70,10 @@ const NewsWidget = (() => {
         return j.items || [];
       } catch { return []; }
     },
-    exchange: async () => {
+    // 기존 exchange와 market 함수를 통합하여 하나의 엔드포인트에서 모든 지표를 가져옵니다.
+    marketData: async () => {
       try {
         const r = await fetch('/api/naver-exchange', { cache: 'no-store' });
-        const j = await r.json();
-        return { date: j.date || '', items: j.items || [] };
-      } catch { return { date: '', items: [] }; }
-    },
-    market: async () => {
-      try {
-        const r = await fetch('/api/market', { cache: 'no-store' });
         const j = await r.json();
         return j.items || [];
       } catch { return []; }
@@ -239,24 +233,20 @@ const NewsWidget = (() => {
       apiQuery = keyword;
     }
 
-    const [newsItems, fxData, mktItems] = await Promise.all([
+    const [newsItems, mktItems] = await Promise.all([
       api.news(apiQuery, 10),
-      api.exchange(),
-      api.market()
+      api.marketData() // 통합된 API 하나만 호출
     ]);
 
-    const fxList = fxData.items || [];
-
     if (newsItems.length > 0) {
-      renderMorningPaper(newsItems[0], fxList, mktItems);
+      renderMorningPaper(newsItems[0], mktItems, mktItems); // fxList와 mktList를 동일한 데이터로 넘김
       renderNewsFeed(newsItems);
     } else {
-      /* 뉴스가 없어도 날짜·지표는 업데이트 */
       const dateEl = document.getElementById('paper-live-date');
       if (dateEl) dateEl.textContent = getTodayLabel();
     }
 
-    renderBottomIndicators(fxList, mktItems);
+    renderBottomIndicators(mktItems, mktItems);
   };
 
   const init = async () => {
@@ -312,8 +302,14 @@ const NewsWidget = (() => {
       indRefreshBtn.addEventListener('click', async () => {
         const icon = indRefreshBtn.querySelector('i');
         if (icon) icon.style.animation = 'ind-spin 0.6s linear infinite';
-        const [fxData, mktItems] = await Promise.all([api.exchange(), api.market()]);
-        renderBottomIndicators(fxData.items || [], mktItems);
+        
+        const mktItems = await api.marketData(); // 새로고침 시 통합 API 호출
+        renderBottomIndicators(mktItems, mktItems);
+        
+        // MORNING NEWS 상단 미니 지표도 같이 업데이트 (선택 사항)
+        const newsItems = await api.news('보험 금융 경제', 1);
+        if(newsItems.length > 0) renderMorningPaper(newsItems[0], mktItems, mktItems);
+
         if (icon) icon.style.animation = '';
       });
     }
