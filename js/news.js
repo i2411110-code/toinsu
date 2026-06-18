@@ -93,7 +93,7 @@ const NewsWidget = (() => {
   
   // 1. 상단 스크롤 띠 배너 날씨 연동
   const renderWeatherStrip = (list) => {
-    const el = document.getElementById('news-weather-strip-line') || document.querySelector('.weather-strip');
+    const el = document.querySelector('.weather-strip');
     if (!el || !list.length) return;
     
     el.innerHTML = list.map(w => `
@@ -187,33 +187,37 @@ const NewsWidget = (() => {
     const el = document.getElementById('news-indicator-grid-inner') || document.querySelector('.indicator-grid');
     if (!el) return;
 
-    const usd = fxList.find(i => i.label === 'USD') || { value: 1512.40, change: 1.40, direction: 'up' };
-    const jpy = fxList.find(i => i.label === 'JPY') || { value: 943.63, change: 1.78, direction: 'up' };
-    const kospi = mktList.find(i => i.label === '코스피') || { value: 8864.24, change: 137.84, direction: 'up' };
-    const gold = mktList.find(i => i.label === '국내 금 (원/g)') || { value: 209700, change: 80, direction: 'up' };
+    const usd   = fxList.find(i => i.label === 'USD')            || { value: 1512.40, change: 1.40,   direction: 'up' };
+    const jpy   = fxList.find(i => i.label === 'JPY')            || { value: 943.63,  change: 1.78,   direction: 'up' };
+    const kospi = mktList.find(i => i.label === '코스피')         || { value: 2750.00, change: 12.00,  direction: 'up' };
+    const gold  = mktList.find(i => i.label === '국내 금 (원/g)') || { value: 105400,  change: 80,     direction: 'up' };
 
-    el.innerHTML = `
+    // 카드 helper: 네이버 링크 + 클릭 연결 포함
+    const card = (link, lbl, price, dir, change) => `
+      <a class="ind-card-link" href="${link}" target="_blank" rel="noopener noreferrer">
         <div class="ind-card">
-            <div class="lbl">USD / KRW (원/달러 환율)</div>
-            <div class="price">${Number(usd.value).toFixed(2)}</div>
-            <div class="state ${usd.direction}"><i class="bi bi-caret-${usd.direction}-fill"></i> ${Math.abs(usd.change).toFixed(2)} (${usd.direction === 'up' ? '상승' : '하락'})</div>
+          <div class="lbl">${lbl}</div>
+          <div class="price">${price}</div>
+          <div class="state ${dir}"><i class="bi bi-caret-${dir}-fill"></i> ${change} (${dir === 'up' ? '▲ 상승' : '▼ 하락'})</div>
+          <div style="font-size:10px; color:#B0B8C1; margin-top:6px; display:flex; align-items:center; gap:3px;">
+            <i class="bi bi-box-arrow-up-right"></i> 네이버 증권 바로가기
+          </div>
         </div>
-        <div class="ind-card">
-            <div class="lbl">JPY / KRW (100엔 환율)</div>
-            <div class="price">${Number(jpy.value).toFixed(2)}</div>
-            <div class="state ${jpy.direction}"><i class="bi bi-caret-${jpy.direction}-fill"></i> ${Math.abs(jpy.change).toFixed(2)} (${jpy.direction === 'up' ? '상승' : '하락'})</div>
-        </div>
-        <div class="ind-card">
-            <div class="lbl">KOSPI 종합지수</div>
-            <div class="price">${Number(kospi.value).toLocaleString('ko-KR', {maximumFractionDigits:2})}</div>
-            <div class="state ${kospi.direction}"><i class="bi bi-caret-${kospi.direction}-fill"></i> ${Math.abs(kospi.change).toFixed(2)} (${kospi.direction === 'up' ? '상승' : '하락'})</div>
-        </div>
-        <div class="ind-card">
-            <div class="lbl">국내 금시세 (g당)</div>
-            <div class="price">${Number(gold.value).toLocaleString('ko-KR', {maximumFractionDigits:0})}</div>
-            <div class="state ${gold.direction}"><i class="bi bi-caret-${gold.direction}-fill"></i> ${Math.abs(gold.change).toLocaleString('ko-KR', {maximumFractionDigits:0})} (${gold.direction === 'up' ? '상승' : '하락'})</div>
-        </div>
-    `;
+      </a>`;
+
+    el.innerHTML =
+      card(EXCHANGE_LINKS.USD,     'USD / KRW (원/달러 환율)',
+           Number(usd.value).toFixed(2),
+           usd.direction, Math.abs(usd.change).toFixed(2)) +
+      card(EXCHANGE_LINKS.JPY,     'JPY / KRW (100엔 환율)',
+           Number(jpy.value).toFixed(2),
+           jpy.direction, Math.abs(jpy.change).toFixed(2)) +
+      card(MARKET_LINKS['코스피'], 'KOSPI 종합지수',
+           Number(kospi.value).toLocaleString('ko-KR', {maximumFractionDigits:2}),
+           kospi.direction, Math.abs(kospi.change).toFixed(2)) +
+      card(MARKET_LINKS['국내 금 (원/g)'], '국내 금시세 (원/g)',
+           Number(gold.value).toLocaleString('ko-KR', {maximumFractionDigits:0}),
+           gold.direction, Math.abs(gold.change).toLocaleString('ko-KR', {maximumFractionDigits:0}));
   };
 
   /* ------------------------------------------------------------------ */
@@ -274,7 +278,19 @@ const NewsWidget = (() => {
         });
     }
 
-    // 3. 메인 첫 실행 데이터 트랙 가동
+    // 3. 경제 지표 새로고침 버튼 이벤트
+    const indRefreshBtn = document.getElementById('indicator-refresh-btn');
+    if (indRefreshBtn) {
+      indRefreshBtn.addEventListener('click', async () => {
+        const icon = indRefreshBtn.querySelector('i');
+        if (icon) { icon.style.animation = 'ind-spin 0.6s linear infinite'; }
+        const [fxData, mktItems] = await Promise.all([api.exchange(), api.market()]);
+        renderBottomIndicators(fxData.items || [], mktItems);
+        if (icon) { icon.style.animation = ''; }
+      });
+    }
+
+    // 4. 메인 첫 실행 데이터 트랙 가동
     await loadAllData('전체 뉴스');
   };
 

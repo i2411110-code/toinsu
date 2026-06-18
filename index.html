@@ -303,17 +303,26 @@
         </div>
 
         <div id="news-bottom-market-grid" style="margin-top:20px;">
-    <div style="font-size:15px; font-weight:800; color:#191F28; margin-bottom:12px;">
-        <i class="bi bi-bar-chart-fill" style="color:#2563EB;"></i> 오늘의 경제 지표
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+        <div style="font-size:15px; font-weight:800; color:#191F28;">
+            <i class="bi bi-bar-chart-fill" style="color:#2563EB;"></i> 오늘의 경제 지표
+        </div>
+        <button id="indicator-refresh-btn"
+            style="background:#EFF6FF; color:#2563EB; border:none; padding:7px 14px; border-radius:20px;
+                   font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px;
+                   font-family:inherit; transition:background 0.15s;"
+            onmouseover="this.style.background='#DBEAFE'"
+            onmouseout="this.style.background='#EFF6FF'">
+            <i class="bi bi-arrow-clockwise"></i> 새로고침
+        </button>
     </div>
     <div class="indicator-grid" id="news-indicator-grid-inner">
-        <!-- JS(news.js renderBottomIndicators)가 여기에 카드를 주입합니다 -->
         <div style="grid-column:1/-1; padding:20px; text-align:center; color:#94A3B8; font-size:13px;">
-            <i class="bi bi-arrow-clockwise" style="animation:spin 1s linear infinite; display:inline-block;"></i>
-            &nbsp;경제 지표 불러오는 중...
+            <i class="bi bi-arrow-clockwise" style="animation:ind-spin 1s linear infinite; display:inline-block; margin-right:6px;"></i>
+            경제 지표 불러오는 중...
         </div>
     </div>
-    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+    <style>@keyframes ind-spin { to { transform: rotate(360deg); } }</style>
 </div>
     </div>
 
