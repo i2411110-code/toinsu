@@ -98,95 +98,39 @@
         .tag-btn { background: #F2F4F6; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; color: #4E5936; cursor: pointer; transition: all 0.2s; }
         .tag-btn.active, .tag-btn:hover { background: #191F28; color: white; }
 
-        /* ── 뉴스 그리드: 두 컬럼 높이 동일 ── */
+        /* ── 뉴스 그리드: 두 컬럼 높이 고정 ── */
         .news-grid-body {
             display: grid;
             grid-template-columns: 1fr 1.3fr;
             gap: 20px;
-            align-items: stretch;
+            /* align-items: stretch; 를 삭제하여 한쪽 내용때문에 반대쪽이 길어지는 것을 방지합니다 */
+            align-items: start; 
         }
         @media (max-width: 768px) {
             .news-grid-body { grid-template-columns: 1fr; }
         }
 
-        /* ── MORNING NEWS 신문지면 섹션 (토스 히어로 스타일 개편) ── */
+        /* ── MORNING NEWS 신문지면 섹션 ── */
         .paper-section {
-            background: #3182F6;
-            box-shadow: 0 10px 30px rgba(49, 130, 246, 0.2);
-            border-radius: 24px;
-            padding: 30px 24px;
+            background: white;
+            border: 1px solid #F2F4F6;
+            border-radius: 20px;
+            padding: 24px;
             display: flex;
             flex-direction: column;
             gap: 0;
-            color: white;
-            border: none;
+            height: 420px; /* 좌측 3줄 요약 내용에 맞춘 최적의 높이로 고정 */
         }
-
-        .paper-header { text-align: left; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 12px; margin-bottom: 18px; position: relative; }
-        .paper-brand { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.8); letter-spacing: 0.5px; }
-        .paper-title { font-size: 26px; font-weight: 800; color: white; margin: 4px 0; font-family: 'Noto Sans KR', sans-serif; letter-spacing: -0.5px; }
-        .paper-date { font-size: 12px; color: rgba(255,255,255,0.7); position: absolute; right: 0; bottom: 12px; }
-
-        /* ── 미니 경제지표 바 (다크톤 반전) ── */
-        .paper-top-index {
-            background: rgba(0, 0, 0, 0.15);
-            color: white;
-            padding: 14px;
-            border-radius: 16px;
-            display: flex;
-            justify-content: space-between;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .p-idx-link { flex: 1; text-decoration: none; color: white; transition: background 0.15s; }
-        .p-idx-item .t { font-size: 11px; color: rgba(255,255,255,0.7); }
-        .p-idx-item .v { font-size: 16px; font-weight: 800; margin: 4px 0; }
-        .p-idx-item .c { font-size: 12px; font-weight: 600; }
-        .p-idx-item .c.up { color: #F87171; } /* 붉은색 밝게 */
-        .p-idx-item .c.down { color: #93C5FD; } /* 푸른색 밝게 */
-
-        /* ── 기사 본문 스타일 ── */
-        .paper-article-item { display: flex; flex-direction: column; gap: 12px; padding: 10px 0; }
-        .paper-article-item strong {
-            font-size: 17px;
-            font-weight: 800;
-            color: white;
-            line-height: 1.45;
-            display: block;
-            border-left: 4px solid #FACC15; /* 노란색 포인트 */
-            padding-left: 12px;
-        }
-        .paper-meta { font-size: 11px; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 4px; }
         
-        .paper-content {
-            font-size: 14px;
-            line-height: 1.8;
-            color: white;
-            margin: 0;
-            word-break: keep-all;
-            background: rgba(255,255,255,0.1); /* 반투명 배경 */
-            border-radius: 12px;
-            padding: 16px;
-            border-left: 3px solid rgba(255,255,255,0.3);
-            min-height: 160px; /* 빈 공간을 채우기 위한 최소 높이 */
-        }
-
-        .paper-read-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+        .feed-section {
+            display: flex;
+            flex-direction: column;
             background: white;
-            color: #3182F6;
-            font-size: 13px;
-            font-weight: 800;
-            padding: 12px 20px;
-            border-radius: 12px;
-            text-decoration: none;
-            align-self: flex-start;
-            margin-top: 8px;
-            transition: all 0.2s;
+            border: 1px solid #F2F4F6;
+            border-radius: 20px;
+            overflow: hidden;
+            height: 420px; /* 좌측 MORNING NEWS와 동일하게 높이를 고정하여 스크롤 유도 */
         }
-        .paper-read-link:hover { background: #F8FAFC; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
         .paper-header { text-align: center; border-bottom: 2px solid #191F28; padding-bottom: 12px; margin-bottom: 18px; }
         .paper-brand { font-size: 11px; font-weight: 700; color: #10B981; letter-spacing: 0.5px; }
