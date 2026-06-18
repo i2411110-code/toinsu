@@ -96,7 +96,7 @@
         .tag-btn { background: #F2F4F6; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; color: #4E5936; cursor: pointer; transition: all 0.2s; }
         .tag-btn.active, .tag-btn:hover { background: #191F28; color: white; }
 
-        .news-grid-body { display: flex; gap: 20px; flex-wrap: wrap; }
+        .news-grid-body { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
         .paper-section { flex: 1.1; min-width: 330px; background: white; border: 1px solid #F2F4F6; border-radius: 16px; padding: 24px; }
         .feed-section { flex: 1.4; min-width: 350px; display: flex; flex-direction: column; gap: 14px; }
 
@@ -1054,10 +1054,10 @@
         };
 
         // 기존 뷰 전환 로직 수정 (다른 화면에서 대시보드 복귀 시 청구 뷰 닫기 추가)
-        const originalSwitchToMain = window.switchToMainView;
         window.switchToMainView = function() {
-            originalSwitchToMain();
+            document.getElementById('pwa-news-view').style.display = 'none';
             document.getElementById('pwa-claim-view').style.display = 'none';
+            document.getElementById('pwa-main-content-view').style.display = 'block';
         };
         
         const originalSwitchToNews = window.switchToNewsView;
