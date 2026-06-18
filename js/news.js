@@ -202,61 +202,48 @@ const NewsWidget = (() => {
 
   // 4. 하단 시장 지표 종합판 (새로고침 기능 및 레이아웃 개선)
   const renderBottomIndicators = (fxList, mktList) => {
-    const el = document.querySelector('.indicator-grid');
+    const el = document.getElementById('news-bottom-market-grid');
     if (!el) return;
 
-    // 데이터가 안 올 경우를 대비한 비상 데이터
     const fallbackFx = [{label: 'USD', value: 1385.50, change: 0, direction: 'up'}, {label: 'JPY', value: 890.30, change: 0, direction: 'down'}];
     const fallbackMkt = [{label: '코스피', value: 2750.45, change: 0, direction: 'up'}, {label: '국내 금 (원/g)', value: 105400, change: 0, direction: 'up'}];
     
-    const fx = fxList.length > 0 ? fxList : fallbackFx;
-    const mkt = mktList.length > 0 ? mktList : fallbackMkt;
+    const fx = (fxList && fxList.length > 0) ? fxList : fallbackFx;
+    const mkt = (mktList && mktList.length > 0) ? mktList : fallbackMkt;
 
     const usd = fx.find(i => i.label === 'USD') || fallbackFx[0];
     const jpy = fx.find(i => i.label === 'JPY') || fallbackFx[1];
     const kospi = mkt.find(i => i.label === '코스피') || fallbackMkt[0];
     const gold = mkt.find(i => i.label === '국내 금 (원/g)') || fallbackMkt[1];
 
-    // 💡 시장 지표 헤더에 새로고침 버튼 추가
-    const headerHtml = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    el.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; margin-top:20px;">
             <div style="font-size: 15px; font-weight: 700; color: #191F28;">오늘의 시장 지표 (네이버 증권 실시간 데이터 연동)</div>
             <button id="btn-refresh-market" style="background:#F2F4F6; border:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; color:#4E5936; cursor:pointer;">
                 <i class="bi bi-arrow-clockwise"></i> 데이터 갱신
             </button>
         </div>
+        <div class="indicator-grid">
+            <a href="https://m.stock.naver.com/marketindex/exchange/FX_USDKRW" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
+                <div class="ind-card"><div class="lbl">USD / KRW</div><div class="price">${usd.value.toLocaleString()}</div><div class="state ${usd.direction}">${usd.direction === 'up' ? '▲' : '▼'} ${Math.abs(usd.change).toFixed(2)}</div></div>
+            </a>
+            <a href="https://m.stock.naver.com/marketindex/exchange/FX_JPYKRW" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
+                <div class="ind-card"><div class="lbl">JPY / KRW</div><div class="price">${jpy.value.toLocaleString()}</div><div class="state ${jpy.direction}">${jpy.direction === 'up' ? '▲' : '▼'} ${Math.abs(jpy.change).toFixed(2)}</div></div>
+            </a>
+            <a href="https://m.stock.naver.com/domestic/index/KOSPI/total" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
+                <div class="ind-card"><div class="lbl">KOSPI 종합지수</div><div class="price">${kospi.value.toLocaleString()}</div><div class="state ${kospi.direction}">${kospi.direction === 'up' ? '▲' : '▼'} ${Math.abs(kospi.change).toFixed(2)}</div></div>
+            </a>
+            <a href="https://m.stock.naver.com/marketindex/metals/M04020000" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
+                <div class="ind-card"><div class="lbl">국내 금시세 (g당)</div><div class="price">${gold.value.toLocaleString()}</div><div class="state ${gold.direction}">${gold.direction === 'up' ? '▲' : '▼'} ${Math.abs(gold.change).toLocaleString()}</div></div>
+            </a>
+        </div>
     `;
-
-    const gridHtml = `
-        <a href="https://m.stock.naver.com/marketindex/exchange/FX_USDKRW" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
-            <div class="ind-card">
-                <div class="lbl">USD / KRW</div>
-                <div class="price">${usd.value.toLocaleString()}</div>
-                <div class="state ${usd.direction}">${usd.direction === 'up' ? '▲' : '▼'} ${Math.abs(usd.change).toFixed(2)}</div>
-            </div>
-        </a>
-        <a href="https://m.stock.naver.com/marketindex/exchange/FX_JPYKRW" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
-            <div class="ind-card">
-                <div class="lbl">JPY / KRW</div>
-                <div class="price">${jpy.value.toLocaleString()}</div>
-                <div class="state ${jpy.direction}">${jpy.direction === 'up' ? '▲' : '▼'} ${Math.abs(jpy.change).toFixed(2)}</div>
-            </div>
-        </a>
-        <a href="https://m.stock.naver.com/domestic/index/KOSPI/total" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
-            <div class="ind-card">
-                <div class="lbl">KOSPI 종합지수</div>
-                <div class="price">${kospi.value.toLocaleString()}</div>
-                <div class="state ${kospi.direction}">${kospi.direction === 'up' ? '▲' : '▼'} ${Math.abs(kospi.change).toFixed(2)}</div>
-            </div>
-        </a>
-        <a href="https://m.stock.naver.com/marketindex/metals/M04020000" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
-            <div class="ind-card">
-                <div class="lbl">국내 금시세 (g당)</div>
-                <div class="price">${gold.value.toLocaleString()}</div>
-                <div class="state ${gold.direction}">${gold.direction === 'up' ? '▲' : '▼'} ${Math.abs(gold.change).toLocaleString()}</div>
-            </div>
-        </a>
-    `;
+    
+    document.getElementById('btn-refresh-market').onclick = async () => {
+        const [fxRes, mktRes] = await Promise.all([api.exchange(), api.market()]);
+        renderBottomIndicators(fxRes.items, mktRes);
+    };
+  };
 
     // 헤더와 그리드를 합쳐서 출력
     const container = document.getElementById('news-bottom-market-grid');
@@ -279,37 +266,27 @@ const NewsWidget = (() => {
   /* 종합 오케스트레이션 로더                                              */
   /* ------------------------------------------------------------------ */
   const loadAllData = async (keyword = '전체 뉴스') => {
-    // 1. 키워드 설정
+    // 키워드 변환 파싱
+    let apiQuery = "보험 금융 경제";
+    if (keyword !== '전체 뉴스' && keyword !== '전체') {
+        apiQuery = keyword;
+    }const loadAllData = async (keyword = '전체 뉴스') => {
     let apiQuery = (keyword === '전체 뉴스' || keyword === '전체') ? "보험 금융 경제" : keyword;
 
-    // 2. 데이터 패치 (병렬)
     const [newsItems, fxData, mktItems] = await Promise.all([
         api.news(apiQuery, 10),
         api.exchange(),
         api.market()
     ]);
 
-    const fxList = fxData.items || [];
-
-    // 3. 렌더링 (순서 보장)
-    if (newsItems.length > 0) {
-        renderMorningPaper(newsItems[0], fxList, mktItems);
-        renderNewsFeed(newsItems);
-    } else {
-        // 혹시 뉴스 데이터가 없어도 지표는 그려야 하므로 예외 처리
-        console.warn("뉴스 데이터를 불러오지 못했습니다.");
-    }
+    // 지표 렌더링 (데이터 유무 상관없이 무조건 호출)
+    renderBottomIndicators(fxData.items, mktItems);
     
-    // 💡 시장 지표는 뉴스 데이터 유무와 상관없이 무조건 실행되도록 별도 배치 (데이터 갱신 핵심!)
-    renderBottomIndicators(fxList, mktItems);
-  };
-
-    // 전산 바인딩 출력 실행
+    // 뉴스 렌더링
     if (newsItems.length > 0) {
-        renderMorningPaper(newsItems[0], fxList, mktItems);
+        renderMorningPaper(newsItems[0], fxData.items, mktItems);
         renderNewsFeed(newsItems);
     }
-    renderBottomIndicators(fxList, mktItems);
   };
 
   const init = async () => {
