@@ -132,6 +132,49 @@ body {
 .sub-page { display: none; background: white; border-radius: 32px; padding: 45px; box-shadow: var(--card-shadow); max-width: 1200px; margin: 0 auto; }
 .section-title { font-size: 26px; font-weight: 700; color: var(--text-dark); margin-bottom: 25px; border-bottom: 2px solid var(--main-blue); padding-bottom: 15px; }
 
+/* =========================================
+   [개인공간 전산실 헤더 행: 이메일 넘침 방지 + 도움말 버튼]
+   ※ page-private.html 의 .section-title 내부에서 사용
+========================================= */
+.private-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.private-header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.private-header-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1 1 auto;
+}
+.help-form-btn {
+    background: var(--main-blue);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+.help-form-btn:hover { background: #1D4ED8; }
+
 .inline-home-btn {
     background: #F1F5F9;
     color: var(--text-dark);
@@ -208,7 +251,28 @@ body {
 /* =========================================
    [비밀 오피스: DB 대시보드 & 체크리스트 스타일]
 ========================================= */
-#dashboard-app { background: #f9fafb; color: #333; display: grid; grid-template-areas: "sidebar top-bar" "sidebar main"; grid-template-columns: 280px 1fr; grid-template-rows: auto 1fr; height: 80vh; overflow: hidden; border-radius: 16px; border: 1px solid #e2e8f0; }
+
+/* ── 가온오피스 내부 탭(앱) 표시 상태 제어 (모바일 겹침 방지 핵심) ──
+   - 기본은 항상 display:none.
+   - .is-active 클래스가 있을 때만 보이도록 한다.
+   - :not(.is-active)에 !important를 줘서, 어떤 반응형 미디어쿼리가
+     #dashboard-app 등에 display값을 지정하더라도 비활성 상태에서는
+     반드시 숨겨지도록(전부 동시 노출되는 문제 차단) 강제한다. */
+#dashboard-app,
+#checklist-app,
+#report-app {
+    display: none;
+}
+#dashboard-app.is-active { display: grid; }
+#checklist-app.is-active,
+#report-app.is-active { display: block; }
+#dashboard-app:not(.is-active),
+#checklist-app:not(.is-active),
+#report-app:not(.is-active) {
+    display: none !important;
+}
+
+#dashboard-app { background: #f9fafb; color: #333; grid-template-areas: "sidebar top-bar" "sidebar main"; grid-template-columns: 280px 1fr; grid-template-rows: auto 1fr; height: 80vh; overflow: hidden; border-radius: 16px; border: 1px solid #e2e8f0; }
 .top-bar { grid-area: top-bar; background: linear-gradient(90deg, #1e40af, #2563eb); color: white; padding: 0.75rem 1rem; font-size: 0.9rem; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; z-index: 1000; }
 .top-bar span { margin-right: 1rem; font-weight: 500; display: inline-block;}
 .sidebar { grid-area: sidebar; background: #2563eb; color: white; display: flex; flex-direction: column; padding: 1rem; overflow-y: auto; }
@@ -257,7 +321,10 @@ body {
 .comment-box button { background: #10b981; color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1em; white-space: nowrap; }
 
 @media (max-width: 1024px) {
-  #dashboard-app { display: flex !important; flex-direction: column; height: auto; overflow: visible; }
+  /* ✅ .is-active 가 붙어 활성화된 상태일 때만 모바일 레이아웃을 강제한다.
+     (이전에는 #dashboard-app 자체를 통째로 잡아서, 다른 탭이 켜져 있어도
+      display:flex !important 가 인라인 none을 덮어써 항상 보이는 버그가 있었음) */
+  #dashboard-app.is-active { display: flex !important; flex-direction: column; height: auto; overflow: visible; }
   .sidebar { flex-direction: row; padding: 0.75rem; overflow-x: auto; white-space: nowrap; align-items: center; gap: 10px; }
   .sidebar h2, .sidebar-checklist { display: none; }
   .tab-btn { margin-bottom: 0; padding: 0.6rem 1rem; font-size: 0.9rem; flex-shrink: 0; }
@@ -470,6 +537,32 @@ body {
         font-size: 12px;
         top: 12px;
         right: 12px;
+    }
+
+    /* ── 개인공간 전산실 헤더: 이메일 넘침 방지 + 도움말 버튼 슬림화 ── */
+    .private-header-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .private-header-left {
+        width: 100%;
+        justify-content: space-between;
+        gap: 8px;
+    }
+    .private-header-title {
+        font-size: 14px;
+    }
+    .private-header-left .inline-home-btn {
+        flex-shrink: 0;
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+    .help-form-btn {
+        align-self: flex-end;
+        padding: 6px 12px;
+        font-size: 11px;
+        border-radius: 16px;
     }
 }
 

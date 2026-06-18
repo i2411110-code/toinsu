@@ -653,6 +653,13 @@ window.unlockPrivate = function() {
 };
 
 // 2. 내부 탭 (대시보드 vs 체크리스트 vs 보장분석 리포트) 전환
+// ✅ 수정: 인라인 style.display 직접 조작 대신 'is-active' 클래스로 상태를 제어한다.
+//    - style.css 쪽에 #dashboard-app/#checklist-app/#report-app 기본값이
+//      display:none 이고 .is-active 일 때만 보이도록 정의되어 있어,
+//      모바일 미디어쿼리(@media max-width:1024px 등)가 어떤 display값을
+//      강제로 줘도 비활성 탭은 :not(.is-active) { display:none !important; }
+//      규칙에 의해 항상 가려진다. (이전 버그: 인라인 display와 미디어쿼리가
+//      충돌해 모바일에서 모든 탭 콘텐츠가 동시에 노출되던 문제 해결)
 window.switchPrivateTab = function(target) {
     // 1) 모든 버튼 활성화 상태 끄기
     const btnDb = document.getElementById('btn-db-dash');
@@ -662,25 +669,28 @@ window.switchPrivateTab = function(target) {
     if(btnChk) btnChk.classList.remove('active');
     if(btnRpt) btnRpt.classList.remove('active');
 
-    // 2) 모든 화면 숨기기
+    // 2) 모든 화면의 활성 클래스 제거 + 과거 인라인 display 잔여값 완전 제거
+    //    (이전 버전 HTML/JS에서 남아있을 수 있는 style="display:..." 충돌 방지)
     const appDb = document.getElementById('dashboard-app');
     const appChk = document.getElementById('checklist-app');
     const appRpt = document.getElementById('report-app');
-    if(appDb) appDb.style.display = 'none';
-    if(appChk) appChk.style.display = 'none';
-    if(appRpt) appRpt.style.display = 'none';
+    [appDb, appChk, appRpt].forEach(panel => {
+        if(!panel) return;
+        panel.classList.remove('is-active');
+        panel.style.display = '';
+    });
 
     // 3) 누른 탭만 켜기
     if(target === 'db') {
         if(btnDb) btnDb.classList.add('active');
-        if(appDb) appDb.style.display = 'grid'; 
+        if(appDb) appDb.classList.add('is-active');
     } else if(target === 'chk') {
         if(btnChk) btnChk.classList.add('active');
-        if(appChk) appChk.style.display = 'block';
+        if(appChk) appChk.classList.add('is-active');
     } else if(target === 'rpt') {
         if(btnRpt) btnRpt.classList.add('active');
-        if(appRpt) appRpt.style.display = 'block';
-        
+        if(appRpt) appRpt.classList.add('is-active');
+
         // 리포트 UI 생성 함수 실행
         if(window.initRptModule) {
             window.initRptModule();
