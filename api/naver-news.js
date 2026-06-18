@@ -9,8 +9,8 @@ app.get('/api/naver-news', async (req, res) => {
         // 네이버 서버로 요청
         const response = await axios.get(`https://openapi.naver.com/v1/search/news.json?query=${encodeURI(query)}&display=10`, {
             headers: {
-                'X-Naver-Client-Id': '5apD7gyt9p', // 알려주신 Client ID 입력
-                'X-Naver-Client-Secret': 'NAVER_CLIENT_SECRET' // 발급받으신 시크릿 키 입력
+                'X-Naver-Client-Id': 'ZHr89YgWwiIoIXvUfbjp', // 알려주신 Client ID 입력
+                'X-Naver-Client-Secret': '5apD7gyt9p' // 발급받으신 시크릿 키 입력
             }
         });
         res.json(response.data); // 결과를 news.js로 반환
