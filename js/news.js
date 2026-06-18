@@ -155,12 +155,18 @@ const NewsWidget = (() => {
         paperDateEl.textContent = today.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
     }
 
-    // 메인 헤드라인 텍스트 배치
+    // 메인 헤드라인 텍스트 배치 (여백 채우기 및 원문 버튼 추가)
     if (paperTitleEl && topItem) {
         paperTitleEl.innerHTML = `
-            <strong>"${clean(topItem.title)}"</strong>
-            <span style="font-size:11px;color:#94A3B8;display:block;margin-bottom:10px;">발행처: NAVER NEWS HUB &middot; 스크랩: ${fmtDate(topItem.pubDate)}</span>
-            ${clean(topItem.description)}
+            <strong style="font-size: 18px; line-height: 1.4;">"${clean(topItem.title)}"</strong>
+            <span style="font-size:11px;color:#94A3B8;display:block;margin-top:8px;margin-bottom:15px;">발행처: NAVER NEWS HUB &middot; 스크랩: ${fmtDate(topItem.pubDate)}</span>
+            <div style="font-size: 15px; line-height: 1.8; color: #4E5936; margin-bottom: 25px; text-align: justify;">
+                ${clean(topItem.description)} ...
+            </div>
+            <a href="${topItem.link || topItem.originallink}" target="_blank" rel="noopener noreferrer" 
+               style="display: block; background: #F8FAFC; color: #3182F6; border: 1px solid #E2E8F0; padding: 14px; border-radius: 12px; text-decoration: none; font-size: 14px; font-weight: 700; text-align: center; transition: all 0.2s;">
+               <i class="bi bi-newspaper"></i> 네이버에서 기사 원문 전체 읽기
+            </a>
         `;
     }
 
