@@ -289,18 +289,7 @@
                     <strong>헤드라인 분석 중...</strong>
                     실시간 뉴스를 가져오고 있습니다. 잠시만 기다려 주세요.
                 </div>
-                <div class="paper-footer-widgets">
-                    <div class="widget-card">
-                        <span class="w-title">오늘의 날씨</span>
-                        <div class="w-content" id="paper-weather-widget-val">-</div>
-                    </div>
-                    <div class="widget-card" style="flex: 1.6;">
-                        <span class="w-title">오늘의 명언</span>
-                        <div class="w-content" style="font-size:11px; color:#4E5936; font-weight:500; text-align:justify; line-height:1.4;">
-                            할 수 있다 !
-                        </div>
-                    </div>
-                </div>
+
             </div>
 
             <div class="feed-section">
@@ -313,7 +302,19 @@
             </div>
         </div>
 
-        <div id="news-bottom-market-grid"></div>
+        <div id="news-bottom-market-grid" style="margin-top:20px;">
+    <div style="font-size:15px; font-weight:800; color:#191F28; margin-bottom:12px;">
+        <i class="bi bi-bar-chart-fill" style="color:#2563EB;"></i> 오늘의 경제 지표
+    </div>
+    <div class="indicator-grid" id="news-indicator-grid-inner">
+        <!-- JS(news.js renderBottomIndicators)가 여기에 카드를 주입합니다 -->
+        <div style="grid-column:1/-1; padding:20px; text-align:center; color:#94A3B8; font-size:13px;">
+            <i class="bi bi-arrow-clockwise" style="animation:spin 1s linear infinite; display:inline-block;"></i>
+            &nbsp;경제 지표 불러오는 중...
+        </div>
+    </div>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+</div>
     </div>
 
     <div class="container" id="pwa-claim-view">

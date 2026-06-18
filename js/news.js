@@ -1,6 +1,10 @@
 /**
  * news.js - 보험가온포탈 뉴스 허브 연동 전산망
  * 독립형 단독 페이지(news.html)에 실시간으로 데이터셋을 매핑하는 모듈
+ *
+ * 사용법:
+ * <script src="js/news.js"></script>
+ * <script>NewsWidget.init();</script>
  */
 
 const NewsWidget = (() => {
@@ -89,7 +93,7 @@ const NewsWidget = (() => {
   
   // 1. 상단 스크롤 띠 배너 날씨 연동
   const renderWeatherStrip = (list) => {
-    const el = document.querySelector('.weather-strip');
+    const el = document.getElementById('news-weather-strip-line') || document.querySelector('.weather-strip');
     if (!el || !list.length) return;
     
     el.innerHTML = list.map(w => `
@@ -99,7 +103,7 @@ const NewsWidget = (() => {
     `).join('');
   };
 
-  // 2. 우측 최신 속보 타일형 피드 연동 (높이 스크롤 기능 추가 완료)
+  // 2. 우측 최신 속보 타일형 피드 연동
   const renderNewsFeed = (items) => {
     const el = document.querySelector('.feed-section');
     if (!el) return;
@@ -109,19 +113,12 @@ const NewsWidget = (() => {
       return;
     }
 
-    // 토스 히어로 스타일 및 스크롤 박스 시작
+    // 구조 정의 초기화 및 헤더 복구
     let html = `
-      <div class="toss-hero-header" style="padding: 24px; margin-bottom: 16px;">
-        <div class="toss-hero-top">
-            <div class="toss-hero-sub" style="color: rgba(255,255,255,0.9);">LIVE NEWS FEED</div>
-            <button class="toss-hero-home-btn" id="nw-btn-refresh-live">
-                <i class="bi bi-arrow-clockwise"></i> 실시간 새로고침
-            </button>
-        </div>
-        <div class="toss-hero-main" style="font-size: 20px;">최신 속보 피드</div>
-      </div>
-      <div style="max-height: 480px; overflow-y: auto; padding-right: 6px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: thin;">
-    `;
+      <div class="section-header-title">
+        최신 속보 피드 
+        <button class="btn-refresh" id="nw-btn-refresh-live"><i class="bi bi-arrow-clockwise"></i> 실시간 새로고침</button>
+      </div>`;
 
     // 인덱스 1번부터 끝까지는 피드 카드로 배치합니다.
     const feedItems = items.slice(1, 6);
@@ -137,8 +134,6 @@ const NewsWidget = (() => {
         </div>`;
     });
 
-    html += `</div>`; // 스크롤 박스 닫기
-
     el.innerHTML = html;
 
     // 실시간 리프레시 이벤트 핸들러 주입
@@ -151,26 +146,13 @@ const NewsWidget = (() => {
   const renderMorningPaper = (topItem, fxList, mktList) => {
     const paperTitleEl = document.querySelector('.paper-body-text');
     const paperIndexEl = document.querySelector('.paper-top-index');
-    const paperDateEl = document.getElementById('paper-live-date');
     
-    // 오늘 날짜로 자동 업데이트
-    if (paperDateEl) {
-        const today = new Date();
-        paperDateEl.textContent = today.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
-    }
-
     // 메인 헤드라인 텍스트 배치
     if (paperTitleEl && topItem) {
         paperTitleEl.innerHTML = `
-            <strong style="font-size: 18px; line-height: 1.4;">"${clean(topItem.title)}"</strong>
-            <span style="font-size:11px;color:#94A3B8;display:block;margin-top:8px;margin-bottom:15px;">발행처: NAVER NEWS HUB &middot; 스크랩: ${fmtDate(topItem.pubDate)}</span>
-            <div style="font-size: 15px; line-height: 1.8; color: #4E5936; margin-bottom: 25px; text-align: justify;">
-                ${clean(topItem.description)} ...
-            </div>
-            <a href="${topItem.link || topItem.originallink}" target="_blank" rel="noopener noreferrer" 
-               style="display: block; background: #F8FAFC; color: #3182F6; border: 1px solid #E2E8F0; padding: 14px; border-radius: 12px; text-decoration: none; font-size: 14px; font-weight: 700; text-align: center; transition: all 0.2s;">
-               <i class="bi bi-newspaper"></i> 네이버에서 기사 원문 전체 읽기
-            </a>
+            <strong>"${clean(topItem.title)}"</strong>
+            <span style="font-size:11px;color:#94A3B8;display:block;margin-bottom:10px;">발행처: NAVER NEWS HUB &middot; 스크랩: ${fmtDate(topItem.pubDate)}</span>
+            ${clean(topItem.description)}
         `;
     }
 
@@ -200,79 +182,38 @@ const NewsWidget = (() => {
     }
   };
 
-  // 4. 하단 시장 지표 종합판 (새로고침 기능 및 레이아웃 개선)
+  // 4. 하단 환율 및 종합 지표 종합판 매핑
   const renderBottomIndicators = (fxList, mktList) => {
-    const el = document.querySelector('.indicator-grid');
+    const el = document.getElementById('news-indicator-grid-inner') || document.querySelector('.indicator-grid');
     if (!el) return;
 
-    // 데이터가 안 올 경우를 대비한 비상 데이터
-    const fallbackFx = [{label: 'USD', value: 1385.50, change: 0, direction: 'up'}, {label: 'JPY', value: 890.30, change: 0, direction: 'down'}];
-    const fallbackMkt = [{label: '코스피', value: 2750.45, change: 0, direction: 'up'}, {label: '국내 금 (원/g)', value: 105400, change: 0, direction: 'up'}];
-    
-    const fx = fxList.length > 0 ? fxList : fallbackFx;
-    const mkt = mktList.length > 0 ? mktList : fallbackMkt;
+    const usd = fxList.find(i => i.label === 'USD') || { value: 1512.40, change: 1.40, direction: 'up' };
+    const jpy = fxList.find(i => i.label === 'JPY') || { value: 943.63, change: 1.78, direction: 'up' };
+    const kospi = mktList.find(i => i.label === '코스피') || { value: 8864.24, change: 137.84, direction: 'up' };
+    const gold = mktList.find(i => i.label === '국내 금 (원/g)') || { value: 209700, change: 80, direction: 'up' };
 
-    const usd = fx.find(i => i.label === 'USD') || fallbackFx[0];
-    const jpy = fx.find(i => i.label === 'JPY') || fallbackFx[1];
-    const kospi = mkt.find(i => i.label === '코스피') || fallbackMkt[0];
-    const gold = mkt.find(i => i.label === '국내 금 (원/g)') || fallbackMkt[1];
-
-    // 💡 시장 지표 헤더에 새로고침 버튼 추가
-    const headerHtml = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <div style="font-size: 15px; font-weight: 700; color: #191F28;">오늘의 시장 지표 (네이버 증권 실시간 데이터 연동)</div>
-            <button id="btn-refresh-market" style="background:#F2F4F6; border:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; color:#4E5936; cursor:pointer;">
-                <i class="bi bi-arrow-clockwise"></i> 데이터 갱신
-            </button>
+    el.innerHTML = `
+        <div class="ind-card">
+            <div class="lbl">USD / KRW (원/달러 환율)</div>
+            <div class="price">${Number(usd.value).toFixed(2)}</div>
+            <div class="state ${usd.direction}"><i class="bi bi-caret-${usd.direction}-fill"></i> ${Math.abs(usd.change).toFixed(2)} (${usd.direction === 'up' ? '상승' : '하락'})</div>
+        </div>
+        <div class="ind-card">
+            <div class="lbl">JPY / KRW (100엔 환율)</div>
+            <div class="price">${Number(jpy.value).toFixed(2)}</div>
+            <div class="state ${jpy.direction}"><i class="bi bi-caret-${jpy.direction}-fill"></i> ${Math.abs(jpy.change).toFixed(2)} (${jpy.direction === 'up' ? '상승' : '하락'})</div>
+        </div>
+        <div class="ind-card">
+            <div class="lbl">KOSPI 종합지수</div>
+            <div class="price">${Number(kospi.value).toLocaleString('ko-KR', {maximumFractionDigits:2})}</div>
+            <div class="state ${kospi.direction}"><i class="bi bi-caret-${kospi.direction}-fill"></i> ${Math.abs(kospi.change).toFixed(2)} (${kospi.direction === 'up' ? '상승' : '하락'})</div>
+        </div>
+        <div class="ind-card">
+            <div class="lbl">국내 금시세 (g당)</div>
+            <div class="price">${Number(gold.value).toLocaleString('ko-KR', {maximumFractionDigits:0})}</div>
+            <div class="state ${gold.direction}"><i class="bi bi-caret-${gold.direction}-fill"></i> ${Math.abs(gold.change).toLocaleString('ko-KR', {maximumFractionDigits:0})} (${gold.direction === 'up' ? '상승' : '하락'})</div>
         </div>
     `;
-
-    const gridHtml = `
-        <a href="https://m.stock.naver.com/marketindex/exchange/FX_USDKRW" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
-            <div class="ind-card">
-                <div class="lbl">USD / KRW</div>
-                <div class="price">${usd.value.toLocaleString()}</div>
-                <div class="state ${usd.direction}">${usd.direction === 'up' ? '▲' : '▼'} ${Math.abs(usd.change).toFixed(2)}</div>
-            </div>
-        </a>
-        <a href="https://m.stock.naver.com/marketindex/exchange/FX_JPYKRW" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
-            <div class="ind-card">
-                <div class="lbl">JPY / KRW</div>
-                <div class="price">${jpy.value.toLocaleString()}</div>
-                <div class="state ${jpy.direction}">${jpy.direction === 'up' ? '▲' : '▼'} ${Math.abs(jpy.change).toFixed(2)}</div>
-            </div>
-        </a>
-        <a href="https://m.stock.naver.com/domestic/index/KOSPI/total" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
-            <div class="ind-card">
-                <div class="lbl">KOSPI 종합지수</div>
-                <div class="price">${kospi.value.toLocaleString()}</div>
-                <div class="state ${kospi.direction}">${kospi.direction === 'up' ? '▲' : '▼'} ${Math.abs(kospi.change).toFixed(2)}</div>
-            </div>
-        </a>
-        <a href="https://m.stock.naver.com/marketindex/metals/M04020000" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
-            <div class="ind-card">
-                <div class="lbl">국내 금시세 (g당)</div>
-                <div class="price">${gold.value.toLocaleString()}</div>
-                <div class="state ${gold.direction}">${gold.direction === 'up' ? '▲' : '▼'} ${Math.abs(gold.change).toLocaleString()}</div>
-            </div>
-        </a>
-    `;
-
-    // 헤더와 그리드를 합쳐서 출력
-    const container = document.getElementById('news-bottom-market-grid');
-    if (container) {
-        container.innerHTML = headerHtml + `<div class="indicator-grid">${gridHtml}</div>`;
-        
-        // 새로고침 버튼에 이벤트 할당
-        document.getElementById('btn-refresh-market').addEventListener('click', () => {
-            // 시장 데이터만 새로 패치
-            api.exchange().then(fx => {
-                api.market().then(mkt => {
-                    renderBottomIndicators(fx.items, mkt);
-                });
-            });
-        });
-    }
   };
 
   /* ------------------------------------------------------------------ */
