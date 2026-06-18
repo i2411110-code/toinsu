@@ -505,14 +505,13 @@
             document.getElementById('pwa-main-content-view').style.display = 'none';
             document.getElementById('pwa-claim-view').style.display = 'none';
             document.getElementById('pwa-news-view').style.display = 'flex';
+            
+            // 데이터가 로드되지 않았을 경우를 대비해 초기화 함수를 확실히 호출
             if (typeof NewsWidget !== 'undefined') {
-                NewsWidget.init();
+                NewsWidget.init(); 
+            } else {
+                console.error("NewsWidget이 로드되지 않았습니다. js/news.js 파일을 확인하세요.");
             }
-        };
-        window.switchToMainView = function() {
-            document.getElementById('pwa-news-view').style.display = 'none';
-            document.getElementById('pwa-claim-view').style.display = 'none';
-            document.getElementById('pwa-main-content-view').style.display = 'block';
         };
 
         // 모바일 헤더 동기화 로직
