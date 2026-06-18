@@ -200,7 +200,7 @@ const NewsWidget = (() => {
     }
   };
 
-  // 4. 하단 시장 지표 종합판 (데이터 연동 및 클릭 링크 완벽 적용)
+  // 4. 하단 시장 지표 종합판 (새로고침 기능 및 레이아웃 개선)
   const renderBottomIndicators = (fxList, mktList) => {
     const el = document.querySelector('.indicator-grid');
     if (!el) return;
@@ -217,17 +217,27 @@ const NewsWidget = (() => {
     const kospi = mkt.find(i => i.label === '코스피') || fallbackMkt[0];
     const gold = mkt.find(i => i.label === '국내 금 (원/g)') || fallbackMkt[1];
 
-    el.innerHTML = `
+    // 💡 시장 지표 헤더에 새로고침 버튼 추가
+    const headerHtml = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div style="font-size: 15px; font-weight: 700; color: #191F28;">오늘의 시장 지표 (네이버 증권 실시간 데이터 연동)</div>
+            <button id="btn-refresh-market" style="background:#F2F4F6; border:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; color:#4E5936; cursor:pointer;">
+                <i class="bi bi-arrow-clockwise"></i> 데이터 갱신
+            </button>
+        </div>
+    `;
+
+    const gridHtml = `
         <a href="https://m.stock.naver.com/marketindex/exchange/FX_USDKRW" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
             <div class="ind-card">
-                <div class="lbl">USD / KRW (원/달러 환율)</div>
+                <div class="lbl">USD / KRW</div>
                 <div class="price">${usd.value.toLocaleString()}</div>
                 <div class="state ${usd.direction}">${usd.direction === 'up' ? '▲' : '▼'} ${Math.abs(usd.change).toFixed(2)}</div>
             </div>
         </a>
         <a href="https://m.stock.naver.com/marketindex/exchange/FX_JPYKRW" target="_blank" rel="noopener noreferrer" style="text-decoration:none; color:inherit;">
             <div class="ind-card">
-                <div class="lbl">JPY / KRW (100엔 환율)</div>
+                <div class="lbl">JPY / KRW</div>
                 <div class="price">${jpy.value.toLocaleString()}</div>
                 <div class="state ${jpy.direction}">${jpy.direction === 'up' ? '▲' : '▼'} ${Math.abs(jpy.change).toFixed(2)}</div>
             </div>
@@ -247,6 +257,22 @@ const NewsWidget = (() => {
             </div>
         </a>
     `;
+
+    // 헤더와 그리드를 합쳐서 출력
+    const container = document.getElementById('news-bottom-market-grid');
+    if (container) {
+        container.innerHTML = headerHtml + `<div class="indicator-grid">${gridHtml}</div>`;
+        
+        // 새로고침 버튼에 이벤트 할당
+        document.getElementById('btn-refresh-market').addEventListener('click', () => {
+            // 시장 데이터만 새로 패치
+            api.exchange().then(fx => {
+                api.market().then(mkt => {
+                    renderBottomIndicators(fx.items, mkt);
+                });
+            });
+        });
+    }
   };
 
   /* ------------------------------------------------------------------ */
