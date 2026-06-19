@@ -928,22 +928,25 @@
             );
         }
 
-        // [수정 완료] 나의 일정 모아보기 렌더링 함수 (과거 일정 숨김)
+        // [수정 완료] 나의 일정 모아보기 렌더링 함수 (과거 일정 완벽 숨김)
         function _renderUserMyList(visible) {
             const panel  = document.getElementById('cal-user-my');
             const listEl = document.getElementById('cal-user-list');
             const badge  = document.getElementById('cal-user-badge');
             if (!panel || !listEl) return;
 
-            // 💡 [추가] 오늘 날짜의 자정(00:00) 기준시간을 만듭니다.
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            // 💡 [강력한 필터링] 한국 시간 기준 YYYY-MM-DD 형식으로 '오늘'을 만듭니다.
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const todayStr = `${yyyy}-${mm}-${dd}`; // 예: "2026-06-20"
 
-            // 본인 일정과 공지사항 중 "오늘 포함 미래의 일정"만 필터링
+            // 본인 일정과 공지사항 중 "오늘(todayStr) 이상인 일정"만 쏙 뽑아냅니다.
             const myEvents = visible.filter(e => {
                 const isMyEvent = (_calCurrentUser && e.uid === _calCurrentUser.uid) || e.isGlobal === true;
-                const eventDate = new Date(e.start);
-                return isMyEvent && (eventDate >= today);
+                const eventDateStr = String(e.start).slice(0, 10); // "2026-06-19" 형태로 앞부분만 자름
+                return isMyEvent && (eventDateStr >= todayStr);
             });
 
             panel.style.display = ''; 
@@ -971,21 +974,24 @@
             }).join('');
         }
 
-        // [수정 완료] 팀 전체 모아보기 렌더링 함수 (과거 일정 숨김)
+        // [수정 완료] 팀 전체 모아보기 렌더링 함수 (과거 일정 완벽 숨김)
         function _renderAdminAllList(visible) {
             const panel  = document.getElementById('cal-admin-all');
             const listEl = document.getElementById('cal-admin-list');
             const badge  = document.getElementById('cal-admin-badge');
             if (!panel || !listEl) return;
             
-            // 💡 [추가] 오늘 날짜의 자정(00:00) 기준시간을 만듭니다.
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            // 💡 [강력한 필터링] 문자열 기반 날짜 비교
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const todayStr = `${yyyy}-${mm}-${dd}`;
 
-            // 팀 전체 일정 중 "오늘 포함 미래의 일정"만 필터링
+            // 팀 전체 일정 중 "오늘(todayStr) 이상인 일정"만 쏙 뽑아냅니다.
             const futureEvents = visible.filter(e => {
-                const eventDate = new Date(e.start);
-                return eventDate >= today;
+                const eventDateStr = String(e.start).slice(0, 10);
+                return eventDateStr >= todayStr;
             });
 
             panel.style.display = '';
