@@ -245,10 +245,12 @@
             <div id="calendarRoot"></div>
         </div>
 
-<div class="cal-card" id="cal-fc-wrap">
+
+       <div class="cal-card" id="cal-fc-wrap">
             <div id="calendarRoot"></div>
         </div>
 
+        <!-- 💡 [신규 추가] 나의 일정 모아보기 패널 -->
         <div id="cal-user-my" class="cal-card" style="display:none; margin-top:14px;">
             <div class="cal-admin-panel-title">
                 <i class="bi bi-calendar-check-fill" style="color:#2563EB;"></i> 나의 일정 모아보기
@@ -257,7 +259,7 @@
             <div id="cal-user-list" class="cal-admin-list"></div>
         </div>
 
-        
+        <!-- 기존 팀 전체 일정 모아보기 패널 -->
         <div id="cal-admin-all" class="cal-card" style="display:none; margin-top:14px;">
             <div class="cal-admin-panel-title">
                 <i class="bi bi-people-fill"></i> 팀 전체 일정 모아보기
@@ -265,7 +267,7 @@
             </div>
             <div id="cal-admin-list" class="cal-admin-list"></div>
         </div>
-    </div>
+        
 
     <div id="calendarModal" class="cal-modal-backdrop" style="display:none;" onclick="if(event.target===this) window.calCloseModal()">
         <div class="cal-modal-card">
