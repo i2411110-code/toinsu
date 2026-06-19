@@ -950,27 +950,31 @@
         }
 
 // [신규 추가] 일반 사원용 나의 일정 목록 빌드 함수
+        // [수정 완료] 일반 사원 및 관리자 공용 나의 일정 목록 빌드 함수
         function _renderUserMyList(visible) {
             const panel  = document.getElementById('cal-user-my');
             const listEl = document.getElementById('cal-user-list');
             const badge  = document.getElementById('cal-user-badge');
             if (!panel || !listEl) return;
 
-            // 관리자는 팀 전체 모아보기가 활성화되므로 개인 패널은 숨깁니다.
-            if (_calIsAdmin) {
-                panel.style.display = 'none';
-                return;
+            // 관리자 숨김 처리 삭제! 
+            // 무조건 전체 데이터에서 '나의 일정'과 '공지사항'만 쏙 뽑아냅니다.
+            const myEvents = visible.filter(e => 
+                (_calCurrentUser && e.uid === _calCurrentUser.uid) || e.isGlobal === true
+            );
+
+            panel.style.display = ''; // 숨김 해제
+            if (badge) badge.textContent = myEvents.length + '건';
+            
+            if (!myEvents.length) { 
+                listEl.innerHTML = '<div style="color:#8B95A1;font-size:13px;padding:8px 0;">등록된 개인 일정이 없습니다.</div>'; 
+                return; 
             }
 
-            panel.style.display = '';
-            if (badge) badge.textContent = visible.length + '건';
-            if (!visible.length) { listEl.innerHTML = '<div style="color:#8B95A1;font-size:13px;">등록된 일정이 없습니다.</div>'; return; }
-
-            // 날짜 순 정렬 후 출력
-            const sorted = [...visible].sort((a, b) => String(a.start).localeCompare(String(b.start)));
+            const sorted = [...myEvents].sort((a, b) => String(a.start).localeCompare(String(b.start)));
             listEl.innerHTML = sorted.map(e => {
                 const d = new Date(e.start);
-                const color = e.isGlobal ? '#D97706' : '#2563EB'; // 전사 공지는 주황색, 개인 일정은 파란색
+                const color = e.isGlobal ? '#D97706' : '#2563EB'; 
                 const dateLabel = isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()}`;
                 return `
                 <div style="display:flex; align-items:center; gap:10px; padding:9px 12px;
@@ -983,7 +987,6 @@
                 </div>`;
             }).join('');
         }
-
         function _updateLabel() {
             const labelEl = document.getElementById('cal-year-month');
             if (!labelEl || !_fc) return;
