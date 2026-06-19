@@ -563,9 +563,8 @@ window.addSchedule = function() {
 }
 
 // ==========================================
-// ✅ [신규] 할 일(Todo) — 캘린더 사이드 패널 전용
+// ✅ [신규] 할 일(Todo) — 데이터베이스 연동 및 취소선 기능 추가
 // ==========================================
-window._todoItems = []; // 세션 내 메모리 저장 (DB 연동 없이 빠르게)
 
 window.addTodo = function() {
     const input = document.getElementById('todoInput');
@@ -573,10 +572,17 @@ window.addTodo = function() {
     const val = input.value.trim();
     if (!val) return;
 
-    window._todoItems.unshift({ id: Date.now(), text: val, done: false });
+    // 객체 형태로 DB 배열의 맨 앞에 추가 (done 상태 포함)
+    window.currentUserSchedules.unshift({ text: val, done: false });
     input.value = '';
     input.focus();
-    window._renderTodoList();
+    
+    // DB와 동기화 후 다시 그리기
+    if (window.executeRegistrySync) {
+        window.executeRegistrySync().then(() => { window._renderTodoList(); });
+    } else {
+        window._renderTodoList();
+    }
 };
 
 window._renderTodoList = function() {
@@ -584,48 +590,64 @@ window._renderTodoList = function() {
     const emptyMsg = document.getElementById('todo-empty');
     if (!ul) return;
 
-    if (window._todoItems.length === 0) {
+    const schedules = window.currentUserSchedules || [];
+
+    if (schedules.length === 0) {
         ul.innerHTML = '';
         if (emptyMsg) emptyMsg.style.display = 'block';
         return;
     }
     if (emptyMsg) emptyMsg.style.display = 'none';
 
-    ul.innerHTML = window._todoItems.map(item => `
-        <li>
-            <span class="todo-text" style="${item.done ? 'text-decoration:line-through; color:#B0B8C1;' : ''}">
-                ${item.done ? '✅' : '○'} ${item.text}
-            </span>
-            <span class="todo-del" onclick="window._toggleTodo(${item.id})" title="완료 처리">
-                ${item.done ? '↩' : '✓'}
-            </span>
-            <span class="todo-del" onclick="window._deleteTodo(${item.id})" title="삭제">×</span>
+    ul.innerHTML = schedules.map((item, idx) => {
+        // 기존 텍스트 전용 과거 데이터와의 호환성 처리
+        let isObj = typeof item === 'object';
+        let text = isObj ? item.text : item;
+        let done = isObj ? item.done : false;
+        
+        return `
+        <li style="display:flex; align-items:flex-start; gap:8px; padding:10px; background:#F8FAFC; border-radius:10px; border:1px solid #E2E8F0; transition: all 0.2s;">
+            <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; flex:1; margin:0;">
+                <input type="checkbox" ${done ? 'checked' : ''} onchange="window._toggleTodo(${idx})" style="width:16px; height:16px; margin-top:2px; accent-color:var(--main-blue); cursor:pointer;">
+                <span style="flex:1; font-size:13px; line-height:1.4; word-break:keep-all; transition: all 0.2s; ${done ? 'text-decoration:line-through; color:#94A3B8;' : 'color:#334155;'}">
+                    ${text}
+                </span>
+            </label>
+            <button onclick="window._deleteTodo(${idx})" style="background:none; border:none; color:#CBD5E1; cursor:pointer; font-size:18px; line-height:1; padding:0; flex-shrink:0; transition:color 0.2s;" onmouseover="this.style.color='#EF4444'" onmouseout="this.style.color='#CBD5E1'">&times;</button>
         </li>
-    `).join('');
+        `;
+    }).join('');
 };
 
-window._toggleTodo = function(id) {
-    const item = window._todoItems.find(x => x.id === id);
-    if (item) { item.done = !item.done; window._renderTodoList(); }
+window._toggleTodo = function(idx) {
+    let item = window.currentUserSchedules[idx];
+    // 과거 텍스트 데이터였다면 객체로 변환
+    if (typeof item === 'string') {
+        window.currentUserSchedules[idx] = { text: item, done: true };
+    } else {
+        item.done = !item.done;
+    }
+    // 상태 변경 후 DB 동기화
+    if (window.executeRegistrySync) {
+        window.executeRegistrySync().then(() => window._renderTodoList());
+    } else {
+        window._renderTodoList();
+    }
 };
 
-window._deleteTodo = function(id) {
-    window._todoItems = window._todoItems.filter(x => x.id !== id);
-    window._renderTodoList();
-};
-
-window.renderSchedule = function() {
-    const ul = document.getElementById('todo-list');
-    if(!ul) return;
-    ul.innerHTML = (window.currentUserSchedules || []).map((item, idx) =>
-        `<li><i class="bi bi-clock-history"></i> ${item} <span style="color:#EF4444; cursor:pointer; margin-left:8px;" onclick="window.deleteSchedule(${idx})">×</span></li>`
-    ).join('');
-}
-
-window.deleteSchedule = function(idx) {
+window._deleteTodo = function(idx) {
     window.currentUserSchedules.splice(idx, 1);
-    if(window.executeRegistrySync) window.executeRegistrySync().then(() => { window.renderSchedule(); });
-}
+    // 삭제 후 DB 동기화
+    if (window.executeRegistrySync) {
+        window.executeRegistrySync().then(() => window._renderTodoList());
+    } else {
+        window._renderTodoList();
+    }
+};
+
+// 기존 캘린더 로드 시 데이터를 불러오기 위한 렌더링 연결
+window.renderSchedule = window._renderTodoList;
+window.deleteSchedule = window._deleteTodo;
 
 window.generateAiMessage = function() {
     const purpose  = document.getElementById('msg-purpose').value;
