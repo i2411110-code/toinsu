@@ -928,25 +928,27 @@
             );
         }
 
-        // [수정 완료] 나의 일정 모아보기 렌더링 함수 (과거 일정 완벽 숨김)
+        // [완벽 보정] 나의 일정 모아보기 렌더링 함수
         function _renderUserMyList(visible) {
             const panel  = document.getElementById('cal-user-my');
             const listEl = document.getElementById('cal-user-list');
             const badge  = document.getElementById('cal-user-badge');
             if (!panel || !listEl) return;
 
-            // 💡 [강력한 필터링] 한국 시간 기준 YYYY-MM-DD 형식으로 '오늘'을 만듭니다.
-            const now = new Date();
-            const yyyy = now.getFullYear();
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const dd = String(now.getDate()).padStart(2, '0');
-            const todayStr = `${yyyy}-${mm}-${dd}`; // 예: "2026-06-20"
+            // 💡 [절대 판별법] 오늘 자정 기준 시간(밀리초) 생성
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayTime = today.getTime();
 
-            // 본인 일정과 공지사항 중 "오늘(todayStr) 이상인 일정"만 쏙 뽑아냅니다.
             const myEvents = visible.filter(e => {
                 const isMyEvent = (_calCurrentUser && e.uid === _calCurrentUser.uid) || e.isGlobal === true;
-                const eventDateStr = String(e.start).slice(0, 10); // "2026-06-19" 형태로 앞부분만 자름
-                return isMyEvent && (eventDateStr >= todayStr);
+                if (!isMyEvent || !e.start) return false;
+                
+                // Firestore 객체든, 문자열이든 무조건 Date 형식으로 통일
+                const eventDate = typeof e.start.toDate === 'function' ? e.start.toDate() : new Date(e.start);
+                eventDate.setHours(0, 0, 0, 0); // 일자만 비교
+                
+                return eventDate.getTime() >= todayTime;
             });
 
             panel.style.display = ''; 
@@ -957,9 +959,15 @@
                 return; 
             }
 
-            const sorted = [...myEvents].sort((a, b) => String(a.start).localeCompare(String(b.start)));
+            // 날짜 꼬임 방지를 위해 정렬도 강력하게 밀리초 단위로 계산
+            const sorted = [...myEvents].sort((a, b) => {
+                const da = typeof a.start.toDate === 'function' ? a.start.toDate() : new Date(a.start);
+                const db = typeof b.start.toDate === 'function' ? b.start.toDate() : new Date(b.start);
+                return da.getTime() - db.getTime();
+            });
+            
             listEl.innerHTML = sorted.map(e => {
-                const d = new Date(e.start);
+                const d = typeof e.start.toDate === 'function' ? e.start.toDate() : new Date(e.start);
                 const color = e.isGlobal ? '#D97706' : '#2563EB'; 
                 const dateLabel = isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()}`;
                 return `
@@ -974,24 +982,23 @@
             }).join('');
         }
 
-        // [수정 완료] 팀 전체 모아보기 렌더링 함수 (과거 일정 완벽 숨김)
+        // [완벽 보정] 팀 전체 모아보기 렌더링 함수
         function _renderAdminAllList(visible) {
             const panel  = document.getElementById('cal-admin-all');
             const listEl = document.getElementById('cal-admin-list');
             const badge  = document.getElementById('cal-admin-badge');
             if (!panel || !listEl) return;
             
-            // 💡 [강력한 필터링] 문자열 기반 날짜 비교
-            const now = new Date();
-            const yyyy = now.getFullYear();
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const dd = String(now.getDate()).padStart(2, '0');
-            const todayStr = `${yyyy}-${mm}-${dd}`;
+            // 💡 [절대 판별법]
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayTime = today.getTime();
 
-            // 팀 전체 일정 중 "오늘(todayStr) 이상인 일정"만 쏙 뽑아냅니다.
             const futureEvents = visible.filter(e => {
-                const eventDateStr = String(e.start).slice(0, 10);
-                return eventDateStr >= todayStr;
+                if (!e.start) return false;
+                const eventDate = typeof e.start.toDate === 'function' ? e.start.toDate() : new Date(e.start);
+                eventDate.setHours(0, 0, 0, 0);
+                return eventDate.getTime() >= todayTime;
             });
 
             panel.style.display = '';
@@ -1002,9 +1009,14 @@
                 return; 
             }
             
-            const sorted = [...futureEvents].sort((a, b) => String(a.start).localeCompare(String(b.start)));
+            const sorted = [...futureEvents].sort((a, b) => {
+                const da = typeof a.start.toDate === 'function' ? a.start.toDate() : new Date(a.start);
+                const db = typeof b.start.toDate === 'function' ? b.start.toDate() : new Date(b.start);
+                return da.getTime() - db.getTime();
+            });
+
             listEl.innerHTML = sorted.map(e => {
-                const d = new Date(e.start);
+                const d = typeof e.start.toDate === 'function' ? e.start.toDate() : new Date(e.start);
                 const color = e.isGlobal ? '#D97706' : colorForUser(e.uid);
                 const dateLabel = isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()}`;
                 return `
