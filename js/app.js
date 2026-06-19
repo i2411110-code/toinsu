@@ -703,6 +703,10 @@ window.closeNotice = function() {
 // [가온 오피스 전용 로직 - 파이어베이스 권한 검증]
 // ==========================================
 
+// ==========================================
+// [가온 오피스 전용 로직 - 파이어베이스 권한 검증]
+// ==========================================
+
 window.unlockPrivate = async function() {
     const currentUserEmail = window.__currentUserEmail;
 
@@ -733,9 +737,11 @@ window.unlockPrivate = async function() {
                 // 권한 승인: 오피스 입장
                 document.getElementById('privateAuthScreen').style.display = 'none';
                 document.getElementById('privateMainContent').style.display = 'block';
+                
+                // [수정 완료] 캘린더 자동 실행
                 window.switchPrivateTab('cal');
-    if (typeof window.initGaonCalendar === 'function') window.initGaonCalendar();
-}
+                if (typeof window.initGaonCalendar === 'function') window.initGaonCalendar();
+                
             } else {
                 // 명단에 없음: 입장 거부
                 alert("가온 오피스 접근 권한이 없습니다.\n팀장님(관리자)에게 승인을 요청해 주세요.");
