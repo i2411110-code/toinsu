@@ -949,6 +949,41 @@
             }).join('');
         }
 
+// [신규 추가] 일반 사원용 나의 일정 목록 빌드 함수
+        function _renderUserMyList(visible) {
+            const panel  = document.getElementById('cal-user-my');
+            const listEl = document.getElementById('cal-user-list');
+            const badge  = document.getElementById('cal-user-badge');
+            if (!panel || !listEl) return;
+
+            // 관리자는 팀 전체 모아보기가 활성화되므로 개인 패널은 숨깁니다.
+            if (_calIsAdmin) {
+                panel.style.display = 'none';
+                return;
+            }
+
+            panel.style.display = '';
+            if (badge) badge.textContent = visible.length + '건';
+            if (!visible.length) { listEl.innerHTML = '<div style="color:#8B95A1;font-size:13px;">등록된 일정이 없습니다.</div>'; return; }
+
+            // 날짜 순 정렬 후 출력
+            const sorted = [...visible].sort((a, b) => String(a.start).localeCompare(String(b.start)));
+            listEl.innerHTML = sorted.map(e => {
+                const d = new Date(e.start);
+                const color = e.isGlobal ? '#D97706' : '#2563EB'; // 전사 공지는 주황색, 개인 일정은 파란색
+                const dateLabel = isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()}`;
+                return `
+                <div style="display:flex; align-items:center; gap:10px; padding:9px 12px;
+                            background:#F8FAFC; border-radius:10px; border-left:3px solid ${color}; cursor:pointer; margin-bottom:4px;"
+                     onclick="window.calOpenModalById('${e.id}')">
+                    <div style="font-size:11px; font-weight:700; color:#64748B; white-space:nowrap;">${dateLabel}</div>
+                    <div style="font-size:13px; color:#191F28; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                        ${e.isGlobal ? '📢 ' : ''}${e.title}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
         function _updateLabel() {
             const labelEl = document.getElementById('cal-year-month');
             if (!labelEl || !_fc) return;
