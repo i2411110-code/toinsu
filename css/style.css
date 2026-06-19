@@ -678,13 +678,15 @@ body {
 /* ══ 캘린더 + 사이드 레이아웃 ══ */
 .cal-main-layout {
     display: grid;
-    grid-template-columns: 1fr 260px;
+    grid-template-columns: 260px 1fr; /* 260px(할 일)을 왼쪽, 1fr(캘린더)을 오른쪽에 배치 */
     gap: 14px;
     align-items: start;
 }
 
-/* ══ 할 일 사이드 패널 ══ */
+/* HTML 렌더링 순서와 무관하게 할 일 패널을 무조건 왼쪽(1열)으로 당깁니다 */
 .todo-side-panel {
+    grid-column: 1;
+    grid-row: 1;
     background: white;
     border-radius: 18px;
     border: 1px solid #F2F4F6;
@@ -692,93 +694,40 @@ body {
     position: sticky;
     top: 16px;
 }
-.todo-panel-header {
-    font-size: 15px;
-    font-weight: 800;
-    color: #191F28;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-}
-.todo-input-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 12px;
-}
-.todo-input {
-    flex: 1;
-    border: 1.5px solid #E2E8F0;
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 13px;
-    font-family: 'Noto Sans KR', sans-serif;
-    outline: none;
-    transition: border-color 0.15s;
-}
-.todo-input:focus { border-color: #2563EB; }
-.todo-add-btn {
-    width: 36px;
-    height: 36px;
-    background: #2563EB;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: background 0.15s;
-}
-.todo-add-btn:hover { background: #1D4ED8; }
-.todo-list-ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-height: 400px;
-    overflow-y: auto;
-}
-.todo-list-ul li {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    background: #F8FAFC;
-    border-radius: 10px;
-    padding: 9px 10px;
-    font-size: 13px;
-    color: #334155;
-    line-height: 1.4;
-    word-break: keep-all;
-}
-.todo-list-ul li .todo-text { flex: 1; }
-.todo-list-ul li .todo-del {
-    color: #CBD5E1;
-    cursor: pointer;
-    font-size: 16px;
-    line-height: 1;
-    flex-shrink: 0;
-    transition: color 0.15s;
-}
-.todo-list-ul li .todo-del:hover { color: #EF4444; }
-.todo-empty-msg {
-    text-align: center;
-    color: #B0B8C1;
-    font-size: 12px;
-    padding: 24px 0 8px;
-    display: none;
+
+/* 캘린더 메인 영역을 오른쪽(2열)으로 보냅니다 */
+.cal-main-layout > div:not(.todo-side-panel) {
+    grid-column: 2;
 }
 
-/* ── 모바일: 사이드 패널을 아래로 ── */
+/* ── 모바일: 사이드 패널을 아래로 (기존 코드 유지) ── */
 @media (max-width: 768px) {
     .cal-main-layout {
         grid-template-columns: 1fr !important;
+        display: flex !important;
+        flex-direction: column-reverse; /* 모바일에서는 할 일을 캘린더 아래로 보내고 싶다면 유지 */
     }
     .todo-side-panel {
         position: static;
+    }
+}
+
+/* ── 모바일 캘린더 폰트/레이아웃 보정 ── */
+@media (max-width: 768px) {
+    #calendarRoot .fc-daygrid-day-number,
+    #calendarRoot .fc-col-header-cell-cushion {
+        font-size: 11px !important; /* 날짜 및 요일 폰트 축소 */
+        padding: 2px 4px !important;
+    }
+    
+    #calendarRoot .fc-event-title,
+    #calendarRoot .fc-event-time {
+        font-size: 10px !important; /* 일정 블록 텍스트 축소 */
+        line-height: 1.2 !important;
+    }
+    
+    #calendarRoot .fc-daygrid-event {
+        white-space: normal !important; /* 긴 텍스트가 잘리지 않고 줄바꿈 되도록 처리 */
+        padding: 1px 2px !important;
     }
 }
