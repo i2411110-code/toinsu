@@ -928,22 +928,82 @@
             );
         }
 
+        // [수정 완료] 나의 일정 모아보기 렌더링 함수 (과거 일정 숨김)
+        function _renderUserMyList(visible) {
+            const panel  = document.getElementById('cal-user-my');
+            const listEl = document.getElementById('cal-user-list');
+            const badge  = document.getElementById('cal-user-badge');
+            if (!panel || !listEl) return;
+
+            // 💡 [추가] 오늘 날짜의 자정(00:00) 기준시간을 만듭니다.
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // 본인 일정과 공지사항 중 "오늘 포함 미래의 일정"만 필터링
+            const myEvents = visible.filter(e => {
+                const isMyEvent = (_calCurrentUser && e.uid === _calCurrentUser.uid) || e.isGlobal === true;
+                const eventDate = new Date(e.start);
+                return isMyEvent && (eventDate >= today);
+            });
+
+            panel.style.display = ''; 
+            if (badge) badge.textContent = myEvents.length + '건';
+            
+            if (!myEvents.length) { 
+                listEl.innerHTML = '<div style="color:#8B95A1;font-size:13px;padding:8px 0;">예정된 일정이 없습니다.</div>'; 
+                return; 
+            }
+
+            const sorted = [...myEvents].sort((a, b) => String(a.start).localeCompare(String(b.start)));
+            listEl.innerHTML = sorted.map(e => {
+                const d = new Date(e.start);
+                const color = e.isGlobal ? '#D97706' : '#2563EB'; 
+                const dateLabel = isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()}`;
+                return `
+                <div style="display:flex; align-items:center; gap:10px; padding:9px 12px;
+                            background:#F8FAFC; border-radius:10px; border-left:3px solid ${color}; cursor:pointer; margin-bottom:4px;"
+                     onclick="window.calOpenModalById('${e.id}')">
+                    <div style="font-size:11px; font-weight:700; color:#64748B; white-space:nowrap;">${dateLabel}</div>
+                    <div style="font-size:13px; color:#191F28; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                        ${e.isGlobal ? '📢 ' : ''}${e.title}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // [수정 완료] 팀 전체 모아보기 렌더링 함수 (과거 일정 숨김)
         function _renderAdminAllList(visible) {
             const panel  = document.getElementById('cal-admin-all');
             const listEl = document.getElementById('cal-admin-list');
             const badge  = document.getElementById('cal-admin-badge');
             if (!panel || !listEl) return;
+            
+            // 💡 [추가] 오늘 날짜의 자정(00:00) 기준시간을 만듭니다.
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // 팀 전체 일정 중 "오늘 포함 미래의 일정"만 필터링
+            const futureEvents = visible.filter(e => {
+                const eventDate = new Date(e.start);
+                return eventDate >= today;
+            });
+
             panel.style.display = '';
-            if (badge) badge.textContent = visible.length + '건';
-            if (!visible.length) { listEl.innerHTML = '<div style="color:#8B95A1;font-size:13px;">등록된 일정이 없습니다.</div>'; return; }
-            const sorted = [...visible].sort((a, b) => String(a.start).localeCompare(String(b.start)));
+            if (badge) badge.textContent = futureEvents.length + '건';
+            
+            if (!futureEvents.length) { 
+                listEl.innerHTML = '<div style="color:#8B95A1;font-size:13px;padding:8px 0;">예정된 팀 일정이 없습니다.</div>'; 
+                return; 
+            }
+            
+            const sorted = [...futureEvents].sort((a, b) => String(a.start).localeCompare(String(b.start)));
             listEl.innerHTML = sorted.map(e => {
                 const d = new Date(e.start);
                 const color = e.isGlobal ? '#D97706' : colorForUser(e.uid);
                 const dateLabel = isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()}`;
                 return `
                 <div style="display:flex; align-items:center; gap:10px; padding:9px 12px;
-                            background:#F8FAFC; border-radius:10px; border-left:3px solid ${color}; cursor:pointer;"
+                            background:#F8FAFC; border-radius:10px; border-left:3px solid ${color}; cursor:pointer; margin-bottom:4px;"
                      onclick="window.calOpenModalById('${e.id}')">
                     <div style="font-size:11px; font-weight:700; color:#64748B; white-space:nowrap;">${dateLabel}</div>
                     <div style="font-size:13px; font-weight:700; color:${color}; flex-shrink:0;">${e.userName || e.email || '?'}</div>
