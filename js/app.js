@@ -562,6 +562,58 @@ window.addSchedule = function() {
     if(window.executeRegistrySync) window.executeRegistrySync().then(() => { window.renderSchedule(); });
 }
 
+// ==========================================
+// ✅ [신규] 할 일(Todo) — 캘린더 사이드 패널 전용
+// ==========================================
+window._todoItems = []; // 세션 내 메모리 저장 (DB 연동 없이 빠르게)
+
+window.addTodo = function() {
+    const input = document.getElementById('todoInput');
+    if (!input) return;
+    const val = input.value.trim();
+    if (!val) return;
+
+    window._todoItems.unshift({ id: Date.now(), text: val, done: false });
+    input.value = '';
+    input.focus();
+    window._renderTodoList();
+};
+
+window._renderTodoList = function() {
+    const ul = document.getElementById('todoList');
+    const emptyMsg = document.getElementById('todo-empty');
+    if (!ul) return;
+
+    if (window._todoItems.length === 0) {
+        ul.innerHTML = '';
+        if (emptyMsg) emptyMsg.style.display = 'block';
+        return;
+    }
+    if (emptyMsg) emptyMsg.style.display = 'none';
+
+    ul.innerHTML = window._todoItems.map(item => `
+        <li>
+            <span class="todo-text" style="${item.done ? 'text-decoration:line-through; color:#B0B8C1;' : ''}">
+                ${item.done ? '✅' : '○'} ${item.text}
+            </span>
+            <span class="todo-del" onclick="window._toggleTodo(${item.id})" title="완료 처리">
+                ${item.done ? '↩' : '✓'}
+            </span>
+            <span class="todo-del" onclick="window._deleteTodo(${item.id})" title="삭제">×</span>
+        </li>
+    `).join('');
+};
+
+window._toggleTodo = function(id) {
+    const item = window._todoItems.find(x => x.id === id);
+    if (item) { item.done = !item.done; window._renderTodoList(); }
+};
+
+window._deleteTodo = function(id) {
+    window._todoItems = window._todoItems.filter(x => x.id !== id);
+    window._renderTodoList();
+};
+
 window.renderSchedule = function() {
     const ul = document.getElementById('todo-list');
     if(!ul) return;
