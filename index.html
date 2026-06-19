@@ -907,7 +907,7 @@
             return allDocs.filter(e => (_calCurrentUser && e.uid === _calCurrentUser.uid) || e.isGlobal === true);
         }
 
-        async function subscribeCalendarEvents() {
+       async function subscribeCalendarEvents() {
             if (!window.__firestoreDb) return;
             const { collection, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js');
             if (_calUnsub) { _calUnsub(); _calUnsub = null; }
@@ -915,13 +915,24 @@
                 collection(window.__firestoreDb, 'calendarEvents'),
                 (snap) => {
                     const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    const visible = filterEventsForCurrentUser(all);
+                    
+                    // 💡 [핵심 추가] 오늘 날짜의 자정(00:00) 기준시간을 만듭니다.
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const todayTime = today.getTime();
+
+                    // 💡 달력 표(메인)와 리스트(모아보기) 전체에서 과거 일정을 아예 차단합니다.
+                    const visible = filterEventsForCurrentUser(all).filter(e => {
+                        if (!e.start) return false;
+                        const eventDate = typeof e.start.toDate === 'function' ? e.start.toDate() : new Date(e.start);
+                        eventDate.setHours(0, 0, 0, 0); // 일자만 비교
+                        return eventDate.getTime() >= todayTime;
+                    });
+
+                    // 차단된 데이터를 달력과 모아보기 화면에 렌더링
                     if (_fc) { _fc.removeAllEvents(); visible.forEach(e => _fc.addEvent(toFcEvent(e))); }
                     
-                    // 💡 1. 팀 전체 리스트 그리기 (관리자 전용)
                     if (_calIsAdmin) _renderAdminAllList(visible);
-                    
-                    // 💡 2. 나의 일정 리스트 그리기 (전 직원 공통)
                     if (typeof _renderUserMyList === 'function') _renderUserMyList(visible); 
                 },
                 (err) => { console.error('[캘린더] 실시간 동기화 오류:', err); }
