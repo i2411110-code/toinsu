@@ -258,17 +258,22 @@ body {
    - :not(.is-active)에 !important를 줘서, 어떤 반응형 미디어쿼리가
      #dashboard-app 등에 display값을 지정하더라도 비활성 상태에서는
      반드시 숨겨지도록(전부 동시 노출되는 문제 차단) 강제한다. */
+/* 캘린더 앱을 포함하여 비활성화 시 화면에서 완전히 제외하도록 수정 */
 #dashboard-app,
 #checklist-app,
-#report-app {
+#report-app,
+#calendar-app {
     display: none;
 }
 #dashboard-app.is-active { display: grid; }
+#calendar-app.is-active { display: grid; } /* 캘린더는 왼쪽 할 일과 나란히 뜨도록 grid 유지 */
 #checklist-app.is-active,
 #report-app.is-active { display: block; }
+
 #dashboard-app:not(.is-active),
 #checklist-app:not(.is-active),
-#report-app:not(.is-active) {
+#report-app:not(.is-active),
+#calendar-app:not(.is-active) {
     display: none !important;
 }
 

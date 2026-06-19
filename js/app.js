@@ -733,6 +733,9 @@ window.unlockPrivate = async function() {
                 // 권한 승인: 오피스 입장
                 document.getElementById('privateAuthScreen').style.display = 'none';
                 document.getElementById('privateMainContent').style.display = 'block';
+                window.switchPrivateTab('cal');
+    if (typeof window.initGaonCalendar === 'function') window.initGaonCalendar();
+}
             } else {
                 // 명단에 없음: 입장 거부
                 alert("가온 오피스 접근 권한이 없습니다.\n팀장님(관리자)에게 승인을 요청해 주세요.");
@@ -781,7 +784,8 @@ window.switchGaonOfficeTab = function(tab) {
     if (panelId) {
         const panel = document.getElementById(panelId);
         if (panel) {
-            panel.style.display = (tab === 'db') ? 'grid' : 'block';
+            // cal이나 db 탭일 때는 레이아웃이 깨지지 않게 grid 형태로 열어줍니다.
+            panel.style.display = (tab === 'db' || tab === 'cal') ? 'grid' : 'block';
             panel.classList.add('is-active');
         }
     }
