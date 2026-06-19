@@ -712,22 +712,44 @@ body {
     }
 }
 
-/* ── 모바일 캘린더 폰트/레이아웃 보정 ── */
+/* ── 모바일 캘린더 네이티브 앱 스타일 보정 ── */
 @media (max-width: 768px) {
+    /* 날짜 번호 가운데 정렬 및 크기 최적화 */
+    #calendarRoot .fc-daygrid-day-top {
+        display: flex;
+        justify-content: center !important;
+        padding-top: 4px;
+    }
     #calendarRoot .fc-daygrid-day-number,
     #calendarRoot .fc-col-header-cell-cushion {
-        font-size: 11px !important; /* 날짜 및 요일 폰트 축소 */
-        padding: 2px 4px !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        padding: 2px !important;
     }
-    
-    #calendarRoot .fc-event-title,
-    #calendarRoot .fc-event-time {
-        font-size: 10px !important; /* 일정 블록 텍스트 축소 */
-        line-height: 1.2 !important;
+
+    /* 캘린더 셀 내부 여백 최소화 */
+    #calendarRoot .fc-daygrid-day-frame {
+        padding: 0 !important;
     }
-    
+    #calendarRoot .fc-daygrid-day-events {
+        margin-bottom: 0 !important;
+    }
+
+    /* 일정 블록 디자인 (모서리 둥글고 꽉 차게) */
     #calendarRoot .fc-daygrid-event {
-        white-space: normal !important; /* 긴 텍스트가 잘리지 않고 줄바꿈 되도록 처리 */
-        padding: 1px 2px !important;
+        margin: 1px 2px !important;
+        border-radius: 4px !important;
+        border: none !important;
+    }
+
+    /* 텍스트 1줄 고정, 가운데 정렬, 말줄임표 처리 */
+    #calendarRoot .fc-event-main > div {
+        text-align: center !important;
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        white-space: nowrap !important; /* 글씨 줄바꿈 방지 */
+        overflow: hidden !important;
+        text-overflow: ellipsis !important; /* 넘치는 글씨 ... 처리 */
+        padding: 3px 1px !important;
     }
 }
