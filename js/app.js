@@ -224,11 +224,6 @@ if (pageId === 'page-private') {
     window.renderSchedule();
 }
 
-    document.getElementById('user-private-title').innerText = currentUserEmail + " 전용 제어실";
-    window.renderCombinedCrmList();
-    window.renderSchedule();
-}
-
          // 실비 계산기 초기화
         if (pageId === 'page-silbi') {
             requestAnimationFrame(() => {
