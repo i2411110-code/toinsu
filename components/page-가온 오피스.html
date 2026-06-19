@@ -208,112 +208,96 @@
         <div id="report-app" style="display:none; padding:4px 0;">
             </div>
 
-        <div id="calendar-app" style="display:none;">
+        <div id="calendar-app" style="display:none;" class="cal-main-layout">
+    
+    <div class="todo-side-panel">
+        <h3 style="font-size:16px; font-weight:700; margin-bottom:12px; color:#191F28;"><i class="bi bi-check-square-fill" style="color:#2563EB;"></i> 오늘 할 일</h3>
+        <div style="display:flex; gap:6px; margin-bottom:12px;">
+            <input type="text" id="todoInput" class="form-control" style="padding:8px 12px; font-size:13px;" placeholder="할 일 입력" onkeydown="if(event.key==='Enter') window.addTodo()">
+            <button class="btn-action" style="padding:8px 14px; font-size:16px; width:auto; border-radius:8px;" onclick="window.addTodo()">+</button>
+        </div>
+        <ul id="todoList" style="list-style:none; padding:0; margin:0; font-size:13px; display:flex; flex-direction:column; gap:8px;"></ul>
+        <div id="todo-empty" style="color:#8B95A1; font-size:12px; text-align:center; padding:20px 0;">등록된 할 일이 없습니다.</div>
+    </div>
 
-            <div class="cal-control-bar">
-                <div class="cal-view-switch">
-                    <button id="cal-view-month" class="cal-view-btn active" onclick="window.calSetView('month')">
-                        <i class="bi bi-calendar3"></i> 월간
-                    </button>
-                    <button id="cal-view-week" class="cal-view-btn" onclick="window.calSetView('week')">
-                        <i class="bi bi-calendar-week"></i> 주간
-                    </button>
-                </div>
-                <div class="cal-nav-group">
-                    <button onclick="window.calPrev()" class="cal-nav-btn" aria-label="이전">
-                        <i class="bi bi-chevron-left"></i>
-                    </button>
-                    <div id="cal-year-month" class="cal-year-month-label">불러오는 중...</div>
-                    <button onclick="window.calNext()" class="cal-nav-btn" aria-label="다음">
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                </div>
-                
-                <div style="display:flex; gap:8px;">
-                    <button onclick="window.calGoToday()" class="cal-today-btn">오늘</button>
-                    <button onclick="window.calOpenCreateModal()" class="cal-today-btn cal-today-btn-primary">
-                        <i class="bi bi-plus-lg"></i> 일정 등록
-                    </button>
-                </div>
+    <div class="cal-main-content">
+        <div class="cal-control-bar">
+            <div class="cal-view-switch">
+                <button id="cal-view-month" class="cal-view-btn active" onclick="window.calSetView('month')"><i class="bi bi-calendar3"></i> 월간</button>
+                <button id="cal-view-week" class="cal-view-btn" onclick="window.calSetView('week')"><i class="bi bi-calendar-week"></i> 주간</button>
             </div>
-
-            <div id="cal-admin-banner" class="cal-admin-banner" style="display:none;">
-                <i class="bi bi-shield-fill-check"></i> 관리자 모드 — 전 직원의 일정이 색상별로 모두 표시됩니다.
+            <div class="cal-nav-group">
+                <button onclick="window.calPrev()" class="cal-nav-btn" aria-label="이전"><i class="bi bi-chevron-left"></i></button>
+                <div id="cal-year-month" class="cal-year-month-label">불러오는 중...</div>
+                <button onclick="window.calNext()" class="cal-nav-btn" aria-label="다음"><i class="bi bi-chevron-right"></i></button>
             </div>
-
-            <div class="cal-card" id="cal-fc-wrap">
-                <div id="calendarRoot"></div>
-            </div>
-
-            <div id="cal-admin-all" class="cal-card" style="display:none; margin-top:14px;">
-                <div class="cal-admin-panel-title">
-                    <i class="bi bi-people-fill"></i> 팀 전체 일정 모아보기
-                    <span id="cal-admin-badge" class="cal-admin-badge"></span>
-                </div>
-                <div id="cal-admin-list" class="cal-admin-list"></div>
-            </div>
-
-        </div><div id="calendarModal" class="cal-modal-backdrop" style="display:none;"
-             onclick="if(event.target===this) window.calCloseModal()">
-            <div class="cal-modal-card">
-                <div class="cal-modal-header">
-                    <div>
-                        <div id="calModalDate" class="cal-modal-date-label"></div>
-                        <div id="calModalTitle" class="cal-modal-title-text"></div>
-                    </div>
-                    <button onclick="window.calCloseModal()" class="cal-modal-close-btn" aria-label="닫기">&times;</button>
-                </div>
-                <div id="calModalBody" class="cal-modal-body"></div>
-                <div class="cal-modal-actions">
-                    <button id="calModalDeleteBtn" class="cal-modal-delete-btn" style="display:none;">
-                        <i class="bi bi-trash3"></i> 이 일정 삭제
-                    </button>
-                </div>
+            <div style="display:flex; gap:8px;">
+                <button onclick="window.calGoToday()" class="cal-today-btn">오늘</button>
+                <button onclick="window.calOpenCreateModal()" class="cal-today-btn cal-today-btn-primary"><i class="bi bi-plus-lg"></i> 일정 등록</button>
             </div>
         </div>
 
-        <div id="calendarAddModal" class="cal-modal-backdrop" style="display:none;"
-             onclick="if(event.target===this) window.calCloseAddModal()">
-            <div class="cal-modal-card">
-                <div class="cal-modal-header">
-                    <div class="cal-modal-title-text">🗓️ 새 일정 등록</div>
-                    <button onclick="window.calCloseAddModal()" class="cal-modal-close-btn" aria-label="닫기">&times;</button>
+        <div id="cal-admin-banner" class="cal-admin-banner" style="display:none;">
+            <i class="bi bi-shield-fill-check"></i> 관리자 모드 — 전 직원의 일정이 색상별로 모두 표시됩니다.
+        </div>
+
+        <div class="cal-card" id="cal-fc-wrap">
+            <div id="calendarRoot"></div>
+        </div>
+
+        <div id="cal-admin-all" class="cal-card" style="display:none; margin-top:14px;">
+            <div class="cal-admin-panel-title">
+                <i class="bi bi-people-fill"></i> 팀 전체 일정 모아보기
+                <span id="cal-admin-badge" class="cal-admin-badge"></span>
+            </div>
+            <div id="cal-admin-list" class="cal-admin-list"></div>
+        </div>
+    </div>
+
+    <div id="calendarModal" class="cal-modal-backdrop" style="display:none;" onclick="if(event.target===this) window.calCloseModal()">
+        <div class="cal-modal-card">
+            <div class="cal-modal-header">
+                <div>
+                    <div id="calModalDate" class="cal-modal-date-label"></div>
+                    <div id="calModalTitle" class="cal-modal-title-text"></div>
                 </div>
-                <div class="cal-modal-body cal-add-form">
-                    <div class="form-group">
-                        <label>날짜</label>
-                        <input id="calAddDate" type="date" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label>제목 (*)</label>
-                        <input id="calAddTitle" class="form-control" placeholder="예) 김가온 고객 방문상담"
-                            onkeydown="if(event.key==='Enter') window.calSubmitNewEvent()">
-                    </div>
-                    <div class="cal-add-form-row">
-                        <div class="form-group">
-                            <label>시간</label>
-                            <input id="calAddTime" type="time" class="form-control" value="09:00">                    
-                        </div>
-                        <div class="form-group">
-                           <label>종료 시간</label>
-                           <input id="calAddEndTime" type="time" class="form-control" value="10:00">
-                           </div>
-                        <div class="form-group">
-                            <label>장소 (선택)</label>
-                            <input id="calAddPlace" class="form-control" placeholder="예) 강남 사무실">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>메모 (선택)</label>
-                        <textarea id="calAddMemo" class="form-control" rows="2" placeholder="전달할 메모를 적어주세요"></textarea>
-                    </div>
-                    <label id="calAddGlobalWrap" class="cal-add-global-wrap" style="display:none;">
-                        <input type="checkbox" id="calAddGlobal"> 📢 전체 공지 일정으로 등록 (모든 직원에게 노출)
-                    </label>
-                    <button class="btn-action" style="background:#2563EB;" onclick="window.calSubmitNewEvent()">등록하기</button>
-                </div>
+                <button onclick="window.calCloseModal()" class="cal-modal-close-btn" aria-label="닫기">&times;</button>
+            </div>
+            <div id="calModalBody" class="cal-modal-body"></div>
+            <div class="cal-modal-actions" style="display:flex; gap:10px;">
+                <button id="calModalEditBtn" class="cal-modal-delete-btn" style="display:none; background:#EFF6FF; color:#2563EB; border-color:#DBEAFE;">
+                    <i class="bi bi-pencil-square"></i> 이 일정 수정
+                </button>
+                <button id="calModalDeleteBtn" class="cal-modal-delete-btn" style="display:none;">
+                    <i class="bi bi-trash3"></i> 이 일정 삭제
+                </button>
             </div>
         </div>
+    </div>
+
+    <div id="calendarAddModal" class="cal-modal-backdrop" style="display:none;" onclick="if(event.target===this) window.calCloseAddModal()">
+        <div class="cal-modal-card">
+            <div class="cal-modal-header">
+                <div id="calAddModalTitle" class="cal-modal-title-text">🗓️ 일정 등록</div>
+                <button onclick="window.calCloseAddModal()" class="cal-modal-close-btn" aria-label="닫기">&times;</button>
+            </div>
+            <div class="cal-modal-body cal-add-form">
+                <div class="form-group"><label>날짜</label><input id="calAddDate" type="date" class="form-control"></div>
+                <div class="form-group"><label>제목 (*)</label><input id="calAddTitle" class="form-control" placeholder="예) 김가온 고객 방문상담" onkeydown="if(event.key==='Enter') window.calSubmitNewEvent()"></div>
+                <div class="cal-add-form-row">
+                    <div class="form-group"><label>시작 시간</label><input id="calAddTime" type="time" class="form-control" value="09:00"></div>
+                    <div class="form-group"><label>종료 시간</label><input id="calAddEndTime" type="time" class="form-control" value="10:00"></div>
+                    <div class="form-group"><label>장소 (선택)</label><input id="calAddPlace" class="form-control" placeholder="예) 강남 사무실"></div>
+                </div>
+                <div class="form-group"><label>메모 (선택)</label><textarea id="calAddMemo" class="form-control" rows="2" placeholder="전달할 메모를 적어주세요"></textarea></div>
+                <label id="calAddGlobalWrap" class="cal-add-global-wrap" style="display:none;">
+                    <input type="checkbox" id="calAddGlobal"> 📢 전체 공지 일정으로 등록 (모든 직원에게 노출)
+                </label>
+                <button id="calAddSubmitBtn" class="btn-action" style="background:#2563EB;" onclick="window.calSubmitNewEvent()">등록하기</button>
+            </div>
+        </div>
+    </div>
+</div>
 
     </div><div class="modal-overlay" id="kakao-modal">
         <div class="analysis-panel">

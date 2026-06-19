@@ -1011,6 +1011,9 @@
         window.calNext     = function() { if (_fc) _fc.next(); };
         window.calGoToday  = function() { if (_fc) _fc.today(); };
 
+        window.calCurrentEditId = null; // 수정 모드 구분을 위한 변수
+
+        // 상세보기 모달 열기 (수정 버튼 활성화 추가)
         function openDetailModal(event) {
             const ep = event.extendedProps || {};
             const start = event.start;
@@ -1019,6 +1022,7 @@
                 ? '하루 종일'
                 : (start ? start.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-')
                   + (event.end ? ' ~ ' + event.end.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '');
+            
             document.getElementById('calModalDate').textContent  = dateLabel;
             document.getElementById('calModalTitle').textContent = (ep.isGlobal ? '📢 ' : '') + event.title;
             document.getElementById('calModalBody').innerHTML = `
@@ -1027,71 +1031,120 @@
                 ${ep.place ? `<div style="margin-bottom:6px;"><b>장소:</b> ${ep.place}</div>` : ''}
                 ${ep.memo  ? `<div style="margin-bottom:6px;"><b>메모:</b> ${ep.memo}</div>`  : ''}
                 ${ep.isGlobal ? `<div style="color:#D97706;font-weight:700;">📢 전체 공지 일정</div>` : ''}`;
-            const canDelete = _calIsAdmin || (_calCurrentUser && ep.uid === _calCurrentUser.uid);
+            
+            const canManage = _calIsAdmin || (_calCurrentUser && ep.uid === _calCurrentUser.uid);
             const delBtn = document.getElementById('calModalDeleteBtn');
-            if (canDelete) { delBtn.style.display = ''; delBtn.onclick = () => deleteEventById(event.id); }
-            else { delBtn.style.display = 'none'; }
+            const editBtn = document.getElementById('calModalEditBtn');
+            
+            if (canManage) { 
+                delBtn.style.display = ''; delBtn.onclick = () => deleteEventById(event.id); 
+                if(editBtn) { editBtn.style.display = ''; editBtn.onclick = () => window.calOpenEditModal(event); }
+            } else { 
+                delBtn.style.display = 'none'; 
+                if(editBtn) editBtn.style.display = 'none'; 
+            }
             document.getElementById('calendarModal').style.display = 'flex';
         }
 
         window.calOpenModalById = function(id) { if (!_fc) return; const ev = _fc.getEventById(id); if (ev) openDetailModal(ev); };
         window.calCloseModal    = function() { document.getElementById('calendarModal').style.display = 'none'; };
 
+        // [신규] 일정 수정 모달 열기
+        window.calOpenEditModal = function(event) {
+            window.calCloseModal(); // 상세 모달 닫기
+            window.calCurrentEditId = event.id; // 현재 수정할 문서 ID 저장
+            
+            const ep = event.extendedProps || {};
+            const sDate = new Date(event.start);
+            const eDate = event.end ? new Date(event.end) : new Date(event.start);
+            
+            const yyyy = sDate.getFullYear();
+            const mm = String(sDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(sDate.getDate()).padStart(2, '0');
+            const sTime = String(sDate.getHours()).padStart(2, '0') + ':' + String(sDate.getMinutes()).padStart(2, '0');
+            const eTime = String(eDate.getHours()).padStart(2, '0') + ':' + String(eDate.getMinutes()).padStart(2, '0');
+            
+            document.getElementById('calAddDate').value = `${yyyy}-${mm}-${dd}`;
+            document.getElementById('calAddTitle').value = event.title;
+            document.getElementById('calAddTime').value = sTime;
+            document.getElementById('calAddEndTime').value = eTime;
+            document.getElementById('calAddPlace').value = ep.place || '';
+            document.getElementById('calAddMemo').value = ep.memo || '';
+            
+            const gChk = document.getElementById('calAddGlobal');
+            if (gChk) gChk.checked = !!ep.isGlobal;
+            
+            document.getElementById('calAddModalTitle').textContent = '🗓️ 일정 수정';
+            document.getElementById('calAddSubmitBtn').textContent = '수정 완료';
+            document.getElementById('calendarAddModal').style.display = 'flex';
+        }
+
+        // 새 일정 등록 모달 열기
         window.calOpenCreateModal = function(dateStr) {
+            window.calCurrentEditId = null; // 신규 등록 모드로 리셋
             _calCreateDateStr = dateStr || new Date().toISOString().slice(0, 10);
             document.getElementById('calAddDate').value  = _calCreateDateStr;
             document.getElementById('calAddTitle').value = '';
             document.getElementById('calAddTime').value  = '09:00';
+            document.getElementById('calAddEndTime').value  = '10:00';
             document.getElementById('calAddPlace').value = '';
             document.getElementById('calAddMemo').value  = '';
             const gChk = document.getElementById('calAddGlobal');
             if (gChk) gChk.checked = false;
+            
+            document.getElementById('calAddModalTitle').textContent = '🗓️ 새 일정 등록';
+            document.getElementById('calAddSubmitBtn').textContent = '등록하기';
             document.getElementById('calendarAddModal').style.display = 'flex';
         };
+        
         window.calCloseAddModal = function() { document.getElementById('calendarAddModal').style.display = 'none'; };
 
+        // [수정] 일정 등록 및 수정 저장 통합 처리
         window.calSubmitNewEvent = async function() {
-    if (!_calCurrentUser) { alert('로그인 정보를 확인할 수 없습니다.'); return; }
-    
-    const dateStr  = document.getElementById('calAddDate').value || _calCreateDateStr;
-    const title    = (document.getElementById('calAddTitle').value || '').trim();
-    const time     = document.getElementById('calAddTime').value || '09:00';
-    
-    // [추가] 종료 시간 값을 가져옵니다.
-    const endTime  = document.getElementById('calAddEndTime').value || '10:00'; 
-    
-    const place    = (document.getElementById('calAddPlace').value || '').trim();
-    const memo     = (document.getElementById('calAddMemo').value || '').trim();
-    const isGlobal = _calIsAdmin && document.getElementById('calAddGlobal') && document.getElementById('calAddGlobal').checked;
-    
-    if (!title)   { alert('일정 제목을 입력해주세요.'); return; }
-    if (!dateStr) { alert('날짜를 선택해주세요.'); return; }
-    
-    try {
-        const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js');
-        await addDoc(collection(window.__firestoreDb, 'calendarEvents'), {
-            uid: _calCurrentUser.uid, 
-            email: _calCurrentUser.email,
-            userName: window.currentUserDisplayName || _calCurrentUser.email,
-            title, 
-            start: `${dateStr}T${time}:00`, 
+            if (!_calCurrentUser) { alert('로그인 정보를 확인할 수 없습니다.'); return; }
             
-            // [추가] 데이터베이스에 종료 시간을 저장하여 주간 캘린더에서 블록이 늘어나게 합니다.
-            end: `${dateStr}T${endTime}:00`, 
+            const dateStr  = document.getElementById('calAddDate').value || _calCreateDateStr;
+            const title    = (document.getElementById('calAddTitle').value || '').trim();
+            const time     = document.getElementById('calAddTime').value || '09:00';
+            const endTime  = document.getElementById('calAddEndTime').value || '10:00'; 
+            const place    = (document.getElementById('calAddPlace').value || '').trim();
+            const memo     = (document.getElementById('calAddMemo').value || '').trim();
+            const isGlobal = _calIsAdmin && document.getElementById('calAddGlobal') && document.getElementById('calAddGlobal').checked;
             
-            allDay: false,
-            place, 
-            memo, 
-            isGlobal: !!isGlobal,
-            createdAt: serverTimestamp(), 
-            updatedAt: serverTimestamp()
-        });
-        window.calCloseAddModal();
-    } catch (e) { 
-        console.error('[캘린더] 일정 등록 실패:', e); 
-        alert('일정 등록에 실패했습니다: ' + e.message); 
-    }
-};
+            if (!title)   { alert('일정 제목을 입력해주세요.'); return; }
+            if (!dateStr) { alert('날짜를 선택해주세요.'); return; }
+            
+            try {
+                const { collection, addDoc, doc, updateDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js');
+                
+                const eventData = {
+                    title, 
+                    start: `${dateStr}T${time}:00`, 
+                    end: `${dateStr}T${endTime}:00`, 
+                    allDay: false,
+                    place, 
+                    memo, 
+                    isGlobal: !!isGlobal,
+                    updatedAt: serverTimestamp()
+                };
+
+                // ID가 존재하면 수정(updateDoc), 없으면 신규등록(addDoc)
+                if (window.calCurrentEditId) {
+                    const eventRef = doc(window.__firestoreDb, 'calendarEvents', window.calCurrentEditId);
+                    await updateDoc(eventRef, eventData);
+                } else {
+                    eventData.uid = _calCurrentUser.uid;
+                    eventData.email = _calCurrentUser.email;
+                    eventData.userName = window.currentUserDisplayName || _calCurrentUser.email;
+                    eventData.createdAt = serverTimestamp();
+                    await addDoc(collection(window.__firestoreDb, 'calendarEvents'), eventData);
+                }
+                window.calCloseAddModal();
+            } catch (e) { 
+                console.error('[캘린더] 일정 저장 실패:', e); 
+                alert('일정 저장에 실패했습니다: ' + e.message); 
+            }
+        };
 
         async function deleteEventById(id) {
             if (!confirm('이 일정을 삭제하시겠습니까?')) return;
