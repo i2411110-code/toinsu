@@ -215,19 +215,18 @@ window.loadComponent = async function(pageId, extraAction) {
         if (pageId === 'page-private') {
             document.getElementById('user-private-title').innerText = currentUserEmail + " 전용 제어실";
 
-            // ✅ 관리자가 승인한 사용자만 가온 오피스 본문 진입 가능
-            const authScreen = document.getElementById('privateAuthScreen');
-            const mainContent = document.getElementById('privateMainContent');
-            if (window.currentUserOfficeApproved) {
-                if (authScreen) authScreen.style.display = 'none';
-                if (mainContent) mainContent.style.display = 'block';
-                window.renderCombinedCrmList();
-                window.renderSchedule();
-            } else {
-                if (authScreen) authScreen.style.display = 'block';
-                if (mainContent) mainContent.style.display = 'none';
-            }
-        }
+            if (pageId === 'page-private') {
+    // ❌ 승인 안 된 사람은 페이지 진입 자체를 막고 팝업 후 메인으로 복귀
+    if (!window.currentUserOfficeApproved) {
+        alert("🔒 인가된 담당자만 접근할 수 있는 보안 영역입니다.");
+        window.loadComponent('main-dashboard');
+        return;
+    }
+
+    document.getElementById('user-private-title').innerText = currentUserEmail + " 전용 제어실";
+    window.renderCombinedCrmList();
+    window.renderSchedule();
+}
 
          // 실비 계산기 초기화
         if (pageId === 'page-silbi') {
