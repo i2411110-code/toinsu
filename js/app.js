@@ -626,19 +626,53 @@ window.closeNotice = function() {
 }
 
 // ==========================================
-// [비밀 메모 오피스 전용 로직]
+// [가온 오피스 전용 로직 - 파이어베이스 권한 검증]
 // ==========================================
 
-// 1. 비밀번호 확인 로직
-// app.js 맨 아래에 추가하거나 수정하세요
-window.unlockPrivate = function() {
-    const pwd = document.getElementById('privatePwd').value;
-    
-    if(pwd === '1004') {
-        document.getElementById('privateAuthScreen').style.display = 'none';
-        document.getElementById('privateMainContent').style.display = 'block';
-    } else {
-        alert('비밀번호가 일치하지 않습니다.');
+window.unlockPrivate = async function() {
+    const currentUserEmail = window.__currentUserEmail;
+
+    if (!currentUserEmail) {
+        alert("로그인 정보가 확인되지 않습니다. 다시 로그인해 주세요.");
+        return;
+    }
+
+    // 검증 중 사용자에게 보여줄 메시지 (선택 사항)
+    const authBtn = document.querySelector('#privateAuthScreen .btn-action');
+    const originalText = authBtn.innerText;
+    authBtn.innerText = "서버에서 권한 확인 중...";
+    authBtn.disabled = true;
+
+    try {
+        const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        const db = window.__firestoreDb; // 이미 초기화된 db 객체 사용
+
+        // 🌟 파이어베이스에서 접근 권한 명단 조회
+        const accessRef = doc(db, "admin_settings", "office_access");
+        const accessSnap = await getDoc(accessRef);
+
+        if (accessSnap.exists()) {
+            const allowedUsers = accessSnap.data().allowedUsers || [];
+
+            // 서버 명단과 현재 로그인된 이메일 대조
+            if (allowedUsers.includes(currentUserEmail)) {
+                // 권한 승인: 오피스 입장
+                document.getElementById('privateAuthScreen').style.display = 'none';
+                document.getElementById('privateMainContent').style.display = 'block';
+            } else {
+                // 명단에 없음: 입장 거부
+                alert("가온 오피스 접근 권한이 없습니다.\n팀장님(관리자)에게 승인을 요청해 주세요.");
+            }
+        } else {
+            alert("서버에 권한 설정 데이터가 존재하지 않습니다.");
+        }
+    } catch (error) {
+        console.error("권한 확인 중 오류 발생:", error);
+        alert("권한을 확인하는 중 서버 오류가 발생했습니다.");
+    } finally {
+        // 버튼 상태 원상복구
+        authBtn.innerText = originalText;
+        authBtn.disabled = false;
     }
 };
 
