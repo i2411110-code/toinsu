@@ -212,16 +212,17 @@ window.loadComponent = async function(pageId, extraAction) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
         // 페이지별 데이터 다시 불러오기
-        if (pageId === 'page-private') {
-            document.getElementById('user-private-title').innerText = currentUserEmail + " 전용 제어실";
-
-            if (pageId === 'page-private') {
+if (pageId === 'page-private') {
     // ❌ 승인 안 된 사람은 페이지 진입 자체를 막고 팝업 후 메인으로 복귀
     if (!window.currentUserOfficeApproved) {
         alert("🔒 인가된 담당자만 접근할 수 있는 보안 영역입니다.");
         window.loadComponent('main-dashboard');
         return;
     }
+
+    window.renderCombinedCrmList();
+    window.renderSchedule();
+}
 
     document.getElementById('user-private-title').innerText = currentUserEmail + " 전용 제어실";
     window.renderCombinedCrmList();
