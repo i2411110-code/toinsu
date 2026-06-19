@@ -1,5 +1,34 @@
 <div class="sub-page" style="display:block; padding: 20px;">
 
+    <div id="privateAuthScreen" style="text-align:center; padding: 80px 20px;">
+        <i class="bi bi-shield-lock-fill" style="font-size: 60px; color: var(--main-blue);"></i>
+        <h3 style="margin: 20px 0; font-weight:700;">가온사업단 전용 오피스</h3>
+        <p style="color: var(--text-muted); font-size:14px; margin-bottom:25px;">
+            인가된 담당자만 접근할 수 있는 보안 영역입니다.<br>부여받은 비밀번호를 입력해주세요.
+        </p>
+        <input type="password" id="privatePwd" class="form-control"
+            style="max-width:300px; margin:0 auto; text-align:center;" placeholder="비밀번호 입력"
+            onkeypress="if(event.key==='Enter') window.unlockPrivate()">
+        <button class="btn-action" style="max-width:300px; margin-top:15px;" onclick="window.unlockPrivate()">
+            접근 허가 요청
+        </button>
+        <button class="inline-home-btn" style="margin-top:20px;" onclick="window.goBack()">
+            <i class="bi bi-arrow-left"></i> 메인으로 돌아가기
+        </button>
+    </div>
+
+    <div id="privateMainContent" style="display:none;">
+
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+            <div style="font-size:18px; font-weight:800; color:#191F28; display:flex; align-items:center; gap:8px;">
+                <i class="bi bi-incognito" style="color:#2563EB;"></i>
+                가온사업단 전용 룸
+            </div>
+            <button class="inline-home-btn" onclick="window.goBack()">
+                <i class="bi bi-house-door-fill"></i> 메인화면
+            </button>
+        </div>
+
         <div class="office-nav" id="office-private-nav" style="margin-bottom:20px;">
             <button id="btn-ptab-cal"           onclick="window.switchPrivateTab('cal'); window.initGaonCalendar();">🗓️ 캘린더</button>
             <button id="btn-ptab-rpt"           onclick="window.switchPrivateTab('rpt')">📋 보장분석 리포트</button>
