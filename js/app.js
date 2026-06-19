@@ -14,6 +14,7 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https:/
 // ==========================================
 window.globalClientRegistry = {};
 window.currentUserSchedules = [];
+window.currentUserOfficeApproved = false; // ✅ 가온 오피스 접근 승인 여부 (기본값: 비승인)
 let currentModalTargetName = "";
 
 // 3. 파이어베이스 설정
@@ -50,16 +51,20 @@ async function loadUserIntegratedData(email) {
             const data = docSnap.data();
             window.globalClientRegistry = data.clientRegistry || {};
             // ✅ 이름 저장해두기
-window.currentUserDisplayName = data.displayName || email.split('@')[0];
+            window.currentUserDisplayName = data.displayName || email.split('@')[0];
             window.currentUserSchedules = data.schedules || [];
+            // ✅ 가온 오피스 접근 승인 여부 (관리자가 Firestore에서 직접 true로 설정한 사람만 true)
+            window.currentUserOfficeApproved = data.officeApproved === true;
             if(document.getElementById('memo-txt')) document.getElementById('memo-txt').value = data.memo || "";
         } else {
             window.globalClientRegistry = {};
             window.currentUserSchedules = [];
+            window.currentUserOfficeApproved = false;
             if(document.getElementById('memo-txt')) document.getElementById('memo-txt').value = "";
         }
     } catch (error) {
         console.error("데이터 로드 실패:", error);
+        window.currentUserOfficeApproved = false;
     }
 }
 
@@ -126,7 +131,7 @@ window.toggleAuthTab = function(mode) {
         inviteGroup.style.display = 'block';
         if(nameGroup) nameGroup.style.display = 'block';
     }
-}   // ← 이 닫는 괄호가 없어서 생긴 문제
+}
 
 window.handleAuthSubmit = function() {
     const email = document.getElementById('auth-email').value.trim();
@@ -155,10 +160,12 @@ window.handleAuthSubmit = function() {
         createUserWithEmailAndPassword(auth, email, password)
             .then(async (userCred) => {
                 const userName = document.getElementById('auth-name')?.value.trim() || '';
-                if(userName) {
-                    const userRef = doc(db, "users_portal", userCred.user.email);
-                    await setDoc(userRef, { displayName: userName }, { merge: true });
-                }
+                // ✅ 신규 가입자는 officeApproved: false 로 시작 (관리자가 직접 승인해야 가온 오피스 접근 가능)
+                const userRef = doc(db, "users_portal", userCred.user.email);
+                await setDoc(userRef, {
+                    displayName: userName || '',
+                    officeApproved: false
+                }, { merge: true });
                 alert("가입이 완료되었습니다!");
                 document.getElementById('auth-overlay').style.display = 'none';
             })
@@ -173,10 +180,12 @@ onAuthStateChanged(auth, (user) => {
     if (user) {
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('user-display-email').innerText = user.email;
-        loadUserIntegratedData(user.email);
+        loadUserIntegratedData(user.email).then(() => {
+            // 데이터(승인 여부 포함) 로드가 끝난 뒤 메인화면 진입
+            window.loadComponent('main-dashboard');
+        });
         updateVisitCounter();
         window.checkAndShowNotice();
-        window.loadComponent('main-dashboard'); // 로그인 후 메인화면 로드
     } else {
         document.getElementById('auth-overlay').style.display = 'flex';
     }
@@ -205,8 +214,19 @@ window.loadComponent = async function(pageId, extraAction) {
         // 페이지별 데이터 다시 불러오기
         if (pageId === 'page-private') {
             document.getElementById('user-private-title').innerText = currentUserEmail + " 전용 제어실";
-            window.renderCombinedCrmList();
-            window.renderSchedule();
+
+            // ✅ 관리자가 승인한 사용자만 가온 오피스 본문 진입 가능
+            const authScreen = document.getElementById('privateAuthScreen');
+            const mainContent = document.getElementById('privateMainContent');
+            if (window.currentUserOfficeApproved) {
+                if (authScreen) authScreen.style.display = 'none';
+                if (mainContent) mainContent.style.display = 'block';
+                window.renderCombinedCrmList();
+                window.renderSchedule();
+            } else {
+                if (authScreen) authScreen.style.display = 'block';
+                if (mainContent) mainContent.style.display = 'none';
+            }
         }
 
          // 실비 계산기 초기화
@@ -628,19 +648,10 @@ window.closeNotice = function() {
 // ==========================================
 // [비밀 메모 오피스 전용 로직]
 // ==========================================
-
-// 1. 비밀번호 확인 로직
-// app.js 맨 아래에 추가하거나 수정하세요
-window.unlockPrivate = function() {
-    const pwd = document.getElementById('privatePwd').value;
-    
-    if(pwd === '1004') {
-        document.getElementById('privateAuthScreen').style.display = 'none';
-        document.getElementById('privateMainContent').style.display = 'block';
-    } else {
-        alert('비밀번호가 일치하지 않습니다.');
-    }
-};
+// ⚠️ 기존의 공용 비밀번호('1004') 방식인 window.unlockPrivate 는 제거되었습니다.
+// 이제 가온 오피스 접근 권한은 Firestore의 users_portal/{email}.officeApproved 값으로
+// 관리자가 직접 승인한 사용자에게만 부여됩니다. (app.js 상단 loadUserIntegratedData,
+// loadComponent의 page-private 분기 참고)
 
 // 2. 내부 탭 전환 — 페이지별 라우터
 // ─────────────────────────────────────────────────────────────────────────────
