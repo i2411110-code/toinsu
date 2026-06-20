@@ -35,12 +35,12 @@
          탭 내비게이션 (2개: DB 스크립트 / 고객 데이터)
     ══════════════════════════════════════════ -->
     <div class="office-nav" style="margin-bottom:16px;">
-        <button id="btn-tab-input" class="active" onclick="window.switchPrivateTab('input')">
-            <i class="bi bi-magic"></i> 고객 정보 자동 분류 AI
-        <button id="btn-tab-list" onclick="window.switchPrivateTab('list')">
-            <i class="bi bi-people-fill"></i> 고객 데이터
-        </button>
-    </div>
+    <button id="btn-tab-input" class="active" onclick="window.switchPrivateTab('input')">
+        <i class="bi bi-magic"></i> 고객 정보 자동 분류 AI
+    <button id="btn-tab-list" onclick="window.switchPrivateTab('list')">
+        <i class="bi bi-people-fill"></i> 고객 데이터
+    </button>
+</div>
 
     <!-- ══════════════════════════════════════
          탭 1: 카톡 원문 통복사 붙여넣기 AI 정렬 장치 + 고객 정보 입력
@@ -168,7 +168,7 @@
     margin-bottom: 16px;
 }
 .office-nav button {
-    flex: 1 1 auto;
+    flex: 1; /* ✅ 무조건 1:1 비율로 50%씩 차지하도록 수정 */
     min-width: 0;
     padding: 10px 14px;
     border: 1.5px solid #E2E8F0;
