@@ -807,7 +807,7 @@
                                 <td><span class="icd-code-text">${item.sickCode || '-'}</span></td>
                                 <td>${item.sickName || '-'}</td>
                                 <td style="color:#64748B;">${item.sickEngName || '-'}</td>
-                                <td style="text-align:center; font-weight:600; color:#475569;">${grade}</td>
+                                <td style="text-align:center; font-weight:600; color:#475569; white-space: nowrap;">${grade}</td>
                             </tr>`);
                     });
                     document.getElementById('icd-result-count').textContent = items.length;
