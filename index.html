@@ -1176,6 +1176,7 @@
         window.calCurrentEditId = null; // 수정 모드 구분을 위한 변수
 
         // 상세보기 모달 열기 (수정 버튼 활성화 추가)
+        // 상세보기 모달 열기 (수정 버튼 활성화 추가)
         function openDetailModal(event) {
             const ep = event.extendedProps || {};
             const start = event.start;
@@ -1194,7 +1195,9 @@
                 ${ep.memo  ? `<div style="margin-bottom:6px;"><b>메모:</b> ${ep.memo}</div>`  : ''}
                 ${ep.isGlobal ? `<div style="color:#D97706;font-weight:700;">📢 전체 공지 일정</div>` : ''}`;
             
-            const canManage = _calIsAdmin || (_calCurrentUser && ep.uid === _calCurrentUser.uid);
+            // 💡 [핵심 수정] 관리자(_calIsAdmin) 조건 제거! 무조건 '작성자 본인'일 때만 수정/삭제 가능하게 변경
+            const canManage = (_calCurrentUser && ep.uid === _calCurrentUser.uid);
+            
             const delBtn = document.getElementById('calModalDeleteBtn');
             const editBtn = document.getElementById('calModalEditBtn');
             
