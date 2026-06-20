@@ -263,6 +263,15 @@
                 </div>
                 <button onclick="window.calCloseModal()" class="cal-modal-close-btn" aria-label="닫기">&times;</button>
             </div>
+            <div id="calModalBody" class="cal-modal-body"></div>
+            <div class="cal-modal-actions" style="display:flex; gap:10px;">
+                <button id="calModalEditBtn" class="cal-modal-delete-btn" style="display:none; background:#EFF6FF; color:#2563EB; border-color:#DBEAFE;">
+                    <i class="bi bi-pencil-square"></i> 이 일정 수정
+                </button>
+                <button id="calModalDeleteBtn" class="cal-modal-delete-btn" style="display:none;">
+                    <i class="bi bi-trash3"></i> 이 일정 삭제
+                </button>
+            </div>
         </div>
     </div>
 
