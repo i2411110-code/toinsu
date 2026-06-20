@@ -191,7 +191,40 @@ window.executeRegistrySync = syncRegistryToDatabase;
 // ==========================================
 // [SPA 부품 조립(라우팅) 엔진 추가]
 // ==========================================
+// ==========================================
+// [SPA 부품 조립(라우팅) 엔진 추가]
+// ==========================================
 window.loadComponent = async function(pageId, extraAction) {
+    // 💡 1. 가온 오피스 클릭 시, 화면을 불러오기 전 서버 권한부터 즉시 체크합니다.
+    if (pageId === 'page-가온 오피스') {
+        const currentUserEmail = window.__currentUserEmail;
+        if (!currentUserEmail) {
+            alert("로그인 정보가 확인되지 않습니다. 다시 로그인해 주세요.");
+            return; // ❌ 화면 안 넘어가고 중단
+        }
+        try {
+            const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+            const accessRef = doc(window.__firestoreDb, "admin_settings", "office_access");
+            const accessSnap = await getDoc(accessRef);
+
+            if (accessSnap.exists()) {
+                const allowedUsers = accessSnap.data().allowedUsers || [];
+                // 명단에 없을 경우
+                if (!allowedUsers.includes(currentUserEmail)) {
+                    alert("가온 오피스 접근 권한이 없습니다.\n팀장님(관리자)에게 승인을 요청해 주세요.");
+                    return; // ❌ 권한 없으면 메인 화면에 그대로 머무름
+                }
+            } else {
+                alert("서버에 권한 설정 데이터가 존재하지 않습니다.");
+                return;
+            }
+        } catch (error) {
+            console.error("권한 확인 중 오류 발생:", error);
+            alert("권한을 확인하는 중 서버 오류가 발생했습니다.");
+            return;
+        }
+    }
+
     const root = document.getElementById('app-root');
     let url = `components/${pageId}.html`;
 
@@ -201,6 +234,12 @@ window.loadComponent = async function(pageId, extraAction) {
         const html = await response.text();
         root.innerHTML = html;
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // 💡 2. 가온 오피스에 정상 입장했다면, 중간 화면 없이 곧바로 캘린더를 실행해줍니다.
+        if (pageId === 'page-가온 오피스') {
+            window.switchPrivateTab('cal');
+            if (typeof window.initGaonCalendar === 'function') window.initGaonCalendar();
+        }
 
         // 페이지별 데이터 다시 불러오기
         if (pageId === 'page-private') {
@@ -218,25 +257,25 @@ window.loadComponent = async function(pageId, extraAction) {
             });
         }
 
-        // ✅ 약관조회 탭 초기 상태 세팅
+        // 약관조회 탭 초기 상태 세팅
         window.switchTermsTab = function(type) {
-    const nonlifeTab = document.getElementById('terms-tab-nonlife');
-    const lifeTab    = document.getElementById('terms-tab-life');
-    const gridNon    = document.getElementById('terms-grid-nonlife');
-    const gridLife   = document.getElementById('terms-grid-life');
-    if (!nonlifeTab || !lifeTab) return;
-    if (type === 'nonlife') {
-        nonlifeTab.style.background = 'white'; nonlifeTab.style.color = '#2563EB';
-        lifeTab.style.background = 'transparent'; lifeTab.style.color = '#64748B';
-        gridNon.style.display = 'grid'; gridLife.style.display = 'none';
-    } else {
-        lifeTab.style.background = 'white'; lifeTab.style.color = '#2563EB';
-        nonlifeTab.style.background = 'transparent'; nonlifeTab.style.color = '#64748B';
-        gridNon.style.display = 'none'; gridLife.style.display = 'grid';
-    }
-};
+            const nonlifeTab = document.getElementById('terms-tab-nonlife');
+            const lifeTab    = document.getElementById('terms-tab-life');
+            const gridNon    = document.getElementById('terms-grid-nonlife');
+            const gridLife   = document.getElementById('terms-grid-life');
+            if (!nonlifeTab || !lifeTab) return;
+            if (type === 'nonlife') {
+                nonlifeTab.style.background = 'white'; nonlifeTab.style.color = '#2563EB';
+                lifeTab.style.background = 'transparent'; lifeTab.style.color = '#64748B';
+                gridNon.style.display = 'grid'; gridLife.style.display = 'none';
+            } else {
+                lifeTab.style.background = 'white'; lifeTab.style.color = '#2563EB';
+                nonlifeTab.style.background = 'transparent'; nonlifeTab.style.color = '#64748B';
+                gridNon.style.display = 'none'; gridLife.style.display = 'grid';
+            }
+        };
 
-        // ✅ 공시실 탭 초기 상태 세팅
+        // 공시실 탭 초기 상태 세팅
         if (pageId === 'page-gongsil') {
             requestAnimationFrame(() => {
                 const nonlifeTab = document.getElementById('gongsil-tab-nonlife');
@@ -261,7 +300,7 @@ window.loadComponent = async function(pageId, extraAction) {
             });
         }
 
-        // ✅ 메인 대시보드 이름 표시
+        // 메인 대시보드 이름 표시
         if (pageId === 'main-dashboard') {
             requestAnimationFrame(() => {
                 const el = document.getElementById('main-user-name');
@@ -269,16 +308,16 @@ window.loadComponent = async function(pageId, extraAction) {
             });
         }
 
-        // ✅ 청구의 모든것 이름 표시
-       if (pageId === 'page-claim-main') {
-    requestAnimationFrame(async () => { // <-- 화살표 함수 앞에 async 추가
-        const el = document.getElementById('claim-user-name');
-        if(el) el.innerText = window.currentUserDisplayName || '안녕하세요';
-         await window.loadClaimDashboard();
-    });
-}
+        // 청구의 모든것 이름 표시
+        if (pageId === 'page-claim-main') {
+            requestAnimationFrame(async () => {
+                const el = document.getElementById('claim-user-name');
+                if(el) el.innerText = window.currentUserDisplayName || '안녕하세요';
+                await window.loadClaimDashboard();
+            });
+        }
 
-        // ✅ 재무 계산기 - 인라인 스크립트 재실행
+        // 재무 계산기 - 인라인 스크립트 재실행
         if (pageId === 'page-calculator') {
             requestAnimationFrame(() => {
                 root.querySelectorAll('script').forEach(old => {
@@ -699,9 +738,6 @@ window.closeNotice = function() {
     document.getElementById('notice-modal').style.display = 'none';
 }
 
-// ==========================================
-// [가온 오피스 전용 로직 - 파이어베이스 권한 검증]
-// ==========================================
 
 // ==========================================
 // [가온 오피스 전용 로직 - 파이어베이스 권한 검증]
