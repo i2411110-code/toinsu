@@ -776,33 +776,42 @@
             clearTimeout(icdTimeout);
             const input = document.getElementById('icd-input').value.trim();
             const tbody = document.getElementById('icd-table-body');
+            
             if (input.length < 2) {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#94A3B8; padding:40px 0;">최소 2글자 이상 입력해 주세요.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#94A3B8; padding:40px 0;">최소 2글자 이상 입력해 주세요.</td></tr>`;
                 document.getElementById('icd-result-count').textContent = '0';
                 return;
             }
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#2563EB; padding:40px 0;">심평원 마스터 검색 중...</td></tr>`;
+            
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#2563EB; padding:40px 0;">심평원 마스터 검색 중...</td></tr>`;
+            
             icdTimeout = setTimeout(async function() {
                 try {
                     const response = await fetch(`/api/search-icd?query=${encodeURIComponent(input)}`);
                     const items = await response.json();
+                    
                     tbody.innerHTML = '';
                     if (!items || items.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#EF4444; padding:40px 0;">검색 결과가 없습니다.</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#EF4444; padding:40px 0;">검색 결과가 없습니다.</td></tr>`;
                         document.getElementById('icd-result-count').textContent = '0';
                         return;
                     }
+                    
                     items.forEach(function(item) {
+                        // 💡 API가 내려주는 급수 데이터를 그대로 사용합니다! (데이터 이름이 다를 경우 수정 필요)
+                        const grade = item.infectionGrade || '-'; 
+                        
                         tbody.insertAdjacentHTML('beforeend', `
                             <tr>
                                 <td><span class="icd-code-text">${item.sickCode || '-'}</span></td>
                                 <td>${item.sickName || '-'}</td>
                                 <td style="color:#64748B;">${item.sickEngName || '-'}</td>
+                                <td style="text-align:center; font-weight:600; color:#475569;">${grade}</td>
                             </tr>`);
                     });
                     document.getElementById('icd-result-count').textContent = items.length;
                 } catch (err) {
-                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#EF4444; padding:40px 0;">전산 서버 응답 실패</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#EF4444; padding:40px 0;">전산 서버 응답 실패</td></tr>`;
                 }
             }, 300);
         };
