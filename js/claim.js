@@ -124,14 +124,17 @@ window.initClaimCanvas = function() {
     window.claimAttachments = [];
     window._renderClaimFileList();
 
-    const canvas = document.getElementById('signature-pad');
-    if (!canvas) return;
-    canvas.width = canvas.parentElement.offsetWidth;
-    canvas.height = 200;
-    const ctx = canvas.getContext('2d');
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = '#0F172A';
+    // ✅ 피보험자/계약자 서명 캔버스를 각각 독립적으로 초기화
+    ['signature-pad', 'signature-pad-contractor'].forEach(id => {
+        const canvas = document.getElementById(id);
+        if (!canvas) return;
+        canvas.width = canvas.parentElement.offsetWidth;
+        canvas.height = 200;
+        const ctx = canvas.getContext('2d');
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#0F172A';
+    });
 
     // 임시저장된 데이터가 있으면 폼에 복원
     if (window.currentDraftId) {
@@ -139,23 +142,33 @@ window.initClaimCanvas = function() {
     }
 };
 
-// ─── 서명 그리기 ───
-window.isDrawingSign = false;
-window.startSign = function(e) {
+// ─── 서명 그리기 (캔버스 ID를 받아 피보험자/계약자 서명을 독립적으로 처리) ───
+window._signDrawState = {};
+
+function _signPlaceholderId(canvasId) {
+    return canvasId === 'signature-pad-contractor' ? 'sign-placeholder-contractor' : 'sign-placeholder';
+}
+
+window.startSign = function(e, canvasId) {
+    canvasId = canvasId || 'signature-pad';
     if (e.type.includes('touch')) e.preventDefault();
-    window.isDrawingSign = true;
-    document.getElementById('sign-placeholder').style.display = 'none';
-    window.drawSign(e);
+    window._signDrawState[canvasId] = true;
+    const ph = document.getElementById(_signPlaceholderId(canvasId));
+    if (ph) ph.style.display = 'none';
+    window.drawSign(e, canvasId);
 };
-window.stopSign = function() {
-    window.isDrawingSign = false;
-    const canvas = document.getElementById('signature-pad');
+window.stopSign = function(canvasId) {
+    canvasId = canvasId || 'signature-pad';
+    window._signDrawState[canvasId] = false;
+    const canvas = document.getElementById(canvasId);
     if (canvas) canvas.getContext('2d').beginPath();
 };
-window.drawSign = function(e) {
-    if (!window.isDrawingSign) return;
+window.drawSign = function(e, canvasId) {
+    canvasId = canvasId || 'signature-pad';
+    if (!window._signDrawState[canvasId]) return;
     if (e.type.includes('touch')) e.preventDefault();
-    const canvas = document.getElementById('signature-pad');
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -165,12 +178,15 @@ window.drawSign = function(e) {
     ctx.beginPath();
     ctx.moveTo(clientX - rect.left, clientY - rect.top);
 };
-window.clearSignature = function() {
-    const canvas = document.getElementById('signature-pad');
+window.clearSignature = function(canvasId) {
+    canvasId = canvasId || 'signature-pad';
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
-    document.getElementById('sign-placeholder').style.display = 'block';
+    const ph = document.getElementById(_signPlaceholderId(canvasId));
+    if (ph) ph.style.display = 'block';
 };
 
 // ==========================================
@@ -178,18 +194,56 @@ window.clearSignature = function() {
 // ==========================================
 window.initUiToggleGroups = function() {
     document.querySelectorAll('.ui-toggle').forEach(group => {
-        const targetId = group.dataset.target;
+        const targetId    = group.dataset.target;
         const hiddenInput = targetId ? document.getElementById(targetId) : null;
+        // ✅ data-show-target / data-show-when : 특정 값 선택 시 다른 영역을 표시/숨김
+        //    예) 계약자와 피보험자 동일여부 토글 → '아니오' 선택 시 계약자 입력 영역 표시
+        const showTargetId = group.dataset.showTarget;
+        const showWhen     = group.dataset.showWhen;
+
+        const applyVisibility = (val) => {
+            if (!showTargetId) return;
+            const showEl = document.getElementById(showTargetId);
+            if (showEl) showEl.style.display = (val === showWhen) ? 'block' : 'none';
+        };
 
         group.querySelectorAll('.toggle-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                if (hiddenInput) hiddenInput.value = btn.dataset.val || btn.innerText.trim();
+                const val = btn.dataset.val || btn.innerText.trim();
+                if (hiddenInput) hiddenInput.value = val;
+                applyVisibility(val);
             });
         });
+
+        // 초기 상태(현재 active 버튼 기준)에 맞춰 표시 영역도 동기화
+        if (showTargetId) {
+            const activeBtn = group.querySelector('.toggle-btn.active');
+            applyVisibility(activeBtn ? (activeBtn.dataset.val || activeBtn.innerText.trim()) : '');
+        }
     });
 };
+
+// ─── 토글 그룹 값/표시상태를 코드에서 강제로 설정 (임시저장 복원 시 사용) ───
+function setToggleGroupValue(targetId, value) {
+    const hiddenInput = document.getElementById(targetId);
+    if (hiddenInput) hiddenInput.value = value;
+
+    const group = document.querySelector(`.ui-toggle[data-target="${targetId}"]`);
+    if (!group) return;
+
+    group.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.classList.toggle('active', (btn.dataset.val || btn.innerText.trim()) === value);
+    });
+
+    const showTargetId = group.dataset.showTarget;
+    const showWhen      = group.dataset.showWhen;
+    if (showTargetId) {
+        const showEl = document.getElementById(showTargetId);
+        if (showEl) showEl.style.display = (value === showWhen) ? 'block' : 'none';
+    }
+}
 
 // ==========================================
 // [첨부서류 업로드]
@@ -267,10 +321,26 @@ function collectFormData() {
     const content      = (document.getElementById('form-content')?.value      || '').trim();
     const accidentType = (document.getElementById('form-accident-type')?.value|| '').trim();
     const job          = (document.getElementById('form-job')?.value          || '').trim();
-    
-    // ✅ 은행명 및 계좌번호 수집 추가
-    const bankName     = (document.getElementById('form-bank-name')?.value    || '').trim();
-    const account      = (document.getElementById('form-account')?.value      || '').trim();
+
+    // ✅ 만 14세 미만 여부
+    const insuredUnder14 = (document.getElementById('form-under14')?.value || '아니오').trim();
+
+    // ✅ 계약자와 피보험자 동일여부 + 계약자 정보 (다를 경우)
+    const sameAsInsured        = (document.getElementById('form-same-as-insured')?.value || '예').trim();
+    const contractorName       = (document.getElementById('form-contractor-name')?.value         || '').trim();
+    const contractorPhone      = (document.getElementById('form-contractor-phone')?.value        || '').trim();
+    const contractorJuminFront = (document.getElementById('form-contractor-jumin-front')?.value  || '').trim();
+    const contractorJuminBack  = (document.getElementById('form-contractor-jumin-back')?.value   || '').trim();
+    const contractorJumin      = (contractorJuminFront + contractorJuminBack).replace(/-/g, '').trim();
+
+    // ✅ 보상안내 받으실 분
+    const compensationRecipient = (document.getElementById('form-compensation-recipient')?.value || '보험청구인').trim();
+
+    // ✅ 계좌 유형 + 은행명/계좌번호/예금주
+    const accountType  = (document.getElementById('form-account-type')?.value || '일반').trim();
+    const bankName      = (document.getElementById('form-bank-name')?.value    || '').trim();
+    const account        = (document.getElementById('form-account')?.value      || '').trim();
+    const accountHolder = (document.getElementById('form-account-holder')?.value || '').trim();
 
     // 진료(사고)일자
     const yy = (document.getElementById('form-year')?.value  || '').trim();
@@ -278,13 +348,18 @@ function collectFormData() {
     const dd = (document.getElementById('form-day')?.value   || '').trim().padStart(2, '0');
     const treatDate = (yy && mm && dd) ? `${yy}-${mm}-${dd}` : '';
 
-    // 주민등록번호
+    // 주민등록번호 (피보험자)
     const juminFront = (document.getElementById('form-jumin-front')?.value || '').trim();
     const juminBack  = (document.getElementById('form-jumin-back')?.value  || '').trim();
     const jumin = (juminFront + juminBack).replace(/-/g, '').trim();
 
-    // ✅ 반환 객체에 bankName, account 포함
-    return { insuredName, phone, content, treatDate, jumin, accidentType, job, bankName, account };
+    return {
+        insuredName, phone, content, treatDate, jumin, accidentType, job, bankName, account,
+        insuredUnder14,
+        sameAsInsured, contractorName, contractorPhone, contractorJumin,
+        compensationRecipient,
+        accountType, accountHolder,
+    };
 }
 
 // ─── PDF 기입용 날짜 파생값 생성 ───
@@ -303,8 +378,9 @@ function splitJumin(jumin) {
 }
 
 // ─── 서명 이미지 추출 ───
-async function getSignImage(pdfDoc) {
-    const canvas = document.getElementById('signature-pad');
+async function getSignImage(pdfDoc, canvasId) {
+    canvasId = canvasId || 'signature-pad';
+    const canvas = document.getElementById(canvasId);
     if (!canvas) return null;
     const signDataUrl = canvas.toDataURL('image/png');
     const blank = document.createElement('canvas').toDataURL('image/png');
@@ -314,8 +390,9 @@ async function getSignImage(pdfDoc) {
 }
 
 // ─── 서명 DataURL 추출 (임시저장용) ───
-function getSignDataUrl() {
-    const canvas = document.getElementById('signature-pad');
+function getSignDataUrl(canvasId) {
+    canvasId = canvasId || 'signature-pad';
+    const canvas = document.getElementById(canvasId);
     if (!canvas) return null;
     const dataUrl = canvas.toDataURL('image/png');
     const blank = document.createElement('canvas').toDataURL('image/png');
@@ -323,16 +400,17 @@ function getSignDataUrl() {
 }
 
 // ─── 서명 DataURL → 캔버스 복원 ───
-async function restoreSignFromDataUrl(dataUrl) {
+async function restoreSignFromDataUrl(dataUrl, canvasId) {
+    canvasId = canvasId || 'signature-pad';
     if (!dataUrl) return;
-    const canvas = document.getElementById('signature-pad');
+    const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const img = new Image();
     img.onload = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const ph = document.getElementById('sign-placeholder');
+        const ph = document.getElementById(_signPlaceholderId(canvasId));
         if (ph) ph.style.display = 'none';
     };
     img.src = dataUrl;
@@ -405,7 +483,8 @@ window.saveDraft = async function() {
         if (!db) throw new Error('Firestore 인스턴스를 찾을 수 없습니다.');
 
         const fd = collectFormData();
-        const signDataUrl = getSignDataUrl();
+        const signDataUrl            = getSignDataUrl('signature-pad');
+        const contractorSignDataUrl  = getSignDataUrl('signature-pad-contractor'); // ✅ 계약자 서명
 
         const record = {
             status:       'draft',
@@ -418,9 +497,18 @@ window.saveDraft = async function() {
             content:      fd.content,
             accidentType: fd.accidentType,
             job:          fd.job,
-            bankName:     fd.bankName,  // ✅ 은행명 저장
-            account:      fd.account,   // ✅ 계좌번호 저장
-            signDataUrl:  signDataUrl,
+            bankName:     fd.bankName,
+            account:      fd.account,
+            accountHolder: fd.accountHolder,         // ✅ 예금주
+            accountType:   fd.accountType,            // ✅ 계좌 유형
+            insuredUnder14: fd.insuredUnder14,         // ✅ 만 14세 미만 여부
+            sameAsInsured:  fd.sameAsInsured,          // ✅ 계약자=피보험자 동일여부
+            contractorName:   fd.contractorName,       // ✅ 계약자 정보
+            contractorPhone:  fd.contractorPhone,
+            contractorJumin:  fd.contractorJumin,
+            compensationRecipient: fd.compensationRecipient, // ✅ 보상안내 받으실 분
+            signDataUrl:            signDataUrl,
+            contractorSignDataUrl:  contractorSignDataUrl,   // ✅ 계약자 서명
             attachments:  (window.claimAttachments || []).map(a => ({ name: a.name, type: a.type, dataUrl: a.dataUrl })),
             updatedAt:    new Date().toISOString(),
         };
@@ -481,24 +569,39 @@ window._restoreDraftToForm = async function(draftId) {
         }
 
         if (d.accidentType) {
-            setVal('form-accident-type', d.accidentType);
-            document.querySelectorAll('.ui-toggle[data-target="form-accident-type"] .toggle-btn').forEach(btn => {
-                btn.classList.toggle('active', (btn.dataset.val || btn.innerText.trim()) === d.accidentType);
-            });
+            setToggleGroupValue('form-accident-type', d.accidentType);
         }
 
         if (d.job) setVal('form-job', d.job);
 
-        // ✅ 계좌 정보 복원 추가
-        if (d.bankName) setVal('form-bank-name', d.bankName);
-        if (d.account)  setVal('form-account', d.account);
+        // ✅ 만 14세 미만 여부 복원
+        if (d.insuredUnder14) setToggleGroupValue('form-under14', d.insuredUnder14);
+
+        // ✅ 계약자와 피보험자 동일여부 + 계약자 정보 복원
+        if (d.sameAsInsured) setToggleGroupValue('form-same-as-insured', d.sameAsInsured);
+        setVal('form-contractor-name',  d.contractorName);
+        setVal('form-contractor-phone', d.contractorPhone);
+        if (d.contractorJumin) {
+            setVal('form-contractor-jumin-front', d.contractorJumin.slice(0, 6));
+            setVal('form-contractor-jumin-back',  d.contractorJumin.slice(6, 13));
+        }
+
+        // ✅ 보상안내 받으실 분 복원
+        if (d.compensationRecipient) setToggleGroupValue('form-compensation-recipient', d.compensationRecipient);
+
+        // ✅ 계좌 정보 복원 (계좌유형 + 은행명/계좌번호/예금주)
+        if (d.accountType) setToggleGroupValue('form-account-type', d.accountType);
+        if (d.bankName)      setVal('form-bank-name', d.bankName);
+        if (d.account)        setVal('form-account', d.account);
+        if (d.accountHolder) setVal('form-account-holder', d.accountHolder);
 
         if (Array.isArray(d.attachments)) {
             window.claimAttachments = d.attachments.slice();
             window._renderClaimFileList();
         }
 
-        if (d.signDataUrl) await restoreSignFromDataUrl(d.signDataUrl);
+        if (d.signDataUrl)           await restoreSignFromDataUrl(d.signDataUrl, 'signature-pad');
+        if (d.contractorSignDataUrl) await restoreSignFromDataUrl(d.contractorSignDataUrl, 'signature-pad-contractor'); // ✅ 계약자 서명 복원
 
         const titleEl = document.getElementById('claim-form-title');
         if (titleEl && d.company) titleEl.innerText = d.company + ' 청구서 작성 (임시저장)';
@@ -648,53 +751,8 @@ window.generateHyundai5PagePDF = async function(mode) {
 // ==========================================
 
 // ─── 보험사별 필드 좌표 테이블 ───
-// ✅ 모든 보험사에 bankName, account 기본 좌표 추가 (실제 양식에 맞춰 Y축 미세 조정 권장)
-const FIELD_COORDS = {
-    DEFAULT: {
-        name:       { x: 145, y: 650 },
-        jumin1:     { x: 270, y: 650 },
-        jumin2:     { x: 370, y: 650 },
-        phone:      { x: 145, y: 600 },
-        content:    { x: 145, y: 400 },
-        year2:      { x: 110, y: 130 },
-        month:      { x: 160, y: 130 },
-        day:        { x: 205, y: 130 },
-        signerName: { x: 370, y: 130 },
-        sign:       { x: 430, y: 118, width: 70, height: 25 },
-        bankName:   { x: 145, y: 300 }, // ✅ 은행명 기본 좌표
-        account:    { x: 250, y: 300 }, // ✅ 계좌번호 기본 좌표
-    },
-    samsung:      { name: { x: 140, y: 648 }, jumin1: { x: 260, y: 648 }, jumin2: { x: 355, y: 648 }, phone: { x: 140, y: 598 }, content: { x: 140, y: 390 }, year2: { x: 105, y: 128 }, month: { x: 158, y: 128 }, day: { x: 203, y: 128 }, signerName: { x: 365, y: 128 }, sign: { x: 430, y: 115, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
-    db:           { name: { x: 140, y: 645 }, jumin1: { x: 258, y: 645 }, jumin2: { x: 353, y: 645 }, phone: { x: 140, y: 595 }, content: { x: 140, y: 385 }, year2: { x: 107, y: 126 }, month: { x: 160, y: 126 }, day: { x: 205, y: 126 }, signerName: { x: 368, y: 126 }, sign: { x: 432, y: 113, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
-    kb:           { name: { x: 143, y: 647 }, jumin1: { x: 262, y: 647 }, jumin2: { x: 357, y: 647 }, phone: { x: 143, y: 597 }, content: { x: 143, y: 388 }, year2: { x: 108, y: 127 }, month: { x: 161, y: 127 }, day: { x: 206, y: 127 }, signerName: { x: 370, y: 127 }, sign: { x: 433, y: 114, width: 65, height: 22 }, bankName: { x: 143, y: 290 }, account: { x: 243, y: 290 } },
-    meritz:       { name: { x: 141, y: 643 }, jumin1: { x: 259, y: 643 }, jumin2: { x: 354, y: 643 }, phone: { x: 141, y: 593 }, content: { x: 141, y: 383 }, year2: { x: 106, y: 124 }, month: { x: 159, y: 124 }, day: { x: 204, y: 124 }, signerName: { x: 366, y: 124 }, sign: { x: 430, y: 111, width: 65, height: 22 }, bankName: { x: 141, y: 290 }, account: { x: 241, y: 290 } },
-    lotte:        { name: { x: 138, y: 640 }, jumin1: { x: 256, y: 640 }, jumin2: { x: 351, y: 640 }, phone: { x: 138, y: 590 }, content: { x: 138, y: 380 }, year2: { x: 103, y: 121 }, month: { x: 156, y: 121 }, day: { x: 201, y: 121 }, signerName: { x: 363, y: 121 }, sign: { x: 427, y: 108, width: 65, height: 22 }, bankName: { x: 138, y: 290 }, account: { x: 238, y: 290 } },
-    mg:           { name: { x: 140, y: 642 }, jumin1: { x: 258, y: 642 }, jumin2: { x: 353, y: 642 }, phone: { x: 140, y: 592 }, content: { x: 140, y: 382 }, year2: { x: 105, y: 123 }, month: { x: 158, y: 123 }, day: { x: 203, y: 123 }, signerName: { x: 365, y: 123 }, sign: { x: 429, y: 110, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
-    nh:           { name: { x: 142, y: 646 }, jumin1: { x: 260, y: 646 }, jumin2: { x: 355, y: 646 }, phone: { x: 142, y: 596 }, content: { x: 142, y: 386 }, year2: { x: 107, y: 125 }, month: { x: 160, y: 125 }, day: { x: 205, y: 125 }, signerName: { x: 367, y: 125 }, sign: { x: 431, y: 112, width: 65, height: 22 }, bankName: { x: 142, y: 290 }, account: { x: 242, y: 290 } },
-    heungkuk:     { name: { x: 139, y: 641 }, jumin1: { x: 257, y: 641 }, jumin2: { x: 352, y: 641 }, phone: { x: 139, y: 591 }, content: { x: 139, y: 381 }, year2: { x: 104, y: 122 }, month: { x: 157, y: 122 }, day: { x: 202, y: 122 }, signerName: { x: 364, y: 122 }, sign: { x: 428, y: 109, width: 65, height: 22 }, bankName: { x: 139, y: 290 }, account: { x: 239, y: 290 } },
-    samsunglife:  { name: { x: 143, y: 649 }, jumin1: { x: 261, y: 649 }, jumin2: { x: 356, y: 649 }, phone: { x: 143, y: 599 }, content: { x: 143, y: 389 }, year2: { x: 108, y: 128 }, month: { x: 161, y: 128 }, day: { x: 206, y: 128 }, signerName: { x: 369, y: 128 }, sign: { x: 432, y: 115, width: 65, height: 22 }, bankName: { x: 143, y: 290 }, account: { x: 243, y: 290 } },
-    hanhwalife:   { name: { x: 141, y: 647 }, jumin1: { x: 259, y: 647 }, jumin2: { x: 354, y: 647 }, phone: { x: 141, y: 597 }, content: { x: 141, y: 387 }, year2: { x: 106, y: 126 }, month: { x: 159, y: 126 }, day: { x: 204, y: 126 }, signerName: { x: 367, y: 126 }, sign: { x: 431, y: 113, width: 65, height: 22 }, bankName: { x: 141, y: 290 }, account: { x: 241, y: 290 } },
-    kyobolife:    { name: { x: 144, y: 650 }, jumin1: { x: 262, y: 650 }, jumin2: { x: 357, y: 650 }, phone: { x: 144, y: 600 }, content: { x: 144, y: 390 }, year2: { x: 109, y: 129 }, month: { x: 162, y: 129 }, day: { x: 207, y: 129 }, signerName: { x: 371, y: 129 }, sign: { x: 434, y: 116, width: 65, height: 22 }, bankName: { x: 144, y: 290 }, account: { x: 244, y: 290 } },
-    shinhanlife:  { name: { x: 142, y: 648 }, jumin1: { x: 260, y: 648 }, jumin2: { x: 355, y: 648 }, phone: { x: 142, y: 598 }, content: { x: 142, y: 388 }, year2: { x: 107, y: 127 }, month: { x: 160, y: 127 }, day: { x: 205, y: 127 }, signerName: { x: 368, y: 127 }, sign: { x: 432, y: 114, width: 65, height: 22 }, bankName: { x: 142, y: 290 }, account: { x: 242, y: 290 } },
-    aialife:      { name: { x: 140, y: 646 }, jumin1: { x: 258, y: 646 }, jumin2: { x: 353, y: 646 }, phone: { x: 140, y: 596 }, content: { x: 140, y: 386 }, year2: { x: 105, y: 125 }, month: { x: 158, y: 125 }, day: { x: 203, y: 125 }, signerName: { x: 366, y: 125 }, sign: { x: 430, y: 112, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
-    abllife:      { name: { x: 139, y: 645 }, jumin1: { x: 257, y: 645 }, jumin2: { x: 352, y: 645 }, phone: { x: 139, y: 595 }, content: { x: 139, y: 385 }, year2: { x: 104, y: 124 }, month: { x: 157, y: 124 }, day: { x: 202, y: 124 }, signerName: { x: 365, y: 124 }, sign: { x: 429, y: 111, width: 65, height: 22 }, bankName: { x: 139, y: 290 }, account: { x: 239, y: 290 } },
-    kdblife:      { name: { x: 141, y: 647 }, jumin1: { x: 259, y: 647 }, jumin2: { x: 354, y: 647 }, phone: { x: 141, y: 597 }, content: { x: 141, y: 387 }, year2: { x: 106, y: 126 }, month: { x: 159, y: 126 }, day: { x: 204, y: 126 }, signerName: { x: 367, y: 126 }, sign: { x: 431, y: 113, width: 65, height: 22 }, bankName: { x: 141, y: 290 }, account: { x: 241, y: 290 } },
-    nhlife:       { name: { x: 143, y: 649 }, jumin1: { x: 261, y: 649 }, jumin2: { x: 356, y: 649 }, phone: { x: 143, y: 599 }, content: { x: 143, y: 389 }, year2: { x: 108, y: 128 }, month: { x: 161, y: 128 }, day: { x: 206, y: 128 }, signerName: { x: 370, y: 128 }, sign: { x: 433, y: 115, width: 65, height: 22 }, bankName: { x: 143, y: 290 }, account: { x: 243, y: 290 } },
-    hanalife:     { name: { x: 140, y: 644 }, jumin1: { x: 258, y: 644 }, jumin2: { x: 353, y: 644 }, phone: { x: 140, y: 594 }, content: { x: 140, y: 384 }, year2: { x: 105, y: 123 }, month: { x: 158, y: 123 }, day: { x: 203, y: 123 }, signerName: { x: 366, y: 123 }, sign: { x: 430, y: 110, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
-    dongyanglife: { name: { x: 138, y: 643 }, jumin1: { x: 256, y: 643 }, jumin2: { x: 351, y: 643 }, phone: { x: 138, y: 593 }, content: { x: 138, y: 383 }, year2: { x: 103, y: 122 }, month: { x: 156, y: 122 }, day: { x: 201, y: 122 }, signerName: { x: 364, y: 122 }, sign: { x: 428, y: 109, width: 65, height: 22 }, bankName: { x: 138, y: 290 }, account: { x: 238, y: 290 } },
-    heungkuklife: { name: { x: 139, y: 641 }, jumin1: { x: 257, y: 641 }, jumin2: { x: 352, y: 641 }, phone: { x: 139, y: 591 }, content: { x: 139, y: 381 }, year2: { x: 104, y: 120 }, month: { x: 157, y: 120 }, day: { x: 202, y: 120 }, signerName: { x: 364, y: 120 }, sign: { x: 428, y: 107, width: 65, height: 22 }, bankName: { x: 139, y: 290 }, account: { x: 239, y: 290 } },
-    linalife:     { name: { x: 140, y: 642 }, jumin1: { x: 258, y: 642 }, jumin2: { x: 353, y: 642 }, phone: { x: 140, y: 592 }, content: { x: 140, y: 382 }, year2: { x: 105, y: 121 }, month: { x: 158, y: 121 }, day: { x: 203, y: 121 }, signerName: { x: 365, y: 121 }, sign: { x: 429, y: 108, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
-    dblife:       { name: { x: 139, y: 643 }, jumin1: { x: 257, y: 643 }, jumin2: { x: 352, y: 643 }, phone: { x: 139, y: 593 }, content: { x: 139, y: 383 }, year2: { x: 104, y: 122 }, month: { x: 157, y: 122 }, day: { x: 202, y: 122 }, signerName: { x: 364, y: 122 }, sign: { x: 428, y: 109, width: 65, height: 22 }, bankName: { x: 139, y: 290 }, account: { x: 239, y: 290 } },
-    kblife:       { name: { x: 141, y: 645 }, jumin1: { x: 259, y: 645 }, jumin2: { x: 354, y: 645 }, phone: { x: 141, y: 595 }, content: { x: 141, y: 385 }, year2: { x: 106, y: 124 }, month: { x: 159, y: 124 }, day: { x: 204, y: 124 }, signerName: { x: 366, y: 124 }, sign: { x: 430, y: 111, width: 65, height: 22 }, bankName: { x: 141, y: 290 }, account: { x: 241, y: 290 } },
-    hanhwa:       { name: { x: 140, y: 644 }, jumin1: { x: 258, y: 644 }, jumin2: { x: 353, y: 644 }, phone: { x: 140, y: 594 }, content: { x: 140, y: 384 }, year2: { x: 105, y: 123 }, month: { x: 158, y: 123 }, day: { x: 203, y: 123 }, signerName: { x: 365, y: 123 }, sign: { x: 429, y: 110, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
-    hana:         { name: { x: 139, y: 643 }, jumin1: { x: 257, y: 643 }, jumin2: { x: 352, y: 643 }, phone: { x: 139, y: 593 }, content: { x: 139, y: 383 }, year2: { x: 104, y: 122 }, month: { x: 157, y: 122 }, day: { x: 202, y: 122 }, signerName: { x: 364, y: 122 }, sign: { x: 428, y: 109, width: 65, height: 22 }, bankName: { x: 139, y: 290 }, account: { x: 239, y: 290 } },
-    miraeassetlife:{ name: { x: 142, y: 647 }, jumin1: { x: 260, y: 647 }, jumin2: { x: 355, y: 647 }, phone: { x: 142, y: 597 }, content: { x: 142, y: 387 }, year2: { x: 107, y: 126 }, month: { x: 160, y: 126 }, day: { x: 205, y: 126 }, signerName: { x: 368, y: 126 }, sign: { x: 432, y: 113, width: 65, height: 22 }, bankName: { x: 142, y: 290 }, account: { x: 242, y: 290 } },
-    imlife:       { name: { x: 138, y: 641 }, jumin1: { x: 256, y: 641 }, jumin2: { x: 351, y: 641 }, phone: { x: 138, y: 591 }, content: { x: 138, y: 381 }, year2: { x: 103, y: 120 }, month: { x: 156, y: 120 }, day: { x: 201, y: 120 }, signerName: { x: 363, y: 120 }, sign: { x: 427, y: 107, width: 65, height: 22 }, bankName: { x: 138, y: 290 }, account: { x: 238, y: 290 } },
-    lina:         { name: { x: 140, y: 642 }, jumin1: { x: 258, y: 642 }, jumin2: { x: 353, y: 642 }, phone: { x: 140, y: 592 }, content: { x: 140, y: 382 }, year2: { x: 105, y: 121 }, month: { x: 158, y: 121 }, day: { x: 203, y: 121 }, signerName: { x: 365, y: 121 }, sign: { x: 429, y: 108, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
-    chubblife:    { name: { x: 141, y: 645 }, jumin1: { x: 259, y: 645 }, jumin2: { x: 354, y: 645 }, phone: { x: 141, y: 595 }, content: { x: 141, y: 385 }, year2: { x: 106, y: 124 }, month: { x: 159, y: 124 }, day: { x: 204, y: 124 }, signerName: { x: 367, y: 124 }, sign: { x: 431, y: 111, width: 65, height: 22 }, bankName: { x: 141, y: 290 }, account: { x: 241, y: 290 } },
-    fubonlife:    { name: { x: 140, y: 644 }, jumin1: { x: 258, y: 644 }, jumin2: { x: 353, y: 644 }, phone: { x: 140, y: 594 }, content: { x: 140, y: 384 }, year2: { x: 105, y: 123 }, month: { x: 158, y: 123 }, day: { x: 203, y: 123 }, signerName: { x: 365, y: 123 }, sign: { x: 429, y: 110, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
-};
-
+// ✅ FIELD_COORDS는 claim-coords.js 파일로 분리되어 window.FIELD_COORDS로 제공됩니다.
+//    HTML에서 claim.js보다 먼저 <script src="claim-coords.js"></script>를 로드해야 합니다.
 // ─── 범용 1페이지 PDF 생성 ───
 window.generateGenericPDF = async function(fileKey, companyName, mode) {
     mode = mode || 'preview';
@@ -710,11 +768,15 @@ window.generateGenericPDF = async function(fileKey, companyName, mode) {
     const fd   = collectFormData();
     const date = getTodayDateFields();
     const jm   = splitJumin(fd.jumin);
-    const sig  = await getSignImage(pdfDoc);
+    const sig  = await getSignImage(pdfDoc, 'signature-pad'); // 피보험자 서명
 
-    const coords = { ...FIELD_COORDS.DEFAULT, ...(FIELD_COORDS[fileKey] || {}) };
-    const txtOpt = { font: customFont, size: 11, color: rgb(0, 0, 0) };
+    // ✅ FIELD_COORDS는 claim-coords.js(window.FIELD_COORDS)에서 가져옵니다.
+    const coords = { ...window.FIELD_COORDS.DEFAULT, ...(window.FIELD_COORDS[fileKey] || {}) };
+    const txtOpt   = { font: customFont, size: 11, color: rgb(0, 0, 0) };
+    const checkOpt = { font: customFont, size: 13, color: rgb(0.15, 0.38, 0.92) };
+    const CHECK = 'V';
 
+    // ── 피보험자 기본 정보 ──
     page.drawText(fd.insuredName, { x: coords.name.x,       y: coords.name.y,       ...txtOpt });
     page.drawText(jm.jumin1,      { x: coords.jumin1.x,     y: coords.jumin1.y,     ...txtOpt });
     page.drawText(jm.jumin2,      { x: coords.jumin2.x,     y: coords.jumin2.y,     ...txtOpt });
@@ -725,17 +787,67 @@ window.generateGenericPDF = async function(fileKey, companyName, mode) {
     page.drawText(date.day,       { x: coords.day.x,        y: coords.day.y,        ...txtOpt });
     page.drawText(fd.insuredName, { x: coords.signerName.x, y: coords.signerName.y, ...txtOpt });
 
-    // ✅ 은행명 및 계좌번호 렌더링 (설정된 좌표에 따라)
-    if (coords.bankName && coords.account && fd.bankName && fd.account) {
+    // ── 은행명 / 계좌번호 / 예금주 ──
+    if (coords.bankName && fd.bankName) {
         page.drawText(fd.bankName, { x: coords.bankName.x, y: coords.bankName.y, ...txtOpt });
-        page.drawText(fd.account,  { x: coords.account.x,  y: coords.account.y,  ...txtOpt });
+    }
+    if (coords.account && fd.account) {
+        page.drawText(fd.account, { x: coords.account.x, y: coords.account.y, ...txtOpt });
+    }
+    if (coords.accountHolder && fd.accountHolder) { // ✅ 예금주
+        page.drawText(fd.accountHolder, { x: coords.accountHolder.x, y: coords.accountHolder.y, ...txtOpt });
     }
 
+    // ── ✅ 만 14세 미만 여부 체크 ──
+    if (coords.under14) {
+        const mark = (fd.insuredUnder14 === '예') ? coords.under14.yes : coords.under14.no;
+        if (mark) page.drawText(CHECK, { x: mark.x, y: mark.y, ...checkOpt });
+    }
+
+    // ── ✅ 보상안내 받으실 분 체크 ──
+    if (coords.compensationRecipient) {
+        const mark = (fd.compensationRecipient === '보험설계사')
+            ? coords.compensationRecipient.agent
+            : coords.compensationRecipient.claimant;
+        if (mark) page.drawText(CHECK, { x: mark.x, y: mark.y, ...checkOpt });
+    }
+
+    // ── ✅ 계좌 유형 체크 (기지급 / 일반 / 자동이체) ──
+    if (coords.accountType) {
+        const accTypeMap = {
+            '기지급':   coords.accountType.prepaid,
+            '일반':     coords.accountType.general,
+            '자동이체': coords.accountType.autoDebit,
+        };
+        const mark = accTypeMap[fd.accountType];
+        if (mark) page.drawText(CHECK, { x: mark.x, y: mark.y, ...checkOpt });
+    }
+
+    // ── 서명 (피보험자) ──
     if (sig) {
         page.drawImage(sig, {
             x: coords.sign.x, y: coords.sign.y,
             width: coords.sign.width, height: coords.sign.height,
         });
+    }
+
+    // ── ✅ 핵심 분기: 계약자와 피보험자 동일여부 ──
+    // '아니오'(동일하지 않음) → 계약자 정보 + 계약자 서명을 별도 좌표(coords.contractor)에 추가로 기입
+    // '예'(동일함)            → 위에서 그린 피보험자 서명 1개로 충분, 추가 작업 없음
+    if (fd.sameAsInsured === '아니오' && coords.contractor) {
+        const c   = coords.contractor;
+        const cjm = splitJumin(fd.contractorJumin);
+        const contractorSig = await getSignImage(pdfDoc, 'signature-pad-contractor'); // 계약자 서명(독립 캔버스)
+
+        if (c.name)   page.drawText(fd.contractorName,  { x: c.name.x,   y: c.name.y,   ...txtOpt });
+        if (c.jumin1) page.drawText(cjm.jumin1,          { x: c.jumin1.x, y: c.jumin1.y, ...txtOpt });
+        if (c.jumin2) page.drawText(cjm.jumin2,          { x: c.jumin2.x, y: c.jumin2.y, ...txtOpt });
+        if (c.phone)  page.drawText(fd.contractorPhone,  { x: c.phone.x,  y: c.phone.y,  ...txtOpt });
+        if (contractorSig && c.sign) {
+            page.drawImage(contractorSig, {
+                x: c.sign.x, y: c.sign.y, width: c.sign.width, height: c.sign.height,
+            });
+        }
     }
 
     const fileName = `${fd.insuredName || '청구서'}_${companyName || ''}.pdf`;

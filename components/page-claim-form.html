@@ -92,6 +92,61 @@
                 <option value="기타">기타</option>
             </select>
         </div>
+        <div class="form-group">
+            <label class="form-label">만 14세 미만 여부 <span class="required">*</span></label>
+            <div class="btn-group ui-toggle" data-target="form-under14">
+                <button type="button" class="toggle-btn" data-val="예">예</button>
+                <button type="button" class="toggle-btn active" data-val="아니오">아니오</button>
+            </div>
+            <input type="hidden" id="form-under14" value="아니오">
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><div class="icon-box"><i class="bi bi-people"></i></div> 계약자 정보</div>
+        <div class="form-group">
+            <label class="form-label">계약자와 피보험자 동일여부 <span class="required">*</span></label>
+            <div class="btn-group ui-toggle" data-target="form-same-as-insured" data-show-target="contractor-fields" data-show-when="아니오">
+                <button type="button" class="toggle-btn active" data-val="예">예</button>
+                <button type="button" class="toggle-btn" data-val="아니오">아니오</button>
+            </div>
+            <input type="hidden" id="form-same-as-insured" value="예">
+        </div>
+
+        <div id="contractor-fields" style="display:none;">
+            <div class="form-group">
+                <label class="form-label">계약자 이름 <span class="required">*</span></label>
+                <input type="text" id="form-contractor-name" class="input-base" placeholder="홍길동" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label class="form-label">계약자 주민등록번호 <span class="required">*</span></label>
+                <div class="input-row">
+                    <input type="tel" id="form-contractor-jumin-front" class="input-base" placeholder="생년월일" maxlength="6"
+                           autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')">
+                    <span>-</span>
+                    <input type="password" id="form-contractor-jumin-back" class="input-base" placeholder="뒷자리" maxlength="7"
+                           autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">계약자 연락처 <span class="required">*</span></label>
+                <input type="tel" id="form-contractor-phone" class="input-base" placeholder="010-0000-0000" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <div class="sign-header">
+                    <label class="form-label" style="margin:0;">계약자 서명란</label>
+                    <button type="button" class="retry-btn" onclick="window.clearSignature('signature-pad-contractor')"><i class="bi bi-arrow-clockwise"></i> 다시 서명</button>
+                </div>
+                <div class="sign-box">
+                    <canvas id="signature-pad-contractor"
+                            onmousedown="window.startSign(event,'signature-pad-contractor')" onmousemove="window.drawSign(event,'signature-pad-contractor')"
+                            onmouseup="window.stopSign('signature-pad-contractor')" onmouseleave="window.stopSign('signature-pad-contractor')"
+                            ontouchstart="window.startSign(event,'signature-pad-contractor')" ontouchmove="window.drawSign(event,'signature-pad-contractor')"
+                            ontouchend="window.stopSign('signature-pad-contractor')" style="width:100%; height:200px; cursor:crosshair;"></canvas>
+                    <div id="sign-placeholder-contractor" class="sign-placeholder"><i class="bi bi-pencil"></i> 여기에 서명해주세요</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="card">
