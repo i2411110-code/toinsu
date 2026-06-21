@@ -697,47 +697,54 @@ window.generateHyundai5PagePDF = async function(mode) {
         const checkOpt = { font: customFont, size: 14, color: rgb(0.15, 0.38, 0.92) };
         const checkMark = 'V';
 
+        // ✅ 좌표는 claim-coords.js의 window.HYUNDAI_COORDS에서 가져옵니다.
+        //    (claim-coords.js가 claim.js보다 먼저 로드되어 있어야 합니다.)
+        const C = window.HYUNDAI_COORDS;
+
         // ── 1페이지 ──
-        pages[0].drawText(fd.insuredName, { x: 145, y: 583, ...txtOpt });
-        pages[0].drawText(jm.jumin1,      { x: 270, y: 583, ...txtOpt });
-        pages[0].drawText(jm.jumin2,      { x: 400, y: 583, ...txtOpt });
-        pages[0].drawText(fd.phone,       { x: 145, y: 493, ...txtOpt });
-        pages[0].drawText(fd.content,     { x: 240, y: 213, ...txtOpt });
-        pages[0].drawText(date.year2,     { x: 110, y: 412, ...txtOpt });
-        pages[0].drawText(date.month,     { x: 165, y: 412, ...txtOpt });
-        pages[0].drawText(date.day,       { x: 215, y: 412, ...txtOpt });
-        pages[0].drawText(fd.insuredName, { x: 430, y: 412, ...txtOpt });
-        if (signImage) pages[0].drawImage(signImage, { x: 500, y: 405, width: 60, height: 22 });
-        
-        // ✅ 은행명 및 계좌번호 현대해상 1페이지 기입 (Y축 좌표는 실제 양식에 맞춰 조정 필요)
+        const p1 = C.page1;
+        pages[0].drawText(fd.insuredName, { x: p1.name.x,       y: p1.name.y,       ...txtOpt });
+        pages[0].drawText(jm.jumin1,      { x: p1.jumin1.x,     y: p1.jumin1.y,     ...txtOpt });
+        pages[0].drawText(jm.jumin2,      { x: p1.jumin2.x,     y: p1.jumin2.y,     ...txtOpt });
+        pages[0].drawText(fd.phone,       { x: p1.phone.x,      y: p1.phone.y,      ...txtOpt });
+        pages[0].drawText(fd.content,     { x: p1.content.x,    y: p1.content.y,    ...txtOpt });
+        pages[0].drawText(date.year2,     { x: p1.year2.x,      y: p1.year2.y,      ...txtOpt });
+        pages[0].drawText(date.month,     { x: p1.month.x,      y: p1.month.y,      ...txtOpt });
+        pages[0].drawText(date.day,       { x: p1.day.x,        y: p1.day.y,        ...txtOpt });
+        pages[0].drawText(fd.insuredName, { x: p1.signerName.x, y: p1.signerName.y, ...txtOpt });
+        if (signImage) pages[0].drawImage(signImage, { x: p1.sign.x, y: p1.sign.y, width: p1.sign.width, height: p1.sign.height });
+
+        // ✅ 은행명 및 계좌번호 현대해상 1페이지 기입
         if (fd.bankName && fd.account) {
-            pages[0].drawText(fd.bankName, { x: 145, y: 300, ...txtOpt }); 
-            pages[0].drawText(fd.account,  { x: 250, y: 300, ...txtOpt }); 
+            pages[0].drawText(fd.bankName, { x: p1.bankName.x, y: p1.bankName.y, ...txtOpt });
+            pages[0].drawText(fd.account,  { x: p1.account.x,  y: p1.account.y,  ...txtOpt });
         }
 
         // ── 2페이지 ──
-        pages[1].drawText(checkMark, { x: 513, y: 416, ...checkOpt });
-        pages[1].drawText(checkMark, { x: 513, y: 311, ...checkOpt });
-        pages[1].drawText(checkMark, { x: 513, y: 188, ...checkOpt });
+        C.page2.checkmarks.forEach(mark => {
+            pages[1].drawText(checkMark, { x: mark.x, y: mark.y, ...checkOpt });
+        });
 
         // ── 3페이지 ──
-        pages[2].drawText(checkMark, { x: 513, y: 288, ...checkOpt });
-        pages[2].drawText(checkMark, { x: 513, y: 188, ...checkOpt });
+        C.page3.checkmarks.forEach(mark => {
+            pages[2].drawText(checkMark, { x: mark.x, y: mark.y, ...checkOpt });
+        });
 
         // ── 4페이지 ──
-        pages[3].drawText(checkMark, { x: 513, y: 645, ...checkOpt });
-        pages[3].drawText(checkMark, { x: 513, y: 226, ...checkOpt });
-        pages[3].drawText(checkMark, { x: 513, y: 134, ...checkOpt });
+        C.page4.checkmarks.forEach(mark => {
+            pages[3].drawText(checkMark, { x: mark.x, y: mark.y, ...checkOpt });
+        });
 
         // ── 5페이지 ──
-        pages[4].drawText(checkMark,      { x: 513, y: 564, ...checkOpt });
-        pages[4].drawText(checkMark,      { x: 513, y: 518, ...checkOpt });
-        pages[4].drawText(checkMark,      { x: 513, y: 429, ...checkOpt });
-        pages[4].drawText(date.year,      { x: 230, y: 381, ...txtOpt });
-        pages[4].drawText(date.month,     { x: 340, y: 381, ...txtOpt });
-        pages[4].drawText(date.day,       { x: 460, y: 381, ...txtOpt });
-        pages[4].drawText(fd.insuredName, { x: 200, y: 320, ...txtOpt });
-        if (signImage) pages[4].drawImage(signImage, { x: 460, y: 295, width: 70, height: 25 });
+        const p5 = C.page5;
+        p5.checkmarks.forEach(mark => {
+            pages[4].drawText(checkMark, { x: mark.x, y: mark.y, ...checkOpt });
+        });
+        pages[4].drawText(date.year,      { x: p5.year.x,  y: p5.year.y,  ...txtOpt });
+        pages[4].drawText(date.month,     { x: p5.month.x, y: p5.month.y, ...txtOpt });
+        pages[4].drawText(date.day,       { x: p5.day.x,   y: p5.day.y,   ...txtOpt });
+        pages[4].drawText(fd.insuredName, { x: p5.name.x,  y: p5.name.y,  ...txtOpt });
+        if (signImage) pages[4].drawImage(signImage, { x: p5.sign.x, y: p5.sign.y, width: p5.sign.width, height: p5.sign.height });
 
         const fileName = `${fd.insuredName || '청구서'}_${window.selectedClaimInsurance || ''}.pdf`;
         await outputPdf(pdfDoc, mode, fileName);

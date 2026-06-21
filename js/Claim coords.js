@@ -89,3 +89,63 @@ window.FIELD_COORDS = {
     chubblife:    { name: { x: 141, y: 645 }, jumin1: { x: 259, y: 645 }, jumin2: { x: 354, y: 645 }, phone: { x: 141, y: 595 }, content: { x: 141, y: 385 }, year2: { x: 106, y: 124 }, month: { x: 159, y: 124 }, day: { x: 204, y: 124 }, signerName: { x: 367, y: 124 }, sign: { x: 431, y: 111, width: 65, height: 22 }, bankName: { x: 141, y: 290 }, account: { x: 241, y: 290 } },
     fubonlife:    { name: { x: 140, y: 644 }, jumin1: { x: 258, y: 644 }, jumin2: { x: 353, y: 644 }, phone: { x: 140, y: 594 }, content: { x: 140, y: 384 }, year2: { x: 105, y: 123 }, month: { x: 158, y: 123 }, day: { x: 203, y: 123 }, signerName: { x: 365, y: 123 }, sign: { x: 429, y: 110, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
 };
+
+// ==========================================
+// [현대해상 - 5페이지 전용 좌표]
+// ------------------------------------------
+// 현대해상은 일반 1페이지 양식과 달리 5페이지로 구성되어 있어
+// 위 FIELD_COORDS(보험사당 좌표 1세트) 구조와 맞지 않습니다.
+// 그래서 페이지별로 별도 객체에 정리했습니다.
+// claim.js의 generateHyundai5PagePDF()에서 이 값을 참조합니다.
+// ⚠️ 아래 값은 기존 claim.js에 하드코딩되어 있던 좌표를 그대로
+//    옮긴 것입니다. (좌표.js 등 외부 출처 좌표는 적용하지 않았습니다 —
+//    실제 템플릿과 맞는지 검증되지 않았기 때문입니다.)
+// ==========================================
+window.HYUNDAI_COORDS = {
+    page1: {
+        name:       { x: 145, y: 583 },
+        jumin1:     { x: 270, y: 583 },
+        jumin2:     { x: 400, y: 583 },
+        phone:      { x: 145, y: 493 },
+        content:    { x: 240, y: 213 },
+        year2:      { x: 110, y: 412 },
+        month:      { x: 165, y: 412 },
+        day:        { x: 215, y: 412 },
+        signerName: { x: 430, y: 412 },
+        sign:       { x: 500, y: 405, width: 60, height: 22 },
+        bankName:   { x: 145, y: 300 },
+        account:    { x: 250, y: 300 },
+    },
+    page2: {
+        checkmarks: [
+            { x: 513, y: 416 },
+            { x: 513, y: 311 },
+            { x: 513, y: 188 },
+        ],
+    },
+    page3: {
+        checkmarks: [
+            { x: 513, y: 288 },
+            { x: 513, y: 188 },
+        ],
+    },
+    page4: {
+        checkmarks: [
+            { x: 513, y: 645 },
+            { x: 513, y: 226 },
+            { x: 513, y: 134 },
+        ],
+    },
+    page5: {
+        checkmarks: [
+            { x: 513, y: 564 },
+            { x: 513, y: 518 },
+            { x: 513, y: 429 },
+        ],
+        year:       { x: 230, y: 381 },
+        month:      { x: 340, y: 381 },
+        day:        { x: 460, y: 381 },
+        name:       { x: 200, y: 320 },
+        sign:       { x: 460, y: 295, width: 70, height: 25 },
+    },
+};
