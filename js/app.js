@@ -1,8 +1,8 @@
 // ==========================================
 // 1. 모듈 Import (반드시 파일 맨 꼭대기에 뭉쳐 있어야 함!)
 // ==========================================
-import './claim-coords'; 
 import './claim.js'; 
+import './claim-coords'; 
 import './report.js';
 import './claim-dashboard.js';
 import './news.js';
