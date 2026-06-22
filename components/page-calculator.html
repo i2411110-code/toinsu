@@ -123,6 +123,7 @@
             </div>
 
             <div id="sv_result_box" class="result-box" style="display:none; background:#F0FDF4; border-color:#16A34A;">
+                
                 <div id="sv_compound_alert" style="display:none; font-size:13px; color:#D97706; text-align:center; margin-bottom:16px; font-weight:700; background:#FFFBEB; padding:12px; border-radius:8px; border:1px dashed #FCD34D;">
                     💡 복리의 마법!<br>기본 이자 외에 <span id="sv_extra_int" style="font-size:15px; font-weight:900; color:#B45309;">0</span>만원의 이자가 추가로 더 붙었습니다.
                 </div>
@@ -250,7 +251,7 @@
                                 <div style="position:absolute; left:-28px; width:20px; height:20px; border-radius:50%; background:#D97706; border:3px solid white;"></div>
                                 <div style="background:white; border-radius:10px; padding:10px 12px;">
                                     <p style="font-size:11px; color:#92400E; font-weight:700;">연금 종료</p>
-                                    <p id="rt_tl3" style="font-size:13px; font-weight:700; color:#191F28; margin-top:2px;">월 0만원 × 0년 수령</p>
+                                    <p id="rt_tl3" style="font-size:13px; font-weight:700; color:#191F28; margin-top:2px;">월 세후 0만원 × 0년 수령</p>
                                 </div>
                             </div>
                         </div>
@@ -288,7 +289,7 @@
 </div>
 
 <script>
-// SPA 환경 대응: Chart.js 동적 로드 (기존 유지)
+// SPA 환경 대응: Chart.js 동적 로드
 (function loadChartJs() {
     if (typeof Chart === 'undefined') {
         var script = document.createElement('script');
@@ -298,15 +299,17 @@
     }
 })();
 
+// 전역 차트 인스턴스 저장용 변수
 let fvChartInstance = null;
 let pvChartInstance = null;
 let svChartInstance = null;
 
-// ==========================================
-// [글로벌 변수 및 상태 관리]
-// ==========================================
-let rtIncomeLimit = 5500; // 기본값 5,500만원 이하
+// 연금 소득 세액공제 한도 상태 관리 변수
+window.rtIncomeLimit = 5500; 
 
+// ==========================================
+// [탭 전환]
+// ==========================================
 window.switchCalcTab = function(tabId) {
     const colors = {'calc-1':'#2563EB','calc-2':'#16A34A','calc-3':'#D97706'};
     const bgs    = {'calc-1':'#EFF6FF','calc-2':'#F0FDF4','calc-3':'#FEF3C7'};
@@ -334,7 +337,7 @@ window.fvSwitchTab = function(tab) {
     selBtn.style.color = '#2563EB';
 };
 
-// 미래가치 계산 (기존 유지)
+// 미래가치 
 window.calcFutureValue = function() {
     const pv    = Number(document.getElementById('fv_present').value);
     const rate  = Number(document.getElementById('fv_rate').value) / 100;
@@ -348,19 +351,43 @@ window.calcFutureValue = function() {
     
     const jjajangFV = 10000 * Math.pow(1 + rate, years);
     document.getElementById('fv_jjajang').innerText = fmt(jjajangFV);
+
     document.getElementById('fv_result_box').style.display = 'block';
 
     if(typeof Chart === 'undefined') return;
-    let labels = []; let dataPoints = [];
-    for(let i=0; i<=years; i++) { labels.push(i + '년'); dataPoints.push(pv * Math.pow(1 + rate, i)); }
+
+    let labels = [];
+    let dataPoints = [];
+    for(let i=0; i<=years; i++) {
+        labels.push(i + '년');
+        dataPoints.push(pv * Math.pow(1 + rate, i));
+    }
+
     if(fvChartInstance) fvChartInstance.destroy();
     const ctx = document.getElementById('fvChart').getContext('2d');
     fvChartInstance = new Chart(ctx, {
-        type: 'line', data: { labels: labels, datasets: [{ label: '필요 금액 추이 (만원)', data: dataPoints, borderColor: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 2, fill: true, tension: 0.3 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '필요 금액 추이 (만원)',
+                data: dataPoints,
+                borderColor: '#EF4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: false } }
+        }
     });
 };
 
-// 현재가치 계산 (기존 유지)
+// 현재가치
 window.calcPresentValue = function() {
     const fv    = Number(document.getElementById('pv_future').value);
     const rate  = Number(document.getElementById('pv_rate').value) / 100;
@@ -374,19 +401,43 @@ window.calcPresentValue = function() {
     
     const jjajangPV = 10000 / Math.pow(1 + rate, years);
     document.getElementById('pv_jjajang').innerText = fmt(jjajangPV);
+
     document.getElementById('pv_result_box').style.display = 'block';
 
     if(typeof Chart === 'undefined') return;
-    let labels = []; let dataPoints = [];
-    for(let i=0; i<=years; i++) { labels.push(i + '년'); dataPoints.push(fv / Math.pow(1 + rate, i)); }
+
+    let labels = [];
+    let dataPoints = [];
+    for(let i=0; i<=years; i++) {
+        labels.push(i + '년');
+        dataPoints.push(fv / Math.pow(1 + rate, i));
+    }
+
     if(pvChartInstance) pvChartInstance.destroy();
     const ctx = document.getElementById('pvChart').getContext('2d');
     pvChartInstance = new Chart(ctx, {
-        type: 'line', data: { labels: labels, datasets: [{ label: '실질 가치 하락 (만원)', data: dataPoints, borderColor: '#3B82F6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 2, fill: true, tension: 0.3 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '실질 가치 하락 (만원)',
+                data: dataPoints,
+                borderColor: '#3B82F6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: false } }
+        }
     });
 };
 
-// 달러 계산 (기존 유지)
+// 달러환산
 window.calcDollarValue = function() {
     const amount = Number(document.getElementById('dv_amount').value);
     const rate   = Number(document.getElementById('dv_rate').value);
@@ -397,10 +448,17 @@ window.calcDollarValue = function() {
     document.getElementById('dv_result_box').style.display = 'block';
 };
 
-// 예적금 탭 제어 (기존 유지)
-let svMode = 'savings'; let svMethod = 'simple'; let svTaxIdx = 0; const svTaxRates = [0.154, 0.095, 0];
+// ==========================================
+// [탭2: 예금·적금]
+// ==========================================
+let svMode   = 'savings';
+let svMethod = 'simple';
+let svTaxIdx = 0;
+const svTaxRates = [0.154, 0.095, 0];
+
 window.svSwitchMode = function(mode) {
-    svMode = mode; const isSav = mode === 'savings';
+    svMode = mode;
+    const isSav = mode === 'savings';
     document.getElementById('sv-tab-savings').style.background = isSav ? 'white' : 'transparent';
     document.getElementById('sv-tab-savings').style.color      = isSav ? '#16A34A' : '#8B95A1';
     document.getElementById('sv-tab-deposit').style.background = !isSav ? 'white' : 'transparent';
@@ -409,47 +467,171 @@ window.svSwitchMode = function(mode) {
     document.getElementById('sv_period_label').innerText = isSav ? '적립기간 (년)' : '예치기간 (년)';
     svUpdateMethodBtns(); svUpdateTaxBtns(); window.calcSavings();
 };
-window.svSwitchMethod = function(method) { svMethod = method; svUpdateMethodBtns(); window.calcSavings(); };
+
+window.svSwitchMethod = function(method) {
+    svMethod = method;
+    svUpdateMethodBtns(); window.calcSavings();
+};
+
 function svUpdateMethodBtns() {
     const activeColor = svMode === 'savings' ? '#16A34A' : '#2563EB';
-    ['simple','compound'].forEach(m => { const btn = document.getElementById('sv-m-' + m); const isActive = svMethod === m; btn.style.background = isActive ? activeColor : '#F2F4F6'; btn.style.color = isActive ? 'white' : '#8B95A1'; });
+    ['simple','compound'].forEach(m => {
+        const btn = document.getElementById('sv-m-' + m);
+        const isActive = svMethod === m;
+        btn.style.background = isActive ? activeColor : '#F2F4F6';
+        btn.style.color      = isActive ? 'white' : '#8B95A1';
+    });
 }
-window.svSwitchTax = function(idx) { svTaxIdx = idx; svUpdateTaxBtns(); window.calcSavings(); };
+
+window.svSwitchTax = function(idx) {
+    svTaxIdx = idx;
+    svUpdateTaxBtns(); window.calcSavings();
+};
+
 function svUpdateTaxBtns() {
-    const activeColor = svMode === 'savings' ? '#16A34A' : '#2563EB'; const activeBg = svMode === 'savings' ? '#F0FDF4' : '#EFF6FF'; const activeBorder = svMode === 'savings' ? '#16A34A' : '#2563EB';
-    [0,1,2].forEach(i => { const btn = document.getElementById('sv-tax-' + i); if (i === svTaxIdx) { btn.style.borderColor = activeBorder; btn.style.background = activeBg; btn.style.color = activeColor; } else { btn.style.borderColor = '#E5E8EB'; btn.style.background = 'white'; btn.style.color = '#8B95A1'; } });
+    const activeColor  = svMode === 'savings' ? '#16A34A' : '#2563EB';
+    const activeBg     = svMode === 'savings' ? '#F0FDF4' : '#EFF6FF';
+    const activeBorder = svMode === 'savings' ? '#16A34A' : '#2563EB';
+    [0,1,2].forEach(i => {
+        const btn = document.getElementById('sv-tax-' + i);
+        if (i === svTaxIdx) {
+            btn.style.borderColor = activeBorder;
+            btn.style.background  = activeBg;
+            btn.style.color       = activeColor;
+        } else {
+            btn.style.borderColor = '#E5E8EB';
+            btn.style.background  = 'white';
+            btn.style.color       = '#8B95A1';
+        }
+    });
 }
 
 window.calcSavings = function() {
-    const amount = Number(document.getElementById('sv_amount').value); const years = Number(document.getElementById('sv_months').value); const rate = Number(document.getElementById('sv_rate').value) / 100;
+    const amount = Number(document.getElementById('sv_amount').value);
+    const years  = Number(document.getElementById('sv_months').value);
+    const rate   = Number(document.getElementById('sv_rate').value) / 100;
     if (!amount || !years) { document.getElementById('sv_result_box').style.display='none'; return; }
-    const months = years * 12; const mr = rate / 12; let principal = 0, interest = 0; let labels = []; let principalData = []; let baseInterestData = []; let extraInterestData = [];
+
+    const months = years * 12;
+    const mr     = rate / 12;
+    let principal = 0, interest = 0;
+    
+    let labels = [];
+    let principalData = [];
+    let baseInterestData = []; 
+    let extraInterestData = []; 
+
     if (svMode === 'savings') {
         principal = amount * months;
         for(let y=1; y<=years; y++){
-            labels.push(y+'년차'); let m_yr = y * 12; let p_yr = amount * m_yr; principalData.push(p_yr);
-            let sim_int = amount * rate * (m_yr * (m_yr + 1) / 2) / 12; let cmp_int = amount * ((Math.pow(1 + mr, m_yr) - 1) / mr) * (1 + mr) - p_yr;
-            if (svMethod === 'simple') { baseInterestData.push(sim_int); extraInterestData.push(0); } else { baseInterestData.push(sim_int); extraInterestData.push(Math.max(0, cmp_int - sim_int)); }
+            labels.push(y+'년차');
+            let m_yr = y * 12;
+            let p_yr = amount * m_yr;
+            principalData.push(p_yr);
+            
+            let sim_int = amount * rate * (m_yr * (m_yr + 1) / 2) / 12;
+            let cmp_int = amount * ((Math.pow(1 + mr, m_yr) - 1) / mr) * (1 + mr) - p_yr;
+            
+            if (svMethod === 'simple') {
+                baseInterestData.push(sim_int);
+                extraInterestData.push(0);
+            } else {
+                baseInterestData.push(sim_int);
+                extraInterestData.push(Math.max(0, cmp_int - sim_int));
+            }
         }
     } else {
         principal = amount;
         for(let y=1; y<=years; y++){
-            labels.push(y+'년차'); principalData.push(amount);
-            let sim_int = amount * rate * y; let cmp_int = amount * (Math.pow(1 + rate, y) - 1);
-            if (svMethod === 'simple') { baseInterestData.push(sim_int); extraInterestData.push(0); } else { baseInterestData.push(sim_int); extraInterestData.push(Math.max(0, cmp_int - sim_int)); }
+            labels.push(y+'년차');
+            principalData.push(amount);
+            
+            let sim_int = amount * rate * y;
+            let cmp_int = amount * (Math.pow(1 + rate, y) - 1);
+            
+            if (svMethod === 'simple') {
+                baseInterestData.push(sim_int);
+                extraInterestData.push(0);
+            } else {
+                baseInterestData.push(sim_int);
+                extraInterestData.push(Math.max(0, cmp_int - sim_int));
+            }
         }
     }
-    interest = svMethod === 'simple' ? baseInterestData[years-1] : (baseInterestData[years-1] + extraInterestData[years-1]); const extraInt = extraInterestData[years-1] || 0; const taxAmt = interest * svTaxRates[svTaxIdx]; const netInt = interest - taxAmt; const total = principal + netInt;
-    const accentColor = svMode === 'savings' ? '#16A34A' : '#2563EB'; const baseColor = svMode === 'savings' ? '#86EFAC' : '#93C5FD'; const resultBg = svMode === 'savings' ? '#F0FDF4' : '#EFF6FF'; const resultBdr = svMode === 'savings' ? '#16A34A' : '#2563EB';
-    const box = document.getElementById('sv_result_box'); box.style.background = resultBg; box.style.borderColor = resultBdr; document.getElementById('sv_total').style.color = accentColor; document.getElementById('sv_netint').style.color = accentColor;
-    if(svMethod === 'compound' && extraInt > 0) { document.getElementById('sv_compound_alert').style.display = 'block'; document.getElementById('sv_extra_int').innerText = fmt(extraInt); } else { document.getElementById('sv_compound_alert').style.display = 'none'; }
-    document.getElementById('sv_total').innerText = fmt(total) + '만원'; document.getElementById('sv_principal').innerText= fmt(principal) + '만원'; document.getElementById('sv_interest').innerText = fmt(interest) + '만원'; document.getElementById('sv_tax').innerText = fmt(taxAmt) + '만원'; document.getElementById('sv_netint').innerText = fmt(netInt) + '만원'; box.style.display = 'block';
-    if(typeof Chart === 'undefined') return; if(svChartInstance) svChartInstance.destroy(); const ctx = document.getElementById('svChart').getContext('2d');
-    svChartInstance = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: '납입 원금', data: principalData, backgroundColor: '#CBD5E1', stack: 'Stack 0' }, { label: '기본 이자(단리)', data: baseInterestData, backgroundColor: baseColor, stack: 'Stack 0' }, { label: '이자에 붙은 추가 이자(복리)', data: extraInterestData, backgroundColor: accentColor, stack: 'Stack 0' }] }, options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } } });
+    
+    interest = svMethod === 'simple' ? baseInterestData[years-1] : (baseInterestData[years-1] + extraInterestData[years-1]);
+    const extraInt = extraInterestData[years-1] || 0;
+
+    const taxAmt = interest * svTaxRates[svTaxIdx];
+    const netInt = interest - taxAmt;
+    const total  = principal + netInt;
+
+    const accentColor = svMode === 'savings' ? '#16A34A' : '#2563EB';
+    const baseColor   = svMode === 'savings' ? '#86EFAC' : '#93C5FD'; 
+    const resultBg    = svMode === 'savings' ? '#F0FDF4' : '#EFF6FF';
+    const resultBdr   = svMode === 'savings' ? '#16A34A' : '#2563EB';
+    
+    const box = document.getElementById('sv_result_box');
+    box.style.background   = resultBg;
+    box.style.borderColor  = resultBdr;
+    document.getElementById('sv_total').style.color  = accentColor;
+    document.getElementById('sv_netint').style.color = accentColor;
+
+    if(svMethod === 'compound' && extraInt > 0) {
+        document.getElementById('sv_compound_alert').style.display = 'block';
+        document.getElementById('sv_extra_int').innerText = fmt(extraInt);
+    } else {
+        document.getElementById('sv_compound_alert').style.display = 'none';
+    }
+
+    document.getElementById('sv_total').innerText    = fmt(total)     + '만원';
+    document.getElementById('sv_principal').innerText= fmt(principal) + '만원';
+    document.getElementById('sv_interest').innerText = fmt(interest)  + '만원';
+    document.getElementById('sv_tax').innerText      = fmt(taxAmt)    + '만원';
+    document.getElementById('sv_netint').innerText   = fmt(netInt)    + '만원';
+    box.style.display = 'block';
+
+    if(typeof Chart === 'undefined') return;
+
+    if(svChartInstance) svChartInstance.destroy();
+    const ctx = document.getElementById('svChart').getContext('2d');
+    svChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '납입 원금',
+                    data: principalData,
+                    backgroundColor: '#CBD5E1',
+                    stack: 'Stack 0'
+                },
+                {
+                    label: '기본 이자(단리)',
+                    data: baseInterestData,
+                    backgroundColor: baseColor,
+                    stack: 'Stack 0'
+                },
+                {
+                    label: '이자에 붙은 추가 이자(복리)',
+                    data: extraInterestData,
+                    backgroundColor: accentColor,
+                    stack: 'Stack 0'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { stacked: true },
+                y: { stacked: true }
+            }
+        }
+    });
 };
 
 // ==========================================
-// [탭3: 연금 계산기 확장 로직]
+// [탭3: 연금 - 서브탭 제어 및 세제 결합]
 // ==========================================
 window.pnSwitchTab = function(tab) {
     ['retire','accum'].forEach(t => {
@@ -464,9 +646,9 @@ window.pnSwitchTab = function(tab) {
     selBtn.style.color = '#D97706';
 };
 
-// 소득구간 버튼 스위칭 함수
+// 소득분위 선택 버튼 함수 (전역 window 바인딩 처리로 구동 보장)
 window.rtSwitchIncome = function(income) {
-    rtIncomeLimit = income;
+    window.rtIncomeLimit = income;
     const underBtn = document.getElementById('rt-income-under');
     const overBtn = document.getElementById('rt-income-over');
     
@@ -477,12 +659,83 @@ window.rtSwitchIncome = function(income) {
         underBtn.style.background = 'white'; underBtn.style.borderColor = '#E5E8EB'; underBtn.style.color = '#8B95A1';
         overBtn.style.background = '#FEF3C7'; overBtn.style.borderColor = '#D97706'; overBtn.style.color = '#D97706';
     }
-    window.calcRetire();
+    window.calcRetire(); 
 };
 
-// 은퇴설계 연산 기능 고도화
 window.calcRetire = function() {
     const curAge      = Number(document.getElementById('rt_current_age').value);
     const startAge    = Number(document.getElementById('rt_start_age').value);
     const monthPension= Number(document.getElementById('rt_monthly_pension').value);
-    const
+    const pensionYears= Number(document.getElementById('rt_pension_years').value);
+    const rate        = Number(document.getElementById('rt_rate').value) / 100;
+
+    if (!curAge || !startAge || !monthPension || !pensionYears || startAge <= curAge) {
+        document.getElementById('rt_result_box').style.display = 'none';
+        return;
+    }
+
+    const mr          = rate / 12;
+    const recvMonths  = pensionYears * 12;
+    const saveMonths  = (startAge - curAge) * 12;
+
+    const needFund = mr > 0 ? monthPension * (1 - Math.pow(1 + mr, -recvMonths)) / mr : monthPension * recvMonths;
+    const monthlySave = mr > 0 ? needFund * mr / (Math.pow(1 + mr, saveMonths) - 1) : needFund / saveMonths;
+    const endAge = startAge + pensionYears;
+
+    // 1. 세액공제 환급액 세부 연산 (연 최대 900만 원 한도 반영)
+    const annualSaveAmount = (monthlySave * 12);
+    const taxCreditRate = (window.rtIncomeLimit === 5500) ? 0.165 : 0.132;
+    const limitAmount = 900; 
+    const effectivelyCredited = Math.min(annualSaveAmount, limitAmount);
+    const taxRefund = effectivelyCredited * taxCreditRate;
+
+    // 2. 나이별 연금소득세 차등 로직 적용
+    let pensionTaxRate = 0.055; 
+    if (startAge >= 80) {
+        pensionTaxRate = 0.033; 
+    } else if (startAge >= 70) {
+        pensionTaxRate = 0.044; 
+    }
+    
+    // 3. 실제 세후 연금 수령액 도출
+    const netMonthlyPension = monthPension * (1 - pensionTaxRate);
+
+    // DOM 출력 데이터 매핑
+    document.getElementById('rt_tax_refund').innerText = fmt(taxRefund);
+    document.getElementById('rt_tax_rate_info').innerText = (pensionTaxRate * 100).toFixed(1) + '%';
+    document.getElementById('rt_need_fund').innerText   = fmt(needFund) + '만원';
+    document.getElementById('rt_monthly_save').innerText= fmt(monthlySave) + '만원';
+    
+    document.getElementById('rt_net_before').innerText = fmt(monthPension) + '만원';
+    document.getElementById('rt_net_after').innerText = fmt(netMonthlyPension) + '만원';
+
+    document.getElementById('rt_tl1').innerText = '매월 ' + fmt(monthlySave) + '만원 저축 (' + curAge + '세 시작)';
+    document.getElementById('rt_tl2').innerText = startAge + '세 · 적립금 ' + fmt(needFund) + '만원';
+    document.getElementById('rt_tl3').innerText = endAge + '세 종료 · 월 세후 ' + fmt(netMonthlyPension) + '만원 × ' + pensionYears + '년 수령';
+    
+    document.getElementById('rt_result_box').style.display = 'block';
+};
+
+window.calcPension = function() {
+    const currentAge = Number(document.getElementById('pn_current_age').value);
+    const startAge   = Number(document.getElementById('pn_start_age').value);
+    const monthly    = Number(document.getElementById('pn_monthly').value);
+    const rate       = Number(document.getElementById('pn_rate').value) / 100;
+
+    if (!monthly || startAge <= currentAge) { document.getElementById('pn_result_box').style.display='none'; return; }
+
+    const months      = (startAge - currentAge) * 12;
+    const monthlyRate = rate / 12;
+    const fv          = monthly * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate) * (1 + monthlyRate);
+
+    document.getElementById('pn_result_total').innerText = fmt(fv) + '만원';
+    document.getElementById('pn_result_box').style.display = 'block';
+};
+
+// ==========================================
+// [공통 유틸]
+// ==========================================
+function fmt(v) {
+    return Math.round(v).toLocaleString();
+}
+</script>
