@@ -382,9 +382,12 @@
                 <label>비밀번호 확인</label>
                 <input type="password" id="auth-password-confirm" class="form-control" placeholder="비밀번호 다시 입력">
             </div>
-            <div class="form-group" style="text-align:left; display:flex; align-items:center; gap:6px; margin-top: -10px; margin-bottom: 15px;">
-                <input type="checkbox" id="save-email-chk" style="width:16px; height:16px; cursor:pointer;">
-                <label for="save-email-chk" style="font-size:13px; color:#64748B; cursor:pointer; margin:0; user-select:none;">이메일 기억하기</label>
+            <div class="form-group" style="text-align:left; display:flex; justify-content:space-between; align-items:center; margin-top: -10px; margin-bottom: 15px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <input type="checkbox" id="save-email-chk" style="width:16px; height:16px; cursor:pointer;">
+                    <label for="save-email-chk" style="font-size:13px; color:#64748B; cursor:pointer; margin:0; user-select:none;">이메일 기억하기</label>
+                </div>
+                <span onclick="window.handleForgotPassword()" style="font-size:13px; color:#2563EB; cursor:pointer; font-weight:500; user-select:none;">비밀번호 찾기</span>
             </div>
             <div class="form-group" id="invite-code-group" style="text-align:left; display:none; margin-bottom:25px;">
                 <label>가온사업단 인증 추천인 코드</label>

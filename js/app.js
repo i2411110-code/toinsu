@@ -7,7 +7,8 @@ import './report.js';
 import './claim-dashboard.js';
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+// ✅ 끝부분에 sendPasswordResetEmail이 추가되었습니다.
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ==========================================
@@ -76,33 +77,39 @@ async function syncRegistryToDatabase() {
 }
 
 async function updateVisitCounter(email) {
-    // 🚫 집계에서 제외할 이메일 목록 (팀장님 이메일이나 테스트 계정을 쉼표로 구분해서 넣으세요)
+    // 🚫 집계에서 제외할 이메일 목록
     const excludedEmails = ['dlsqh814@naver.com'];
-
-    // 현재 로그인한 이메일이 제외 목록에 포함되어 있다면, 숫자를 올리지 않고 즉시 종료합니다.
-    if (excludedEmails.includes(email)) {
-        console.log(`[통계 제외] ${email} 접속 - 방문자 카운트를 올리지 않습니다.`);
-        return; 
-    }
+    const isExcluded = excludedEmails.includes(email);
 
     const today = new Date().toISOString().slice(0, 10);
     const statsRef = doc(db, "site_stats", "visit_counter");
     try {
         const snap = await getDoc(statsRef);
         if (!snap.exists()) {
-            await setDoc(statsRef, { total: 1, lastDate: today, todayCount: 1 });
-            document.getElementById('count-today').innerText = 1;
-            document.getElementById('count-total').innerText = 1;
+            if (!isExcluded) {
+                await setDoc(statsRef, { total: 1, lastDate: today, todayCount: 1 });
+            }
+            document.getElementById('count-today').innerText = isExcluded ? 0 : 1;
+            document.getElementById('count-total').innerText = isExcluded ? 0 : 1;
         } else {
             const data = snap.data();
             const isNewDay = data.lastDate !== today;
-            await updateDoc(statsRef, {
-                total: increment(1),
-                todayCount: isNewDay ? 1 : increment(1),
-                lastDate: today
-            });
-            document.getElementById('count-today').innerText = isNewDay ? 1 : (data.todayCount || 0) + 1;
-            document.getElementById('count-total').innerText = (data.total || 0) + 1;
+            
+            if (!isExcluded) {
+                // 일반 사원/고객: DB 카운트 올리고 화면 갱신
+                await updateDoc(statsRef, {
+                    total: increment(1),
+                    todayCount: isNewDay ? 1 : increment(1),
+                    lastDate: today
+                });
+                document.getElementById('count-today').innerText = isNewDay ? 1 : (data.todayCount || 0) + 1;
+                document.getElementById('count-total').innerText = (data.total || 0) + 1;
+            } else {
+                // ✅ 팀장님 계정: DB 수치는 안 올리지만 화면에는 기존 누적 현황 정상 표시
+                console.log(`[통계 제외] ${email} 접속 - 기존 통계 수치만 UI에 바인딩합니다.`);
+                document.getElementById('count-today').innerText = isNewDay ? 0 : (data.todayCount || 0);
+                document.getElementById('count-total').innerText = (data.total || 0);
+            }
         }
     } catch (e) {
         console.error("카운터 업데이트 실패:", e);
@@ -122,9 +129,8 @@ window.toggleAuthTab = function(mode) {
     const title = document.getElementById('auth-title');
     const submitBtn = document.getElementById('auth-submit-btn');
     const inviteGroup = document.getElementById('invite-code-group');
-    const passConfirmGroup = document.getElementById('password-confirm-group'); // ✅ 추가됨
+    const passConfirmGroup = document.getElementById('password-confirm-group');
     const nameGroup = document.getElementById('name-input-group');
-    
     document.getElementById('auth-error-msg').style.display = 'none';
     
     if(mode === 'login') {
@@ -132,13 +138,13 @@ window.toggleAuthTab = function(mode) {
         title.innerText = "보험가온포탈 로그인"; submitBtn.innerText = "포탈 접속하기";
         inviteGroup.style.display = 'none';
         if(nameGroup) nameGroup.style.display = 'none';
-        if(passConfirmGroup) passConfirmGroup.style.display = 'none'; // ✅ 로그인 시 숨김
+        if(passConfirmGroup) passConfirmGroup.style.display = 'none';
     } else {
         regBtn.classList.add('active'); loginBtn.classList.remove('active');
         title.innerText = "신규 멤버 회원가입"; submitBtn.innerText = "가입 및 로그인";
         inviteGroup.style.display = 'block';
         if(nameGroup) nameGroup.style.display = 'block';
-        if(passConfirmGroup) passConfirmGroup.style.display = 'block'; // ✅ 가입 시 표시
+        if(passConfirmGroup) passConfirmGroup.style.display = 'block';
     }
 }
 
@@ -156,7 +162,6 @@ window.handleAuthSubmit = function() {
     }
 
     if(document.getElementById('tab-login-btn').classList.contains('active')) {
-        // [로그인 진행 로직]
         signInWithEmailAndPassword(auth, email, password)
             .then(() => { 
                 if (shouldSave) {
@@ -171,22 +176,17 @@ window.handleAuthSubmit = function() {
                 errorMsg.style.display = "block";
             });
     } else {
-        // [회원가입 진행 로직]
-        const passwordConfirm = document.getElementById('auth-password-confirm').value; // ✅ 추가됨
+        const passwordConfirm = document.getElementById('auth-password-confirm').value;
         const inviteCode = document.getElementById('auth-invite-code').value.trim();
         
-        // ✅ 비밀번호 일치 여부 검사
         if(password !== passwordConfirm) {
             errorMsg.innerText = "❌ 비밀번호가 서로 일치하지 않습니다.";
-            errorMsg.style.display = "block"; 
-            return;
+            errorMsg.style.display = "block"; return;
         }
-
         if(inviteCode !== MASTER_INVITE_CODE) {
             errorMsg.innerText = "❌ 추천인 코드가 올바르지 않습니다.";
             errorMsg.style.display = "block"; return;
         }
-
         createUserWithEmailAndPassword(auth, email, password)
             .then(async (userCred) => {
                 const userName = document.getElementById('auth-name')?.value.trim() || '';
@@ -207,6 +207,7 @@ window.handleAuthSubmit = function() {
     }
 }
 
+// ⚠️ 중복 분량을 완전히 제거하고 하나로 통합한 상태 제어 엔진
 onAuthStateChanged(auth, (user) => {
     if (user) {
         document.getElementById('auth-overlay').style.display = 'none';
@@ -214,11 +215,10 @@ onAuthStateChanged(auth, (user) => {
         loadUserIntegratedData(user.email);
         updateVisitCounter(user.email);
         window.checkAndShowNotice();
-        window.loadComponent('main-dashboard'); 
+        window.loadComponent('main-dashboard');
         window.startSessionTimer();
     } else {
         document.getElementById('auth-overlay').style.display = 'flex';
-        // ✅ 저장된 이메일이 있을 시 불러오고 체크박스도 자동 활성화
         const savedEmail = localStorage.getItem('gaonSavedEmail');
         if(savedEmail && document.getElementById('auth-email')) {
             document.getElementById('auth-email').value = savedEmail;
@@ -232,11 +232,31 @@ onAuthStateChanged(auth, (user) => {
 window.handleLogout = function() {
     if(confirm("로그아웃 하시겠습니까?")) { 
         signOut(auth).then(() => { 
-            window.clearSessionTimer(); // 타이머 확실히 끄기
+            window.clearSessionTimer();
             location.reload(); 
         }); 
     }
 }
+
+// ✨ [신규 추가] 파이어베이스 비밀번호 재설정 메일 전송 로직
+window.handleForgotPassword = function() {
+    const email = document.getElementById('auth-email').value.trim();
+    if (!email) {
+        alert("💡 비밀번호를 찾으실 이메일 주소를 입력창에 먼저 적어주세요!");
+        document.getElementById('auth-email').focus();
+        return;
+    }
+    
+    if (confirm(`${email} 주소로 비밀번호 재설정 링크를 전송하시겠습니까?`)) {
+        sendPasswordResetEmail(auth, email)
+            .then(() => {
+                alert("✉️ 비밀번호 재설정 이메일이 발송되었습니다.\n메일함을 확인하여 비밀번호를 변경해 주세요.");
+            })
+            .catch((error) => {
+                alert("❌ 메일 발송 실패: " + error.message);
+            });
+    }
+};
 
 // ==========================================
 // [신규 추가] 30분 자동 로그아웃 및 연장 시스템
