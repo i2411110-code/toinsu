@@ -1,3 +1,5 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <div class="sub-page toss" style="display:block; padding: 0; background:transparent; box-shadow:none;">
 
     <div class="toss-hero" style="background:#0284C7;">
@@ -9,7 +11,6 @@
         <h1 class="toss-hero-title" style="font-size:24px;">상담에 꼭 필요한<br>계산기 모음입니다.</h1>
     </div>
 
-    <!-- 상단 탭 -->
     <div style="display: flex; background: white; padding: 4px; border-radius: 12px; margin: 0 4px 16px; border: 1px solid #F2F4F6;">
         <button id="tab-calc-1" onclick="window.switchCalcTab('calc-1')" style="flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; background: #EFF6FF; color: #2563EB; transition: all 0.2s;">화폐가치</button>
         <button id="tab-calc-2" onclick="window.switchCalcTab('calc-2')" style="flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; background: transparent; color: #8B95A1; transition: all 0.2s;">예금·적금</button>
@@ -18,18 +19,15 @@
 
     <div style="padding: 0 4px;">
 
-        <!-- ===== 탭 1: 화폐가치 ===== -->
         <div id="view-calc-1" class="toss-card" style="display: block;">
             <div class="toss-card-title" style="margin-bottom: 4px;">시간의 경과에 따른 화폐가치</div>
 
-            <!-- 화폐가치 서브탭 -->
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; background:#F2F4F6; border-radius:12px; padding:4px; margin-bottom:16px;">
                 <button id="fv-tab-future" onclick="window.fvSwitchTab('future')" style="padding:10px 4px; border:none; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer; background:white; color:#2563EB; transition:all 0.2s;">미래가치</button>
                 <button id="fv-tab-present" onclick="window.fvSwitchTab('present')" style="padding:10px 4px; border:none; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer; background:transparent; color:#8B95A1; transition:all 0.2s;">현재가치</button>
                 <button id="fv-tab-dollar" onclick="window.fvSwitchTab('dollar')" style="padding:10px 4px; border:none; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer; background:transparent; color:#8B95A1; transition:all 0.2s;">달러환산</button>
             </div>
 
-            <!-- 미래가치 -->
             <div id="fv-view-future">
                 <div class="form-group">
                     <label>현재 금액 (만원)</label>
@@ -46,11 +44,11 @@
                 <div id="fv_result_box" class="result-box" style="display:none; background:#EFF6FF; border-color:#3182F6;">
                     <p style="font-size:13px; color:#1e3a8a; font-weight:700;">미래의 체감 가치 금액</p>
                     <h3 id="fv_result_val" style="font-size:26px; font-weight:900; color:#2563EB; margin-top:4px;">0만원</h3>
-                    <p style="font-size:12px; color:#64748B; margin-top:8px;">* 물가상승으로 현재 <span id="fv_result_desc1">0</span>만원의 가치가 <span id="fv_result_desc2">0</span>년 후엔 이만큼 필요합니다.</p>
+                    <p style="font-size:12px; color:#64748B; margin-top:8px; margin-bottom:15px;">* 물가상승으로 현재 <span id="fv_result_desc1">0</span>만원의 가치가 <span id="fv_result_desc2">0</span>년 후엔 이만큼 필요합니다.</p>
+                    <canvas id="fvChart" style="max-height: 200px;"></canvas>
                 </div>
             </div>
 
-            <!-- 현재가치 -->
             <div id="fv-view-present" style="display:none;">
                 <div class="form-group">
                     <label>미래 금액 (만원)</label>
@@ -67,11 +65,11 @@
                 <div id="pv_result_box" class="result-box" style="display:none; background:#EFF6FF; border-color:#3182F6;">
                     <p style="font-size:13px; color:#1e3a8a; font-weight:700;">현재 기준 실질 가치</p>
                     <h3 id="pv_result_val" style="font-size:26px; font-weight:900; color:#2563EB; margin-top:4px;">0만원</h3>
-                    <p style="font-size:12px; color:#64748B; margin-top:8px;">* <span id="pv_result_desc2">0</span>년 후 <span id="pv_result_desc1">0</span>만원의 현재 구매력입니다.</p>
+                    <p style="font-size:12px; color:#64748B; margin-top:8px; margin-bottom:15px;">* <span id="pv_result_desc2">0</span>년 후 <span id="pv_result_desc1">0</span>만원의 현재 구매력입니다.</p>
+                    <canvas id="pvChart" style="max-height: 200px;"></canvas>
                 </div>
             </div>
 
-            <!-- 달러환산 -->
             <div id="fv-view-dollar" style="display:none;">
                 <div class="form-group">
                     <label>금액 (만원)</label>
@@ -89,17 +87,14 @@
             </div>
         </div>
 
-        <!-- ===== 탭 2: 예금·적금 ===== -->
         <div id="view-calc-2" class="toss-card" style="display: none;">
             <div class="toss-card-title" style="margin-bottom: 4px;">단리 · 복리 만기금액 계산</div>
 
-            <!-- 적금/예금 탭 -->
             <div style="display:grid; grid-template-columns:1fr 1fr; background:#F2F4F6; border-radius:12px; padding:4px; margin-bottom:12px;">
                 <button id="sv-tab-savings" onclick="window.svSwitchMode('savings')" style="padding:12px; border:none; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; background:white; color:#16A34A; transition:all 0.2s;">적금</button>
                 <button id="sv-tab-deposit" onclick="window.svSwitchMode('deposit')" style="padding:12px; border:none; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; background:transparent; color:#8B95A1; transition:all 0.2s;">예금</button>
             </div>
 
-            <!-- 단리/복리 -->
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;">
                 <button id="sv-m-simple" onclick="window.svSwitchMethod('simple')" style="padding:12px; border:none; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; background:#16A34A; color:white; transition:all 0.2s;">단리</button>
                 <button id="sv-m-compound" onclick="window.svSwitchMethod('compound')" style="padding:12px; border:none; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; background:#F2F4F6; color:#8B95A1; transition:all 0.2s;">복리(월)</button>
@@ -118,7 +113,6 @@
                 <input type="number" id="sv_rate" class="form-control" placeholder="예: 4.5" oninput="window.calcSavings()">
             </div>
 
-            <!-- 과세유형 -->
             <div class="form-group">
                 <label>과세유형</label>
                 <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
@@ -128,11 +122,10 @@
                 </div>
             </div>
 
-            <!-- 결과 -->
             <div id="sv_result_box" class="result-box" style="display:none; background:#F0FDF4; border-color:#16A34A;">
                 <p style="font-size:13px; color:#166534; font-weight:700; text-align:center; margin-bottom:8px;">세후 만기 수령액</p>
                 <h3 id="sv_total" style="font-size:28px; font-weight:900; color:#16A34A; text-align:center; margin-bottom:12px;">0만원</h3>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;">
                     <div style="background:white; border-radius:10px; padding:12px; text-align:center;">
                         <p style="font-size:12px; color:#64748B; font-weight:700; margin-bottom:4px;">원금</p>
                         <p id="sv_principal" style="font-size:14px; font-weight:900; color:#191F28;">0만원</p>
@@ -150,21 +143,19 @@
                         <p id="sv_netint" style="font-size:14px; font-weight:900; color:#16A34A;">0만원</p>
                     </div>
                 </div>
-                <p style="font-size:11px; color:#8B95A1; margin-top:10px; text-align:center;">실제 금리·세율·우대조건에 따라 결과가 달라질 수 있습니다.</p>
+                <canvas id="svChart" style="max-height: 200px; margin-bottom:10px;"></canvas>
+                <p style="font-size:11px; color:#8B95A1; text-align:center;">실제 금리·세율·우대조건에 따라 결과가 달라질 수 있습니다.</p>
             </div>
         </div>
 
-        <!-- ===== 탭 3: 연금 ===== -->
         <div id="view-calc-3" class="toss-card" style="display: none;">
             <div class="toss-card-title" style="margin-bottom: 4px;">은퇴자금 · 연금액 계산</div>
 
-            <!-- 연금 서브탭 -->
             <div style="display:grid; grid-template-columns:1fr 1fr; background:#F2F4F6; border-radius:12px; padding:4px; margin-bottom:16px;">
                 <button id="pn-tab-retire" onclick="window.pnSwitchTab('retire')" style="padding:10px 4px; border:none; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer; background:white; color:#D97706; transition:all 0.2s;">은퇴설계</button>
                 <button id="pn-tab-accum" onclick="window.pnSwitchTab('accum')" style="padding:10px 4px; border:none; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer; background:transparent; color:#8B95A1; transition:all 0.2s;">적립계산</button>
             </div>
 
-            <!-- 은퇴설계 -->
             <div id="pn-view-retire">
                 <p style="font-size:12px; color:#8B95A1; margin-bottom:12px; line-height:1.6;">희망 월 연금액을 입력하면 필요 은퇴자금과 매월 저축액을 계산합니다.</p>
                 <div class="form-group">
@@ -202,7 +193,6 @@
                             </div>
                         </div>
                     </div>
-                    <!-- 타임라인 -->
                     <div style="background:#FFFBEB; border-radius:12px; padding:16px;">
                         <div style="position:relative; padding-left:28px;">
                             <div style="position:absolute; left:9px; top:12px; bottom:12px; width:2px; background:#FCD34D;"></div>
@@ -232,7 +222,6 @@
                 </div>
             </div>
 
-            <!-- 적립계산 -->
             <div id="pn-view-accum" style="display:none;">
                 <div class="form-group">
                     <label>현재 연령 (세)</label>
@@ -263,6 +252,11 @@
 </div>
 
 <script>
+// 전역 차트 인스턴스 저장용 변수
+let fvChartInstance = null;
+let pvChartInstance = null;
+let svChartInstance = null;
+
 // ==========================================
 // [탭 전환]
 // ==========================================
@@ -296,30 +290,94 @@ window.fvSwitchTab = function(tab) {
     selBtn.style.color = '#2563EB';
 };
 
-// 미래가치
+// 미래가치 (인플레이션 시계열 차트 포함)
 window.calcFutureValue = function() {
     const pv    = Number(document.getElementById('fv_present').value);
     const rate  = Number(document.getElementById('fv_rate').value) / 100;
     const years = Number(document.getElementById('fv_years').value);
     if (!pv || !years) { document.getElementById('fv_result_box').style.display='none'; return; }
+    
     const fv = pv * Math.pow(1 + rate, years);
     document.getElementById('fv_result_val').innerText  = fmt(fv) + '만원';
     document.getElementById('fv_result_desc1').innerText = fmt(pv);
     document.getElementById('fv_result_desc2').innerText = years;
     document.getElementById('fv_result_box').style.display = 'block';
+
+    // 차트 데이터 생성
+    let labels = [];
+    let dataPoints = [];
+    for(let i=0; i<=years; i++) {
+        labels.push(i + '년');
+        dataPoints.push(pv * Math.pow(1 + rate, i));
+    }
+
+    if(fvChartInstance) fvChartInstance.destroy();
+    const ctx = document.getElementById('fvChart').getContext('2d');
+    fvChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '필요 금액 추이 (만원)',
+                data: dataPoints,
+                borderColor: '#EF4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: false } }
+        }
+    });
 };
 
-// 현재가치
+// 현재가치 (실질 구매력 하락 차트 포함)
 window.calcPresentValue = function() {
     const fv    = Number(document.getElementById('pv_future').value);
     const rate  = Number(document.getElementById('pv_rate').value) / 100;
     const years = Number(document.getElementById('pv_years').value);
     if (!fv || !years) { document.getElementById('pv_result_box').style.display='none'; return; }
+    
     const pv = fv / Math.pow(1 + rate, years);
     document.getElementById('pv_result_val').innerText   = fmt(pv) + '만원';
     document.getElementById('pv_result_desc1').innerText = fmt(fv);
     document.getElementById('pv_result_desc2').innerText = years;
     document.getElementById('pv_result_box').style.display = 'block';
+
+    // 차트 데이터 생성
+    let labels = [];
+    let dataPoints = [];
+    for(let i=0; i<=years; i++) {
+        labels.push(i + '년');
+        dataPoints.push(fv / Math.pow(1 + rate, i));
+    }
+
+    if(pvChartInstance) pvChartInstance.destroy();
+    const ctx = document.getElementById('pvChart').getContext('2d');
+    pvChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '실질 가치 하락 (만원)',
+                data: dataPoints,
+                borderColor: '#3B82F6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: false } }
+        }
+    });
 };
 
 // 달러환산
@@ -391,6 +449,7 @@ function svUpdateTaxBtns() {
     });
 }
 
+// 예적금 시각화(누적 막대 차트 포함)
 window.calcSavings = function() {
     const amount = Number(document.getElementById('sv_amount').value);
     const years  = Number(document.getElementById('sv_months').value);
@@ -400,22 +459,39 @@ window.calcSavings = function() {
     const months = years * 12;
     const mr     = rate / 12;
     let principal = 0, interest = 0;
+    
+    // 차트용 데이터 배열
+    let labels = [];
+    let principalData = [];
+    let interestData = [];
 
     if (svMode === 'savings') {
         principal = amount * months;
-        if (svMethod === 'simple') {
-            interest = amount * rate * (months * (months + 1) / 2) / 12;
-        } else {
-            const fv = amount * ((Math.pow(1 + mr, months) - 1) / mr) * (1 + mr);
-            interest = fv - principal;
+        for(let y=1; y<=years; y++){
+            labels.push(y+'년차');
+            let p_yr = amount * (y * 12);
+            principalData.push(p_yr);
+            if (svMethod === 'simple') {
+                let m_yr = y * 12;
+                interestData.push(amount * rate * (m_yr * (m_yr + 1) / 2) / 12);
+            } else {
+                let fv_yr = amount * ((Math.pow(1 + mr, y * 12) - 1) / mr) * (1 + mr);
+                interestData.push(fv_yr - p_yr);
+            }
         }
+        interest = interestData[years-1];
     } else {
         principal = amount;
-        if (svMethod === 'simple') {
-            interest = amount * rate * years;
-        } else {
-            interest = amount * (Math.pow(1 + rate, years) - 1);
+        for(let y=1; y<=years; y++){
+            labels.push(y+'년차');
+            principalData.push(amount);
+            if (svMethod === 'simple') {
+                interestData.push(amount * rate * y);
+            } else {
+                interestData.push(amount * (Math.pow(1 + rate, y) - 1));
+            }
         }
+        interest = interestData[years-1];
     }
 
     const taxAmt = interest * svTaxRates[svTaxIdx];
@@ -437,6 +513,37 @@ window.calcSavings = function() {
     document.getElementById('sv_tax').innerText      = fmt(taxAmt)    + '만원';
     document.getElementById('sv_netint').innerText   = fmt(netInt)    + '만원';
     box.style.display = 'block';
+
+    // 누적 막대 차트 생성
+    if(svChartInstance) svChartInstance.destroy();
+    const ctx = document.getElementById('svChart').getContext('2d');
+    svChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '납입 원금',
+                    data: principalData,
+                    backgroundColor: '#CBD5E1',
+                    stack: 'Stack 0'
+                },
+                {
+                    label: '누적 이자(세전)',
+                    data: interestData,
+                    backgroundColor: accentColor,
+                    stack: 'Stack 0'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { stacked: true },
+                y: { stacked: true }
+            }
+        }
+    });
 };
 
 // ==========================================
@@ -472,12 +579,10 @@ window.calcRetire = function() {
     const recvMonths  = pensionYears * 12;
     const saveMonths  = (startAge - curAge) * 12;
 
-    // 연금 수령에 필요한 원금 (현가)
     const needFund = mr > 0
         ? monthPension * (1 - Math.pow(1 + mr, -recvMonths)) / mr
         : monthPension * recvMonths;
 
-    // 매월 저축액
     const monthlySave = mr > 0
         ? needFund * mr / (Math.pow(1 + mr, saveMonths) - 1)
         : needFund / saveMonths;
