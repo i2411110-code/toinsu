@@ -576,6 +576,11 @@
     <div class="floating-contact-wrap" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
         <div class="pwa-menu-wrapper">
             <div class="pwa-sub-menu">
+                <div class="float-btn-container" data-tooltip="전국 병원 정보">
+                 <button class="sub-float-btn" style="background:#F43F5E !important; color:white !important;" onclick="window.openHospitalModal()">
+                  <i class="bi bi-hospital"></i>
+                  </button>
+                   </div>
                 <div class="float-btn-container" data-tooltip="청구 서류 안내">
                     <button class="sub-float-btn" style="background:#8B5CF6!important; color:white!important;" onclick="window.switchToClaimView()">
                         <i class="bi bi-file-earmark-medical"></i>
@@ -652,6 +657,38 @@
             </div>
         </div>
     </div>
+
+    <!-- ================================================================
+         병원 검색 모달
+    ================================================================ -->
+
+    <div id="hospital-info-modal" class="portal-modal" style="z-index: 4000; display: none;" onclick="window.closeHospitalModal()">
+    <div class="modal-body" style="max-width: 450px; padding: 25px;" onclick="event.stopPropagation()">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 2px solid #2563EB; padding-bottom:10px;">
+            <h3 style="font-size:18px; font-weight:700; color:#191F28; margin:0;">
+                <i class="bi bi-hospital-fill" style="color:#2563EB;"></i> 전국 병원 정보
+            </h3>
+            <button onclick="window.closeHospitalModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#8B95A1; line-height:1;">&times;</button>
+        </div>
+        
+        <p style="font-size:13px; color:#64748B; margin-bottom:20px; line-height:1.5;">
+            요양기관명을 클릭하시면 상세정보(전화번호, 홈페이지 등)를 보실 수 있습니다.
+        </p>
+        
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+            <button class="btn-action" style="background:#EFF6FF; color:#1D4ED8; border:1px solid #DBEAFE; font-size:14px; padding:12px;">상급종합병원</button>
+            <button class="btn-action" style="background:#EFF6FF; color:#1D4ED8; border:1px solid #DBEAFE; font-size:14px; padding:12px;">종합병원</button>
+            <button class="btn-action" style="background:#EFF6FF; color:#1D4ED8; border:1px solid #DBEAFE; font-size:14px; padding:12px;">병원</button>
+            <button class="btn-action" style="background:#EFF6FF; color:#1D4ED8; border:1px solid #DBEAFE; font-size:14px; padding:12px;">요양병원</button>
+            <button class="btn-action" style="background:#EFF6FF; color:#1D4ED8; border:1px solid #DBEAFE; font-size:14px; padding:12px;">정신병원</button>
+            <button class="btn-action" style="background:#EFF6FF; color:#1D4ED8; border:1px solid #DBEAFE; font-size:14px; padding:12px;">치과병원</button>
+            <button class="btn-action" style="background:#EFF6FF; color:#1D4ED8; border:1px solid #DBEAFE; font-size:14px; padding:12px;">보건소</button>
+            <button class="btn-action" style="background:#EFF6FF; color:#1D4ED8; border:1px solid #DBEAFE; font-size:14px; padding:12px;">한방병원</button>
+        </div>
+
+    </div>
+</div>
 
     <!-- ================================================================
          PWA 배너
@@ -1453,6 +1490,8 @@
             });
         }
 
+        
+
         /* ── 청구 뷰 열기 ── */
         window.switchToClaimView = function() {
             document.getElementById('pwa-main-content-view').style.display = 'none';
@@ -1475,8 +1514,19 @@
             _origSwitchToNews();
             document.getElementById('pwa-claim-view').style.display = 'none';
         };
-
+        
+        /* ── 병원 정보 모달 열기/닫기 ── */
+window.openHospitalModal = function() {
+    const modal = document.getElementById('hospital-info-modal');
+    if (modal) modal.style.display = 'flex';
+};
+window.closeHospitalModal = function() {
+    const modal = document.getElementById('hospital-info-modal');
+    if (modal) modal.style.display = 'none';
+};
     })();
+
+    
     </script>
 </body>
 </html>
