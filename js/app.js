@@ -122,19 +122,23 @@ window.toggleAuthTab = function(mode) {
     const title = document.getElementById('auth-title');
     const submitBtn = document.getElementById('auth-submit-btn');
     const inviteGroup = document.getElementById('invite-code-group');
+    const passConfirmGroup = document.getElementById('password-confirm-group'); // ✅ 추가됨
+    const nameGroup = document.getElementById('name-input-group');
+    
     document.getElementById('auth-error-msg').style.display = 'none';
     
-    const nameGroup = document.getElementById('name-input-group');
     if(mode === 'login') {
         loginBtn.classList.add('active'); regBtn.classList.remove('active');
         title.innerText = "보험가온포탈 로그인"; submitBtn.innerText = "포탈 접속하기";
         inviteGroup.style.display = 'none';
         if(nameGroup) nameGroup.style.display = 'none';
+        if(passConfirmGroup) passConfirmGroup.style.display = 'none'; // ✅ 로그인 시 숨김
     } else {
         regBtn.classList.add('active'); loginBtn.classList.remove('active');
         title.innerText = "신규 멤버 회원가입"; submitBtn.innerText = "가입 및 로그인";
         inviteGroup.style.display = 'block';
         if(nameGroup) nameGroup.style.display = 'block';
+        if(passConfirmGroup) passConfirmGroup.style.display = 'block'; // ✅ 가입 시 표시
     }
 }
 
@@ -142,6 +146,8 @@ window.handleAuthSubmit = function() {
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value;
     const errorMsg = document.getElementById('auth-error-msg');
+    const saveEmailChk = document.getElementById('save-email-chk');
+    const shouldSave = saveEmailChk ? saveEmailChk.checked : false;
     errorMsg.style.display = "none";
 
     if(!email || !password) {
@@ -150,9 +156,14 @@ window.handleAuthSubmit = function() {
     }
 
     if(document.getElementById('tab-login-btn').classList.contains('active')) {
+        // [로그인 진행 로직]
         signInWithEmailAndPassword(auth, email, password)
             .then(() => { 
-                localStorage.setItem('gaonSavedEmail', email); // ✅ 아이디 저장
+                if (shouldSave) {
+                    localStorage.setItem('gaonSavedEmail', email); 
+                } else {
+                    localStorage.removeItem('gaonSavedEmail'); 
+                }
                 document.getElementById('auth-overlay').style.display = 'none'; 
             })
             .catch((error) => {
@@ -160,11 +171,22 @@ window.handleAuthSubmit = function() {
                 errorMsg.style.display = "block";
             });
     } else {
+        // [회원가입 진행 로직]
+        const passwordConfirm = document.getElementById('auth-password-confirm').value; // ✅ 추가됨
         const inviteCode = document.getElementById('auth-invite-code').value.trim();
+        
+        // ✅ 비밀번호 일치 여부 검사
+        if(password !== passwordConfirm) {
+            errorMsg.innerText = "❌ 비밀번호가 서로 일치하지 않습니다.";
+            errorMsg.style.display = "block"; 
+            return;
+        }
+
         if(inviteCode !== MASTER_INVITE_CODE) {
             errorMsg.innerText = "❌ 추천인 코드가 올바르지 않습니다.";
             errorMsg.style.display = "block"; return;
         }
+
         createUserWithEmailAndPassword(auth, email, password)
             .then(async (userCred) => {
                 const userName = document.getElementById('auth-name')?.value.trim() || '';
@@ -172,7 +194,9 @@ window.handleAuthSubmit = function() {
                     const userRef = doc(db, "users_portal", userCred.user.email);
                     await setDoc(userRef, { displayName: userName }, { merge: true });
                 }
-                localStorage.setItem('gaonSavedEmail', email); // ✅ 가입 시에도 아이디 저장
+                if (shouldSave) {
+                    localStorage.setItem('gaonSavedEmail', email);
+                }
                 alert("가입이 완료되었습니다!");
                 document.getElementById('auth-overlay').style.display = 'none';
             })
@@ -183,29 +207,24 @@ window.handleAuthSubmit = function() {
     }
 }
 
-// ⚠️ 중복되었던 로그인 감지 로직 하나로 통합
 onAuthStateChanged(auth, (user) => {
     if (user) {
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('user-display-email').innerText = user.email;
         loadUserIntegratedData(user.email);
-        
-        // ✅ [핵심 수정] 여기에 반드시 user.email을 넣어주어야 통계 제외가 작동합니다.
         updateVisitCounter(user.email);
-        
         window.checkAndShowNotice();
-        window.loadComponent('main-dashboard'); // 로그인 후 메인화면 로드
-        
-        // ✅ [핵심 추가] 로그인 성공 시 30분 타이머 돕니다.
+        window.loadComponent('main-dashboard'); 
         window.startSessionTimer();
     } else {
         document.getElementById('auth-overlay').style.display = 'flex';
-        // ✅ 저장된 아이디 자동 세팅
+        // ✅ 저장된 이메일이 있을 시 불러오고 체크박스도 자동 활성화
         const savedEmail = localStorage.getItem('gaonSavedEmail');
         if(savedEmail && document.getElementById('auth-email')) {
             document.getElementById('auth-email').value = savedEmail;
+            const chkBox = document.getElementById('save-email-chk');
+            if(chkBox) chkBox.checked = true;
         }
-        // ✅ 로그아웃 상태면 타이머 정지
         if(window.clearSessionTimer) window.clearSessionTimer();
     }
 });
