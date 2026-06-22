@@ -43,13 +43,17 @@ module.exports = async (req, res) => {
             if (jpy) items.push({ label: 'JPY', value: safeParse(jpy.closePrice), change: safeParse(jpy.compareToPreviousClosePrice), direction: getDirection(jpy) });
         }
 
+        res.setHeader('Cache-Control', 'no-store');
         res.status(200).json({ items: items.length > 0 ? items : fallbackData });
 
     } catch (error) {
         console.error('증권 API 연동 중 문제 발생:', error);
+        res.setHeader('Cache-Control', 'no-store');
         res.status(200).json({ items: fallbackData });
     }
 };
+
+
 
 // 비상시 표시할 안전 데이터 (환율 추가)
 const fallbackData = [

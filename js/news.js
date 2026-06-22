@@ -302,14 +302,17 @@ if (indRefreshBtn) {
     indRefreshBtn.addEventListener('click', async () => {
         const icon = indRefreshBtn.querySelector('i');
         if (icon) icon.style.animation = 'ind-spin 0.6s linear infinite';
+        indRefreshBtn.disabled = true;
 
-        // 핵심: 고정 데이터가 아닌, 실시간 통합 API를 호출
-        const mktItems = await api.marketData(); 
-
-        // UI에 즉시 반영
-        renderBottomIndicators(mktItems, mktItems);
-
-        if (icon) icon.style.animation = '';
+        try {
+            const mktItems = await api.marketData();
+            renderBottomIndicators(mktItems, mktItems);
+        } catch (err) {
+            console.error('지표 새로고침 실패:', err);
+        } finally {
+            if (icon) icon.style.animation = '';
+            indRefreshBtn.disabled = false;
+        }
     });
 }
 
