@@ -1,19 +1,13 @@
 module.exports = async (req, res) => {
     try {
         const fetchExchange = (code) =>
-            fetch(`https://m.stock.naver.com/front-api/v1/marketIndex/prices?category=exchange&reutersCode=${code}&page=1&pageSize=1`)
+            fetch(`https://api.stock.naver.com/marketindex/exchange/${code}/prices?page=1&pageSize=1`)
                 .then(r => r.json())
                 .catch(() => null);
 
-        const fetchMetal = (code) =>
-            fetch(`https://m.stock.naver.com/front-api/v1/marketIndex/prices?category=metals&reutersCode=${code}&page=1&pageSize=1`)
-                .then(r => r.json())
-                .catch(() => null);
-
-        const [resKospi, resKosdaq, dataGold, dataUsd, dataJpy] = await Promise.all([
+        const [resKospi, resKosdaq, dataUsd, dataJpy] = await Promise.all([
             fetch('https://m.stock.naver.com/api/index/KOSPI/basic'),
             fetch('https://m.stock.naver.com/api/index/KOSDAQ/basic'),
-            fetchMetal('KRDXGO_SC_KRX'),
             fetchExchange('FX_USDKRW'),
             fetchExchange('FX_JPYKRW')
         ]);
@@ -21,7 +15,6 @@ module.exports = async (req, res) => {
         const dataKospi = await resKospi.json();
         const dataKosdaq = await resKosdaq.json();
 
-        console.log('dataGold:', JSON.stringify(dataGold).slice(0, 300));
         console.log('dataUsd:', JSON.stringify(dataUsd).slice(0, 300));
         console.log('dataJpy:', JSON.stringify(dataJpy).slice(0, 300));
 
@@ -39,14 +32,12 @@ module.exports = async (req, res) => {
             items.push({ label: '코스닥', value: safeParse(dataKosdaq.closePrice), change: safeParse(dataKosdaq.compareToPreviousClosePrice), direction: getDirection(dataKosdaq) });
         }
 
-        const goldItem = dataGold && dataGold.result && dataGold.result[0];
-        if (goldItem) items.push({ label: '국내 금 (원/g)', value: safeParse(goldItem.closePrice), change: safeParse(goldItem.compareToPreviousClosePrice), direction: getDirection(goldItem) });
+        // dataUsd, dataJpy 구조는 로그 확인 후 맞춰서 파싱 (배열일 수도, {result:[...]}일 수도 있음)
+        const usdArr = Array.isArray(dataUsd) ? dataUsd : (dataUsd && dataUsd.result) || [];
+        const jpyArr = Array.isArray(dataJpy) ? dataJpy : (dataJpy && dataJpy.result) || [];
 
-        const usdItem = dataUsd && dataUsd.result && dataUsd.result[0];
-        if (usdItem) items.push({ label: 'USD', value: safeParse(usdItem.closePrice), change: safeParse(usdItem.compareToPreviousClosePrice), direction: getDirection(usdItem) });
-
-        const jpyItem = dataJpy && dataJpy.result && dataJpy.result[0];
-        if (jpyItem) items.push({ label: 'JPY', value: safeParse(jpyItem.closePrice), change: safeParse(jpyItem.compareToPreviousClosePrice), direction: getDirection(jpyItem) });
+        if (usdArr[0]) items.push({ label: 'USD', value: safeParse(usdArr[0].closePrice), change: safeParse(usdArr[0].compareToPreviousClosePrice), direction: getDirection(usdArr[0]) });
+        if (jpyArr[0]) items.push({ label: 'JPY', value: safeParse(jpyArr[0].closePrice), change: safeParse(jpyArr[0].compareToPreviousClosePrice), direction: getDirection(jpyArr[0]) });
 
         res.setHeader('Cache-Control', 'no-store');
         res.status(200).json({ items: items.length > 0 ? items : fallbackData });
@@ -61,7 +52,6 @@ module.exports = async (req, res) => {
 const fallbackData = [
     { label: '코스피', value: 2750.45, change: 0, direction: 'up' },
     { label: '코스닥', value: 870.12, change: 0, direction: 'down' },
-    { label: '국내 금 (원/g)', value: 105400, change: 0, direction: 'up' },
     { label: 'USD', value: 1350.00, change: 0, direction: 'up' },
     { label: 'JPY', value: 900.00, change: 0, direction: 'up' }
 ];
