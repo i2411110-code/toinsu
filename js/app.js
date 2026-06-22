@@ -75,7 +75,16 @@ async function syncRegistryToDatabase() {
     }, { merge: true });
 }
 
-async function updateVisitCounter() {
+async function updateVisitCounter(email) {
+    // 🚫 집계에서 제외할 이메일 목록 (팀장님 이메일이나 테스트 계정을 쉼표로 구분해서 넣으세요)
+    const excludedEmails = ['dlsqh814@naver.com'];
+
+    // 현재 로그인한 이메일이 제외 목록에 포함되어 있다면, 숫자를 올리지 않고 즉시 종료합니다.
+    if (excludedEmails.includes(email)) {
+        console.log(`[통계 제외] ${email} 접속 - 방문자 카운트를 올리지 않습니다.`);
+        return; 
+    }
+
     const today = new Date().toISOString().slice(0, 10);
     const statsRef = doc(db, "site_stats", "visit_counter");
     try {
@@ -179,7 +188,7 @@ onAuthStateChanged(auth, (user) => {
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('user-display-email').innerText = user.email;
         loadUserIntegratedData(user.email);
-        updateVisitCounter();
+        updateVisitCounter(user.email);
         window.checkAndShowNotice();
         window.loadComponent('main-dashboard'); // 로그인 후 메인화면 로드
         
