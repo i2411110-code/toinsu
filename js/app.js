@@ -136,7 +136,7 @@ window.toggleAuthTab = function(mode) {
         inviteGroup.style.display = 'block';
         if(nameGroup) nameGroup.style.display = 'block';
     }
-}   // ← 이 닫는 괄호가 없어서 생긴 문제
+}
 
 window.handleAuthSubmit = function() {
     const email = document.getElementById('auth-email').value.trim();
@@ -152,7 +152,7 @@ window.handleAuthSubmit = function() {
     if(document.getElementById('tab-login-btn').classList.contains('active')) {
         signInWithEmailAndPassword(auth, email, password)
             .then(() => { 
-                localStorage.setItem('gaonSavedEmail', email); // ✅ 다음 접속을 위해 아이디 저장
+                localStorage.setItem('gaonSavedEmail', email); // ✅ 아이디 저장
                 document.getElementById('auth-overlay').style.display = 'none'; 
             })
             .catch((error) => {
@@ -183,19 +183,24 @@ window.handleAuthSubmit = function() {
     }
 }
 
+// ⚠️ 중복되었던 로그인 감지 로직 하나로 통합
 onAuthStateChanged(auth, (user) => {
     if (user) {
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('user-display-email').innerText = user.email;
         loadUserIntegratedData(user.email);
+        
+        // ✅ [핵심 수정] 여기에 반드시 user.email을 넣어주어야 통계 제외가 작동합니다.
         updateVisitCounter(user.email);
+        
         window.checkAndShowNotice();
         window.loadComponent('main-dashboard'); // 로그인 후 메인화면 로드
         
-        window.startSessionTimer(); // ✅ 로그인 성공 시 타이머 시작
+        // ✅ [핵심 추가] 로그인 성공 시 30분 타이머 돕니다.
+        window.startSessionTimer();
     } else {
         document.getElementById('auth-overlay').style.display = 'flex';
-        // ✅ 저장된 아이디가 있으면 로그인 창에 띄워주기
+        // ✅ 저장된 아이디 자동 세팅
         const savedEmail = localStorage.getItem('gaonSavedEmail');
         if(savedEmail && document.getElementById('auth-email')) {
             document.getElementById('auth-email').value = savedEmail;
@@ -206,24 +211,12 @@ onAuthStateChanged(auth, (user) => {
 });
 
 window.handleLogout = function() {
-    if(confirm("로그아웃 하시겠습니까?")) { signOut(auth).then(() => { location.reload(); }); }
-}
-
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        document.getElementById('auth-overlay').style.display = 'none';
-        document.getElementById('user-display-email').innerText = user.email;
-        loadUserIntegratedData(user.email);
-        updateVisitCounter();
-        window.checkAndShowNotice();
-        window.loadComponent('main-dashboard'); // 로그인 후 메인화면 로드
-    } else {
-        document.getElementById('auth-overlay').style.display = 'flex';
+    if(confirm("로그아웃 하시겠습니까?")) { 
+        signOut(auth).then(() => { 
+            window.clearSessionTimer(); // 타이머 확실히 끄기
+            location.reload(); 
+        }); 
     }
-});
-
-window.handleLogout = function() {
-    if(confirm("로그아웃 하시겠습니까?")) { signOut(auth).then(() => { location.reload(); }); }
 }
 
 // ==========================================
@@ -231,8 +224,10 @@ window.handleLogout = function() {
 // ==========================================
 let sessionWarningTimer = null;
 let sessionLogoutTimer = null;
-const WARNING_TIME = 25 * 60 * 1000; // 25분 뒤 모달 표시 (테스트 시 5000 등 초 단위로 바꿔서 확인 가능)
-const LOGOUT_TIME = 30 * 60 * 1000;  // 30분 뒤 자동 로그아웃
+
+// 테스트를 위해 시간 짧게 설정되어 있다면 아래처럼 원상복구 하세요 (25분 / 30분)
+const WARNING_TIME = 25 * 60 * 1000; 
+const LOGOUT_TIME = 30 * 60 * 1000;  
 
 window.startSessionTimer = function() {
     window.clearSessionTimer(); // 기존 타이머 리셋
@@ -258,14 +253,11 @@ window.clearSessionTimer = function() {
 window.extendSession = function() {
     const modal = document.getElementById('session-extend-modal');
     if (modal) modal.style.display = 'none';
-    window.startSessionTimer(); // 타이머를 다시 30분으로 세팅
+    window.startSessionTimer(); // 타이머를 다시 처음부터 세팅
 };
 
 window.executeRegistrySync = syncRegistryToDatabase;
 
-// ==========================================
-// [SPA 부품 조립(라우팅) 엔진 추가]
-// ==========================================
 // ==========================================
 // [SPA 부품 조립(라우팅) 엔진 추가]
 // ==========================================
