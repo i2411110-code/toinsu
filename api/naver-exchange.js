@@ -3,7 +3,7 @@ module.exports = async (req, res) => {
         const fetchExchange = (code) =>
             fetch(`https://api.stock.naver.com/marketindex/exchange/${code}/prices?page=1&pageSize=1`)
                 .then(r => r.json())
-                .catch(() => null);
+                .catch(() => []);
 
         const [resKospi, resKosdaq, dataUsd, dataJpy] = await Promise.all([
             fetch('https://m.stock.naver.com/api/index/KOSPI/basic'),
@@ -15,29 +15,33 @@ module.exports = async (req, res) => {
         const dataKospi = await resKospi.json();
         const dataKosdaq = await resKosdaq.json();
 
-        console.log('dataUsd:', JSON.stringify(dataUsd).slice(0, 300));
-        console.log('dataJpy:', JSON.stringify(dataJpy).slice(0, 300));
-
         const items = [];
         const safeParse = (str) => parseFloat((str || '0').toString().replace(/,/g, ''));
-        const getDirection = (obj) => {
+
+        // 코스피/코스닥용 (기존 구조 그대로)
+        const getDirectionIndex = (obj) => {
             if (!obj || !obj.compareToPreviousPrice) return 'up';
             return obj.compareToPreviousPrice.code === '5' ? 'down' : 'up';
         };
 
+        // 환율용 (fluctuationsType.code: '2' = 상승, 그 외 = 하락)
+        const getDirectionFx = (obj) => {
+            if (!obj || !obj.fluctuationsType) return 'up';
+            return obj.fluctuationsType.code === '2' ? 'up' : 'down';
+        };
+
         if (dataKospi && dataKospi.closePrice) {
-            items.push({ label: '코스피', value: safeParse(dataKospi.closePrice), change: safeParse(dataKospi.compareToPreviousClosePrice), direction: getDirection(dataKospi) });
+            items.push({ label: '코스피', value: safeParse(dataKospi.closePrice), change: safeParse(dataKospi.compareToPreviousClosePrice), direction: getDirectionIndex(dataKospi) });
         }
         if (dataKosdaq && dataKosdaq.closePrice) {
-            items.push({ label: '코스닥', value: safeParse(dataKosdaq.closePrice), change: safeParse(dataKosdaq.compareToPreviousClosePrice), direction: getDirection(dataKosdaq) });
+            items.push({ label: '코스닥', value: safeParse(dataKosdaq.closePrice), change: safeParse(dataKosdaq.compareToPreviousClosePrice), direction: getDirectionIndex(dataKosdaq) });
         }
 
-        // dataUsd, dataJpy 구조는 로그 확인 후 맞춰서 파싱 (배열일 수도, {result:[...]}일 수도 있음)
-        const usdArr = Array.isArray(dataUsd) ? dataUsd : (dataUsd && dataUsd.result) || [];
-        const jpyArr = Array.isArray(dataJpy) ? dataJpy : (dataJpy && dataJpy.result) || [];
+        const usdItem = Array.isArray(dataUsd) ? dataUsd[0] : null;
+        const jpyItem = Array.isArray(dataJpy) ? dataJpy[0] : null;
 
-        if (usdArr[0]) items.push({ label: 'USD', value: safeParse(usdArr[0].closePrice), change: safeParse(usdArr[0].compareToPreviousClosePrice), direction: getDirection(usdArr[0]) });
-        if (jpyArr[0]) items.push({ label: 'JPY', value: safeParse(jpyArr[0].closePrice), change: safeParse(jpyArr[0].compareToPreviousClosePrice), direction: getDirection(jpyArr[0]) });
+        if (usdItem) items.push({ label: 'USD', value: safeParse(usdItem.closePrice), change: safeParse(usdItem.fluctuations), direction: getDirectionFx(usdItem) });
+        if (jpyItem) items.push({ label: 'JPY', value: safeParse(jpyItem.closePrice), change: safeParse(jpyItem.fluctuations), direction: getDirectionFx(jpyItem) });
 
         res.setHeader('Cache-Control', 'no-store');
         res.status(200).json({ items: items.length > 0 ? items : fallbackData });
