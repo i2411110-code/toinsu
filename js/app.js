@@ -142,7 +142,10 @@ window.handleAuthSubmit = function() {
 
     if(document.getElementById('tab-login-btn').classList.contains('active')) {
         signInWithEmailAndPassword(auth, email, password)
-            .then(() => { document.getElementById('auth-overlay').style.display = 'none'; })
+            .then(() => { 
+                localStorage.setItem('gaonSavedEmail', email); // ✅ 다음 접속을 위해 아이디 저장
+                document.getElementById('auth-overlay').style.display = 'none'; 
+            })
             .catch((error) => {
                 errorMsg.innerText = "❌ 로그인 실패: " + error.message;
                 errorMsg.style.display = "block";
@@ -160,6 +163,7 @@ window.handleAuthSubmit = function() {
                     const userRef = doc(db, "users_portal", userCred.user.email);
                     await setDoc(userRef, { displayName: userName }, { merge: true });
                 }
+                localStorage.setItem('gaonSavedEmail', email); // ✅ 가입 시에도 아이디 저장
                 alert("가입이 완료되었습니다!");
                 document.getElementById('auth-overlay').style.display = 'none';
             })
@@ -178,6 +182,32 @@ onAuthStateChanged(auth, (user) => {
         updateVisitCounter();
         window.checkAndShowNotice();
         window.loadComponent('main-dashboard'); // 로그인 후 메인화면 로드
+        
+        window.startSessionTimer(); // ✅ 로그인 성공 시 타이머 시작
+    } else {
+        document.getElementById('auth-overlay').style.display = 'flex';
+        // ✅ 저장된 아이디가 있으면 로그인 창에 띄워주기
+        const savedEmail = localStorage.getItem('gaonSavedEmail');
+        if(savedEmail && document.getElementById('auth-email')) {
+            document.getElementById('auth-email').value = savedEmail;
+        }
+        // ✅ 로그아웃 상태면 타이머 정지
+        if(window.clearSessionTimer) window.clearSessionTimer();
+    }
+});
+
+window.handleLogout = function() {
+    if(confirm("로그아웃 하시겠습니까?")) { signOut(auth).then(() => { location.reload(); }); }
+}
+
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        document.getElementById('auth-overlay').style.display = 'none';
+        document.getElementById('user-display-email').innerText = user.email;
+        loadUserIntegratedData(user.email);
+        updateVisitCounter();
+        window.checkAndShowNotice();
+        window.loadComponent('main-dashboard'); // 로그인 후 메인화면 로드
     } else {
         document.getElementById('auth-overlay').style.display = 'flex';
     }
@@ -186,6 +216,41 @@ onAuthStateChanged(auth, (user) => {
 window.handleLogout = function() {
     if(confirm("로그아웃 하시겠습니까?")) { signOut(auth).then(() => { location.reload(); }); }
 }
+
+// ==========================================
+// [신규 추가] 30분 자동 로그아웃 및 연장 시스템
+// ==========================================
+let sessionWarningTimer = null;
+let sessionLogoutTimer = null;
+const WARNING_TIME = 25 * 60 * 1000; // 25분 뒤 모달 표시 (테스트 시 5000 등 초 단위로 바꿔서 확인 가능)
+const LOGOUT_TIME = 30 * 60 * 1000;  // 30분 뒤 자동 로그아웃
+
+window.startSessionTimer = function() {
+    window.clearSessionTimer(); // 기존 타이머 리셋
+    
+    // 25분 뒤에 경고 모달 띄우기
+    sessionWarningTimer = setTimeout(() => {
+        const modal = document.getElementById('session-extend-modal');
+        if (modal) modal.style.display = 'flex';
+    }, WARNING_TIME);
+
+    // 30분 뒤에 강제 로그아웃
+    sessionLogoutTimer = setTimeout(() => {
+        alert("보안을 위해 자동 로그아웃 되었습니다.");
+        signOut(auth).then(() => { location.reload(); });
+    }, LOGOUT_TIME);
+};
+
+window.clearSessionTimer = function() {
+    clearTimeout(sessionWarningTimer);
+    clearTimeout(sessionLogoutTimer);
+};
+
+window.extendSession = function() {
+    const modal = document.getElementById('session-extend-modal');
+    if (modal) modal.style.display = 'none';
+    window.startSessionTimer(); // 타이머를 다시 30분으로 세팅
+};
 
 window.executeRegistrySync = syncRegistryToDatabase;
 
