@@ -1,18 +1,24 @@
 module.exports = async (req, res) => {
     try {
-        // 지수, 금, 환율 데이터를 동시에 호출합니다.
         const [resKospi, resKosdaq, resMetals, resExchange] = await Promise.all([
             fetch('https://m.stock.naver.com/api/index/KOSPI/basic'),
             fetch('https://m.stock.naver.com/api/index/KOSDAQ/basic'),
             fetch('https://m.stock.naver.com/front-api/v1/marketIndex/prices?category=metals'),
-            fetch('https://m.stock.naver.com/front-api/v1/marketIndex/prices?category=exchange') // 환율 API 추가
+            fetch('https://m.stock.naver.com/front-api/v1/marketIndex/prices?category=exchange')
         ]);
 
         const dataKospi = await resKospi.json();
         const dataKosdaq = await resKosdaq.json();
         const dataMetals = await resMetals.json();
         const dataExchange = await resExchange.json();
-        
+
+        // ↓↓↓ 디버깅용 로그 추가
+        console.log('Metals status:', resMetals.status);
+        console.log('Exchange status:', resExchange.status);
+        console.log('dataMetals:', JSON.stringify(dataMetals).slice(0, 300));
+        console.log('dataExchange:', JSON.stringify(dataExchange).slice(0, 300));
+        // ↑↑↑
+
         const items = [];
         
         const safeParse = (str) => parseFloat((str || '0').toString().replace(/,/g, ''));
