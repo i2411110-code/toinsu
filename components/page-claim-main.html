@@ -43,9 +43,19 @@
     </div>
 
     <!-- 광고 배너 -->
-    <div class="banner-wrapper center-banner toss-banner-wrap" style="max-height:300px; overflow:hidden;">
-        <div class="banner-box" onclick="window.open('https://naver.me/GiajN4ki')" style="max-height:300px; overflow:hidden;">
-            <img src="광고/광고.png" alt="광고배너" class="banner-img" style="max-height:300px; width:100%; object-fit:cover; object-position:center;" onerror="this.parentElement.parentElement.style.display='none'">
+    <div class="banner-wrapper center-banner toss-banner-wrap">
+        <div class="ad-slider-container">
+            <div class="ad-slider-track">
+                <div class="ad-slide" onclick="window.open('https://naver.me/GiajN4ki')">
+                    <img src="광고/광고.png" alt="광고배너1">
+                </div>
+                <div class="ad-slide" onclick="window.open('https://naver.me/새로운링크2')">
+                    <img src="광고/광고2.png" alt="광고배너2">
+                </div>
+                <div class="ad-slide" onclick="window.open('https://naver.me/새로운링크3')">
+                    <img src="광고/광고3.png" alt="광고배너3">
+                </div>
+            </div>
         </div>
     </div>
 
@@ -201,5 +211,50 @@
     .toss-menu-icon { width:40px; height:40px; font-size:18px; }
     .toss-hero-title { font-size:20px; }
 }
+
+/* =========================================
+   광고 배너 자동 슬라이드 애니메이션 (3개 기준)
+========================================= */
+.ad-slider-container {
+    width: 100%;
+    max-height: 300px;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid #F2F4F6;
+    background: white;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.ad-slider-track {
+    display: flex;
+    width: 300%; /* 광고가 3개이므로 300% */
+    /* 12초 동안 3개의 광고가 순환합니다 (수정 가능) */
+    animation: adSlideAnimation 12s infinite; 
+}
+
+.ad-slide {
+    width: 33.3333%; /* 100% / 3개 */
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.ad-slide img {
+    width: 100%;
+    height: 100%;
+    max-height: 300px;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+/* 3개 광고 기준: 멈춤 -> 이동 -> 멈춤 반복 */
+@keyframes adSlideAnimation {
+    0%, 25% { transform: translateX(0%); }         /* 1번 배너 대기 */
+    33%, 58% { transform: translateX(-33.3333%); } /* 2번 배너 대기 */
+    66%, 91% { transform: translateX(-66.6666%); } /* 3번 배너 대기 */
+    100% { transform: translateX(0%); }            /* 다시 1번으로 */
+}
+
 </style>
 
