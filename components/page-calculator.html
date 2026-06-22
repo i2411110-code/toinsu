@@ -5,7 +5,7 @@
             <i class="bi bi-house-fill"></i> 메인화면
         </button>
         <div class="toss-hero-tag"><i class="bi bi-calculator-fill"></i> 재무 계산기</div>
-        <p class="toss-hero-sub">맞춤형 재무설계 도구</p>
+        <p class="toss-hero-sub">가온사업단 맞춤형 재무설계 도구</p>
         <h1 class="toss-hero-title" style="font-size:24px;">상담에 꼭 필요한<br>계산기 모음입니다.</h1>
     </div>
 
@@ -123,6 +123,11 @@
             </div>
 
             <div id="sv_result_box" class="result-box" style="display:none; background:#F0FDF4; border-color:#16A34A;">
+                
+                <div id="sv_compound_alert" style="display:none; font-size:13px; color:#D97706; text-align:center; margin-bottom:16px; font-weight:700; background:#FFFBEB; padding:12px; border-radius:8px; border:1px dashed #FCD34D;">
+                    💡 복리의 마법!<br>기본 이자 외에 <span id="sv_extra_int" style="font-size:15px; font-weight:900; color:#B45309;">0</span>만원의 이자가 추가로 더 붙었습니다.
+                </div>
+
                 <p style="font-size:13px; color:#166534; font-weight:700; text-align:center; margin-bottom:8px;">세후 만기 수령액</p>
                 <h3 id="sv_total" style="font-size:28px; font-weight:900; color:#16A34A; text-align:center; margin-bottom:12px;">0만원</h3>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;">
@@ -252,7 +257,7 @@
 </div>
 
 <script>
-// SPA 환경 대응: Chart.js 동적 로드 (스크립트가 없으면 즉시 자동 설치)
+// SPA 환경 대응: Chart.js 동적 로드
 (function loadChartJs() {
     if (typeof Chart === 'undefined') {
         var script = document.createElement('script');
@@ -297,7 +302,7 @@ window.fvSwitchTab = function(tab) {
     selBtn.style.color = '#2563EB';
 };
 
-// 미래가치 (인플레이션 선형 차트 + 자장면 물가)
+// 미래가치 
 window.calcFutureValue = function() {
     const pv    = Number(document.getElementById('fv_present').value);
     const rate  = Number(document.getElementById('fv_rate').value) / 100;
@@ -309,13 +314,11 @@ window.calcFutureValue = function() {
     document.getElementById('fv_result_desc1').innerText = fmt(pv);
     document.getElementById('fv_result_desc2').innerText = years;
     
-    // 자장면 물가 계산 (현재 1만원 가정)
     const jjajangFV = 10000 * Math.pow(1 + rate, years);
     document.getElementById('fv_jjajang').innerText = fmt(jjajangFV);
 
     document.getElementById('fv_result_box').style.display = 'block';
 
-    // Chart.js 로딩 대기 후 렌더링
     if(typeof Chart === 'undefined') return;
 
     let labels = [];
@@ -349,7 +352,7 @@ window.calcFutureValue = function() {
     });
 };
 
-// 현재가치 (실질 구매력 하락 차트 + 자장면 물가)
+// 현재가치
 window.calcPresentValue = function() {
     const fv    = Number(document.getElementById('pv_future').value);
     const rate  = Number(document.getElementById('pv_rate').value) / 100;
@@ -361,7 +364,6 @@ window.calcPresentValue = function() {
     document.getElementById('pv_result_desc1').innerText = fmt(fv);
     document.getElementById('pv_result_desc2').innerText = years;
     
-    // 자장면 물가 역산 (미래 1만원짜리의 현재 가치)
     const jjajangPV = 10000 / Math.pow(1 + rate, years);
     document.getElementById('pv_jjajang').innerText = fmt(jjajangPV);
 
@@ -469,7 +471,7 @@ function svUpdateTaxBtns() {
     });
 }
 
-// 예적금 시각화(누적 막대 차트 포함)
+// 예적금 시각화 (단리/복리 분리 차트)
 window.calcSavings = function() {
     const amount = Number(document.getElementById('sv_amount').value);
     const years  = Number(document.getElementById('sv_months').value);
@@ -482,49 +484,72 @@ window.calcSavings = function() {
     
     let labels = [];
     let principalData = [];
-    let interestData = [];
+    let baseInterestData = []; // 기본 이자 (단리 기준)
+    let extraInterestData = []; // 이자에 붙은 추가 이자 (복리분)
 
     if (svMode === 'savings') {
         principal = amount * months;
         for(let y=1; y<=years; y++){
             labels.push(y+'년차');
-            let p_yr = amount * (y * 12);
+            let m_yr = y * 12;
+            let p_yr = amount * m_yr;
             principalData.push(p_yr);
+            
+            let sim_int = amount * rate * (m_yr * (m_yr + 1) / 2) / 12;
+            let cmp_int = amount * ((Math.pow(1 + mr, m_yr) - 1) / mr) * (1 + mr) - p_yr;
+            
             if (svMethod === 'simple') {
-                let m_yr = y * 12;
-                interestData.push(amount * rate * (m_yr * (m_yr + 1) / 2) / 12);
+                baseInterestData.push(sim_int);
+                extraInterestData.push(0);
             } else {
-                let fv_yr = amount * ((Math.pow(1 + mr, y * 12) - 1) / mr) * (1 + mr);
-                interestData.push(fv_yr - p_yr);
+                baseInterestData.push(sim_int);
+                extraInterestData.push(Math.max(0, cmp_int - sim_int));
             }
         }
-        interest = interestData[years-1];
     } else {
         principal = amount;
         for(let y=1; y<=years; y++){
             labels.push(y+'년차');
             principalData.push(amount);
+            
+            let sim_int = amount * rate * y;
+            let cmp_int = amount * (Math.pow(1 + rate, y) - 1);
+            
             if (svMethod === 'simple') {
-                interestData.push(amount * rate * y);
+                baseInterestData.push(sim_int);
+                extraInterestData.push(0);
             } else {
-                interestData.push(amount * (Math.pow(1 + rate, y) - 1));
+                baseInterestData.push(sim_int);
+                extraInterestData.push(Math.max(0, cmp_int - sim_int));
             }
         }
-        interest = interestData[years-1];
     }
+    
+    interest = svMethod === 'simple' ? baseInterestData[years-1] : (baseInterestData[years-1] + extraInterestData[years-1]);
+    const extraInt = extraInterestData[years-1] || 0;
 
     const taxAmt = interest * svTaxRates[svTaxIdx];
     const netInt = interest - taxAmt;
     const total  = principal + netInt;
 
     const accentColor = svMode === 'savings' ? '#16A34A' : '#2563EB';
+    const baseColor   = svMode === 'savings' ? '#86EFAC' : '#93C5FD'; // 기본 이자 색상(연하게)
     const resultBg    = svMode === 'savings' ? '#F0FDF4' : '#EFF6FF';
     const resultBdr   = svMode === 'savings' ? '#16A34A' : '#2563EB';
+    
     const box = document.getElementById('sv_result_box');
     box.style.background   = resultBg;
     box.style.borderColor  = resultBdr;
     document.getElementById('sv_total').style.color  = accentColor;
     document.getElementById('sv_netint').style.color = accentColor;
+
+    // 복리 추가 알림창 제어
+    if(svMethod === 'compound' && extraInt > 0) {
+        document.getElementById('sv_compound_alert').style.display = 'block';
+        document.getElementById('sv_extra_int').innerText = fmt(extraInt);
+    } else {
+        document.getElementById('sv_compound_alert').style.display = 'none';
+    }
 
     document.getElementById('sv_total').innerText    = fmt(total)     + '만원';
     document.getElementById('sv_principal').innerText= fmt(principal) + '만원';
@@ -549,8 +574,14 @@ window.calcSavings = function() {
                     stack: 'Stack 0'
                 },
                 {
-                    label: '누적 이자(세전)',
-                    data: interestData,
+                    label: '기본 이자(단리)',
+                    data: baseInterestData,
+                    backgroundColor: baseColor,
+                    stack: 'Stack 0'
+                },
+                {
+                    label: '이자에 붙은 추가 이자(복리)',
+                    data: extraInterestData,
                     backgroundColor: accentColor,
                     stack: 'Stack 0'
                 }
