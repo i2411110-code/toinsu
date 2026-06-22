@@ -128,23 +128,40 @@ window.toggleAuthTab = function(mode) {
     const regBtn = document.getElementById('tab-register-btn');
     const title = document.getElementById('auth-title');
     const submitBtn = document.getElementById('auth-submit-btn');
+    
+    // 숨기고 보여줄 대상들
     const inviteGroup = document.getElementById('invite-code-group');
     const passConfirmGroup = document.getElementById('password-confirm-group');
     const nameGroup = document.getElementById('name-input-group');
+    const loginHelperGroup = document.getElementById('login-helper-group'); // ✅ 이메일기억/비번찾기 줄
+    const emailHelperText = document.getElementById('email-helper-text');   // ✅ 이메일 필수 안내 문구
+    
     document.getElementById('auth-error-msg').style.display = 'none';
     
     if(mode === 'login') {
+        // [로그인 화면 세팅]
         loginBtn.classList.add('active'); regBtn.classList.remove('active');
         title.innerText = "보험가온포탈 로그인"; submitBtn.innerText = "포탈 접속하기";
-        inviteGroup.style.display = 'none';
+        
+        if(inviteGroup) inviteGroup.style.display = 'none';
         if(nameGroup) nameGroup.style.display = 'none';
         if(passConfirmGroup) passConfirmGroup.style.display = 'none';
+        if(emailHelperText) emailHelperText.style.display = 'none';
+        
+        // 로그인 화면 전용 옵션 표시
+        if(loginHelperGroup) loginHelperGroup.style.display = 'flex';
     } else {
+        // [회원가입 화면 세팅]
         regBtn.classList.add('active'); loginBtn.classList.remove('active');
         title.innerText = "신규 멤버 회원가입"; submitBtn.innerText = "가입 및 로그인";
-        inviteGroup.style.display = 'block';
+        
+        if(inviteGroup) inviteGroup.style.display = 'block';
         if(nameGroup) nameGroup.style.display = 'block';
         if(passConfirmGroup) passConfirmGroup.style.display = 'block';
+        
+        // 가입 시 이메일 안내 표시 & 기억하기 줄 숨김
+        if(emailHelperText) emailHelperText.style.display = 'block';
+        if(loginHelperGroup) loginHelperGroup.style.display = 'none';
     }
 }
 
