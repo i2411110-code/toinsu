@@ -302,18 +302,13 @@ if (indRefreshBtn) {
     indRefreshBtn.addEventListener('click', async () => {
         const icon = indRefreshBtn.querySelector('i');
         if (icon) icon.style.animation = 'ind-spin 0.6s linear infinite';
-        
-        // 통합 API 호출로 변경하여 최신 정보 동기화
-        const [fxItems, mktItems] = await Promise.all([
-            api.exchange(), // 데이터셋 확인 필수
-            api.market()
-        ]);
-        
-        // 데이터가 비어있을 경우를 대비한 가드 추가
-        if (mktItems.length > 0) {
-            renderBottomIndicators(fxItems, mktItems);
-        }
-        
+
+        // 핵심: 고정 데이터가 아닌, 실시간 통합 API를 호출
+        const mktItems = await api.marketData(); 
+
+        // UI에 즉시 반영
+        renderBottomIndicators(mktItems, mktItems);
+
         if (icon) icon.style.animation = '';
     });
 }

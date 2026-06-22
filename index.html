@@ -119,7 +119,9 @@
     display: flex;
     flex-direction: column;
     gap: 0;
-    min-height: 480px; /* height: 420px; 를 min-height로 변경하여 세로 폭 확보 */
+    min-height: 480px; /* 고정 높이에서 최소 높이로 변경 */
+    max-height: 600px; /* 너무 길어질 경우를 대비한 최대 높이 설정 */
+    overflow-y: auto;  /* 내용이 많으면 내부 스크롤 발생 */
 }
 
 .feed-section {
@@ -129,7 +131,8 @@
     border: 1px solid #F2F4F6;
     border-radius: 20px;
     overflow: hidden;
-    min-height: 480px; /* 좌측 MORNING NEWS와 동일하게 맞춰줍니다. */
+    min-height: 480px; /* paper-section과 동일하게 설정 */
+    max-height: 600px;
 }
 
         .paper-header { text-align: center; border-bottom: 2px solid #191F28; padding-bottom: 12px; margin-bottom: 18px; }
