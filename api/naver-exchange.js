@@ -1,33 +1,37 @@
 module.exports = async (req, res) => {
     try {
-        const [resKospi, resKosdaq, resMetals, resExchange] = await Promise.all([
+        const fetchExchange = (code) =>
+            fetch(`https://m.stock.naver.com/front-api/v1/marketIndex/prices?category=exchange&reutersCode=${code}&page=1&pageSize=1`)
+                .then(r => r.json())
+                .catch(() => null);
+
+        const fetchMetal = (code) =>
+            fetch(`https://m.stock.naver.com/front-api/v1/marketIndex/prices?category=metals&reutersCode=${code}&page=1&pageSize=1`)
+                .then(r => r.json())
+                .catch(() => null);
+
+        const [resKospi, resKosdaq, dataGold, dataUsd, dataJpy] = await Promise.all([
             fetch('https://m.stock.naver.com/api/index/KOSPI/basic'),
             fetch('https://m.stock.naver.com/api/index/KOSDAQ/basic'),
-            fetch('https://m.stock.naver.com/front-api/v1/marketIndex/prices?category=metals'),
-            fetch('https://m.stock.naver.com/front-api/v1/marketIndex/prices?category=exchange')
+            fetchMetal('KRDXGO_SC_KRX'),
+            fetchExchange('FX_USDKRW'),
+            fetchExchange('FX_JPYKRW')
         ]);
 
         const dataKospi = await resKospi.json();
         const dataKosdaq = await resKosdaq.json();
-        const dataMetals = await resMetals.json();
-        const dataExchange = await resExchange.json();
 
-        // ↓↓↓ 디버깅용 로그 추가
-        console.log('Metals status:', resMetals.status);
-        console.log('Exchange status:', resExchange.status);
-        console.log('dataMetals:', JSON.stringify(dataMetals).slice(0, 300));
-        console.log('dataExchange:', JSON.stringify(dataExchange).slice(0, 300));
-        // ↑↑↑
+        console.log('dataGold:', JSON.stringify(dataGold).slice(0, 300));
+        console.log('dataUsd:', JSON.stringify(dataUsd).slice(0, 300));
+        console.log('dataJpy:', JSON.stringify(dataJpy).slice(0, 300));
 
         const items = [];
-        
         const safeParse = (str) => parseFloat((str || '0').toString().replace(/,/g, ''));
         const getDirection = (obj) => {
             if (!obj || !obj.compareToPreviousPrice) return 'up';
             return obj.compareToPreviousPrice.code === '5' ? 'down' : 'up';
         };
 
-        // 1. 코스피 / 코스닥
         if (dataKospi && dataKospi.closePrice) {
             items.push({ label: '코스피', value: safeParse(dataKospi.closePrice), change: safeParse(dataKospi.compareToPreviousClosePrice), direction: getDirection(dataKospi) });
         }
@@ -35,19 +39,14 @@ module.exports = async (req, res) => {
             items.push({ label: '코스닥', value: safeParse(dataKosdaq.closePrice), change: safeParse(dataKosdaq.compareToPreviousClosePrice), direction: getDirection(dataKosdaq) });
         }
 
-        // 2. 국내 금
-        if (dataMetals && dataMetals.result) {
-            const gold = dataMetals.result.find(item => item.reutersCode === 'KRDXGO_SC_KRX');
-            if (gold) items.push({ label: '국내 금 (원/g)', value: safeParse(gold.closePrice), change: safeParse(gold.compareToPreviousClosePrice), direction: getDirection(gold) });
-        }
+        const goldItem = dataGold && dataGold.result && dataGold.result[0];
+        if (goldItem) items.push({ label: '국내 금 (원/g)', value: safeParse(goldItem.closePrice), change: safeParse(goldItem.compareToPreviousClosePrice), direction: getDirection(goldItem) });
 
-        // 3. 환율 (USD, JPY) 추가
-        if (dataExchange && dataExchange.result) {
-            const usd = dataExchange.result.find(item => item.reutersCode === 'FX_USDKRW');
-            const jpy = dataExchange.result.find(item => item.reutersCode === 'FX_JPYKRW');
-            if (usd) items.push({ label: 'USD', value: safeParse(usd.closePrice), change: safeParse(usd.compareToPreviousClosePrice), direction: getDirection(usd) });
-            if (jpy) items.push({ label: 'JPY', value: safeParse(jpy.closePrice), change: safeParse(jpy.compareToPreviousClosePrice), direction: getDirection(jpy) });
-        }
+        const usdItem = dataUsd && dataUsd.result && dataUsd.result[0];
+        if (usdItem) items.push({ label: 'USD', value: safeParse(usdItem.closePrice), change: safeParse(usdItem.compareToPreviousClosePrice), direction: getDirection(usdItem) });
+
+        const jpyItem = dataJpy && dataJpy.result && dataJpy.result[0];
+        if (jpyItem) items.push({ label: 'JPY', value: safeParse(jpyItem.closePrice), change: safeParse(jpyItem.compareToPreviousClosePrice), direction: getDirection(jpyItem) });
 
         res.setHeader('Cache-Control', 'no-store');
         res.status(200).json({ items: items.length > 0 ? items : fallbackData });
@@ -59,9 +58,6 @@ module.exports = async (req, res) => {
     }
 };
 
-
-
-// 비상시 표시할 안전 데이터 (환율 추가)
 const fallbackData = [
     { label: '코스피', value: 2750.45, change: 0, direction: 'up' },
     { label: '코스닥', value: 870.12, change: 0, direction: 'down' },
