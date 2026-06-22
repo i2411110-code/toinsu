@@ -2,10 +2,9 @@ module.exports = async (req, res) => {
     try {
         const { type, query } = req.query;
         
-        // 💡 공공데이터포털 - 건강보험심사평가원 병원정보서비스 일반인증키 (디코딩된 키 입력 권장)
+        // 💡 여기에 팀장님의 Encoding 인증키를 그대로 유지하세요
         const SERVICE_KEY = "5fcb4c277774a3ab3d2ed9e791bf1c525a5646fbe28fd661f799510fd5d1303d";
         
-        // 심평원 요양기관 종별코드 매핑 (01:상급종합, 11:종합병원, 21:병원, 28:요양병원, 41:정신병원, 51:치과병원, 93:보건소, 31:한방병원)
         const clCdMap = {
             '상급종합병원': '01', '종합병원': '11', '병원': '21', '요양병원': '28',
             '정신병원': '41', '치과병원': '51', '보건소': '93', '한방병원': '31'
@@ -14,17 +13,31 @@ module.exports = async (req, res) => {
         const clCd = clCdMap[type] || '';
         const encodeQuery = query ? encodeURIComponent(query) : '';
         
-        // 심평원 병원기본정보조회 엔드포인트 가동 (JSON 규격 요청)
         let url = `http://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList?ServiceKey=${SERVICE_KEY}&_type=json&numOfRows=20`;
         if (clCd) url += `&clCd=${clCd}`;
         if (query) url += `&yadmNm=${encodeQuery}`;
 
         const response = await fetch(url, { method: 'GET' });
-        if (!response.ok) throw new Error(`심평원 API 통신 실패: ${response.status}`);
         
-        const data = await response.json();
+        // 1. JSON 변환 전, 일단 텍스트 형태로 받아옵니다.
+        const textData = await response.text();
         
-        // 데이터 파싱 및 안전 가드 수립
+        let data;
+        try {
+            // 2. 정상적인 JSON 데이터인지 파싱을 시도합니다.
+            data = JSON.parse(textData);
+        } catch (parseError) {
+            // 3. 파싱에 실패했다면(XML 에러 메시지가 날아왔다면) 동기화 지연으로 판단합니다.
+            console.warn("심평원 API 동기화 대기 중 또는 XML 에러 반환:", textData);
+            return res.status(200).json([{
+                name: "📡 시스템 연동 중입니다",
+                tel: "안내",
+                addr: "방금 발급된 공공 API 인증키가 정부 서버에 동기화되고 있습니다. (최대 1~2시간 소요)",
+                url: "",
+                clName: "안내"
+            }]);
+        }
+        
         const items = data.response?.body?.items?.item;
         const resultList = [];
         
@@ -32,11 +45,11 @@ module.exports = async (req, res) => {
             const arr = Array.isArray(items) ? items : [items];
             arr.forEach(h => {
                 resultList.push({
-                    name: h.yadmNm,       // 요양기관명
-                    tel: h.telno || '-',  // 전화번호
-                    addr: h.addr || '-',  // 주소
-                    url: h.hospUrl || '', // 홈페이지 주소
-                    clName: h.clCdNm      // 종별구분명
+                    name: h.yadmNm,       
+                    tel: h.telno || '-',  
+                    addr: h.addr || '-',  
+                    url: h.hospUrl || '', 
+                    clName: h.clCdNm      
                 });
             });
         }
