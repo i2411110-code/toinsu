@@ -296,23 +296,27 @@ const NewsWidget = (() => {
       });
     }
 
-    /* ── 5. 경제지표 새로고침 버튼 ── */
-    const indRefreshBtn = document.getElementById('indicator-refresh-btn');
-    if (indRefreshBtn) {
-      indRefreshBtn.addEventListener('click', async () => {
+    /* ── 5. 경제지표 새로고침 버튼 로직 보완 ── */
+const indRefreshBtn = document.getElementById('indicator-refresh-btn');
+if (indRefreshBtn) {
+    indRefreshBtn.addEventListener('click', async () => {
         const icon = indRefreshBtn.querySelector('i');
         if (icon) icon.style.animation = 'ind-spin 0.6s linear infinite';
         
-        const mktItems = await api.marketData(); // 새로고침 시 통합 API 호출
-        renderBottomIndicators(mktItems, mktItems);
+        // 통합 API 호출로 변경하여 최신 정보 동기화
+        const [fxItems, mktItems] = await Promise.all([
+            api.exchange(), // 데이터셋 확인 필수
+            api.market()
+        ]);
         
-        // MORNING NEWS 상단 미니 지표도 같이 업데이트 (선택 사항)
-        const newsItems = await api.news('보험 금융 경제', 1);
-        if(newsItems.length > 0) renderMorningPaper(newsItems[0], mktItems, mktItems);
-
+        // 데이터가 비어있을 경우를 대비한 가드 추가
+        if (mktItems.length > 0) {
+            renderBottomIndicators(fxItems, mktItems);
+        }
+        
         if (icon) icon.style.animation = '';
-      });
-    }
+    });
+}
 
     /* ── 6. 메인 첫 실행 데이터 트랙 가동 ── */
     await loadAllData('전체 뉴스');

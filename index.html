@@ -111,26 +111,26 @@
         }
 
         /* ── MORNING NEWS 신문지면 섹션 ── */
-        .paper-section {
-            background: white;
-            border: 1px solid #F2F4F6;
-            border-radius: 20px;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-            height: 420px; /* 좌측 3줄 요약 내용에 맞춘 최적의 높이로 고정 */
-        }
-        
-        .feed-section {
-            display: flex;
-            flex-direction: column;
-            background: white;
-            border: 1px solid #F2F4F6;
-            border-radius: 20px;
-            overflow: hidden;
-            height: 420px; /* 좌측 MORNING NEWS와 동일하게 높이를 고정하여 스크롤 유도 */
-        }
+.paper-section {
+    background: white;
+    border: 1px solid #F2F4F6;
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-height: 480px; /* height: 420px; 를 min-height로 변경하여 세로 폭 확보 */
+}
+
+.feed-section {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border: 1px solid #F2F4F6;
+    border-radius: 20px;
+    overflow: hidden;
+    min-height: 480px; /* 좌측 MORNING NEWS와 동일하게 맞춰줍니다. */
+}
 
         .paper-header { text-align: center; border-bottom: 2px solid #191F28; padding-bottom: 12px; margin-bottom: 18px; }
         .paper-brand { font-size: 11px; font-weight: 700; color: #10B981; letter-spacing: 0.5px; }
