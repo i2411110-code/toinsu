@@ -86,6 +86,7 @@ async function updateVisitCounter(email) {
     try {
         const snap = await getDoc(statsRef);
         if (!snap.exists()) {
+            // 최초 문서 생성 시
             if (!isExcluded) {
                 await setDoc(statsRef, { total: 1, lastDate: today, todayCount: 1 });
             }
@@ -96,19 +97,39 @@ async function updateVisitCounter(email) {
             const isNewDay = data.lastDate !== today;
             
             if (!isExcluded) {
-                // 일반 사원/고객: DB 카운트 올리고 화면 갱신
-                await updateDoc(statsRef, {
-                    total: increment(1),
-                    todayCount: isNewDay ? 1 : increment(1),
-                    lastDate: today
-                });
-                document.getElementById('count-today').innerText = isNewDay ? 1 : (data.todayCount || 0) + 1;
-                document.getElementById('count-total').innerText = (data.total || 0) + 1;
+                // [1] 일반 사원/고객: DB 카운트 올리고 화면 갱신
+                if (isNewDay) {
+                    // 새로운 날인 경우: 오늘 카운트를 1로 초기화하고 날짜 갱신
+                    await updateDoc(statsRef, {
+                        total: increment(1),
+                        todayCount: 1,
+                        lastDate: today
+                    });
+                    document.getElementById('count-today').innerText = 1;
+                    document.getElementById('count-total').innerText = (data.total || 0) + 1;
+                } else {
+                    // 같은 날인 경우: 기존 카운트 누적
+                    await updateDoc(statsRef, {
+                        total: increment(1),
+                        todayCount: increment(1)
+                    });
+                    document.getElementById('count-today').innerText = (data.todayCount || 0) + 1;
+                    document.getElementById('count-total').innerText = (data.total || 0) + 1;
+                }
             } else {
-                // ✅ 팀장님 계정: DB 수치는 안 올리지만 화면에는 기존 누적 현황 정상 표시
-                console.log(`[통계 제외] ${email} 접속 - 기존 통계 수치만 UI에 바인딩합니다.`);
-                document.getElementById('count-today').innerText = isNewDay ? 0 : (data.todayCount || 0);
-                document.getElementById('count-total').innerText = (data.total || 0);
+                // [2] 팀장님 계정: DB 수치는 안 올리지만 날짜 변화에 따른 화면 초기화 대응
+                console.log(`[통계 제외] ${email} 접속 - UI 바인딩 진행 (날짜 변경 여부: ${isNewDay})`);
+                
+                if (isNewDay) {
+                    // 🌟 핵심수정: 서버 데이터가 아직 어제 날짜에 머물러 있더라도, 
+                    // 실제 날짜가 바뀌었다면 오늘 카운터는 화면에 '0'으로 표기되어야 합니다.
+                    document.getElementById('count-today').innerText = 0;
+                    document.getElementById('count-total').innerText = (data.total || 0);
+                } else {
+                    // 같은 날이라면 기존에 쌓인 오늘 카운트 정상 표시
+                    document.getElementById('count-today').innerText = (data.todayCount || 0);
+                    document.getElementById('count-total').innerText = (data.total || 0);
+                }
             }
         }
     } catch (e) {
