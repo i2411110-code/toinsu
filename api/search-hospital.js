@@ -5,14 +5,13 @@ module.exports = async (req, res) => {
         // 💡 팀장님의 Encoding 인증키 유지
         const SERVICE_KEY = "5fcb4c277774a3ab3d2ed9e791bf1c525a5646fbe28fd661f799510fd5d1303d";
         
-        // 🎯 [심평원 최종 검증: 데이터 누락 없는 마스터 종별코드셋]
         const clCdMap = {
             '상급종합병원': '01',
             '종합병원': '11',
             '병원': '21',
             '요양병원': '28',
-            '정신병원': '41',  // 👈 데이터가 확실히 나오는 공식 정신병원 코드로 재고정
-            '치과병원': '51',  // 👈 데이터 누락을 방지하기 위해 치과 분류 코드로 재고정
+            '정신병원': '41',  
+            '치과병원': '51',  
             '한방병원': '92',  
             '보건소': '71'     
         };
@@ -47,12 +46,20 @@ module.exports = async (req, res) => {
         if (items) {
             const arr = Array.isArray(items) ? items : [items];
             arr.forEach(h => {
+                const clName = h.clCdNm || '';
+                
+                // 🎯 [정신병원 카테고리 전용 필터링 안전장치]
+                // 정신병원 검색인데 기관 분류명(clName)에 '치과'가 포함되어 있다면 리스트에 넣지 않고 건너뜁니다.
+                if (type === '정신병원' && clName.includes('치과')) {
+                    return; 
+                }
+
                 resultList.push({
                     name: h.yadmNm,       
                     tel: h.telno || '-',  
                     addr: h.addr || '-',  
                     url: h.hospUrl || '', 
-                    clName: h.clCdNm      
+                    clName: clName      
                 });
             });
         }
