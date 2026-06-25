@@ -1,5 +1,5 @@
 // claim-coords.js
-export const claimCoords = {
+const claimCoords = {
   "abllife": { "1": { piName: { x: 0, y: 0, type: "text" }, piJuminFront: { x: 0, y: 0, gap: 23, type: "split" } } },
   "aialife": { "1": { piName: { x: 0, y: 0, type: "text" } } },
   "chubblife": { "1": { piName: { x: 0, y: 0, type: "text" } } },
@@ -65,7 +65,6 @@ export const claimCoords = {
       signature: { x: 805, y: 820, w: 60, h: 40, type: "image" }
     } 
   },
-  "kblife": { "1": { piName: { x: 0, y: 0, type: "text" } } },
   "kblife": { "1": { piName: { x: 0, y: 0, type: "text" } } },
   "kdblife": { "1": { piName: { x: 0, y: 0, type: "text" } } },
   "kyobolife": { "1": { piName: { x: 0, y: 0, type: "text" } } },
