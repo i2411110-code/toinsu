@@ -37,6 +37,7 @@ window.FIELD_COORDS = {
         jumin1:     { x: 270, y: 650 },
         jumin2:     { x: 370, y: 650 },
         phone:      { x: 145, y: 600 },
+        job:        { x: 145, y: 625 },
         content:    { x: 145, y: 400 },
         year2:      { x: 110, y: 130 },
         month:      { x: 160, y: 130 },

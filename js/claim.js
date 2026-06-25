@@ -693,6 +693,14 @@ window.generateHyundai5PagePDF = async function(mode) {
         const jm   = splitJumin(fd.jumin);
         const signImage = await getSignImage(pdfDoc);
 
+        // ✅ 사용자가 입력한 "사고일(발병일시)" — treatDate(yyyy-mm-dd)에서 파생
+        const [ty, tm, td] = (fd.treatDate || '').split('-');
+        const treat = {
+            year2: ty ? ty.slice(2, 4) : '',
+            month: tm || '',
+            day:   td || '',
+        };
+
         const txtOpt   = { font: customFont, size: 11, color: rgb(0, 0, 0) };
         const checkOpt = { font: customFont, size: 14, color: rgb(0.15, 0.38, 0.92) };
         const checkMark = 'V';
@@ -708,9 +716,12 @@ window.generateHyundai5PagePDF = async function(mode) {
         pages[0].drawText(jm.jumin2,      { x: p1.jumin2.x,     y: p1.jumin2.y,     ...txtOpt });
         pages[0].drawText(fd.phone,       { x: p1.phone.x,      y: p1.phone.y,      ...txtOpt });
         pages[0].drawText(fd.content,     { x: p1.content.x,    y: p1.content.y,    ...txtOpt });
-        pages[0].drawText(date.year2,     { x: p1.year2.x,      y: p1.year2.y,      ...txtOpt });
-        pages[0].drawText(date.month,     { x: p1.month.x,      y: p1.month.y,      ...txtOpt });
-        pages[0].drawText(date.day,       { x: p1.day.x,        y: p1.day.y,        ...txtOpt });
+        pages[0].drawText(treat.year2,    { x: p1.year2.x,      y: p1.year2.y,      ...txtOpt });
+        pages[0].drawText(treat.month,    { x: p1.month.x,      y: p1.month.y,      ...txtOpt });
+        pages[0].drawText(treat.day,      { x: p1.day.x,        y: p1.day.y,        ...txtOpt });
+        if (fd.job && p1.job) {
+            pages[0].drawText(fd.job, { x: p1.job.x, y: p1.job.y, ...txtOpt });
+        }
         pages[0].drawText(fd.insuredName, { x: p1.signerName.x, y: p1.signerName.y, ...txtOpt });
         if (signImage) pages[0].drawImage(signImage, { x: p1.sign.x, y: p1.sign.y, width: p1.sign.width, height: p1.sign.height });
 
