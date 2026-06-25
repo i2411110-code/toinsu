@@ -13,7 +13,7 @@
 
     <!-- 4개 메뉴 -->
     <div class="toss-menu-grid">
-        <div class="toss-menu-item" onclick="window.navigateTo('page-claim-select')">
+        <div class="toss-menu-item" onclick="window.navigateTo('page-claim-form')">
             <div class="toss-menu-icon" style="background:#EEF2FF; color:#4F46E5;"><i class="bi bi-send-fill"></i></div>
             <span>청구하기</span>
         </div>
@@ -83,7 +83,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid #F2F4F6;">
                 <span id="notice-detail-tag" style="background:#EFF6FF; color:#3182F6; font-size:11px; font-weight:800; padding:4px 10px; border-radius:8px;">공지</span>
                 <div style="display:flex; gap:8px; align-items:center;">
-                    <div id="notice-detail-admin-btns" style="display:none; gap:6px; display:none;">
+                    <div id="notice-detail-admin-btns" style="display:none; gap:6px;">
                         <button id="notice-detail-edit-btn" onclick="window.openNoticeEditor()" style="padding:6px 12px; background:#F2F4F6; color:#4E5968; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;"><i class="bi bi-pencil"></i> 수정</button>
                         <button id="notice-detail-delete-btn" onclick="window.deleteCurrentNotice()" style="padding:6px 12px; background:#FEF2F2; color:#EF4444; border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;"><i class="bi bi-trash"></i> 삭제</button>
                     </div>
@@ -103,31 +103,22 @@
                 <h3 style="font-size:17px; font-weight:800; color:#191F28; margin:0;"><i class="bi bi-shield-lock-fill" style="color:#E11D48; margin-right:6px;"></i><span id="editor-modal-title">공지 작성</span></h3>
                 <button onclick="document.getElementById('notice-editor-modal').style.display='none'" style="background:#F2F4F6; border:none; width:32px; height:32px; border-radius:50%; font-size:18px; cursor:pointer; color:#8B95A1;">&times;</button>
             </div>
-
             <input type="hidden" id="notice-edit-id" value="">
-
             <div style="margin-bottom:14px;">
                 <label style="font-size:13px; font-weight:700; color:#64748B; display:block; margin-bottom:6px;">공지 제목</label>
                 <input id="notice-edit-title" type="text" style="width:100%; padding:12px 14px; border:1.5px solid #E5E8EB; border-radius:10px; font-size:14px; font-family:inherit; outline:none; box-sizing:border-box;" placeholder="제목을 입력하세요">
             </div>
-
             <div style="margin-bottom:14px;">
                 <label style="font-size:13px; font-weight:700; color:#64748B; display:block; margin-bottom:6px;">내용</label>
                 <textarea id="notice-edit-content" style="width:100%; height:180px; padding:12px 14px; border:1.5px solid #E5E8EB; border-radius:10px; font-size:13px; font-family:inherit; outline:none; resize:vertical; line-height:1.7; box-sizing:border-box;" placeholder="공지 내용을 입력하세요."></textarea>
             </div>
-
             <div style="margin-bottom:20px;">
                 <label style="font-size:13px; font-weight:700; color:#64748B; display:block; margin-bottom:8px;">공지 바 슬라이드 게시 여부</label>
                 <div style="display:flex; gap:8px;">
-                    <button id="publish-btn-yes" onclick="window.setPublish(true)" style="flex:1; padding:11px; border:1.5px solid #3182F6; border-radius:10px; background:#EFF6FF; color:#3182F6; font-weight:700; font-size:13px; cursor:pointer;">
-                        <i class="bi bi-megaphone-fill"></i> 슬라이드 게시
-                    </button>
-                    <button id="publish-btn-no" onclick="window.setPublish(false)" style="flex:1; padding:11px; border:1.5px solid #E5E8EB; border-radius:10px; background:white; color:#8B95A1; font-weight:700; font-size:13px; cursor:pointer;">
-                        <i class="bi bi-eye-slash"></i> 목록만 등록
-                    </button>
+                    <button id="publish-btn-yes" onclick="window.setPublish(true)" style="flex:1; padding:11px; border:1.5px solid #3182F6; border-radius:10px; background:#EFF6FF; color:#3182F6; font-weight:700; font-size:13px; cursor:pointer;"><i class="bi bi-megaphone-fill"></i> 슬라이드 게시</button>
+                    <button id="publish-btn-no" onclick="window.setPublish(false)" style="flex:1; padding:11px; border:1.5px solid #E5E8EB; border-radius:10px; background:white; color:#8B95A1; font-weight:700; font-size:13px; cursor:pointer;"><i class="bi bi-eye-slash"></i> 목록만 등록</button>
                 </div>
             </div>
-
             <div style="display:flex; gap:8px;">
                 <button onclick="document.getElementById('notice-editor-modal').style.display='none'" style="flex:1; padding:13px; background:#F2F4F6; color:#64748B; border:none; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer;">취소</button>
                 <button onclick="window.saveNotice()" style="flex:2; padding:13px; background:#3182F6; color:white; border:none; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer;"><i class="bi bi-cloud-upload-fill"></i> 저장</button>
@@ -140,24 +131,33 @@
     <div class="toss-card">
         <div class="toss-card-head">
             <div class="toss-card-title">청구 현황</div>
-            <span class="toss-link" onclick="window.navigateTo('page-docs')">전체보기 <i class="bi bi-chevron-right"></i></span>
+            <span class="toss-link" onclick="window.showClaimList('all')">전체보기 <i class="bi bi-chevron-right"></i></span>
         </div>
-        <img src="dummy" onerror="if(window.loadClaimData) window.loadClaimData(); this.style.display='none';" style="display:none;">
-
-    <div class="toss-status-grid">
-        <div class="toss-status-box">
-            <div class="toss-status-num" id="claim-count-total">0<span>건</span></div>
-            <div class="toss-status-label">전체 청구</div>
-        </div>
-        <div class="toss-status-box">
-            <div class="toss-status-num" id="claim-count-temp">0<span>건</span></div>
-            <div class="toss-status-label">임시 저장</div>
-        </div>
-        <div class="toss-status-box">
-            <div class="toss-status-num" id="claim-count-done">0<span>건</span></div>
-            <div class="toss-status-label">발송 완료</div>
+        <div class="toss-status-grid">
+            <div class="toss-status-box" onclick="window.showClaimList('all')" style="cursor:pointer;">
+                <div class="toss-status-num" id="claim-count-total">0<span>건</span></div>
+                <div class="toss-status-label">전체 청구</div>
+            </div>
+            <div class="toss-status-box" onclick="window.showClaimList('draft')" style="cursor:pointer;">
+                <div class="toss-status-num" id="claim-count-temp">0<span>건</span></div>
+                <div class="toss-status-label">임시 저장</div>
+            </div>
+            <div class="toss-status-box" onclick="window.showClaimList('sent')" style="cursor:pointer;">
+                <div class="toss-status-num" id="claim-count-done">0<span>건</span></div>
+                <div class="toss-status-label">발송 완료</div>
+            </div>
         </div>
     </div>
+
+    <!-- 청구 목록 모달 -->
+    <div id="claim-list-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:8000; align-items:flex-end; justify-content:center;" onclick="event.target===this && window.closeClaimListModal()">
+        <div style="background:white; border-radius:20px 20px 0 0; width:100%; max-width:600px; max-height:80vh; overflow-y:auto; padding:24px 20px 40px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h3 id="claim-list-modal-title" style="font-size:18px; font-weight:800; color:#191F28; margin:0;">목록</h3>
+                <button onclick="window.closeClaimListModal()" style="background:#F2F4F6; border:none; width:32px; height:32px; border-radius:50%; font-size:18px; cursor:pointer; color:#8B95A1;">&times;</button>
+            </div>
+            <div id="claim-list-modal-body"></div>
+        </div>
     </div>
 
     <!-- 최근 청구 -->
@@ -189,13 +189,13 @@
 .toss-notice-bar:hover { border-color:#D1D6DB; }
 .toss-notice-tag { background:#EFF6FF; color:#3182F6; font-size:11px; font-weight:800; padding:4px 10px; border-radius:8px; flex-shrink:0; }
 .toss-banner-wrap { margin-bottom:16px; }
-.toss-banner-wrap .banner-box { border-radius:18px; box-shadow:none; border:1px solid #F2F4F6; }
 .toss-card { background:white; border-radius:20px; padding:22px 20px; border:1px solid #F2F4F6; margin-bottom:16px; }
 .toss-card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
 .toss-card-title { font-size:17px; font-weight:800; color:#191F28; }
 .toss-link { font-size:13px; font-weight:700; color:#3182F6; cursor:pointer; }
 .toss-status-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-.toss-status-box { background:#F9FAFB; border-radius:14px; padding:18px 8px; text-align:center; }
+.toss-status-box { background:#F9FAFB; border-radius:14px; padding:18px 8px; text-align:center; transition: background 0.15s; }
+.toss-status-box:hover { background:#EFF6FF; }
 .toss-status-num { font-size:22px; font-weight:800; color:#191F28; }
 .toss-status-num span { font-size:13px; font-weight:700; color:#8B95A1; margin-left:2px; }
 .toss-status-label { font-size:12px; color:#8B95A1; font-weight:600; margin-top:6px; }
@@ -204,6 +204,16 @@
 .notice-list-item { padding:16px 0; border-bottom:1px solid #F2F4F6; cursor:pointer; transition:background 0.1s; }
 .notice-list-item:last-child { border-bottom:none; }
 .notice-list-item:hover { background:#FAFAFA; border-radius:10px; padding-left:8px; }
+.ad-slider-container { width:100%; max-height:300px; border-radius:18px; overflow:hidden; border:1px solid #F2F4F6; background:white; position:relative; box-shadow:0 4px 12px rgba(0,0,0,0.03); }
+.ad-slider-track { display:flex; width:300%; animation: adSlideAnimation 14s infinite; }
+.ad-slide { width:33.3333%; flex-shrink:0; cursor:pointer; }
+.ad-slide img { width:100%; height:100%; max-height:300px; object-fit:cover; object-position:center; display:block; }
+@keyframes adSlideAnimation {
+    0%, 25% { transform: translateX(0%); }
+    33%, 58% { transform: translateX(-33.3333%); }
+    66%, 91% { transform: translateX(-66.6666%); }
+    100% { transform: translateX(0%); }
+}
 @media (max-width: 640px) {
     .toss-menu-grid { gap:8px; }
     .toss-menu-item { padding:16px 4px; }
@@ -211,50 +221,4 @@
     .toss-menu-icon { width:40px; height:40px; font-size:18px; }
     .toss-hero-title { font-size:20px; }
 }
-
-/* =========================================
-   광고 배너 자동 슬라이드 애니메이션 (3개 기준)
-========================================= */
-.ad-slider-container {
-    width: 100%;
-    max-height: 300px;
-    border-radius: 18px;
-    overflow: hidden;
-    border: 1px solid #F2F4F6;
-    background: white;
-    position: relative;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-}
-
-.ad-slider-track {
-    display: flex;
-    width: 300%; /* 광고가 3개이므로 300% */
-    /* 12초 동안 3개의 광고가 순환합니다 (수정 가능) */
-    animation: adSlideAnimation 14s infinite; 
-}
-
-.ad-slide {
-    width: 33.3333%; /* 100% / 3개 */
-    flex-shrink: 0;
-    cursor: pointer;
-}
-
-.ad-slide img {
-    width: 100%;
-    height: 100%;
-    max-height: 300px;
-    object-fit: cover;
-    object-position: center;
-    display: block;
-}
-
-/* 3개 광고 기준: 멈춤 -> 이동 -> 멈춤 반복 */
-@keyframes adSlideAnimation {
-    0%, 25% { transform: translateX(0%); }         /* 1번 배너 대기 */
-    33%, 58% { transform: translateX(-33.3333%); } /* 2번 배너 대기 */
-    66%, 91% { transform: translateX(-66.6666%); } /* 3번 배너 대기 */
-    100% { transform: translateX(0%); }            /* 다시 1번으로 */
-}
-
 </style>
-

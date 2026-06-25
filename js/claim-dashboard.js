@@ -87,6 +87,9 @@ function _updateClaimCounters(records) {
     _setText('claim-count-total',      total);
     _setText('claim-count-draft',      drafts);
     _setText('claim-count-sent',       sent);
+    // 2705 page-claim-main.htmlC758 C2e4C81c IDC640 B3d9Ae30D654
+    _setText('claim-count-temp',       drafts);
+    _setText('claim-count-done',       sent);
 }
 
 function _setText(id, val) {

@@ -458,6 +458,13 @@ window.loadComponent = async function(pageId, extraAction) {
             });
         }
 
+        // 청구서 작성 폼 초기화
+        if (pageId === 'page-claim-form') {
+            requestAnimationFrame(() => {
+                if (typeof window.initClaimCanvas === 'function') window.initClaimCanvas();
+            });
+        }
+
         // 재무 계산기 - 인라인 스크립트 재실행
         if (pageId === 'page-calculator') {
             requestAnimationFrame(() => {
