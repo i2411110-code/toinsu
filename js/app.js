@@ -2,8 +2,8 @@
 // 1. 모듈 Import (반드시 파일 맨 꼭대기에 뭉쳐 있어야 함!)
 // ==========================================
 import './claim-coords.js'; 
-import './claim.js'; 
-import './report.js';
+    import './claim.js'; 
+    import './report.js';
 import './claim-dashboard.js';
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";

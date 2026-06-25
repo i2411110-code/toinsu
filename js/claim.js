@@ -1,7 +1,3 @@
-// claim.js
-import { claimCoords } from './claim-coords.js';
-
-/**
  * 30대 보험사 공통 서류 정밀 맵핑 빌더 엔진
  * @param {string} canvasId - 타겟 HTML Canvas ID
  * @param {string} companyKey - 보험사 식별 식별자 (예: "hyundai", "samsung", "db")
@@ -96,3 +92,5 @@ export async function drawClaimForm(canvasId, companyKey, pageNum, userData) {
     }
   });
 }
+
+window.drawClaimForm = drawClaimForm;
