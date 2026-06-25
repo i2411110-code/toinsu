@@ -1048,28 +1048,17 @@
                 collection(window.__firestoreDb, 'calendarEvents'),
                 (snap) => {
                     const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    
-                    // 💡 [핵심 추가] 오늘 날짜의 자정(00:00) 기준시간을 만듭니다.
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const todayTime = today.getTime();
 
-                    // 💡 달력 표(메인)와 리스트(모아보기) 전체에서 과거 일정을 아예 차단합니다.
-                    const visible = filterEventsForCurrentUser(all).filter(e => {
-                        if (!e.start) return false;
-                        const eventDate = typeof e.start.toDate === 'function' ? e.start.toDate() : new Date(e.start);
-                        eventDate.setHours(0, 0, 0, 0); // 일자만 비교
-                        return eventDate.getTime() >= todayTime;
-                    });
+                    // 💡 권한(본인/공지)에 맞는 일정 전체 — 과거/미래 가리지 않고 달력에는 전부 표시
+                    const visible = filterEventsForCurrentUser(all);
 
-                    // 차단된 데이터를 달력과 모아보기 화면에 렌더링
+                    // 달력 그리드에는 과거 일정 포함 전체 렌더링
                     if (_fc) { _fc.removeAllEvents(); visible.forEach(e => _fc.addEvent(toFcEvent(e))); }
-                    
+
+                    // 모아보기 리스트(나의 일정 / 팀 전체)에만 "오늘 이후" 일정만 필터링해서 표시
                     if (_calIsAdmin) _renderAdminAllList(visible);
-                    if (typeof _renderUserMyList === 'function') _renderUserMyList(visible); 
+                    if (typeof _renderUserMyList === 'function') _renderUserMyList(visible);
                 },
-                (err) => { console.error('[캘린더] 실시간 동기화 오류:', err); }
-            );
         }
 
         // [완벽 보정] 나의 일정 모아보기 렌더링 함수
