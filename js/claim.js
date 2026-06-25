@@ -109,7 +109,10 @@ async function drawClaimForm(canvasId, companyKey, pageNum, userData) {
           const signImg = new Image();
           signImg.src = value; // Base64 Data URL 매핑
           signImg.onload = () => {
-            ctx.drawImage(signImg, config.x, config.y, config.w, config.h);
+            // claim-coords.js 키 이름과 일치하도록 width/height 우선, w/h 폴백
+            const dw = config.width  || config.w  || 70;
+            const dh = config.height || config.h  || 25;
+            ctx.drawImage(signImg, config.x, config.y, dw, dh);
           };
         }
         break;

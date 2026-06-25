@@ -1,11 +1,8 @@
 // ==========================================
-// 1. 모듈 Import (반드시 파일 맨 꼭대기에 뭉쳐 있어야 함!)
+// 1. Firebase 동적 Import (Pure HTML/JS 환경 호환 - window 전역 방식)
+// claim-coords.js / claim.js / report.js / claim-dashboard.js 는
+// index.html에서 <script src="..."> 태그로 직접 로드됩니다.
 // ==========================================
-import './claim-coords.js'; 
-    import './claim.js'; 
-    import './report.js';
-import './claim-dashboard.js';
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 // ✅ 끝부분에 sendPasswordResetEmail이 추가되었습니다.
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
