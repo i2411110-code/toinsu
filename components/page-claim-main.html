@@ -13,7 +13,7 @@
 
     <!-- 4개 메뉴 -->
     <div class="toss-menu-grid">
-        <div class="toss-menu-item" onclick="window.navigateTo('page-claim-form')">
+        <div class="toss-menu-item" onclick="window.navigateTo('page-claim-select')">
             <div class="toss-menu-icon" style="background:#EEF2FF; color:#4F46E5;"><i class="bi bi-send-fill"></i></div>
             <span>청구하기</span>
         </div>
@@ -135,15 +135,15 @@
         </div>
         <div class="toss-status-grid">
             <div class="toss-status-box" onclick="window.showClaimList('all')" style="cursor:pointer;">
-                <div class="toss-status-num" id="claim-count-total">0<span>건</span></div>
+                <div class="toss-status-num" id="claim-count-total">0건</div>
                 <div class="toss-status-label">전체 청구</div>
             </div>
             <div class="toss-status-box" onclick="window.showClaimList('draft')" style="cursor:pointer;">
-                <div class="toss-status-num" id="claim-count-temp">0<span>건</span></div>
+                <div class="toss-status-num" id="claim-count-temp">0건</div>
                 <div class="toss-status-label">임시 저장</div>
             </div>
             <div class="toss-status-box" onclick="window.showClaimList('sent')" style="cursor:pointer;">
-                <div class="toss-status-num" id="claim-count-done">0<span>건</span></div>
+                <div class="toss-status-num" id="claim-count-done">0건</div>
                 <div class="toss-status-label">발송 완료</div>
             </div>
         </div>
