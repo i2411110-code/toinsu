@@ -115,3 +115,139 @@ window.generateGenericPDF = async function(fileKey, companyName, mode) {
     const fileName = `${fd.insuredName || '청구서'}_${companyName || ''}.pdf`;
     await outputPdf(pdfDoc, mode, fileName);
 };
+
+// ==========================================
+// [현대해상 - 5페이지 전용 로직 리팩토링]
+// ==========================================
+window.generateHyundai5PagePDF = async function(mode) {
+    mode = mode || 'preview';
+    const btn = mode === 'download'
+        ? document.querySelector('button[onclick="window.downloadClaimPDF()"]')
+        : document.querySelector('button[onclick="window.previewClaimPDF()"]');
+    setPdfBtnLoading(btn, true);
+
+    try {
+        const { PDFDocument, rgb } = window.PDFLib;
+        const { pdfBytes, fontBytes } = await loadPdfAndFont(null, 'hyundai');
+
+        const pdfDoc = await PDFDocument.load(pdfBytes);
+        pdfDoc.registerFontkit(window.fontkit);
+        const customFont = await pdfDoc.embedFont(fontBytes);
+        const pages = pdfDoc.getPages();
+
+        // 1. 데이터 수집 및 주민번호 버그 수정
+        const fd   = collectFormData();
+        const date = getTodayDateFields();
+        
+        const cleanJumin = (fd.jumin || '').replace(/[^0-9]/g, '');
+        const jm = {
+            jumin1: cleanJumin.slice(0, 6),
+            jumin2: cleanJumin.slice(6) // 뒤 끝까지 안전하게 자름
+        };
+
+        const signImage = await getSignImage(pdfDoc, 'signature-pad'); // 피보험자 서명
+
+        // 사고일 파생값
+        const [ty, tm, td] = (fd.treatDate || '').split('-');
+        const treat = {
+            year2: ty ? ty.slice(2, 4) : '',
+            month: tm || '',
+            day:   td || '',
+        };
+
+        const txtOpt   = { font: customFont, size: 11, color: rgb(0, 0, 0) };
+        const checkOpt = { font: customFont, size: 14, color: rgb(0.15, 0.38, 0.92) };
+        const checkMark = 'V';
+
+        // 좌표 바인딩
+        const C = window.HYUNDAI_COORDS;
+
+        // ── 1페이지 기입 ──
+        const p1 = C.page1;
+        if (p1.name)    pages[0].drawText(fd.insuredName, { x: p1.name.x,       y: p1.name.y,       ...txtOpt });
+        if (p1.jumin1)  pages[0].drawText(jm.jumin1,      { x: p1.jumin1.x,     y: p1.jumin1.y,     ...txtOpt });
+        if (p1.jumin2)  pages[0].drawText(jm.jumin2,      { x: p1.jumin2.x,     y: p1.jumin2.y,     ...txtOpt });
+        if (p1.phone)   pages[0].drawText(fd.phone,       { x: p1.phone.x,      y: p1.phone.y,      ...txtOpt });
+        if (p1.content) pages[0].drawText(fd.content,     { x: p1.content.x,    y: p1.content.y,    ...txtOpt });
+        if (p1.year2)   pages[0].drawText(treat.year2,    { x: p1.year2.x,      y: p1.year2.y,      ...txtOpt });
+        if (p1.month)   pages[0].drawText(treat.month,    { x: p1.month.x,      y: p1.month.y,      ...txtOpt });
+        if (p1.day)     pages[0].drawText(treat.day,      { x: p1.day.x,        y: p1.day.y,        ...txtOpt });
+        
+        if (fd.job && p1.job) {
+            pages[0].drawText(fd.job, { x: p1.job.x, y: p1.job.y, ...txtOpt });
+        }
+        
+        if (p1.signerName) pages[0].drawText(fd.insuredName, { x: p1.signerName.x, y: p1.signerName.y, ...txtOpt });
+        if (signImage && p1.sign) {
+            pages[0].drawImage(signImage, { x: p1.sign.x, y: p1.sign.y, width: p1.sign.width, height: p1.sign.height });
+        }
+
+        // 은행명, 계좌번호, 예금주 현대해상 1페이지 기입 보정
+        if (fd.bankName && p1.bankName)     pages[0].drawText(fd.bankName, { x: p1.bankName.x, y: p1.bankName.y, ...txtOpt });
+        if (fd.account && p1.account)       pages[0].drawText(fd.account,  { x: p1.account.x,  y: p1.account.y,  ...txtOpt });
+        if (fd.accountHolder && p1.accountHolder) pages[0].drawText(fd.accountHolder, { x: p1.accountHolder.x, y: p1.accountHolder.y, ...txtOpt });
+
+        // 관계 분기 연산 (isSameAsInsured, usesBenType 트래킹 로그 출력)
+        const isSameAsInsured = (fd.sameAsInsured === '예');
+        const isUnder14 = (fd.insuredUnder14 === '예');
+        const usesBenType = isUnder14 || !isSameAsInsured;
+        console.log(`[DEBUG] contact branch check - company: 현대해상, usesBenType: ${usesBenType}, isSameAsInsured: ${isSameAsInsured}`);
+
+        // 계약자가 다르거나 만 14세 미만일 때 대리인 정보 추가 기입 (현대해상용 좌표 구조 대응)
+        if (usesBenType && p1.contractor) {
+            const pc = p1.contractor;
+            const cleanContractorJumin = (fd.contractorJumin || '').replace(/[^0-9]/g, '');
+            const cjm = {
+                jumin1: cleanContractorJumin.slice(0, 6),
+                jumin2: cleanContractorJumin.slice(6)
+            };
+            const contractorSig = await getSignImage(pdfDoc, 'signature-pad-contractor');
+
+            if (pc.name && fd.contractorName)   pages[0].drawText(fd.contractorName,  { x: pc.name.x,   y: pc.name.y,   ...txtOpt });
+            if (pc.jumin1 && cjm.jumin1)        pages[0].drawText(cjm.jumin1,         { x: pc.jumin1.x, y: pc.jumin1.y, ...txtOpt });
+            if (pc.jumin2 && cjm.jumin2)        pages[0].drawText(cjm.jumin2,         { x: pc.jumin2.x, y: pc.jumin2.y, ...txtOpt });
+            if (pc.phone && fd.contractorPhone) pages[0].drawText(fd.contractorPhone, { x: pc.phone.x,  y: pc.phone.y,  ...txtOpt });
+            if (contractorSig && pc.sign) {
+                pages[0].drawImage(contractorSig, { x: pc.sign.x, y: pc.sign.y, width: pc.sign.width, height: pc.sign.height });
+            }
+        }
+
+        // ── 2 ~ 4페이지 동의서 체크마크 ──
+        if (C.page2?.checkmarks) C.page2.checkmarks.forEach(m => pages[1].drawText(checkMark, { x: m.x, y: m.y, ...checkOpt }));
+        if (C.page3?.checkmarks) C.page3.checkmarks.forEach(m => pages[2].drawText(checkMark, { x: m.x, y: m.y, ...checkOpt }));
+        if (C.page4?.checkmarks) C.page4.checkmarks.forEach(m => pages[3].drawText(checkMark, { x: m.x, y: m.y, ...checkOpt }));
+
+        // ── 5페이지 서명 및 날짜 기입 ──
+        const p5 = C.page5;
+        if (p5?.checkmarks) p5.checkmarks.forEach(m => pages[4].drawText(checkMark, { x: m.x, y: m.y, ...checkOpt }));
+        
+        if (p5) {
+            if (p5.year)  pages[4].drawText(date.year,      { x: p5.year.x,  y: p5.year.y,  ...txtOpt });
+            if (p5.month) pages[4].drawText(date.month,     { x: p5.month.x, y: p5.month.y, ...txtOpt });
+            if (p5.day)   pages[4].drawText(date.day,       { x: p5.day.x,   y: p5.day.y,   ...txtOpt });
+            if (p5.name)  pages[4].drawText(fd.insuredName, { x: p5.name.x,  y: p5.name.y,  ...txtOpt });
+            if (signImage && p5.sign) {
+                pages[4].drawImage(signImage, { x: p5.sign.x, y: p5.sign.y, width: p5.sign.width, height: p5.sign.height });
+            }
+            
+            // 5페이지에 대리인/계약자 동의 서명란 좌표가 별도로 잡혀있다면 반영
+            if (usesBenType && p5.contractorSign) {
+                const contractorSig5 = await getSignImage(pdfDoc, 'signature-pad-contractor');
+                if (contractorSig5) {
+                    pages[4].drawImage(contractorSig5, { x: p5.contractorSign.x, y: p5.contractorSign.y, width: p5.contractorSign.width, height: p5.contractorSign.height });
+                }
+                if (p5.contractorName && fd.contractorName) {
+                    pages[4].drawText(fd.contractorName, { x: p5.contractorName.x, y: p5.contractorName.y, ...txtOpt });
+                }
+            }
+        }
+
+        const fileName = `${fd.insuredName || '청구서'}_${window.selectedClaimInsurance || ''}.pdf`;
+        await outputPdf(pdfDoc, mode, fileName);
+    } catch (err) {
+        console.error("현대해상 PDF 생성 에러:", err);
+        alert("현대해상 PDF 생성 중 오류가 발생했습니다: " + err.message);
+    } finally {
+        setPdfBtnLoading(btn, false);
+    }
+};
