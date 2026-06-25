@@ -897,11 +897,9 @@ window.unlockPrivate = async function() {
 
     // 검증 중 사용자에게 보여줄 메시지 (선택 사항)
     const authBtn = document.querySelector('#privateAuthScreen .btn-action');
-    if (authBtn) {
-        window.__originalAuthText = authBtn.innerText;
-        authBtn.innerText = "서버에서 권한 확인 중...";
-        authBtn.disabled = true;
-    }
+    const originalText = authBtn.innerText;
+    authBtn.innerText = "서버에서 권한 확인 중...";
+    authBtn.disabled = true;
 
     try {
         const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
@@ -917,11 +915,12 @@ window.unlockPrivate = async function() {
             // 서버 명단과 현재 로그인된 이메일 대조
             if (allowedUsers.includes(currentUserEmail)) {
                 // 권한 승인: 오피스 입장
-                if (document.getElementById('privateAuthScreen')) document.getElementById('privateAuthScreen').style.display = 'none';
-                if (document.getElementById('privateMainContent')) document.getElementById('privateMainContent').style.display = 'block';
+                document.getElementById('privateAuthScreen').style.display = 'none';
+                document.getElementById('privateMainContent').style.display = 'block';
                 
-                // [수정 완료] 캘린더 자동 실행 및 데이터 동기화
+                // [수정 완료] 캘린더 자동 실행
                 window.switchPrivateTab('cal');
+                if (typeof window.initGaonCalendar === 'function') window.initGaonCalendar();
                 
             } else {
                 // 명단에 없음: 입장 거부
@@ -935,76 +934,54 @@ window.unlockPrivate = async function() {
         alert("권한을 확인하는 중 서버 오류가 발생했습니다.");
     } finally {
         // 버튼 상태 원상복구
-        if (authBtn && window.__originalAuthText) {
-            authBtn.innerText = window.__originalAuthText;
-            authBtn.disabled = false;
-        }
+        authBtn.innerText = originalText;
+        authBtn.disabled = false;
     }
 };
 
 // 2. 내부 탭 전환 — 페이지별 라우터
 // ─────────────────────────────────────────────────────────────────────────────
-// ▶ 이전 제공된 HTML 수정본의 구조적 ID 맵핑에 완벽히 대응하도록 보완 완료
+// ▶ page-가온_오피스 → switchGaonOfficeTab(tab)  (btn-ptab-* / dashboard-app 등)
+// ▶ page-private     → switchPrivateDataTab(tab)  (btn-tab-input|list)
+// ▶ window.switchPrivateTab 은 두 함수를 모두 위임하는 공용 라우터로 유지
+//   (HTML 인라인 onclick 호출이 섞여있어 하나의 이름으로 통일)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── 가온 오피스 전용: 4탭 전환 (db / chk / rpt / cal) ──
 window.switchGaonOfficeTab = function(tab) {
-    // 💡 HTML 수정본의 ID 구조와 완벽 매칭 ('calendar-app' 및 'ptab-content-*' 대응)
     const PTAB_PANELS = {
         'db':  'dashboard-app',
         'chk': 'checklist-app',
         'rpt': 'report-app',
         'cal': 'calendar-app',
     };
-    
-    // 모든 패널 숨김 처리
+    // 모든 패널 숨김
     Object.values(PTAB_PANELS).forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.style.display = 'none'; el.classList.remove('is-active'); }
-        
-        // ptab-content-* 형태의 랩퍼가 존재할 경우를 대비한 2중 안전 잠금
-        const ptabWrap = document.getElementById('ptab-content-' + Object.keys(PTAB_PANELS).find(key => PTAB_PANELS[key] === id));
-        if (ptabWrap) ptabWrap.style.display = 'none';
     });
-    
     // 모든 탭 버튼 비활성화
     Object.keys(PTAB_PANELS).forEach(k => {
         const btn = document.getElementById('btn-ptab-' + k);
         if (btn) btn.classList.remove('active');
     });
-    
-    // 선택한 패널 활성화
+    // 선택 패널만 표시
     const panelId = PTAB_PANELS[tab];
     if (panelId) {
         const panel = document.getElementById(panelId);
-        const ptabWrap = document.getElementById('ptab-content-' + tab);
-        
-        // 상위 랩퍼 레이아웃 보정
-        if (ptabWrap) ptabWrap.style.display = 'block';
-        
         if (panel) {
-            // cal이나 db 탭일 때는 레이아웃이 깨지지 않게 부모 그리드 유지
+            // cal이나 db 탭일 때는 레이아웃이 깨지지 않게 grid 형태로 열어줍니다.
             panel.style.display = (tab === 'db' || tab === 'cal') ? 'grid' : 'block';
             panel.classList.add('is-active');
         }
     }
-    
     const activeBtn = document.getElementById('btn-ptab-' + tab);
     if (activeBtn) activeBtn.classList.add('active');
 
-    // [로직 보완] 각 탭별 연결 모듈 리렌더링 및 파이어베이스 데이터 로드 호출
+    // 리포트 탭: 초기화 함수 호출
     if (tab === 'rpt' && window.initRptModule) window.initRptModule();
-    
-    if (tab === 'cal') {
-        // 1. 파이어베이스 연동 데이터 호출 (9개 일정 로드 목적)
-        if (typeof window.initGaonCalendar === 'function') {
-            window.initGaonCalendar();
-        }
-        // 2. FullCalendar 화면 깨짐 방지용 리렌더링 트리거
-        if (window.calendarRender) {
-            setTimeout(() => window.calendarRender(), 100);
-        }
-    }
+    // 캘린더 탭: 렌더
+    if (tab === 'cal' && window.calendarRender) setTimeout(() => window.calendarRender(), 50);
 };
 
 // ── 개인공간 전산실 전용: 2탭 전환 (input / list) ──
@@ -1033,8 +1010,10 @@ window.switchPrivateDataTab = function(tab) {
 
 // ── 공용 라우터: HTML onclick="window.switchPrivateTab(...)" 을 모두 처리 ──
 window.switchPrivateTab = function(target) {
+    // 가온 오피스 탭 키 (db/chk/rpt/cal)
     if (['db', 'chk', 'rpt', 'cal'].includes(target)) {
         window.switchGaonOfficeTab(target);
+    // 개인공간 탭 키 (input/list)
     } else if (['input', 'list'].includes(target)) {
         window.switchPrivateDataTab(target);
     }
