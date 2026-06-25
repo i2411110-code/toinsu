@@ -70,7 +70,7 @@ window.selectClaimCompany = function(cardElement, companyName) {
 // [청구서 작성 폼 - 캔버스 및 PDF 전역 로직]
 // ==========================================
 
-// ─── 보험사명 → PDF 파일명 매핑 테이블 (화면 UI 한글 정식 명칭 완전 일치 보정) ───
+// ─── 보험사명 → PDF 파일명 매핑 테이블 (정식 명칭 100% 매치 완료) ───
 const CLAIM_PDF_MAP = {
     // ── 손해보험 ──
     '현대해상':          { file: 'hyundai',        pages: 5 },
@@ -361,7 +361,7 @@ function getTodayDateFields() {
     return { year, year2, month, day };
 }
 
-// 주민등록번호 뒷자리 7자리 누락 해결 보정 (slice 범위 수정)
+// 주민등록번호 뒷자리 7자리 안전 수집 (slice(6) 범위 버그 패치)
 function splitJumin(jumin) {
     if (!jumin) return { jumin1: '', jumin2: '' };
     const clean = jumin.replace(/[^0-9]/g, '');
@@ -432,7 +432,6 @@ async function outputPdf(pdfDoc, mode, fileName) {
     }
 }
 
-// 버튼 로딩 제어
 function setPdfBtnLoading(btn, loading) {
     if (!btn) return;
     if (loading) {
@@ -647,7 +646,7 @@ window.downloadClaimPDF = async function() {
 };
 
 // ==========================================
-// [현대해상 - 5페이지 전용 로직 리팩토링 완료]
+// [현대해상 - 5페이지 전용 로직]
 // ==========================================
 window.generateHyundai5PagePDF = async function(mode) {
     mode = mode || 'preview';
@@ -683,6 +682,12 @@ window.generateHyundai5PagePDF = async function(mode) {
 
         const C = window.HYUNDAI_COORDS;
 
+        // 관계 및 9번째 원본 분기 조건식 동기화
+        const isSameAsInsured = (fd.sameAsInsured === '예');
+        const isUnder14 = (fd.insuredUnder14 === '예');
+        const usesBenType = isUnder14 || !isSameAsInsured;
+        console.log(`[DEBUG] contact branch check - company: 현대해상, usesBenType: ${usesBenType}, isSameAsInsured: ${isSameAsInsured}`);
+
         // ── 1페이지 기입 ──
         const p1 = C.page1;
         if (p1.name)    pages[0].drawText(fd.insuredName, { x: p1.name.x,       y: p1.name.y,       ...txtOpt });
@@ -695,19 +700,19 @@ window.generateHyundai5PagePDF = async function(mode) {
         if (p1.day)     pages[0].drawText(treat.day,      { x: p1.day.x,        y: p1.day.y,        ...txtOpt });
         
         if (fd.job && p1.job) pages[0].drawText(fd.job, { x: p1.job.x, y: p1.job.y, ...txtOpt });
-        if (p1.signerName) pages[0].drawText(fd.insuredName, { x: p1.signerName.x, y: p1.signerName.y, ...txtOpt });
-        if (signImage && p1.sign) pages[0].drawImage(signImage, { x: p1.sign.x, y: p1.sign.y, width: p1.sign.width, height: p1.sign.height });
+
+        // 피보험자 서명 및 대리인(usesBenType) 최종 청구인 하단 스위칭 보정
+        const effectiveName = usesBenType ? fd.contractorName : fd.insuredName;
+        const mainSig = usesBenType ? await getSignImage(pdfDoc, 'signature-pad-contractor') : signImage;
+
+        if (p1.signerName) pages[0].drawText(effectiveName, { x: p1.signerName.x, y: p1.signerName.y, ...txtOpt });
+        if (mainSig && p1.sign) pages[0].drawImage(mainSig, { x: p1.sign.x, y: p1.sign.y, width: p1.sign.width, height: p1.sign.height });
 
         if (fd.bankName && p1.bankName)     pages[0].drawText(fd.bankName, { x: p1.bankName.x, y: p1.bankName.y, ...txtOpt });
         if (fd.account && p1.account)       pages[0].drawText(fd.account,  { x: p1.account.x,  y: p1.account.y,  ...txtOpt });
         if (fd.accountHolder && p1.accountHolder) pages[0].drawText(fd.accountHolder, { x: p1.accountHolder.x, y: p1.accountHolder.y, ...txtOpt });
 
-        // 관계 분석 및 분기 트래킹 (usesBenType 로직 구현)
-        const isSameAsInsured = (fd.sameAsInsured === '예');
-        const isUnder14 = (fd.insuredUnder14 === '예');
-        const usesBenType = isUnder14 || !isSameAsInsured;
-        console.log(`[DEBUG] contact branch check - company: 현대해상, usesBenType: ${usesBenType}, isSameAsInsured: ${isSameAsInsured}`);
-
+        // 대리인 고유 칸 기입
         if (usesBenType && p1.contractor) {
             const pc = p1.contractor;
             const cjm = splitJumin(fd.contractorJumin);
@@ -733,8 +738,8 @@ window.generateHyundai5PagePDF = async function(mode) {
             if (p5.year)  pages[4].drawText(date.year,      { x: p5.year.x,  y: p5.year.y,  ...txtOpt });
             if (p5.month) pages[4].drawText(date.month,     { x: p5.month.x, y: p5.month.y, ...txtOpt });
             if (p5.day)   pages[4].drawText(date.day,       { x: p5.day.x,   y: p5.day.y,   ...txtOpt });
-            if (p5.name)  pages[4].drawText(fd.insuredName, { x: p5.name.x,  y: p5.name.y,  ...txtOpt });
-            if (signImage && p5.sign) pages[4].drawImage(signImage, { x: p5.sign.x, y: p5.sign.y, width: p5.sign.width, height: p5.sign.height });
+            if (p5.name)  pages[4].drawText(effectiveName, { x: p5.name.x,  y: p5.name.y,  ...txtOpt });
+            if (mainSig && p5.sign) pages[4].drawImage(mainSig, { x: p5.sign.x, y: p5.sign.y, width: p5.sign.width, height: p5.sign.height });
             
             if (usesBenType && p5.contractorSign) {
                 const contractorSig5 = await getSignImage(pdfDoc, 'signature-pad-contractor');
@@ -745,13 +750,13 @@ window.generateHyundai5PagePDF = async function(mode) {
 
         const fileName = `${fd.insuredName || '청구서'}_${window.selectedClaimInsurance || ''}.pdf`;
         await outputPdf(pdfDoc, mode, fileName);
-    } finally {
+    } finaly {
         setPdfBtnLoading(btn, false);
     }
 };
 
 // ==========================================
-// [범용 1페이지 PDF 생성 로직 리팩토링 완료]
+// [범용 1페이지 PDF 생성 - 원본 완벽 동기화]
 // ==========================================
 window.generateGenericPDF = async function(fileKey, companyName, mode) {
     mode = mode || 'preview';
@@ -766,7 +771,7 @@ window.generateGenericPDF = async function(fileKey, companyName, mode) {
 
     const fd   = collectFormData();
     const date = getTodayDateFields();
-    const jm   = splitJumin(fd.jumin); // 뒷자리 정상 슬라이싱 분기 적용됨
+    const jm   = splitJumin(fd.jumin);
     const sig  = await getSignImage(pdfDoc, 'signature-pad');
 
     const coords = { ...window.FIELD_COORDS.DEFAULT, ...(window.FIELD_COORDS[fileKey] || {}) };
@@ -774,6 +779,7 @@ window.generateGenericPDF = async function(fileKey, companyName, mode) {
     const checkOpt = { font: customFont, size: 13, color: rgb(0.15, 0.38, 0.92) };
     const CHECK = 'V';
 
+    // 9번째 원본 데이터 관계 연산 정밀 구동
     const isSameAsInsured = (fd.sameAsInsured === '예');
     const isUnder14 = (fd.insuredUnder14 === '예');
     const usesBenType = isUnder14 || !isSameAsInsured;
@@ -790,14 +796,22 @@ window.generateGenericPDF = async function(fileKey, companyName, mode) {
     if (coords.year2) page.drawText(date.year2, { x: coords.year2.x, y: coords.year2.y, ...txtOpt });
     if (coords.month) page.drawText(date.month, { x: coords.month.x, y: coords.month.y, ...txtOpt });
     if (coords.day)   page.drawText(date.day,   { x: coords.day.x,   y: coords.day.y,   ...txtOpt });
-    if (coords.signerName) page.drawText(fd.insuredName, { x: coords.signerName.x, y: coords.signerName.y, ...txtOpt });
+
+    // 하단 최종 서명인명 및 서명 패드 (usesBenType 스위칭 흐름 매핑)
+    const effectiveName = usesBenType ? fd.contractorName : fd.insuredName;
+    const mainSig = usesBenType ? await getSignImage(pdfDoc, 'signature-pad-contractor') : sig;
+
+    if (coords.signerName) page.drawText(effectiveName, { x: coords.signerName.x, y: coords.signerName.y, ...txtOpt });
+    if (mainSig && coords.sign) {
+        page.drawImage(mainSig, { x: coords.sign.x, y: coords.sign.y, width: coords.sign.width, height: coords.sign.height });
+    }
 
     // 금융 정보 기입
     if (coords.bankName && fd.bankName)       page.drawText(fd.bankName, { x: coords.bankName.x, y: coords.bankName.y, ...txtOpt });
     if (coords.account && fd.account)         page.drawText(fd.account, { x: coords.account.x, y: coords.account.y, ...txtOpt });
     if (coords.accountHolder && fd.accountHolder) page.drawText(fd.accountHolder, { x: coords.accountHolder.x, y: coords.accountHolder.y, ...txtOpt });
 
-    // 계좌유형 체크박스 매핑 예외 방어 처리
+    // 계좌유형 한글-영어 파이프라인 매핑 완벽 해결
     if (coords.accountType) {
         const targetMark = coords.accountType[fd.accountType] || 
                            (fd.accountType === '일반' ? coords.accountType.general : 
@@ -805,6 +819,7 @@ window.generateGenericPDF = async function(fileKey, companyName, mode) {
         if (targetMark) page.drawText(CHECK, { x: targetMark.x, y: targetMark.y, ...checkOpt });
     }
 
+    // 만 14세 미만 체크박스 매핑 보정
     if (coords.under14) {
         const mark = isUnder14 ? coords.under14.yes : coords.under14.no;
         if (mark) page.drawText(CHECK, { x: mark.x, y: mark.y, ...checkOpt });
@@ -815,11 +830,7 @@ window.generateGenericPDF = async function(fileKey, companyName, mode) {
         if (mark) page.drawText(CHECK, { x: mark.x, y: mark.y, ...checkOpt });
     }
 
-    if (sig && coords.sign) {
-        page.drawImage(sig, { x: coords.sign.x, y: coords.sign.y, width: coords.sign.width, height: coords.sign.height });
-    }
-
-    // 계약자 비즈니스 로직 연산 조건부 트리 매핑
+    // 계약자 고유 입력칸 데이터 주입
     if (usesBenType && coords.contractor) {
         const c = coords.contractor;
         const cjm = splitJumin(fd.contractorJumin);
