@@ -468,11 +468,8 @@ window.loadComponent = async function(pageId, extraAction) {
         // 보험사 선택 화면 초기화
         if (pageId === 'page-claim-select') {
             requestAnimationFrame(() => {
-                // 탭 초기 상태 (손해보험 탭 활성화)
-                window.switchClaimTab(
-                    document.querySelector('.form-toggle-btn.active'),
-                    'grid-nonlife'
-                );
+                const firstBtn = document.querySelector('.form-toggle-btn');
+                if (firstBtn) window.switchClaimTab(firstBtn, 'grid-nonlife');
             });
         }
 
@@ -1985,66 +1982,7 @@ window.saveNotice = async function() {
 };
 
 // ---- 공지 삭제 ----
-// ==========================================
-// [보험사 선택 화면 - page-claim-select]
-// ==========================================
-
-// 손해보험 / 생명보험 / 배상책임 탭 전환
-window.switchClaimTab = function(btn, gridId) {
-    // 모든 그리드 숨김
-    document.querySelectorAll('.ins-grid-container').forEach(g => g.style.display = 'none');
-    // 모든 탭 버튼 초기화
-    document.querySelectorAll('.form-toggle-btn').forEach(b => {
-        b.style.border = 'none';
-        b.style.background = 'transparent';
-        b.style.color = '#8B95A1';
-        b.style.boxShadow = 'none';
-        b.classList.remove('active');
-    });
-    // 선택된 그리드 표시
-    const grid = document.getElementById(gridId);
-    if (grid) {
-        grid.style.display = gridId === 'grid-liability' ? 'block' : 'grid';
-    }
-    // 선택된 버튼 활성화
-    if (btn) {
-        btn.style.border = '1px solid #3182F6';
-        btn.style.background = 'white';
-        btn.style.color = '#3182F6';
-        btn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-        btn.classList.add('active');
-    }
-};
-
-// 보험사 카드 선택
-window.selectClaimCompany = function(card, companyName) {
-    // 모든 카드 선택 해제
-    document.querySelectorAll('.ins-select-card').forEach(c => {
-        c.style.border = '1px solid #E5E8EB';
-        c.style.background = 'white';
-        c.style.transform = 'scale(1)';
-    });
-    // 선택된 카드 강조
-    card.style.border = '2px solid #3182F6';
-    card.style.background = '#EFF6FF';
-    card.style.transform = 'scale(1.03)';
-
-    // 선택된 보험사 전역 저장
-    window.selectedClaimCompany = companyName;
-
-    // 다음 단계 버튼 활성화
-    const btn = document.getElementById('next-step-btn');
-    if (btn) {
-        btn.disabled = false;
-        btn.style.background = '#3182F6';
-        btn.style.color = 'white';
-        btn.style.cursor = 'pointer';
-        btn.innerText = `${companyName} 청구서 작성하기`;
-        btn.onclick = function() {
-            window.navigateTo('page-claim-form');
-        };
-    }
-};
+window.deleteCurrentNotice = async function() {
     if (!_currentNoticeId) return;
     if (!confirm('이 공지를 삭제하시겠습니까?')) return;
     try {
@@ -2057,5 +1995,58 @@ window.selectClaimCompany = function(card, companyName) {
         window.openNoticeListModal();
     } catch(e) {
         alert('삭제 실패: ' + e.message);
+    }
+};
+
+// ==========================================
+// [보험사 선택 화면 - page-claim-select]
+// ==========================================
+
+// 손해보험 / 생명보험 / 배상책임 탭 전환
+window.switchClaimTab = function(btn, gridId) {
+    document.querySelectorAll('.ins-grid-container').forEach(g => g.style.display = 'none');
+    document.querySelectorAll('.form-toggle-btn').forEach(b => {
+        b.style.border = 'none';
+        b.style.background = 'transparent';
+        b.style.color = '#8B95A1';
+        b.style.boxShadow = 'none';
+        b.classList.remove('active');
+    });
+    const grid = document.getElementById(gridId);
+    if (grid) {
+        grid.style.display = gridId === 'grid-liability' ? 'block' : 'grid';
+    }
+    if (btn) {
+        btn.style.border = '1px solid #3182F6';
+        btn.style.background = 'white';
+        btn.style.color = '#3182F6';
+        btn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+        btn.classList.add('active');
+    }
+};
+
+// 보험사 카드 선택
+window.selectClaimCompany = function(card, companyName) {
+    document.querySelectorAll('.ins-select-card').forEach(c => {
+        c.style.border = '1px solid #E5E8EB';
+        c.style.background = 'white';
+        c.style.transform = 'scale(1)';
+    });
+    card.style.border = '2px solid #3182F6';
+    card.style.background = '#EFF6FF';
+    card.style.transform = 'scale(1.03)';
+
+    window.selectedClaimCompany = companyName;
+
+    const btn = document.getElementById('next-step-btn');
+    if (btn) {
+        btn.disabled = false;
+        btn.style.background = '#3182F6';
+        btn.style.color = 'white';
+        btn.style.cursor = 'pointer';
+        btn.innerText = companyName + ' 청구서 작성하기';
+        btn.onclick = function() {
+            window.navigateTo('page-claim-form');
+        };
     }
 };
