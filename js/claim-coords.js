@@ -123,18 +123,26 @@ window.FIELD_COORDS = {
 // ==========================================
 window.HYUNDAI_COORDS = {
     page1: {
-        name:       { x: 145, y: 583 },
-        jumin1:     { x: 270, y: 583 },
-        jumin2:     { x: 400, y: 583 },
-        phone:      { x: 145, y: 493 },
-        content:    { x: 240, y: 213 },
-        year2:      { x: 110, y: 412 },
-        month:      { x: 165, y: 412 },
-        day:        { x: 215, y: 412 },
-        signerName: { x: 430, y: 412 },
-        sign:       { x: 500, y: 405, width: 60, height: 22 },
-        bankName:   { x: 145, y: 300 },
-        account:    { x: 250, y: 300 },
+        page1: {
+    name:       { x: 135, y: 611 },
+    jumin1:     { x: 264, y: 611 },   // 주민번호 앞 6자리 시작 위치(주민번호1)
+    jumin2:     { x: 410, y: 611 },   // 주민번호 뒤 7자리 시작 위치(주민번호7)
+    phone:      { /* ⚠️ 측정값 없음 - 기존 값 유지: x:145, y:493 */ x: 145, y: 493 },
+    job:        { x: 135, y: 588 },   // ✅ 신규 추가 (기존 코드에 job 좌표 없었음)
+    content:    { /* ⚠️ 측정값 없음 - 기존 값 유지 */ x: 240, y: 213 },
+    year2:      { x: 115, y: 440 },   // 발병일시 년
+    month:      { x: 181, y: 438 },   // 발병일시 월
+    day:        { x: 229, y: 439 },   // 발병일시 일
+    signerName: { x: 409, y: 132 },   // 작성일자 옆 성명
+    sign:       { x: 521, y: 133, width: 60, height: 22 }, // width/height는 기존 값 유지
+    bankName:   { x: 104, y: 218 },
+    account:    { x: 253, y: 218 },
+    accountHolder: { x: 493, y: 218 }, // ✅ 신규 추가 (기존 코드엔 예금주 좌표/출력 로직 없었음)
+
+    // ✅ 신규 추가: 계약자 정보 (기존 HYUNDAI_COORDS엔 계약자 섹션이 없었음)
+    contractorName: { x: 134, y: 565 },
+    contractorJumin1: { x: 264, y: 566 },
+    contractorJumin2: { x: 410, y: 566 },
     },
     page2: {
         checkmarks: [
