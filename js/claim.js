@@ -641,6 +641,10 @@ window.processClaimPDF = async function(mode) {
         ? document.querySelector('button[onclick="window.downloadClaimPDF()"]')
         : document.querySelector('button[onclick="window.previewClaimPDF()"]');
 
+    if (!company) {
+        alert('보험사가 선택되지 않았습니다.\n청구하기 메뉴에서 보험사를 먼저 선택해주세요.');
+        return;
+    }
     if (!info) {
         alert(`"${company}" 양식은 현재 등록 대기 중입니다.`);
         return;
