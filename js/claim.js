@@ -406,10 +406,10 @@ async function restoreSignFromDataUrl(dataUrl, canvasId) {
 
 async function loadPdfAndFont(pdfDoc, fileKey) {
     const formUrl = `./forms/${fileKey}.pdf`;
-    const fontUrl = 'fonts/noto-sans-kr/Noto_Sans_KR/NotoSansKR-Black.otf';
+    const fontUrl = 'fonts/noto-sans-kr/Noto_Sans_KR/ChosunSg.TTF';
     const [pdfRes, fontRes] = await Promise.all([fetch(formUrl), fetch(fontUrl)]);
     if (!pdfRes.ok)  throw new Error(`PDF 양식을 찾을 수 없습니다: forms/${fileKey}.pdf`);
-    if (!fontRes.ok) throw new Error('폰트 파일을 찾을 수 없습니다: fonts/noto-sans-kr/Noto_Sans_KR/NotoSansKR-Black.otf');
+    if (!fontRes.ok) throw new Error('폰트 파일을 찾을 수 없습니다: fonts/noto-sans-kr/Noto_Sans_KR/ChosunSg.TTF');
     const [pdfBytes, fontBytes] = await Promise.all([pdfRes.arrayBuffer(), fontRes.arrayBuffer()]);
     return { pdfBytes, fontBytes };
 }
@@ -764,7 +764,7 @@ window.generateGenericPDF = async function(fileKey, companyName, mode) {
     const sig  = await getSignImage(pdfDoc, 'signature-pad');
 
     const coords = { ...window.FIELD_COORDS.DEFAULT, ...(window.FIELD_COORDS[fileKey] || {}) };
-    const txtOpt   = { font: customFont, size: 11, color: rgb(0, 0, 0) };
+    const txtOpt   = { font: customFont, size: 12, color: rgb(50, 50, 50) };
     const checkOpt = { font: customFont, size: 13, color: rgb(0.15, 0.38, 0.92) };
     const CHECK = 'V';
 
