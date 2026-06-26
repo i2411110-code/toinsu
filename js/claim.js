@@ -368,6 +368,27 @@ function splitJumin(jumin) {
     return { jumin1: clean.slice(0, 6), jumin2: clean.slice(6) };
 }
 
+// 🔴 [추가] 주민번호 13자리를 분리해서 찍어주는 함수
+function drawJumin(pdfPage, juminValue, insuranceKey) {
+    if (!juminValue || juminValue.length !== 13) return;
+
+    const config = window.FIELD_COORDS[insuranceKey] || window.FIELD_COORDS.DEFAULT;
+    const start = config.juminStart || window.FIELD_COORDS.DEFAULT.juminStart;
+    const gap = config.juminGap || window.FIELD_COORDS.DEFAULT.juminGap;
+
+    const chars = juminValue.split('');
+    chars.forEach((char, index) => {
+        // 주민번호 뒷자리(7번째 글자, index 6)부터는 하이픈(-) 영역 때문에 추가 여백 10을 줌
+        const xOffset = (index >= 6) ? 10 : 0; 
+        
+        pdfPage.drawText(char, {
+            x: start.x + (index * gap) + xOffset,
+            y: start.y,
+            size: 12 // 필요시 폰트 사이즈 조정
+        });
+    });
+}
+
 async function getSignImage(pdfDoc, canvasId) {
     canvasId = canvasId || 'signature-pad';
     const canvas = document.getElementById(canvasId);
