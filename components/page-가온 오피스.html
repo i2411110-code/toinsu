@@ -319,22 +319,19 @@
 
 <!-- ▼ checklist-app div 다음에 추가 -->
 <div id="cca-app" style="display:none;">
-    <div class="mb-10">
-        <div class="px-4 mb-8 text-center md:text-left">
-            <h2 class="text-[28px] font-bold mb-1 tracking-tight">항암 담보</h2>
-            <p class="text-[#6B7684] text-xl font-medium">신기술, 고액 항암치료비</p>
+    <div class="cca-container">
+        <div class="cca-header">
+            <h2>항암 담보 분석</h2>
+            <p>신기술, 고액 항암치료비 한눈에 보기</p>
         </div>
 
-        <div class="bg-white rounded-[32px] p-10 md:p-14 shadow-[0_4px_30px_rgba(0,0,0,0.02)] border border-[#EDF0F3]">
-            <div id="ccaItemsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-y-16 gap-x-8">
-                <!-- JS가 아이템 렌더링 -->
-            </div>
+        <div class="cca-card">
+            <div id="ccaItemsGrid" class="cca-grid">
+                </div>
         </div>
-    </div>
 
-    <div class="mt-14 pt-8 border-t border-gray-200 w-full">
-        <div class="flex justify-center items-center gap-2 text-[#ADB5BD] text-sm text-center">
-            <span>금액은 클릭해서 수정 가능하며, 버튼을 누르면 적정/부족/미보장 상태가 바뀝니다.</span>
+        <div style="margin-top:40px; padding-top:20px; border-top:1px solid #E5E8EB; text-align:center; color:#8B95A1; font-size:13px;">
+            <i class="bi bi-info-circle-fill"></i> 금액은 클릭해서 직접 수정 가능하며, 버튼을 누르면 적정/부족/미보장 상태가 바뀝니다.
         </div>
     </div>
 </div>

@@ -2006,45 +2006,49 @@ window.deleteCurrentNotice = async function() {
 // =====================================================
 // ✅ [신규 추가] 항암 보장 분석 솔루션 — 그리드 렌더 & 상태 토글
 // =====================================================
+// =====================================================
+// ✅ [수정] 항암 보장 분석 솔루션 — 그리드 렌더 & 상태 토글 (순수 CSS 버전)
+// =====================================================
 window.renderCcaGrid = function () {
     const grid = document.getElementById('ccaItemsGrid');
     if (!grid || grid.dataset.rendered === '1') return; // 중복 렌더링 방지
     grid.dataset.rendered = '1';
 
     const itemsData = [
-        { id: 1, name: "표적항암약물허가", amount: "3,000만원", status: "부족" },
-        { id: 2, name: "중입자치료",       amount: "미가입",     status: "미보장" },
-        { id: 3, name: "세기조절방사선",   amount: "미가입",     status: "미보장" },
-        { id: 4, name: "양성자치료",       amount: "미가입",     status: "미보장" },
-        { id: 5, name: "CAR-T항암",        amount: "미가입",     status: "미보장" },
-        { id: 6, name: "로봇암 수술비",    amount: "300만원",    status: "부족" },
-        { id: 7, name: "암수술비",         amount: "300만원",    status: "부족" },
-        { id: 8, name: "항암방사선약물",   amount: "300만원",    status: "부족" },
+        { name: "표적항암약물허가", amount: "3,000만원", status: "부족" },
+        { name: "중입자치료",       amount: "미가입",     status: "미보장" },
+        { name: "세기조절방사선",   amount: "미가입",     status: "미보장" },
+        { name: "양성자치료",       amount: "미가입",     status: "미보장" },
+        { name: "CAR-T항암",        amount: "미가입",     status: "미보장" },
+        { name: "로봇암 수술비",    amount: "300만원",    status: "부족" },
+        { name: "암수술비",         amount: "300만원",    status: "부족" },
+        { name: "항암방사선약물",   amount: "300만원",    status: "부족" },
     ];
 
+    // style.css에 만들어둔 클래스명과 매핑
     const statusConfig = {
-        "적정":   { bg: "bg-[#E8F3FF]", text: "text-[#3182F6]" },
-        "부족":   { bg: "bg-[#FFF0F0]", text: "text-[#F04452]" },
-        "미보장": { bg: "bg-[#F2F4F6]", text: "text-[#8B95A1]" },
+        "적정":   "cca-btn-blue",
+        "부족":   "cca-btn-red",
+        "미보장": "cca-btn-gray",
     };
     const statuses = ["적정", "부족", "미보장"];
 
     itemsData.forEach(item => {
         const container = document.createElement('div');
-        container.className = "flex flex-col items-center text-center";
+        container.className = "cca-item";
 
-        const nameSpan = document.createElement('span');
-        nameSpan.className = "text-[#191F28] text-[17px] mb-1 font-bold tracking-tight";
+        const nameSpan = document.createElement('div');
+        nameSpan.className = "cca-item-name";
         nameSpan.innerText = item.name;
 
         const amountInput = document.createElement('input');
         amountInput.type = "text";
         amountInput.value = item.amount;
-        amountInput.className = "text-[#8B95A1] text-[15px] font-normal bg-transparent border-none p-0 w-full text-center focus:ring-0 mb-5";
+        amountInput.className = "cca-item-input";
 
         const btn = document.createElement('button');
         const updateBtnStyle = (status) => {
-            btn.className = `w-full max-w-[120px] py-3 rounded-[18px] text-[17px] font-bold transition-all active:scale-95 ${statusConfig[status].bg} ${statusConfig[status].text}`;
+            btn.className = `cca-item-btn ${statusConfig[status]}`;
             btn.innerText = status;
         };
 

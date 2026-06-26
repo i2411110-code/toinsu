@@ -777,3 +777,52 @@ body {
         padding: 3px 1px !important;
     }
 }
+
+
+/* ====================================================
+   [가온 오피스] PC 풀스크린 모드 (박스 껍데기 제거)
+==================================================== */
+@media (min-width: 1025px) {
+    /* 기존 서브페이지의 하얀 박스 배경과 그림자를 투명하게 없애고 넓게 폅니다 */
+    .sub-page {
+        max-width: 100% !important;
+        padding: 20px 40px !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+    /* DB 스크립트 메인 화면도 투명하고 넓게 */
+    #dashboard-app {
+        height: auto !important;
+        min-height: 85vh;
+        border: none !important;
+        background: transparent !important;
+    }
+    #dashboard-app .main { padding: 0 40px !important; }
+}
+
+/* ====================================================
+   [항암 보장 분석] 전용 CSS (Tailwind 플러그인 대체용)
+==================================================== */
+.cca-container { max-width: 1200px; margin: 0 auto; padding: 20px 0; }
+.cca-header { margin-bottom: 30px; text-align: left; }
+.cca-header h2 { font-size: 28px; font-weight: 700; color: #191F28; margin-bottom: 5px; }
+.cca-header p { font-size: 18px; color: #6B7684; font-weight: 500; }
+.cca-card { background: white; border-radius: 32px; padding: 40px 50px; box-shadow: 0 4px 30px rgba(0,0,0,0.03); border: 1px solid #EDF0F3; }
+.cca-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px 20px; }
+.cca-item { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.cca-item-name { font-size: 17px; font-weight: 700; color: #191F28; margin-bottom: 10px; word-break: keep-all; }
+.cca-item-input { width: 100%; text-align: center; font-size: 15px; color: #8B95A1; border: none; border-bottom: 1px solid transparent; outline: none; background: transparent; padding: 5px; margin-bottom: 15px; transition: border-color 0.2s; }
+.cca-item-input:focus { border-bottom: 1px solid #3182F6; color: #191F28; }
+.cca-item-btn { width: 100%; max-width: 120px; padding: 12px; border-radius: 18px; font-size: 16px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; }
+.cca-item-btn:active { transform: scale(0.95); }
+/* 버튼 상태별 색상 (토스 컬러) */
+.cca-btn-blue { background: #E8F3FF; color: #3182F6; }
+.cca-btn-red { background: #FFF0F0; color: #F04452; }
+.cca-btn-gray { background: #F2F4F6; color: #8B95A1; }
+
+/* 모바일 화면일 때 2칸으로 자동 정렬 */
+@media (max-width: 768px) {
+    .cca-grid { grid-template-columns: repeat(2, 1fr); gap: 30px 15px; }
+    .cca-card { padding: 30px 20px; border-radius: 24px; }
+    .cca-header { text-align: center; }
+}
