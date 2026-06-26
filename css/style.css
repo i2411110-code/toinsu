@@ -80,8 +80,9 @@ body {
 /* =========================================
    CONTAINER & LAYOUT
 ========================================= */
+/* 기존 그대로 둠 */
 .container { max-width: 1440px; margin: 40px auto; padding: 0 30px; }
-.top-banner-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-bottom: 30px; }
+.sub-page { display: none; background: white; border-radius: 32px; padding: 45px; box-shadow: var(--card-shadow); max-width: 1200px; margin: 0 auto; }
 @media (max-width: 768px) { .top-banner-row { grid-template-columns: 1fr; } }
 .wide-banner { background: white; border-radius: 24px; padding: 30px 40px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: var(--card-shadow); border: 1px solid rgba(255,255,255,0.7); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; overflow: hidden; }
 .wide-banner:hover { transform: translateY(-5px); box-shadow: 0 20px 35px -10px rgba(37, 99, 235, 0.15); border-color: var(--main-blue); }
@@ -131,6 +132,24 @@ body {
 
 .sub-page { display: none; background: white; border-radius: 32px; padding: 45px; box-shadow: var(--card-shadow); max-width: 1200px; margin: 0 auto; }
 .section-title { font-size: 26px; font-weight: 700; color: var(--text-dark); margin-bottom: 25px; border-bottom: 2px solid var(--main-blue); padding-bottom: 15px; }
+
+/* ▼ 아래 블록을 CSS 파일 맨 끝에 새로 추가 */
+@media (min-width: 1025px) {
+    /* 가온 오피스 화면(.sub-page)의 1200px 박스 제한을 풀어줍니다 */
+    .sub-page {
+        max-width: 1600px;   /* 1200px → 1600px로 확장. 100%로 두면 모니터에 따라 너무 퍼질 수 있어 상한선만 둠 */
+    }
+
+    /* DB 영업 스크립트 사이드바를 조금 더 넓게 */
+    #dashboard-app {
+        grid-template-columns: 320px 1fr;
+    }
+
+    /* 탭 메뉴가 줄바꿈 없이 한 줄로, 가운데 쏠리지 않게 */
+    #office-private-nav {
+        max-width: 100%;
+    }
+}
 
 /* =========================================
    [개인공간 전산실 헤더 행: 이메일 넘침 방지 + 도움말 버튼]

@@ -968,6 +968,7 @@ window.switchGaonOfficeTab = function(tab) {
         'chk': 'checklist-app',
         'rpt': 'report-app',
         'cal': 'calendar-app',
+        'cca': 'cca-app',
     };
     // 모든 패널 숨김
     Object.values(PTAB_PANELS).forEach(id => {
@@ -996,6 +997,8 @@ window.switchGaonOfficeTab = function(tab) {
     if (tab === 'rpt' && window.initRptModule) window.initRptModule();
     // 캘린더 탭: 렌더
     if (tab === 'cal' && window.calendarRender) setTimeout(() => window.calendarRender(), 50);
+    // 항암 보장 분석 탭: 최초 1회 렌더
+    if (tab === 'cca' && window.renderCcaGrid) window.renderCcaGrid();
 };
 
 // ── 개인공간 전산실 전용: 2탭 전환 (input / list) ──
@@ -1024,8 +1027,8 @@ window.switchPrivateDataTab = function(tab) {
 
 // ── 공용 라우터: HTML onclick="window.switchPrivateTab(...)" 을 모두 처리 ──
 window.switchPrivateTab = function(target) {
-    // 가온 오피스 탭 키 (db/chk/rpt/cal)
-    if (['db', 'chk', 'rpt', 'cal'].includes(target)) {
+    // 가온 오피스 탭 키 (db/chk/rpt/cal/cca)
+    if (['db', 'chk', 'rpt', 'cal', 'cca'].includes(target)) {
         window.switchGaonOfficeTab(target);
     // 개인공간 탭 키 (input/list)
     } else if (['input', 'list'].includes(target)) {
@@ -1998,4 +2001,65 @@ window.deleteCurrentNotice = async function() {
     } catch(e) {
         alert('삭제 실패: ' + e.message);
     }
+};
+
+// =====================================================
+// ✅ [신규 추가] 항암 보장 분석 솔루션 — 그리드 렌더 & 상태 토글
+// =====================================================
+window.renderCcaGrid = function () {
+    const grid = document.getElementById('ccaItemsGrid');
+    if (!grid || grid.dataset.rendered === '1') return; // 중복 렌더링 방지
+    grid.dataset.rendered = '1';
+
+    const itemsData = [
+        { id: 1, name: "표적항암약물허가", amount: "3,000만원", status: "부족" },
+        { id: 2, name: "중입자치료",       amount: "미가입",     status: "미보장" },
+        { id: 3, name: "세기조절방사선",   amount: "미가입",     status: "미보장" },
+        { id: 4, name: "양성자치료",       amount: "미가입",     status: "미보장" },
+        { id: 5, name: "CAR-T항암",        amount: "미가입",     status: "미보장" },
+        { id: 6, name: "로봇암 수술비",    amount: "300만원",    status: "부족" },
+        { id: 7, name: "암수술비",         amount: "300만원",    status: "부족" },
+        { id: 8, name: "항암방사선약물",   amount: "300만원",    status: "부족" },
+    ];
+
+    const statusConfig = {
+        "적정":   { bg: "bg-[#E8F3FF]", text: "text-[#3182F6]" },
+        "부족":   { bg: "bg-[#FFF0F0]", text: "text-[#F04452]" },
+        "미보장": { bg: "bg-[#F2F4F6]", text: "text-[#8B95A1]" },
+    };
+    const statuses = ["적정", "부족", "미보장"];
+
+    itemsData.forEach(item => {
+        const container = document.createElement('div');
+        container.className = "flex flex-col items-center text-center";
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = "text-[#191F28] text-[17px] mb-1 font-bold tracking-tight";
+        nameSpan.innerText = item.name;
+
+        const amountInput = document.createElement('input');
+        amountInput.type = "text";
+        amountInput.value = item.amount;
+        amountInput.className = "text-[#8B95A1] text-[15px] font-normal bg-transparent border-none p-0 w-full text-center focus:ring-0 mb-5";
+
+        const btn = document.createElement('button');
+        const updateBtnStyle = (status) => {
+            btn.className = `w-full max-w-[120px] py-3 rounded-[18px] text-[17px] font-bold transition-all active:scale-95 ${statusConfig[status].bg} ${statusConfig[status].text}`;
+            btn.innerText = status;
+        };
+
+        let currentStatus = item.status;
+        updateBtnStyle(currentStatus);
+
+        btn.onclick = () => {
+            const nextIdx = (statuses.indexOf(currentStatus) + 1) % statuses.length;
+            currentStatus = statuses[nextIdx];
+            updateBtnStyle(currentStatus);
+        };
+
+        container.appendChild(nameSpan);
+        container.appendChild(amountInput);
+        container.appendChild(btn);
+        grid.appendChild(container);
+    });
 };
