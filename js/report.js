@@ -303,6 +303,19 @@ function getRptHTML() {
     </div>
   </div>
 
+  <!-- 모드 탭 -->
+  <div style="display:flex;gap:8px;margin-bottom:18px;">
+    <button id="rpt-mode-text-btn" class="rpt-mode-btn active" onclick="window.rptSwitchMode('text')">
+      <i class="bi bi-clipboard-fill"></i> 텍스트 붙여넣기 분석
+    </button>
+    <button id="rpt-mode-excel-btn" class="rpt-mode-btn" onclick="window.rptSwitchMode('excel')">
+      <i class="bi bi-file-earmark-excel-fill"></i> 토스DB 엑셀 분석 (니즈환기)
+    </button>
+  </div>
+
+  <!-- ===== 모드 1: 텍스트 분석 (기존 기능 그대로) ===== -->
+  <div id="rpt-mode-text-panel">
+
   <!-- STEP 1 -->
   <div class="rpt-card">
     <div class="rpt-step-label">STEP 1</div>
@@ -398,7 +411,11 @@ function getRptHTML() {
   <div id="rpt-error-box" style="display:none;margin-top:12px;padding:12px 16px;
     background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;color:#DC2626;font-size:13px;">
     <i class="bi bi-exclamation-circle-fill"></i> <span id="rpt-error-msg"></span>
-  </div>`;
+  </div>
+  
+   <!-- ===== 모드 2: 엑셀 분석 (report-excel.js 가 채워줌) ===== -->
+  <div id="rpt-mode-excel-panel" style="display:none;"></div>
+  `;
 }
 
 function injectRptStyles() {
@@ -415,6 +432,13 @@ function injectRptStyles() {
   cursor:pointer;transition:background .2s;width:100%;justify-content:center;}
 .btn-action:hover{background:#1D6FE8;}
 .btn-action:disabled{background:#94A3B8;cursor:not-allowed;}
+
+.rpt-mode-btn{flex:1;background:#F1F5F9;border:none;border-radius:10px;padding:12px;
+  font-size:13.5px;font-weight:700;color:#64748B;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;gap:6px;transition:all .15s;
+  font-family:'Noto Sans KR',sans-serif;}
+.rpt-mode-btn.active{background:#3182F6;color:#fff;}
+.rpt-mode-btn:not(.active):hover{background:#E2E8F0;}
 
 /* 미리보기 테이블 */
 #rpt-preview-table table{border-collapse:collapse;font-size:11px;font-family:'Noto Sans KR',sans-serif;min-width:700px;}
@@ -1011,3 +1035,25 @@ if (document.readyState === 'loading') {
 }
 
 })();
+
+// ─── 모드 전환 ───
+window.rptSwitchMode = function (mode) {
+  const textBtn  = document.getElementById('rpt-mode-text-btn');
+  const excelBtn = document.getElementById('rpt-mode-excel-btn');
+  const textPanel  = document.getElementById('rpt-mode-text-panel');
+  const excelPanel = document.getElementById('rpt-mode-excel-panel');
+  if (!textPanel || !excelPanel) return;
+
+  if (mode === 'excel') {
+    textBtn.classList.remove('active');
+    excelBtn.classList.add('active');
+    textPanel.style.display = 'none';
+    excelPanel.style.display = 'block';
+    if (window.initRptExcelModule) window.initRptExcelModule();
+  } else {
+    excelBtn.classList.remove('active');
+    textBtn.classList.add('active');
+    excelPanel.style.display = 'none';
+    textPanel.style.display = 'block';
+  }
+};
