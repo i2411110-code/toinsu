@@ -1,5 +1,6 @@
 // ================================================
 // 토스DB 엑셀 보장분석 → 니즈환기 리포트 생성기
+// v1.1: initRptExcelModule 중복 실행 방지 + 드래그앤드롭 안정화
 // - 토스 "OOO님의 보장분석 리포트.xlsx" 양식 업로드
 // - 소분류별 고객 보장총액(만원)을 권장 기준금액과 비교
 // - 부족/미가입 항목 빨간색 표시
@@ -8,7 +9,7 @@
 
 (function () {
 
-  // ─── [기준금액 설정] 단위: 만원. 필요시 이 값만 수정하면 전체 기준이 바뀝니다 ───
+  // ─── [기준금액 설정] 단위: 만원 ───
   const RECOMMEND = {
     // 실비
     '질병입원의료비': 5000, '질병외래의료비': 30, '질병처방조제료': 10,
@@ -42,21 +43,20 @@
 
   // ─── [대분류별 니즈환기 멘트 템플릿] ───
   const NEEDS_SCRIPT = {
-    '실비':       '실손의료비가 부족하거나 미가입 상태입니다. 실비는 실제 발생한 진료비를 직접 보장받는 가장 기본적인 항목이라, 우선적으로 보완을 권장드립니다.',
-    '3대진단':    '암·뇌혈관·심장질환(3대 진단비)이 권장 기준보다 부족합니다. 진단 시 치료비뿐 아니라 생활비까지 감당할 수 있는 수준으로 보강이 필요합니다.',
-    '수술비':     '질병·상해 수술비 보장이 부족합니다. 수술 1회당 발생하는 비급여 부담을 고려하면 추가 보강이 필요합니다.',
-    '입원일당':   '입원일당 보장이 부족합니다. 장기 입원 시 발생하는 간병비·생활비 공백을 막기 위한 보강이 필요합니다.',
-    '사망':       '사망보험금이 부족합니다. 가족의 생계 유지를 위한 최소한의 준비금으로 보강을 권장드립니다.',
-    '후유장해':   '후유장해 보장이 부족합니다. 장해로 인한 장기 소득 단절에 대비한 보강이 필요합니다.',
-    '골절화상':   '골절·화상 진단 보장이 부족합니다. 비교적 발생 빈도가 높은 항목이라 소액으로도 보강해두시면 좋습니다.',
+    '실비':         '실손의료비가 부족하거나 미가입 상태입니다. 실비는 실제 발생한 진료비를 직접 보장받는 가장 기본적인 항목이라, 우선적으로 보완을 권장드립니다.',
+    '3대진단':      '암·뇌혈관·심장질환(3대 진단비)이 권장 기준보다 부족합니다. 진단 시 치료비뿐 아니라 생활비까지 감당할 수 있는 수준으로 보강이 필요합니다.',
+    '수술비':       '질병·상해 수술비 보장이 부족합니다. 수술 1회당 발생하는 비급여 부담을 고려하면 추가 보강이 필요합니다.',
+    '입원일당':     '입원일당 보장이 부족합니다. 장기 입원 시 발생하는 간병비·생활비 공백을 막기 위한 보강이 필요합니다.',
+    '사망':         '사망보험금이 부족합니다. 가족의 생계 유지를 위한 최소한의 준비금으로 보강을 권장드립니다.',
+    '후유장해':     '후유장해 보장이 부족합니다. 장해로 인한 장기 소득 단절에 대비한 보강이 필요합니다.',
+    '골절화상':     '골절·화상 진단 보장이 부족합니다. 비교적 발생 빈도가 높은 항목이라 소액으로도 보강해두시면 좋습니다.',
     '생활배상책임': '일상생활배상책임 보장이 부족합니다. 가입금액이 크지 않아 적은 비용으로 큰 사고를 대비할 수 있는 항목입니다.',
-    '운전자':     '운전자 관련 보장(벌금·합의금·변호사비용 등)이 부족합니다. 운전을 하신다면 필수적으로 보강을 권장드립니다.',
-    '화재':       '화재 관련 보장이 부족합니다.',
-    '치아':       '치아 보존·보철 치료 보장이 부족합니다. 치과 치료비는 비급여 비중이 높아 보강 시 실질적인 도움이 됩니다.',
+    '운전자':       '운전자 관련 보장(벌금·합의금·변호사비용 등)이 부족합니다. 운전을 하신다면 필수적으로 보강을 권장드립니다.',
+    '화재':         '화재 관련 보장이 부족합니다.',
+    '치아':         '치아 보존·보철 치료 보장이 부족합니다. 치과 치료비는 비급여 비중이 높아 보강 시 실질적인 도움이 됩니다.',
   };
 
   let exState = { customerName: '', companies: [], rows: [] };
-  // rows: [{ cat, label, customerSum, recommend, status, perProduct: [v1, v2, ...] }]
 
   // ─── 외부 스크립트 로더 ───
   function loadScript(src) {
@@ -68,14 +68,16 @@
     });
   }
 
-  // ─── 모듈 초기화 (mode 전환 시 호출) ───
+  // ─── 모듈 초기화 ───
   window.initRptExcelModule = function () {
     const panel = document.getElementById('rpt-mode-excel-panel');
     if (!panel) return;
+    // ✅ 이미 초기화된 경우 재실행 방지
     if (panel.dataset.inited) return;
     panel.dataset.inited = '1';
     panel.innerHTML = getExcelHTML();
     injectExcelStyles();
+    bindDropZone(); // ✅ 드롭존 이벤트를 초기화 후 바인딩
   };
 
   function getExcelHTML() {
@@ -84,7 +86,7 @@
       <div class="rpt-step-label">STEP 1</div>
       <h3 class="rpt-step-title">토스DB 보장분석 엑셀 업로드</h3>
       <p class="rpt-step-desc">고객의 "OOO님의 보장분석 리포트.xlsx" 파일을 업로드하면, 부족한 보장 항목을 자동으로 찾아 빨간색으로 표시하고 안내 멘트를 생성합니다.</p>
-      <label id="rptex-drop" class="rptex-drop">
+      <label id="rptex-drop" class="rptex-drop" for="rptex-file-input">
         <i class="bi bi-file-earmark-excel" style="font-size:28px;color:#3182F6;"></i>
         <span id="rptex-drop-text">클릭하거나 파일을 끌어다 놓으세요 (.xlsx)</span>
         <input type="file" id="rptex-file-input" accept=".xlsx" style="display:none;" onchange="window.rptExHandleFile(this.files[0])">
@@ -153,30 +155,31 @@
     document.head.appendChild(s);
   }
 
-  // ─── 드래그앤드롭 바인딩 (드롭 영역 클릭 시 input도 같이 열리도록) ───
-  document.addEventListener('click', function (e) {
-    if (e.target && e.target.id === 'rptex-drop') {
-      // label 클릭 시 자동으로 input 열림 (htmlFor 역할), 별도 처리 불필요
-    }
-  });
-  document.addEventListener('dragover', function (e) {
-    const drop = document.getElementById('rptex-drop');
-    if (drop && drop.contains(e.target)) { e.preventDefault(); drop.classList.add('dragover'); }
-  });
-  document.addEventListener('dragleave', function (e) {
-    const drop = document.getElementById('rptex-drop');
-    if (drop) drop.classList.remove('dragover');
-  });
-  document.addEventListener('drop', function (e) {
-    const drop = document.getElementById('rptex-drop');
-    if (drop && drop.contains(e.target)) {
-      e.preventDefault();
-      drop.classList.remove('dragover');
-      const f = e.dataTransfer.files && e.dataTransfer.files[0];
-      if (f) window.rptExHandleFile(f);
-    }
-  });
+  // ✅ [수정] 드롭존 이벤트를 별도 함수로 분리 — 초기화 후 패널 내부 요소에만 바인딩
+  function bindDropZone() {
+    const panel = document.getElementById('rpt-mode-excel-panel');
+    if (!panel) return;
 
+    panel.addEventListener('dragover', function (e) {
+      const drop = document.getElementById('rptex-drop');
+      if (drop) { e.preventDefault(); drop.classList.add('dragover'); }
+    });
+    panel.addEventListener('dragleave', function (e) {
+      const drop = document.getElementById('rptex-drop');
+      if (drop) drop.classList.remove('dragover');
+    });
+    panel.addEventListener('drop', function (e) {
+      const drop = document.getElementById('rptex-drop');
+      if (drop) {
+        e.preventDefault();
+        drop.classList.remove('dragover');
+        const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) window.rptExHandleFile(f);
+      }
+    });
+  }
+
+  // ─── 에러 표시/숨김 ───
   function rptExShowError(msg) {
     const b = document.getElementById('rptex-error-box');
     if (b) { document.getElementById('rptex-error-msg').textContent = msg; b.style.display = 'block'; }
@@ -224,7 +227,6 @@
   };
 
   // ─── 토스 보장분석 엑셀(AOA) 파싱 ───
-  // aoa[r][c] : c=0 은 항상 빈 A열, c=1 → B열(대분류), c=2 → C열(소분류), c=3 → D열(보장총액), c>=4 → 상품별 금액
   function parseTossExcel(aoa) {
     let customerName = '';
     const titleCell = (aoa[1] && aoa[1][1]) || (aoa[0] && aoa[0][1]) || '';
@@ -242,10 +244,9 @@
       const c = String(row[2] || '').trim();
       const d = row[3];
 
-      // 헤더 행 감지: B='대분류' & C='소분류'
+      // 헤더 행 감지
       if (b === '대분류' && c === '소분류') {
         headerSeen = true;
-        // 상품명은 첫 헤더 행에서만 추출 (E열~ 부터)
         if (companies.length === 0) {
           for (let cc = 4; cc < row.length; cc++) {
             const name = String(row[cc] || '').trim();
@@ -254,10 +255,10 @@
         }
         continue;
       }
-      if (!headerSeen) continue; // 표 시작 전(상세정보 섹션 등)은 건너뜀
+      if (!headerSeen) continue;
 
       if (b) currentCat = b;
-      if (!c) continue; // 소분류 없는 빈 행은 skip
+      if (!c) continue;
 
       const sumAmt = parseManwon(d);
       const perProduct = [];
@@ -266,7 +267,7 @@
       }
 
       const recommend = RECOMMEND[c];
-      let status = 'none'; // 기준 없음
+      let status = 'none';
       if (recommend !== undefined) {
         status = sumAmt >= recommend ? 'ok' : 'low';
       }
@@ -343,7 +344,6 @@
       return `안녕하세요, ${name || '고객'}님.\n전담 매니저 심현진입니다.\n\n보장분석 결과, 전반적으로 보장이 양호하게 준비되어 있으십니다.\n다만 보험은 시기에 따라 갱신이나 한도 변경이 있을 수 있어, 1년에 한 번씩 점검해보시는 걸 권장드립니다. 🙂`;
     }
 
-    // 대분류별 그룹핑 (중복 제거)
     const cats = [];
     lowItems.forEach(r => { if (!cats.includes(r.cat)) cats.push(r.cat); });
 
@@ -388,4 +388,4 @@
       .replace(/"/g, '&quot;');
   }
 
-})();
+})(); 
