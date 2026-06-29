@@ -1,6 +1,6 @@
 // ================================================
 // 보장분석 리포트 생성기 - 가온사업단 오피스 모듈
-// v7.0: 상품명 중복제거 강화 + 미리보기 토글 + 인쇄 CSS + 엑셀 스타일 일치
+// v7.1: 엑셀 패널 div 중첩 버그 수정 + rptSwitchMode null 체크 추가
 // ================================================
 
 (function () {
@@ -85,7 +85,7 @@ const INSURER_MAP = [
   { keyword: '교보생명',       insurer: '교보생명' },
 ];
 
-// ─── [v7 개선] 담보 키워드 매핑 ───
+// ─── 담보 키워드 매핑 ───
 const COVERAGE_RULES = [
   { key: 'inpatient',        kws: ['입원의료비', '입원 의료비', '상해+질병 입원', '입원실료'] },
   { key: 'outpatient',       kws: ['외래의료비', '처방조제료', '통원의료비', '통원 의료비', '외래'] },
@@ -153,30 +153,26 @@ function extractInsurer(product) {
   return m ? m[0].slice(0, 10) : product.slice(0, 8);
 }
 
-// ─── [v7 핵심] 상품명 정규화 키 생성 ───
-// 띄어쓰기·특수문자·괄호·형번호 등을 제거해 동일 상품 판별
+// ─── 상품명 정규화 키 생성 ───
 function normalizeProductKey(name) {
   return name
-    .replace(/\s/g, '')                    // 공백 제거
-    .replace(/[()（）【】\[\]<>「」『』]/g, '') // 괄호 제거
-    .replace(/[·・,，、]/g, '')              // 구분자 제거
-    .replace(/무배당|무\)|무\(|갱신형|해약환급금|미지급형|납입면제형|최초계약|일반심사형/g, '') // 공통 접미사 제거
+    .replace(/\s/g, '')
+    .replace(/[()（）【】\[\]<>「」『』]/g, '')
+    .replace(/[·・,，、]/g, '')
+    .replace(/무배당|무\)|무\(|갱신형|해약환급금|미지급형|납입면제형|최초계약|일반심사형/g, '')
     .toLowerCase();
 }
 
-// ─── [v7 핵심] 상품명인지 담보명인지 판별 ───
-// 진짜 보험 상품명 패턴: 브랜드+상품 키워드 포함, 금액 없음, 최소 길이
+// ─── 상품명 판별 ───
 const PRODUCT_MUST_HAVE = /보험|케어|플러스|종합|건강|생명|화재|손보|통합보험|라이프|운전자보험|치아보험|누리는|에버리치|굿앤굿|Chubb|ABL|버팀목|이지로운|뉴케어|더핏|흥Good|흥good/i;
 const AMT_RE = /[0-9,]+\s*(?:억\s*[0-9,]*\s*만원?|만원?|억)/;
-
-// 담보명으로 오인될 수 있는 패턴 (이런 패턴이 있으면 상품명 아님)
 const COVERAGE_LIKE = /진단비|진단금|수술비|입원일당|치료비|사망보험금|사망보험|사망급부|재해사망|상해사망|입원비|수술급|배상책임|치료자금|치료지원금|부상치료|골절|보장보험금|보험금$|손해액|합의금|선임비용|벌금|응급실|처방조제|외래진료|깁스|혈전|항암|표적|항암방사|로봇암/;
 
 function isProductLine(line) {
-  if (!PRODUCT_MUST_HAVE.test(line)) return false;  // 보험 키워드 없으면 false
-  if (AMT_RE.test(line)) return false;              // 금액 포함이면 담보명
-  if (COVERAGE_LIKE.test(line)) return false;       // 담보명 패턴이면 false
-  if (line.length < 7) return false;               // 너무 짧으면 false
+  if (!PRODUCT_MUST_HAVE.test(line)) return false;
+  if (AMT_RE.test(line)) return false;
+  if (COVERAGE_LIKE.test(line)) return false;
+  if (line.length < 7) return false;
   return true;
 }
 
@@ -191,7 +187,7 @@ function mapCoverageKey(label) {
   return null;
 }
 
-// ─── [v7 핵심] 파싱 함수 - 중복 상품 병합 로직 강화 ───
+// ─── 파싱 함수 ───
 function parseInsuranceText(raw) {
   const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
   let customerName = '';
@@ -199,7 +195,6 @@ function parseInsuranceText(raw) {
   const nameMatch = lines[0] && lines[0].match(/^(.{1,8})\s*님/);
   if (nameMatch) customerName = nameMatch[1].trim();
 
-  // 무시할 대분류 헤더
   const IGNORE_LINES = new Set([
     '사망','후유장해','실손의료비','수술비','입원비(일당)','치료비','뇌혈관질환',
     '심장질환','치매','운전자','법률,배상책임','치아,화상,골절','암','골절','배상',
@@ -207,9 +202,7 @@ function parseInsuranceText(raw) {
   ]);
   const SUMMARY_RE = /^(충분|부족|미가입|권장금액|가입금액|부족금액)\s*[:：]?/;
 
-  // productMap: normalizedKey → { displayName, insurer, coverages, premium, start_date, end_date }
   const productMap = new Map();
-  // 삽입 순서 유지용
   const productOrder = [];
 
   function emptyEntry(product) {
@@ -235,7 +228,6 @@ function parseInsuranceText(raw) {
     if (SUMMARY_RE.test(line)) { pendingLabel = null; continue; }
     if (i === 0 && nameMatch) continue;
 
-    // 상품명 감지
     if (isProductLine(line)) {
       const nk = normalizeProductKey(line);
       if (!productMap.has(nk)) {
@@ -247,7 +239,6 @@ function parseInsuranceText(raw) {
       continue;
     }
 
-    // 금액 줄
     if (AMT_RE.test(line)) {
       if (currentNormKey && pendingLabel) {
         const key = mapCoverageKey(pendingLabel);
@@ -260,7 +251,6 @@ function parseInsuranceText(raw) {
       continue;
     }
 
-    // 세부 보장명 후보 (담보명)
     if (currentNormKey && line.length >= 2) {
       pendingLabel = line;
     }
@@ -294,6 +284,7 @@ window.initRptModule = function () {
   injectRptStyles();
 };
 
+// ✅ [수정] rpt-mode-text-panel 닫는 태그 추가 + 엑셀 패널 분리
 function getRptHTML() {
   return `
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
@@ -313,16 +304,16 @@ function getRptHTML() {
     </button>
   </div>
 
-  <!-- ===== 모드 1: 텍스트 분석 (기존 기능 그대로) ===== -->
+  <!-- ===== 모드 1: 텍스트 분석 ===== -->
   <div id="rpt-mode-text-panel">
 
-  <!-- STEP 1 -->
-  <div class="rpt-card">
-    <div class="rpt-step-label">STEP 1</div>
-    <h3 class="rpt-step-title">보장 텍스트 붙여넣기</h3>
-    <p class="rpt-step-desc">보장분석 요약 텍스트를 아래 영역에 붙여넣으세요.</p>
-    <textarea id="rpt-text-input"
-      placeholder="예시)
+    <!-- STEP 1 -->
+    <div class="rpt-card">
+      <div class="rpt-step-label">STEP 1</div>
+      <h3 class="rpt-step-title">보장 텍스트 붙여넣기</h3>
+      <p class="rpt-step-desc">보장분석 요약 텍스트를 아래 영역에 붙여넣으세요.</p>
+      <textarea id="rpt-text-input"
+        placeholder="예시)
 신정원 님
 
 사망
@@ -331,89 +322,90 @@ function getRptHTML() {
 일반사망보험_신정원
 100만원
 ..."
-      style="width:100%;height:220px;border:1.5px solid #BAD7FB;border-radius:10px;
-        padding:12px 14px;font-size:13px;font-family:'Noto Sans KR',sans-serif;
-        color:#334155;resize:vertical;box-sizing:border-box;line-height:1.7;
-        background:#F8FBFF;outline:none;transition:border 0.2s;"
-      oninput="window.rptCheckInput()"
-      onfocus="this.style.borderColor='#3182F6'"
-      onblur="this.style.borderColor='#BAD7FB'"
-    ></textarea>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
-      <span id="rpt-char-count" style="font-size:11px;color:#94A3B8;">0자 입력됨</span>
-      <button onclick="document.getElementById('rpt-text-input').value='';window.rptCheckInput();"
-        style="background:none;border:none;font-size:12px;color:#94A3B8;cursor:pointer;padding:2px 6px;">지우기</button>
-    </div>
-  </div>
-
-  <!-- STEP 2 -->
-  <div class="rpt-card">
-    <div class="rpt-step-label">STEP 2</div>
-    <h3 class="rpt-step-title">AI 보장 분석 시작</h3>
-    <p class="rpt-step-desc">버튼을 클릭하면 입력된 텍스트를 분석하여 보장분석표를 생성합니다.</p>
-
-    <div id="rpt-progress-wrap" style="display:none;margin-bottom:16px;">
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748B;margin-bottom:6px;">
-        <span id="rpt-progress-text">분석 준비 중...</span>
-        <span id="rpt-progress-pct">0%</span>
-      </div>
-      <div style="height:10px;background:#E5E8EB;border-radius:99px;overflow:hidden;">
-        <div id="rpt-progress-bar"
-          style="height:100%;width:0%;background:linear-gradient(90deg,#3182F6,#60A5FA);
-          border-radius:99px;transition:width 0.45s cubic-bezier(0.4,0,0.2,1);"></div>
-      </div>
-      <div id="rpt-page-status" style="font-size:11px;color:#94A3B8;margin-top:5px;"></div>
-    </div>
-
-    <button id="rpt-analyze-btn" class="btn-action" style="max-width:240px;" onclick="window.rptStartParsing()">
-      <i class="bi bi-lightning-charge-fill"></i> AI 분석 시작
-    </button>
-  </div>
-
-  <!-- STEP 3 -->
-  <div id="rpt-step3" class="rpt-card" style="display:none;">
-    <div class="rpt-step-label">STEP 3</div>
-    <h3 class="rpt-step-title">분석 완료</h3>
-    <p class="rpt-step-desc" id="rpt-result-summary" style="color:#3182F6;font-weight:600;margin-bottom:16px;"></p>
-
-    <!-- 액션 버튼들 -->
-    <div style="display:flex;gap:10px;margin-bottom:0;flex-wrap:wrap;">
-      <!-- [v7] 미리보기 토글 버튼 -->
-      <button id="rpt-preview-btn" class="btn-action" style="width:auto;padding:10px 20px;background:#0F172A;" onclick="window.rptTogglePreview()">
-        <i class="bi bi-table"></i> 미리보기 펼치기
-      </button>
-      <button class="btn-action" style="width:auto;padding:10px 20px;" onclick="window.rptDownloadExcel()">
-        <i class="bi bi-file-earmark-excel-fill"></i> 엑셀 다운로드
-      </button>
-      <button class="btn-action" style="width:auto;padding:10px 20px;background:#475569;" onclick="window.rptPrint()">
-        <i class="bi bi-printer-fill"></i> 인쇄하기
-      </button>
-      <button style="background:none;border:1px solid #E2E8F0;padding:10px 20px;border-radius:8px;
-        cursor:pointer;font-size:13px;color:#475569;" onclick="window.rptReset()">
-        <i class="bi bi-arrow-counterclockwise"></i> 다시 시작
-      </button>
-    </div>
-  </div>
-
-  <!-- [v7] 미리보기 패널 (토글) -->
-  <div id="rpt-preview-panel" style="display:none;margin-top:0;">
-    <div class="rpt-card" style="margin-bottom:0;border-top-left-radius:0;border-top-right-radius:0;border-top:none;">
-      <p style="font-size:12px;color:#3182F6;margin:0 0 12px 0;font-weight:600;">
-        💡 고객 이름, 금액, 텍스트를 클릭하면 직접 수정할 수 있습니다. (금액 수정 시 자동 합산)
-      </p>
-      <div style="overflow-x:auto;border-radius:10px;border:1px solid #E2E8F0;">
-        <div id="rpt-preview-table"></div>
+        style="width:100%;height:220px;border:1.5px solid #BAD7FB;border-radius:10px;
+          padding:12px 14px;font-size:13px;font-family:'Noto Sans KR',sans-serif;
+          color:#334155;resize:vertical;box-sizing:border-box;line-height:1.7;
+          background:#F8FBFF;outline:none;transition:border 0.2s;"
+        oninput="window.rptCheckInput()"
+        onfocus="this.style.borderColor='#3182F6'"
+        onblur="this.style.borderColor='#BAD7FB'"
+      ></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+        <span id="rpt-char-count" style="font-size:11px;color:#94A3B8;">0자 입력됨</span>
+        <button onclick="document.getElementById('rpt-text-input').value='';window.rptCheckInput();"
+          style="background:none;border:none;font-size:12px;color:#94A3B8;cursor:pointer;padding:2px 6px;">지우기</button>
       </div>
     </div>
-  </div>
 
-  <!-- 에러 박스 -->
-  <div id="rpt-error-box" style="display:none;margin-top:12px;padding:12px 16px;
-    background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;color:#DC2626;font-size:13px;">
-    <i class="bi bi-exclamation-circle-fill"></i> <span id="rpt-error-msg"></span>
+    <!-- STEP 2 -->
+    <div class="rpt-card">
+      <div class="rpt-step-label">STEP 2</div>
+      <h3 class="rpt-step-title">AI 보장 분석 시작</h3>
+      <p class="rpt-step-desc">버튼을 클릭하면 입력된 텍스트를 분석하여 보장분석표를 생성합니다.</p>
+
+      <div id="rpt-progress-wrap" style="display:none;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#64748B;margin-bottom:6px;">
+          <span id="rpt-progress-text">분석 준비 중...</span>
+          <span id="rpt-progress-pct">0%</span>
+        </div>
+        <div style="height:10px;background:#E5E8EB;border-radius:99px;overflow:hidden;">
+          <div id="rpt-progress-bar"
+            style="height:100%;width:0%;background:linear-gradient(90deg,#3182F6,#60A5FA);
+            border-radius:99px;transition:width 0.45s cubic-bezier(0.4,0,0.2,1);"></div>
+        </div>
+        <div id="rpt-page-status" style="font-size:11px;color:#94A3B8;margin-top:5px;"></div>
+      </div>
+
+      <button id="rpt-analyze-btn" class="btn-action" style="max-width:240px;" onclick="window.rptStartParsing()">
+        <i class="bi bi-lightning-charge-fill"></i> AI 분석 시작
+      </button>
+    </div>
+
+    <!-- STEP 3 -->
+    <div id="rpt-step3" class="rpt-card" style="display:none;">
+      <div class="rpt-step-label">STEP 3</div>
+      <h3 class="rpt-step-title">분석 완료</h3>
+      <p class="rpt-step-desc" id="rpt-result-summary" style="color:#3182F6;font-weight:600;margin-bottom:16px;"></p>
+
+      <div style="display:flex;gap:10px;margin-bottom:0;flex-wrap:wrap;">
+        <button id="rpt-preview-btn" class="btn-action" style="width:auto;padding:10px 20px;background:#0F172A;" onclick="window.rptTogglePreview()">
+          <i class="bi bi-table"></i> 미리보기 펼치기
+        </button>
+        <button class="btn-action" style="width:auto;padding:10px 20px;" onclick="window.rptDownloadExcel()">
+          <i class="bi bi-file-earmark-excel-fill"></i> 엑셀 다운로드
+        </button>
+        <button class="btn-action" style="width:auto;padding:10px 20px;background:#475569;" onclick="window.rptPrint()">
+          <i class="bi bi-printer-fill"></i> 인쇄하기
+        </button>
+        <button style="background:none;border:1px solid #E2E8F0;padding:10px 20px;border-radius:8px;
+          cursor:pointer;font-size:13px;color:#475569;" onclick="window.rptReset()">
+          <i class="bi bi-arrow-counterclockwise"></i> 다시 시작
+        </button>
+      </div>
+    </div>
+
+    <!-- 미리보기 패널 -->
+    <div id="rpt-preview-panel" style="display:none;margin-top:0;">
+      <div class="rpt-card" style="margin-bottom:0;border-top-left-radius:0;border-top-right-radius:0;border-top:none;">
+        <p style="font-size:12px;color:#3182F6;margin:0 0 12px 0;font-weight:600;">
+          💡 고객 이름, 금액, 텍스트를 클릭하면 직접 수정할 수 있습니다. (금액 수정 시 자동 합산)
+        </p>
+        <div style="overflow-x:auto;border-radius:10px;border:1px solid #E2E8F0;">
+          <div id="rpt-preview-table"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 에러 박스 -->
+    <div id="rpt-error-box" style="display:none;margin-top:12px;padding:12px 16px;
+      background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;color:#DC2626;font-size:13px;">
+      <i class="bi bi-exclamation-circle-fill"></i> <span id="rpt-error-msg"></span>
+    </div>
+
   </div>
-  
-   <!-- ===== 모드 2: 엑셀 분석 (report-excel.js 가 채워줌) ===== -->
+  <!-- ✅ [수정] rpt-mode-text-panel 여기서 닫기 (엑셀 패널과 분리) -->
+
+  <!-- ===== 모드 2: 엑셀 분석 (report-excel.js 가 채워줌) ===== -->
   <div id="rpt-mode-excel-panel" style="display:none;"></div>
   `;
 }
@@ -440,7 +432,6 @@ function injectRptStyles() {
 .rpt-mode-btn.active{background:#3182F6;color:#fff;}
 .rpt-mode-btn:not(.active):hover{background:#E2E8F0;}
 
-/* 미리보기 테이블 */
 #rpt-preview-table table{border-collapse:collapse;font-size:11px;font-family:'Noto Sans KR',sans-serif;min-width:700px;}
 #rpt-preview-table th,#rpt-preview-table td{border:1px solid #C5CBD3;padding:5px 7px;white-space:nowrap;text-align:center;}
 #rpt-preview-table .r-cat{background:#001E42;color:#fff;font-weight:700;}
@@ -460,8 +451,6 @@ function injectRptStyles() {
 [contenteditable="true"]:focus{outline:2px solid #3182F6;background:#fff!important;color:#000!important;}
 @keyframes rpt-fadein{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
 .rpt-fadein{animation:rpt-fadein .5s ease both;}
-
-/* 미리보기 패널 애니메이션 */
 #rpt-preview-panel{transition:opacity .3s ease;}
 #rpt-step3.has-preview{border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:0;}
 `;
@@ -542,12 +531,10 @@ window.rptStartParsing = function () {
         if (step3) {
           step3.style.display = 'block';
           step3.classList.add('rpt-fadein');
-          // 결과 요약 업데이트
           const summary = document.getElementById('rpt-result-summary');
           if (summary) {
             summary.textContent = `✅ 총 ${rptState.companies.length}개 보험 상품 분석 완료! 아래 버튼으로 미리보기·다운로드·인쇄할 수 있습니다.`;
           }
-          // 미리보기 버튼 업데이트
           const pvBtn = document.getElementById('rpt-preview-btn');
           if (pvBtn) pvBtn.innerHTML = '<i class="bi bi-table"></i> 미리보기 펼치기';
         }
@@ -565,7 +552,7 @@ window.rptStartParsing = function () {
   }, 1700);
 };
 
-// ─── [v7] 미리보기 토글 ───
+// ─── 미리보기 토글 ───
 window.rptTogglePreview = function () {
   const panel = document.getElementById('rpt-preview-panel');
   const btn = document.getElementById('rpt-preview-btn');
@@ -685,7 +672,7 @@ function renderPreview() {
   document.getElementById('rpt-preview-table').innerHTML = html;
 }
 
-// ─── [v7] 엑셀 다운로드 - 심*진 파일 스타일 완전 일치 ───
+// ─── 엑셀 다운로드 ───
 window.rptDownloadExcel = async function () {
   if (!window.XLSX) {
     await loadScript('https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js');
@@ -697,20 +684,18 @@ window.rptDownloadExcel = async function () {
   const ws   = {};
   const merges = [];
 
-  // 색상 (심*진 엑셀에서 추출한 정확한 값)
   const C = {
-    navy:    '001E42',  // 헤더 배경
+    navy:    '001E42',
     white:   'FFFFFF',
-    gray:    'D6DEE7',  // 담보명/합산 배경
-    feeGray: 'D7DDE4',  // 보험료 행 배경
-    oddBg:   'FFFFFF',  // 홀수 담보 배경
-    evenBg:  'F8FAFC',  // 짝수 담보 배경
+    gray:    'D6DEE7',
+    feeGray: 'D7DDE4',
+    oddBg:   'FFFFFF',
+    evenBg:  'F8FAFC',
     footBg:  'F8FAFC',
-    blue:    '1E40AF',  // 담보 금액 글자
-    darkNav: '001E42',  // 합산 글자
-    red:     'C00000',  // 보험사명 글자
-    grayTxt: '94A3B8',  // 각주 글자
-    titleBorderBottom: '001E42',
+    blue:    '1E40AF',
+    darkNav: '001E42',
+    red:     'C00000',
+    grayTxt: '94A3B8',
   };
 
   const thin = { style: 'thin', color: { rgb: 'C5CBD3' } };
@@ -742,55 +727,42 @@ window.rptDownloadExcel = async function () {
 
   let r = 0;
 
-  // ── 타이틀 행 (Row 1) ──
   setCell(r, 0, `${name} 님 보장분석표`, null, C.navy, true, 'left', 14, false);
-  // 타이틀 셀 하단 테두리 강조
   const titleCell = ws[XLSX.utils.encode_cell({ r, c: 0 })];
   titleCell.s.border = { ...BD, bottom: { style: 'medium', color: { rgb: C.navy } } };
   addMerge(r, 0, r, 2 + N);
   r++;
 
-  // ── 헤더 블록 (Row 2~6): 주요보장 병합 ──
-  // 주요보장 셀 (A열, rowspan 5)
   setCell(r, 0, '주요\n보장', C.navy, C.white, true, 'center', 10);
   addMerge(r, 0, r + 4, 0);
-
-  // 고객보장합산 셀 (C열, rowspan 4 → 행 2~5, 보험료 행 위까지)
   setCell(r, 2, '고객\n보장합산', C.gray, C.darkNav, true, 'center', 10);
   addMerge(r, 2, r + 3, 2);
-
-  // 보험사 행
   setCell(r, 1, '보험사', C.navy, C.white, true, 'center', 10);
   co.forEach((c, i) => setCell(r, 3 + i, c.name, C.gray, C.red, true, 'center', 10));
   r++;
 
-  // 상품명 행
   setCell(r, 1, '상품명', C.navy, C.white, true, 'center', 10);
   setCell(r, 2, '', C.gray, null, false, 'center');
   co.forEach((c, i) => setCell(r, 3 + i, c.product, C.white, '000000', false, 'center', 9));
   r++;
 
-  // 가입시기 행
   setCell(r, 1, '가입시기', C.navy, C.white, true, 'center', 10);
   setCell(r, 2, '', C.gray, null, false, 'center');
   co.forEach((c, i) => setCell(r, 3 + i, c.start_date || '', C.gray, '000000', false, 'center', 9));
   r++;
 
-  // 납입기간/만기 행
   setCell(r, 1, '납입기간/\n만기시점', C.navy, C.white, true, 'center', 10);
   setCell(r, 2, '', C.gray, null, false, 'center');
   co.forEach((c, i) => setCell(r, 3 + i, c.end_date || '', C.white, '000000', false, 'center', 9));
   r++;
 
-  // 보험료 행
-  setCell(r, 0, '', C.navy, C.white, true, 'center'); // 주요보장 병합 내부
+  setCell(r, 0, '', C.navy, C.white, true, 'center');
   setCell(r, 1, '보험료', C.feeGray, C.darkNav, true, 'center', 10);
   const totalPrem = co.reduce((s, c) => s + (c.premium || 0), 0);
   setCell(r, 2, totalPrem || '', C.feeGray, C.darkNav, true, 'right', 10);
   co.forEach((c, i) => setCell(r, 3 + i, c.premium || '', C.feeGray, C.darkNav, true, 'right', 10));
   r++;
 
-  // ── 담보 행 ──
   let catStartRow = -1, catCurr = null;
 
   COVERAGE_DEF.forEach((cov, idx) => {
@@ -805,42 +777,31 @@ window.rptDownloadExcel = async function () {
     }
 
     setCell(r, 1, cov.label, C.gray, '000000', true, 'left', 10, false);
-
     const vals = co.map(c => (c.coverages || {})[cov.key] || 0);
     const sum  = vals.reduce((s, v) => s + v, 0);
     setCell(r, 2, sum ? fmtMan(sum) : '', C.gray, C.darkNav, true, 'right', 10, false);
-
     vals.forEach((v, i) => setCell(r, 3 + i, v ? fmtMan(v) : '', dataBg, C.blue, false, 'right', 10, false));
     r++;
   });
 
-  // 마지막 카테고리 병합 닫기
   if (catCurr !== null) addMerge(catStartRow, 0, r - 1, 0);
 
-  // ── 각주 행 ──
   setCell(r, 0,
     '* 본 자료는 단순 참고용이며 보험 보장에 대한 자세한 사항은 해당 증권과 약관을 참고하시기 바랍니다.',
     C.footBg, C.grayTxt, false, 'left', 9, false
   );
   addMerge(r, 0, r, 2 + N);
 
-  // ── 범위·병합·열너비·행높이 설정 ──
   ws['!ref']    = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r, c: 2 + N } });
   ws['!merges'] = merges;
-
-  // 심*진 엑셀과 동일한 열 너비
   ws['!cols'] = [
-    { wch: 5 },   // A: 주요보장
-    { wch: 22 },  // B: 담보명
-    { wch: 12 },  // C: 고객보장합산
-    ...co.map(() => ({ wch: 12 })), // 각 상품 열
+    { wch: 5 },
+    { wch: 22 },
+    { wch: 12 },
+    ...co.map(() => ({ wch: 12 })),
   ];
-
-  // 행 높이
   ws['!rows'] = Array.from({ length: r + 1 }, (_, i) => ({
-    hpt: i === 0 ? 28         // 타이틀
-       : i >= 1 && i <= 5 ? 36  // 헤더 5행
-       : 22                   // 담보 행
+    hpt: i === 0 ? 28 : i >= 1 && i <= 5 ? 36 : 22
   }));
 
   XLSX.utils.book_append_sheet(wb, ws, '보장분석표');
@@ -850,7 +811,7 @@ window.rptDownloadExcel = async function () {
   XLSX.writeFile(wb, `${name}_보장분석표_${ds}.xlsx`);
 };
 
-// ─── [v7] 인쇄 - A4 가로 1페이지 행 잘림 방지 ───
+// ─── 인쇄 ───
 window.rptPrint = function () {
   const content = document.getElementById('rpt-preview-table').innerHTML;
   const win = window.open('', '_blank', 'width=1400,height=900');
@@ -859,35 +820,10 @@ window.rptPrint = function () {
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
-
-      /* ── 화면 미리보기 ── */
-      body {
-        font-family: 'Noto Sans KR', sans-serif;
-        background: #f0f0f0;
-        padding: 10px;
-      }
-      .print-wrapper {
-        background: white;
-        padding: 8mm 6mm;
-        width: fit-content;
-        min-width: 100%;
-      }
-
-      table {
-        border-collapse: collapse;
-        table-layout: auto;
-        width: 100%;
-      }
-      th, td {
-        border: 1px solid #C5CBD3;
-        padding: 3px 4px;
-        text-align: center;
-        font-size: 9px;
-        font-family: 'Noto Sans KR', sans-serif;
-        line-height: 1.3;
-        vertical-align: middle;
-        white-space: nowrap;
-      }
+      body { font-family: 'Noto Sans KR', sans-serif; background: #f0f0f0; padding: 10px; }
+      .print-wrapper { background: white; padding: 8mm 6mm; width: fit-content; min-width: 100%; }
+      table { border-collapse: collapse; table-layout: auto; width: 100%; }
+      th, td { border: 1px solid #C5CBD3; padding: 3px 4px; text-align: center; font-size: 9px; font-family: 'Noto Sans KR', sans-serif; line-height: 1.3; vertical-align: middle; white-space: nowrap; }
       .r-cat    { background: #001E42 !important; color: #fff; font-weight: 700; width: 22px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .r-item   { background: #D6DEE7 !important; font-weight: 600; text-align: left; min-width: 90px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .r-sum    { background: #D6DEE7 !important; font-weight: 700; color: #001E42; min-width: 55px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -900,78 +836,24 @@ window.rptPrint = function () {
       .r-val-alt{ background: #F8FAFC !important; color: #1E40AF; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .r-title td { font-size: 13px; font-weight: 700; text-align: left; padding: 7px 8px; border-bottom: 2px solid #001E42; }
       .r-foot td { background: #F8FAFC !important; font-size: 8px; color: #64748B; text-align: left; padding: 4px 6px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-
-      /* ── @media print ──
-         핵심 원칙:
-         - 행(row)은 절대 잘리지 않도록 → page-break-inside: avoid on tr
-         - 열(column)이 많으면 가로로 다음 페이지로 → 가로 overflow 허용
-         - 모든 행이 한 세로 페이지에 들어가도록 세로 스케일 조정
-      */
       @media print {
-        @page {
-          size: A4 landscape;
-          margin: 8mm 6mm;
-        }
-
-        html, body {
-          width: auto;
-          height: auto;
-          background: white !important;
-          padding: 0;
-          margin: 0;
-        }
-
-        .print-wrapper {
-          padding: 0;
-          background: white !important;
-          /* 가로는 자연스럽게, 세로만 1페이지 강제 */
-          /* transform 대신 테이블 자체 폰트/패딩 축소로 대응 */
-        }
-
-        table {
-          width: auto;
-          /* 열 수가 많을 때 가로로 넘어가도록 */
-          page-break-inside: auto;
-        }
-
-        /* 행은 절대 중간에서 잘리지 않도록 */
-        tr {
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-
-        /* 세로 방향으로 모든 행이 들어가도록 폰트 및 패딩 최소화 */
-        th, td {
-          font-size: 7.5px !important;
-          padding: 2px 3px !important;
-          line-height: 1.2 !important;
-        }
-        .r-title td {
-          font-size: 11px !important;
-          padding: 5px 6px !important;
-        }
-        .r-foot td {
-          font-size: 7px !important;
-          padding: 3px 4px !important;
-        }
+        @page { size: A4 landscape; margin: 8mm 6mm; }
+        html, body { width: auto; height: auto; background: white !important; padding: 0; margin: 0; }
+        .print-wrapper { padding: 0; background: white !important; }
+        table { width: auto; page-break-inside: auto; }
+        tr { page-break-inside: avoid; break-inside: avoid; }
+        th, td { font-size: 7.5px !important; padding: 2px 3px !important; line-height: 1.2 !important; }
+        .r-title td { font-size: 11px !important; padding: 5px 6px !important; }
+        .r-foot td { font-size: 7px !important; padding: 3px 4px !important; }
         .r-item { min-width: 75px !important; }
         .r-sum  { min-width: 45px !important; }
-
-        /* 인쇄 시 contenteditable 윤곽선 제거 */
         [contenteditable] { outline: none !important; }
       }
     </style>
   </head><body>
-    <div class="print-wrapper">
-      ${content}
-    </div>
+    <div class="print-wrapper">${content}</div>
     <script>
-      window.onload = function() {
-        setTimeout(function() {
-          window.focus();
-          window.print();
-        }, 800);
-      };
+      window.onload = function() { setTimeout(function() { window.focus(); window.print(); }, 800); };
     <\/script>
   </body></html>`);
   win.document.close();
@@ -1036,13 +918,18 @@ if (document.readyState === 'loading') {
 
 })();
 
-// ─── 모드 전환 ───
+// ✅ [수정] rptSwitchMode — IIFE 밖에 위치 + null 체크 추가
 window.rptSwitchMode = function (mode) {
-  const textBtn  = document.getElementById('rpt-mode-text-btn');
-  const excelBtn = document.getElementById('rpt-mode-excel-btn');
+  const textBtn    = document.getElementById('rpt-mode-text-btn');
+  const excelBtn   = document.getElementById('rpt-mode-excel-btn');
   const textPanel  = document.getElementById('rpt-mode-text-panel');
   const excelPanel = document.getElementById('rpt-mode-excel-panel');
-  if (!textPanel || !excelPanel) return;
+
+  // ✅ null 체크: DOM이 아직 없으면 조용히 리턴
+  if (!textBtn || !excelBtn || !textPanel || !excelPanel) {
+    console.warn('[rptSwitchMode] 패널 요소를 찾을 수 없습니다. DOM이 준비됐는지 확인하세요.');
+    return;
+  }
 
   if (mode === 'excel') {
     textBtn.classList.remove('active');
