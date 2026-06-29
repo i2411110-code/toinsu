@@ -1,6 +1,6 @@
 // ================================================
 // 토스DB 엑셀 보장분석 → 니즈환기 리포트 생성기
-// v1.1: initRptExcelModule 중복 실행 방지 + 드래그앤드롭 안정화
+// v1.2: 컬럼 오프셋 버그 수정 (A열이 없는 엑셀 양식 대응)
 // - 토스 "OOO님의 보장분석 리포트.xlsx" 양식 업로드
 // - 소분류별 고객 보장총액(만원)을 권장 기준금액과 비교
 // - 부족/미가입 항목 빨간색 표시
@@ -155,7 +155,7 @@
     document.head.appendChild(s);
   }
 
-  // ✅ [수정] 드롭존 이벤트를 별도 함수로 분리 — 초기화 후 패널 내부 요소에만 바인딩
+  // ✅ 드롭존 이벤트를 별도 함수로 분리 — 초기화 후 패널 내부 요소에만 바인딩
   function bindDropZone() {
     const panel = document.getElementById('rpt-mode-excel-panel');
     if (!panel) return;
@@ -227,42 +227,67 @@
   };
 
   // ─── 토스 보장분석 엑셀(AOA) 파싱 ───
+  // ✅ [수정] 토스 양식은 A열이 비어있어 SheetJS가 A열 자체를 생성하지 않고
+  //    B열 내용이 배열 index 0번부터 시작합니다. (직접 ZIP/XML 분석으로 확인됨:
+  //    시트 범위가 "B2:G66" 형태라 컬럼이 한 칸씩 앞으로 당겨집니다.)
+  //    그래서 기존 코드의 row[1](대분류) / row[2](소분류) / row[3](보장총액) /
+  //    row[4..](보험사) 인덱스를 모두 1칸씩 줄였습니다.
+  //    혹시 일부 양식이 A열을 포함해서 내려올 경우를 대비해, 헤더 행을 찾을 때
+  //    "대분류"/"소분류" 텍스트가 어느 열에서 발견되는지 먼저 스캔하고
+  //    그 위치를 기준으로 나머지 컬럼을 계산하는 방식으로 안전하게 처리합니다.
   function parseTossExcel(aoa) {
     let customerName = '';
-    const titleCell = (aoa[1] && aoa[1][1]) || (aoa[0] && aoa[0][1]) || '';
-    const m = String(titleCell).match(/^(.+?)님/);
-    if (m) customerName = m[1].trim();
+    // 제목 행("OOO님의 보장분석 리포트")도 컬럼이 한 칸 당겨질 수 있으므로
+    // 앞쪽 몇 개 셀을 모두 훑어서 "님"이 포함된 첫 텍스트를 찾습니다.
+    outer:
+    for (let r = 0; r < Math.min(aoa.length, 5); r++) {
+      const row = aoa[r] || [];
+      for (let c = 0; c < row.length; c++) {
+        const m = String(row[c] || '').match(/^(.+?)님/);
+        if (m) { customerName = m[1].trim(); break outer; }
+      }
+    }
 
     let companies = [];
     let rows = [];
     let currentCat = null;
     let headerSeen = false;
+    let catCol = -1, subCol = -1, amtCol = -1, companyStartCol = -1;
 
     for (let r = 0; r < aoa.length; r++) {
       const row = aoa[r] || [];
-      const b = String(row[1] || '').trim();
-      const c = String(row[2] || '').trim();
-      const d = row[3];
 
-      // 헤더 행 감지
-      if (b === '대분류' && c === '소분류') {
-        headerSeen = true;
-        if (companies.length === 0) {
-          for (let cc = 4; cc < row.length; cc++) {
-            const name = String(row[cc] || '').trim();
-            if (name) companies.push(name);
+      // 헤더 행 감지: "대분류"와 "소분류"가 어느 열에 있든 인접해서 나오면 헤더로 인식
+      if (!headerSeen) {
+        for (let c = 0; c < row.length - 1; c++) {
+          const cur = String(row[c] || '').trim();
+          const next = String(row[c + 1] || '').trim();
+          if (cur === '대분류' && next === '소분류') {
+            headerSeen = true;
+            catCol = c;
+            subCol = c + 1;
+            amtCol = c + 2;
+            companyStartCol = c + 3;
+            for (let cc = companyStartCol; cc < row.length; cc++) {
+              const name = String(row[cc] || '').trim();
+              if (name) companies.push(name);
+            }
+            break;
           }
         }
         continue;
       }
-      if (!headerSeen) continue;
+
+      const b = String(row[catCol] || '').trim();
+      const c = String(row[subCol] || '').trim();
+      const d = row[amtCol];
 
       if (b) currentCat = b;
       if (!c) continue;
 
       const sumAmt = parseManwon(d);
       const perProduct = [];
-      for (let cc = 4; cc < 4 + companies.length; cc++) {
+      for (let cc = companyStartCol; cc < companyStartCol + companies.length; cc++) {
         perProduct.push(parseManwon(row[cc]));
       }
 
