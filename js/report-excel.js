@@ -1,24 +1,24 @@
 // ================================================
 // 토스DB 엑셀 보장분석 → 니즈환기 리포트 생성기
-// v5.0: 17행 보험료 자동파싱 + 분석표 이미지 클립보드 복사
+// v5.1: 보험료 행 탐지 로직 개선(절대행번호 의존 제거) + 분석표 이미지 export 전용 카드 디자인
 // ================================================
 (function () {
 
   // ─── 기준금액 (만원) ───
   const RECOMMEND = {
-    '질병입원의료비': 5000, '질병외래의료비': 30, '질병처방조제료': 10,
-    '상해입원의료비': 5000, '상해외래의료비': 30, '상해처방조제료': 10,
-    '일반암진단': 3000, '소액암(유사암)진단': 500, '고액암진단': 2000,
+    '질병입원의료비': 5000, '질병외래의료비': 30, 
+    '상해입원의료비': 5000, '상해외래의료비': 30,
+    '일반암진단': 5000, '소액암(유사암)진단': 1000, '고액암진단': 2000,
     '뇌혈관질환진단': 2000, '뇌졸중질환진단': 2000, '뇌출혈질환진단': 1000,
     '허혈성심장질환진단': 2000, '급성심근경색진단': 1000,
-    '질병수술': 300, '상해수술': 300, '암수술': 500,
+    '질병수술': 50, '상해수술': 100, '암수술': 500,
     '뇌혈관질환수술': 1000, '허혈성심장질환수술': 1000,
     '질병입원': 3, '상해입원': 3,
     '질병사망': 5000, '상해사망': 10000,
     '질병80%이상후유장해': 5000, '질병80%미만후유장해': 5000,
     '상해80%이상후유장해': 10000, '상해80%미만후유장해': 10000,
     '골절진단': 100, '화상진단': 100,
-    '가족생활배상책임담보': 1000, '일상생활배상책임담보': 1000,
+    '가족생활배상책임담보': 10000, '일상생활배상책임담보': 10000,
     '교통사고처리지원금': 3000, '벌금(대물)': 2000, '벌금(대인)': 3000,
     '변호사선임비용': 5000, '자동차부상치료비': 3000,
     '화재벌금': 2000, '보존치료': 100, '보철치료': 100,
@@ -126,7 +126,7 @@
     var opinion  = buildOpinion(name, age, total, level, lowItems, items);
     var lines = [];
     lines.push('안녕하세요 ' + name + '님');
-    lines.push('토스 앱을 통해 신청하신 \'' + category + '\' 상담을 도와드릴 심현진 어드바이저 입니다.');
+    lines.push('토스 앱을 통해 신청하신 \'' + category + '\' 상담을 도와드릴 OOO 어드바이저 입니다.');
     lines.push('');
     lines.push('상담 진행에 앞서 안심하시고 질의응답 하실 수 있도록 당사 명함 함께 첨부해드립니다.');
     lines.push('');
@@ -176,7 +176,7 @@
     return '<div class="rpt-card">'
       + '<div class="rpt-step-label">STEP 1</div>'
       + '<h3 class="rpt-step-title">토스DB 보장분석 엑셀 업로드</h3>'
-      + '<p class="rpt-step-desc">고객의 "OOO님의 보장분석 리포트.xlsx" 파일을 업로드하세요.<br><span style="color:#64748B;font-size:12px;">📌 17번째 행의 보험료가 자동으로 파싱됩니다.</span></p>'
+      + '<p class="rpt-step-desc">고객의 "OOO님의 보장분석 리포트.xlsx" 파일을 업로드하세요.<br><span style="color:#64748B;font-size:12px;">📌 보험료 행이 자동으로 파싱됩니다.</span></p>'
       + '<label id="rptex-drop" class="rptex-drop" for="rptex-file-input">'
       + '<i class="bi bi-file-earmark-excel" style="font-size:28px;color:#3182F6;"></i>'
       + '<span id="rptex-drop-text">클릭하거나 파일을 끌어다 놓으세요 (.xlsx)</span>'
@@ -204,11 +204,11 @@
       + '📊 보장 분석표 '
       + '<span style="font-weight:400;color:#94A3B8;font-size:11px;">— 상태 클릭: 적정↔부족 전환 · 합산금액 클릭: 직접 수정 · 보험료: 클릭하여 수정</span></p>'
       + '<div style="overflow-x:auto;border-radius:10px;border:1px solid #E2E8F0;margin-bottom:4px;"><div id="rptex-table"></div></div>'
-      + '<p style="font-size:11px;color:#94A3B8;margin-bottom:16px;">💡 분석표 이미지 복사 후 카카오톡에 바로 붙여넣기 하세요.</p>'
+      + '<p style="font-size:11px;color:#94A3B8;margin-bottom:16px;">💡 분석표 이미지 복사 후 카카오톡에 바로 붙여넣기 하세요. (이미지는 보기 좋게 별도로 재구성되어 생성됩니다)</p>'
 
       /* ── 보험료 수동 추가 ── */
       + '<div style="border:1.5px solid #E2E8F0;border-radius:12px;overflow:hidden;margin-bottom:16px;">'
-      + '<div style="background:#001E42;color:#fff;padding:10px 14px;font-size:13px;font-weight:700;">💰 보험사별 월납 보험료 <span style="font-size:11px;font-weight:400;opacity:.8;">(엑셀 17행 자동 파싱 · 직접 수정 가능)</span></div>'
+      + '<div style="background:#001E42;color:#fff;padding:10px 14px;font-size:13px;font-weight:700;">💰 보험사별 월납 보험료 <span style="font-size:11px;font-weight:400;opacity:.8;">(엑셀 자동 파싱 · 직접 수정 가능)</span></div>'
       + '<div style="padding:14px;">'
       + '<table style="border-collapse:collapse;width:100%;font-size:13px;">'
       + '<thead><tr>'
@@ -326,7 +326,7 @@
     }
   };
 
-  // ─── parseToss: 17행 보험료 자동 파싱 ───
+  // ─── parseToss: 보험료 행 자동 파싱 (절대 행번호 의존 제거) ───
   function parseToss(aoa) {
     var customerName = '';
     var found = false;
@@ -339,7 +339,16 @@
 
     var companies = [], rows = [], currentCat = null, headerSeen = false;
     var catCol = -1, subCol = -1, amtCol = -1, coStart = -1;
-    var premiumAmounts = []; // 17행(index 16)에서 파싱
+    var premiumAmounts = [];
+
+    // 행 전체(어느 셀이든)에서 보험료 관련 키워드 탐지
+    function rowHasPremiumKeyword(row) {
+      for (var i = 0; i < row.length; i++) {
+        var v = String(row[i] || '').replace(/\s/g, '');
+        if (/보험료|월납|월보험료|합계보험료|총보험료/.test(v)) return true;
+      }
+      return false;
+    }
 
     for (var ri = 0; ri < aoa.length; ri++) {
       var row = aoa[ri] || [];
@@ -358,21 +367,18 @@
         continue;
       }
 
-      // 17행(0-index: 16) = 보험료 행 파싱
-      // 헤더 행 이후 기준으로도 체크: 소분류 셀에 '보험료' 포함 여부
-      var subVal = String(row[subCol]||'').trim();
-      var catVal = String(row[catCol]||'').trim();
-      var isPremRow = (ri === 16) || subVal.includes('보험료') || catVal.includes('보험료') || subVal.includes('월납');
-      if (isPremRow && companies.length > 0 && premiumAmounts.length === 0) {
+      // 헤더 이후 모든 행 대상으로 보험료 행 탐지 (행 번호에 의존하지 않음)
+      if (companies.length > 0 && premiumAmounts.length === 0 && rowHasPremiumKeyword(row)) {
         for (var pc2 = coStart; pc2 < coStart + companies.length; pc2++) {
           var pv = String(row[pc2]||'').replace(/,/g,'').trim();
           var pn = parseFloat(pv) || 0;
-          // 원 단위 vs 만원 단위 구분: 1000 이상이면 원 단위로 간주
           premiumAmounts.push(pn);
         }
-        continue; // 보험료 행은 보장 항목에서 제외
+        continue; // 보험료 행은 보장 항목 목록에서 제외
       }
 
+      var catVal = String(row[catCol]||'').trim();
+      var subVal = String(row[subCol]||'').trim();
       var b = catVal;
       var lbl = subVal;
       if (b) currentCat = b;
@@ -383,6 +389,22 @@
       var rec = RECOMMEND[lbl];
       rows.push({ cat: currentCat, label: lbl, customerSum: sum, recommend: rec,
         status: rec === undefined ? 'none' : sum >= rec ? 'ok' : 'low', perProduct: per });
+    }
+
+    // 폴백: 위 로직으로 보험료를 못 찾았을 경우, 시트 전체를 한 번 더 훑어서
+    // "보험료"라는 단어가 포함된 행을 모두 검사 (헤더 발견 전이라도 탐지)
+    if (companies.length > 0 && premiumAmounts.length === 0) {
+      for (var ri2 = 0; ri2 < aoa.length; ri2++) {
+        var row2 = aoa[ri2] || [];
+        if (rowHasPremiumKeyword(row2)) {
+          var tmp = [];
+          for (var pc3 = coStart; pc3 < coStart + companies.length; pc3++) {
+            var pv2 = String(row2[pc3]||'').replace(/,/g,'').trim();
+            tmp.push(parseFloat(pv2) || 0);
+          }
+          if (tmp.some(function(v){ return v > 0; })) { premiumAmounts = tmp; break; }
+        }
+      }
     }
 
     return { customerName: customerName, companies: companies, rows: rows, premiumAmounts: premiumAmounts };
@@ -433,7 +455,7 @@
     if (catEl) catEl.addEventListener('input', function() { gState.category = this.value; refreshMsg(); });
   }
 
-  // ─── 분석표 렌더 (보험료 행 포함) ───
+  // ─── 분석표 렌더 (보험료 행 포함, 편집용 인터랙티브 테이블) ───
   function renderAnalysisTable() {
     var rows = exState.rows;
     var companies = exState.companies;
@@ -633,10 +655,9 @@
       .catch(function(){ ta.select(); document.execCommand('copy'); alert('✅ 복사 완료'); });
   };
 
-  // ─── 분석표 이미지 복사 (html2canvas) ───
+  // ─── 분석표 이미지 복사 (html2canvas, 카톡 전송용 별도 카드 디자인) ───
   window.rptExCopyTableImage = async function() {
-    var tbl = document.getElementById('rptex-analysis-table');
-    if (!tbl) return alert('분석표가 없습니다.');
+    if (!exState.rows.length || !gState) return alert('분석표가 없습니다.');
 
     var btn = document.getElementById('rptex-img-copy-btn');
     if (btn) { btn.textContent = '⏳ 이미지 생성 중...'; btn.disabled = true; }
@@ -646,27 +667,67 @@
         await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
       }
 
-      // 임시 래퍼: 배경 흰색, 패딩, 한국어 폰트
+      var total = gState.premiums.reduce(function(s,p){ return s+(p.amount||0); }, 0);
+      var level = evalLevel(gState.age || 40, total);
+
+      // 대분류 rowspan 계산
+      var spans = {}, last = null, si = 0;
+      exState.rows.forEach(function(r, i) {
+        if (r.cat !== last) { if (last !== null) spans[si] = i - si; last = r.cat; si = i; }
+      });
+      if (last !== null) spans[si] = exState.rows.length - si;
+
+      var rowsHtml = '';
+      exState.rows.forEach(function(r, i) {
+        var stColor = r.status === 'ok' ? '#3182F6' : r.status === 'low' ? '#DC2626' : '#94A3B8';
+        var stBg    = r.status === 'ok' ? '#EFF6FF' : r.status === 'low' ? '#FEF2F2' : '#F1F5F9';
+        var stLbl   = r.status === 'ok' ? '적정' : r.status === 'low' ? '부족' : '기준없음';
+        rowsHtml += '<tr>';
+        if (spans[i] !== undefined) {
+          rowsHtml += '<td rowspan="' + spans[i] + '" style="background:#F8FAFC;font-weight:700;color:#001E42;text-align:center;padding:12px 10px;border:1px solid #E2E8F0;font-size:13px;">' + esc(r.cat) + '</td>';
+        }
+        rowsHtml += '<td style="text-align:left;padding:12px 16px;font-weight:600;color:#334155;border:1px solid #E2E8F0;font-size:13px;">' + esc(r.label) + '</td>';
+        rowsHtml += '<td style="text-align:right;padding:12px 16px;border:1px solid #E2E8F0;font-size:13px;' + (r.status==='low'?'color:#DC2626;font-weight:700;':'color:#334155;') + '">' + (r.customerSum ? r.customerSum.toLocaleString()+'만원' : '-') + '</td>';
+        rowsHtml += '<td style="text-align:right;padding:12px 16px;color:#94A3B8;border:1px solid #E2E8F0;font-size:13px;">' + (r.recommend !== undefined ? r.recommend.toLocaleString()+'만원' : '-') + '</td>';
+        rowsHtml += '<td style="text-align:center;padding:10px;border:1px solid #E2E8F0;"><span style="display:inline-block;background:' + stBg + ';color:' + stColor + ';font-weight:800;font-size:12px;padding:4px 14px;border-radius:20px;">' + stLbl + '</span></td>';
+        rowsHtml += '</tr>';
+      });
+
+      var html =
+        '<div style="width:660px;background:#fff;border-radius:18px;overflow:hidden;font-family:\'Malgun Gothic\',\'Apple SD Gothic Neo\',\'Noto Sans KR\',sans-serif;box-shadow:0 1px 3px rgba(0,0,0,0.06);">'
+          + '<div style="background:linear-gradient(135deg,#001E42,#0B3A6F);color:#fff;padding:26px 28px;">'
+            + '<div style="font-size:18px;font-weight:800;letter-spacing:-0.3px;">' + esc(gState.customerName) + '님 보장 분석 리포트</div>'
+            + '<div style="display:flex;gap:18px;margin-top:10px;">'
+              + '<div style="font-size:13px;opacity:.85;">💰 월납 ' + total.toLocaleString() + '원</div>'
+              + '<div style="font-size:13px;opacity:.85;">' + level.emoji + ' 연령 대비 ' + level.label + '</div>'
+            + '</div>'
+          + '</div>'
+          + '<table style="width:100%;border-collapse:collapse;">'
+            + '<thead><tr>'
+              + '<th style="background:#F1F5F9;padding:12px 10px;border:1px solid #E2E8F0;color:#334155;font-size:12px;">대분류</th>'
+              + '<th style="background:#F1F5F9;padding:12px 16px;border:1px solid #E2E8F0;color:#334155;font-size:12px;text-align:left;">소분류</th>'
+              + '<th style="background:#F1F5F9;padding:12px 16px;border:1px solid #E2E8F0;color:#334155;font-size:12px;text-align:right;">고객 보장합산</th>'
+              + '<th style="background:#F1F5F9;padding:12px 16px;border:1px solid #E2E8F0;color:#334155;font-size:12px;text-align:right;">권장 기준</th>'
+              + '<th style="background:#F1F5F9;padding:12px 10px;border:1px solid #E2E8F0;color:#334155;font-size:12px;">상태</th>'
+            + '</tr></thead>'
+            + '<tbody>' + rowsHtml + '</tbody>'
+          + '</table>'
+          + '<div style="padding:16px 28px;font-size:11.5px;color:#94A3B8;background:#F8FAFC;line-height:1.6;">본 분석은 고객 제공 가입설계서 기준의 참고 자료이며, 실제 보장 내용은 약관을 기준으로 합니다.</div>'
+        + '</div>';
+
       var wrapper = document.createElement('div');
-      wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff;padding:16px;font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;';
-      // 표 복제 후 스타일 그대로 사용
-      var clone = tbl.cloneNode(true);
-      // contenteditable 제거 (이미지에서 커서 표시 방지)
-      clone.querySelectorAll('[contenteditable]').forEach(function(el){ el.removeAttribute('contenteditable'); });
-      // 상태 토글 힌트 텍스트 제거
-      clone.querySelectorAll('.rptex-status').forEach(function(el){ el.style.cursor = 'default'; });
-      wrapper.appendChild(clone);
+      wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;';
+      wrapper.innerHTML = html;
       document.body.appendChild(wrapper);
 
-      var canvas = await window.html2canvas(wrapper, {
-        scale: 2,
+      var canvas = await window.html2canvas(wrapper.firstElementChild, {
+        scale: 2.5,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
       });
       document.body.removeChild(wrapper);
 
-      // ClipboardItem으로 PNG 복사
       canvas.toBlob(async function(blob) {
         try {
           await navigator.clipboard.write([
@@ -674,7 +735,6 @@
           ]);
           alert('✅ 분석표 이미지가 복사되었습니다!\n카카오톡 채팅창에 바로 붙여넣기(Ctrl+V) 하세요.');
         } catch(e) {
-          // 클립보드 실패 시 다운로드로 대체
           var a = document.createElement('a');
           a.href = canvas.toDataURL('image/png');
           a.download = '보장분석표.png';
