@@ -14,13 +14,17 @@ export default async function handler(req, res) {
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    // responseFormat === 'json' 이면 JSON 형식 응답을 강제 (니즈환기 멘트 생성용)
-    const modelConfig = { model: "gemini-2.5-flash-lite" };
-    if (responseFormat === 'json') {
-      modelConfig.generationConfig = { responseMimeType: "application/json" };
-    }
+    // Api generate message.js - modelConfig 부분 수정
+const modelConfig = { model: "gemini-2.5-flash-lite" };
 
-    const model = genAI.getGenerativeModel(modelConfig);
+if (responseFormat === 'json') {
+  modelConfig.generationConfig = { 
+    responseMimeType: "application/json" 
+  };
+  // 확실하게 JSON 반환을 유도하기 위해 시스템 지침을 명시적으로 바인딩해주는 것이 좋습니다.
+}
+
+const model = genAI.getGenerativeModel(modelConfig);
 
     // 이미지가 있으면 함께 전달, 없으면 텍스트만 전달
     const parts = imageB64

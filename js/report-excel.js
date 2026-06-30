@@ -184,12 +184,20 @@
         throw new Error('서버 응답 오류 (' + resp.status + '): ' + errBody);
       }
 
-      var data = await resp.json();
-      if (data.error) throw new Error(data.error);
-      if (!data.text) throw new Error('응답에서 텍스트를 찾을 수 없습니다.');
+      // report-excel.js - rptExGenerateAIMessage 함수 내부 수정
+var data = await resp.json();
+if (data.error) throw new Error(data.error);
+if (!data.text) throw new Error('응답에서 텍스트를 찾을 수 없습니다.');
 
-      var clean = String(data.text).replace(/```json|```/g, '').trim();
-      var parsed = JSON.parse(clean);
+// 백틱 코드 블록이 포함되어 있든, 순수 JSON이든 모두 처리할 수 있는 정규식으로 방어형 코드 작성
+var clean = String(data.text);
+if (clean.includes('```')) {
+  clean = clean.replace(/```json|```/g, '').trim();
+} else {
+  clean = clean.trim();
+}
+
+var parsed = JSON.parse(clean);
       if (!parsed.items || parsed.items.length < 1 || !parsed.opinion) throw new Error('AI 응답 형식 오류');
       gState.aiContent = parsed;
     } catch (err) {
