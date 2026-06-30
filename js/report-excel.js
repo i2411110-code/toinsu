@@ -850,6 +850,8 @@
   function refreshMsg() {
     var ta = document.getElementById('rptex-msg-output');
     if (!ta || !gState) return;
+    // AI 멘트가 아직 생성되지 않았으면 textarea 비워두기
+    if (!gState.aiContent) { ta.value = ''; return; }
     ta.value = makeMsg(gState);
   }
 
