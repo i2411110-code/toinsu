@@ -205,7 +205,7 @@
   function getCurrentAdvisorName() {
     var el = document.getElementById('main-user-name');
     var name = el ? el.textContent.trim() : '';
-    return name && name !== '' ? name : 'OOO';
+    return name && name !== '설계사님' ? name : '심현진';
   }
 
   function makeMsg(state) {
