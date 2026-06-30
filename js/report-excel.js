@@ -153,7 +153,12 @@
     };
   }
 
-  // ─── AI 호출 + 결과를 textarea에 반영 ───
+  // ─── 백엔드 프록시 엔드포인트 ───
+  // 실제 Gemini API 키는 서버(GEMINI_API_KEY 환경변수)에만 보관되고,
+  // 프론트엔드는 이 엔드포인트로만 요청을 보냅니다. 경로는 운영 환경에 맞게 수정하세요.
+  var AI_PROXY_ENDPOINT = '/api/generate-message';
+
+  // ─── AI 호출 + 결과를 textarea에 반영 (백엔드 프록시 경유) ───
   window.rptExGenerateAIMessage = async function() {
     if (!gState) return;
     var btn = document.getElementById('rptex-ai-gen-btn');
@@ -163,19 +168,27 @@
 
     try {
       var payload = buildAIPayload();
-      var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      var fullPrompt = AI_SYSTEM_PROMPT + '\n\n고객 보장 데이터:\n' + JSON.stringify(payload);
+
+      var resp = await fetch(AI_PROXY_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1000,
-          system: AI_SYSTEM_PROMPT,
-          messages: [{ role: 'user', content: '고객 보장 데이터:\n' + JSON.stringify(payload) }],
+          prompt: fullPrompt,
+          responseFormat: 'json',
         }),
       });
+
+      if (!resp.ok) {
+        var errBody = await resp.text();
+        throw new Error('서버 응답 오류 (' + resp.status + '): ' + errBody);
+      }
+
       var data = await resp.json();
-      var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
-      var clean = text.replace(/```json|```/g, '').trim();
+      if (data.error) throw new Error(data.error);
+      if (!data.text) throw new Error('응답에서 텍스트를 찾을 수 없습니다.');
+
+      var clean = String(data.text).replace(/```json|```/g, '').trim();
       var parsed = JSON.parse(clean);
       if (!parsed.items || parsed.items.length < 1 || !parsed.opinion) throw new Error('AI 응답 형식 오류');
       gState.aiContent = parsed;
