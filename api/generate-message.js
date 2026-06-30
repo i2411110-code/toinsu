@@ -15,12 +15,23 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'prompt가 없습니다.' });
   }
 
-  try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
-    const result = await model.generateContent([prompt]);
-    return res.status(200).json({ text: result.response.text() });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
+  const genAI = new GoogleGenerativeAI(apiKey);
+
+  // 503 과부하 시 fallback 모델로 재시도
+  const models = ['gemini-2.5-flash-lite', 'gemini-1.5-flash'];
+
+  for (const modelName of models) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent([prompt]);
+      return res.status(200).json({ text: result.response.text() });
+    } catch (error) {
+      const is503 = error.message && (error.message.includes('503') || error.message.includes('Service Unavailable') || error.message.includes('high demand'));
+      if (is503 && modelName !== models[models.length - 1]) {
+        console.warn(`${modelName} 과부하 — ${models[models.indexOf(modelName) + 1]}로 재시도`);
+        continue;
+      }
+      return res.status(500).json({ error: error.message });
+    }
   }
 }

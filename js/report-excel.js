@@ -180,9 +180,32 @@
     if (!gState) return;
     var btn = document.getElementById('rptex-ai-gen-btn');
     var ta  = document.getElementById('rptex-msg-output');
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-stars"></i> AI 분석 중...'; }
-    if (ta) ta.value = '🤖 AI가 보장분석 데이터를 검토해 멘트를 작성하고 있습니다...';
 
+    // ── 버튼 비활성화 ──
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-stars"></i> AI 분석 중...'; }
+
+    // ── textarea 숨기고 로딩 UI 표시 ──
+    if (ta) { ta.value = ''; ta.style.display = 'none'; }
+    var loadingEl = document.getElementById('rptex-ai-loading');
+    if (!loadingEl) {
+      loadingEl = document.createElement('div');
+      loadingEl.id = 'rptex-ai-loading';
+      loadingEl.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;height:300px;border:1.5px solid #E2E8F0;border-radius:10px;background:#F8FAFC;';
+      loadingEl.innerHTML = '<div class="rptex-ai-dots"><span></span><span></span><span></span></div>'
+        + '<div style="font-size:13px;color:#64748B;font-weight:600;" id="rptex-ai-loading-text">🤖 보장 데이터 분석 중...</div>';
+      if (ta && ta.parentNode) ta.parentNode.insertBefore(loadingEl, ta);
+    } else {
+      loadingEl.style.display = 'flex';
+    }
+    var loadingMsgs = ['🤖 보장 데이터 분석 중...', '📊 부족 항목 검토 중...', '✍️ 멘트 작성 중...', '🔍 보험료 수준 비교 중...'];
+    var msgIdx = 0;
+    var loadingTextEl = document.getElementById('rptex-ai-loading-text');
+    var loadingInterval = setInterval(function() {
+      msgIdx = (msgIdx + 1) % loadingMsgs.length;
+      if (loadingTextEl) loadingTextEl.textContent = loadingMsgs[msgIdx];
+    }, 900);
+
+    // ── API 호출 ──
     try {
       var payload = buildAIPayload();
       var fullPrompt = AI_SYSTEM_PROMPT + '\n\n고객 보장 데이터:\n' + JSON.stringify(payload);
@@ -190,10 +213,7 @@
       var resp = await fetch(AI_PROXY_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: fullPrompt,
-          responseFormat: 'json',
-        }),
+        body: JSON.stringify({ prompt: fullPrompt }),
       });
 
       if (!resp.ok) {
@@ -201,37 +221,23 @@
         throw new Error('서버 응답 오류 (' + resp.status + '): ' + errBody);
       }
 
-      // report-excel.js - rptExGenerateAIMessage 함수 내부 수정
-var data = await resp.json();
-if (data.error) throw new Error(data.error);
-if (!data.text) throw new Error('응답에서 텍스트를 찾을 수 없습니다.');
+      var data = await resp.json();
+      if (data.error) throw new Error(data.error);
+      if (!data.text) throw new Error('응답에서 텍스트를 찾을 수 없습니다.');
 
-// 백틱 코드 블록이 포함되어 있든, 순수 JSON이든 모두 처리할 수 있는 정규식으로 방어형 코드 작성
-var clean = String(data.text);
-if (clean.includes('```')) {
-  clean = clean.replace(/```json|```/g, '').trim();
-} else {
-  clean = clean.trim();
-}
-
-var parsed = JSON.parse(clean);
+      var clean = String(data.text).replace(/```json|```/g, '').trim();
+      var parsed = JSON.parse(clean);
       if (!parsed.items || parsed.items.length < 1 || !parsed.opinion) throw new Error('AI 응답 형식 오류');
       gState.aiContent = parsed;
     } catch (err) {
       console.error('AI 멘트 생성 실패 — 기본 로직으로 대체합니다.', err);
-      gState.aiContent = null; // makeMsg에서 자동으로 폴백 로직 사용
+      gState.aiContent = null;
     }
 
+    // ── 로딩 종료 ──
     clearInterval(loadingInterval);
-    var loadingEl2 = document.getElementById('rptex-ai-loading');
-    if (loadingEl2) loadingEl2.style.display = 'none';
-    var ta2 = document.getElementById('rptex-msg-output');
-    if (ta2) ta2.style.display = '';
-    clearInterval(loadingInterval);
-    var loadingEl2 = document.getElementById('rptex-ai-loading');
-    if (loadingEl2) loadingEl2.style.display = 'none';
-    var ta2 = document.getElementById('rptex-msg-output');
-    if (ta2) ta2.style.display = '';
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (ta) ta.style.display = '';
     refreshMsg();
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-stars"></i> AI 멘트 재생성'; }
   };
