@@ -1,41 +1,50 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+// api/generate-message.js
+// Vercel Serverless Function — Anthropic API 프록시
+// 환경변수 ANTHROPIC_API_KEY 를 Vercel 대시보드 > Settings > Environment Variables 에 등록하세요.
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: '허용되지 않은 요청 방식입니다.' });
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'ANTHROPIC_API_KEY 환경변수가 설정되지 않았습니다.' });
+  }
+
+  const { prompt } = req.body || {};
+  if (!prompt) {
+    return res.status(400).json({ error: 'prompt가 없습니다.' });
   }
 
   try {
-    const { prompt, imageB64, responseFormat } = req.body;
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
 
-    if (!prompt) {
-      return res.status(400).json({ error: 'prompt가 필요합니다.' });
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(response.status).json({ error: errText });
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const data = await response.json();
+    const text = (data.content || [])
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('');
 
-    // Api generate message.js - modelConfig 부분 수정
-const modelConfig = { model: "gemini-2.5-flash-lite" };
-
-if (responseFormat === 'json') {
-  modelConfig.generationConfig = { 
-    responseMimeType: "application/json" 
-  };
-  // 확실하게 JSON 반환을 유도하기 위해 시스템 지침을 명시적으로 바인딩해주는 것이 좋습니다.
-}
-
-const model = genAI.getGenerativeModel(modelConfig);
-
-    // 이미지가 있으면 함께 전달, 없으면 텍스트만 전달
-    const parts = imageB64
-      ? [prompt, { inlineData: { mimeType: "image/jpeg", data: imageB64 } }]
-      : [prompt];
-
-    const result = await model.generateContent(parts);
-
-    return res.status(200).json({ text: result.response.text() });
-
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(200).json({ text });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 }
