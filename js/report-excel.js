@@ -160,7 +160,7 @@
     var level = evalLevel(gState.age || 40, total);
     return {
       고객나이: gState.age || 40,
-      상담카테고리: gState.category || '보험 점검',
+      상담카테고리: gState.category || '또래월보험비교',
       월납보험료합계_원: total,
       연령대비보험료수준: level.label,
       부족항목: lowItems.map(function(r){
@@ -349,7 +349,12 @@
       + '<div class="rptex-meta-item"><label class="rptex-meta-label">고객 나이</label>'
       + '<input type="number" id="rptex-age" class="rptex-meta-input" value="40" min="1" max="99" style="width:70px;"></div>'
       + '<div class="rptex-meta-item"><label class="rptex-meta-label">상담 카테고리</label>'
-      + '<input type="text" id="rptex-category" class="rptex-meta-input" value="보험 점검" style="width:160px;"></div>'
+      + '<select id="rptex-category" class="rptex-meta-input" style="width:160px;">'
+      + '<option value="또래월보험비교">또래월보험비교</option>'
+      + '<option value="실비부족">실비부족</option>'
+      + '<option value="종합분석">종합분석</option>'
+      + '<option value="보장부족">보장부족</option>'
+      + '</select></div>'
       + '</div>'
 
       /* ── 통합 분석표 ── */
@@ -607,7 +612,7 @@
     gState = {
       customerName: customerName || '고객',
       age: Number((ageEl0 && ageEl0.value) || 40) || 40,
-      category: (catEl0 && catEl0.value) || '보험 점검',
+      category: (catEl0 && catEl0.value) || '또래월보험비교',
       premiums: companies.map(function(name, i){
         return { name: name, amount: premiumAmounts[i] || 0 };
       }),
@@ -624,7 +629,7 @@
       gState.age = Number(this.value) || 40;
       refreshPremiumSummary(); refreshAnalysisPremiumRow(); refreshMsg();
     });
-    if (catEl) catEl.addEventListener('input', function() { gState.category = this.value; refreshMsg(); });
+    if (catEl) catEl.addEventListener('change', function() { gState.category = this.value; refreshMsg(); });
 
     // 업로드 완료 직후 AI 멘트 1차 자동 생성
     window.rptExGenerateAIMessage();
