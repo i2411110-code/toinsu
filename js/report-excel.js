@@ -8,10 +8,10 @@
   const RECOMMEND = {
     '질병입원의료비': 5000, '질병외래의료비': 25, '질병처방조제료': 5,
     '상해입원의료비': 5000, '상해외래의료비': 25, '상해처방조제료': 5,
-    '일반암진단': 10000, '소액암(유사암)진단': 2000, '고액암진단': 5000,
-    '뇌혈관질환진단': 3000, '뇌졸중질환진단': 2000, '뇌출혈질환진단': 2000,
-    '허혈성심장질환진단': 3000, '급성심근경색진단': 2000,
-    '질병수술': 50, '상해수술': 200, '암수술': 1000,
+    '일반암진단': 5000, '소액암(유사암)진단': 1000, '고액암진단': 2000,
+    '뇌혈관질환진단': 2000, '뇌졸중질환진단': 2000, '뇌출혈질환진단': 1000,
+    '허혈성심장질환진단': 2000, '급성심근경색진단': 1000,
+    '질병수술': 50, '상해수술': 100, '암수술': 500,
     '뇌혈관질환수술': 1000, '허혈성심장질환수술': 1000,
     '질병입원': 3, '상해입원': 3,
     '질병사망': 5000, '상해사망': 10000,
@@ -19,8 +19,8 @@
     '상해80%이상후유장해': 10000, '상해80%미만후유장해': 10000,
     '골절진단': 100, '화상진단': 100,
     '가족생활배상책임담보': 10000, '일상생활배상책임담보': 10000,
-    '교통사고처리지원금': 20000, '벌금(대물)': 500, '벌금(대인)': 3000,
-    '변호사선임비용': 5000, '자동차부상치료비': 30,
+    '교통사고처리지원금': 3000, '벌금(대물)': 2000, '벌금(대인)': 3000,
+    '변호사선임비용': 5000, '자동차부상치료비': 3000,
     '화재벌금': 2000, '보존치료': 100, '보철치료': 100,
   };
 
@@ -211,9 +211,17 @@ var parsed = JSON.parse(clean);
 
   // ─── 로그인한 어드바이저 이름 가져오기 ───
   function getCurrentAdvisorName() {
+    // app.js에서 로그인 후 window.currentUserDisplayName에 저장됨
+    if (window.currentUserDisplayName && window.currentUserDisplayName.trim()) {
+      return window.currentUserDisplayName.trim();
+    }
+    // 폴백: #main-user-name DOM 텍스트 (끝에 '님' 제거)
     var el = document.getElementById('main-user-name');
-    var name = el ? el.textContent.trim() : '';
-    return name && name !== '설계사님' ? name : '심현진';
+    if (el) {
+      var name = el.textContent.replace(/님$/, '').trim();
+      if (name && name !== '설계사') return name;
+    }
+    return '어드바이저';
   }
 
   function makeMsg(state) {
@@ -549,10 +557,12 @@ var parsed = JSON.parse(clean);
       '✅ 총 ' + rows.length + '개 항목 중 ' + lowItems.length + '개 부족 항목 발견' +
       (noneCount ? ' (기준 미설정 ' + noneCount + '개)' : '') + parsedMsg;
 
+    var ageEl0 = document.getElementById('rptex-age');
+    var catEl0 = document.getElementById('rptex-category');
     gState = {
       customerName: customerName || '고객',
-      age: 40,
-      category: '보험 점검',
+      age: Number((ageEl0 && ageEl0.value) || 40) || 40,
+      category: (catEl0 && catEl0.value) || '보험 점검',
       premiums: companies.map(function(name, i){
         return { name: name, amount: premiumAmounts[i] || 0 };
       }),
