@@ -201,10 +201,18 @@
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-stars"></i> AI 멘트 재생성'; }
   };
 
+  // ─── 로그인한 어드바이저 이름 가져오기 ───
+  function getCurrentAdvisorName() {
+    var el = document.getElementById('main-user-name');
+    var name = el ? el.textContent.trim() : '';
+    return name && name !== '' ? name : 'OOO';
+  }
+
   function makeMsg(state) {
     var name     = state.customerName || '고객';
     var age      = state.age || 40;
     var category = state.category || '보험 점검';
+    var advisorName = getCurrentAdvisorName();
     var premiums = state.premiums || [];
     var lowItems = state.lowItems || [];
     var total    = premiums.reduce(function(s, p){ return s + (p.amount || 0); }, 0);
@@ -221,7 +229,7 @@
 
     var lines = [];
     lines.push('안녕하세요 ' + name + '님');
-    lines.push('토스 앱을 통해 신청하신 \'' + category + '\' 상담을 도와드릴 ' + advisorName + ' 어드바이저 입니다.');
+    lines.push('토스 앱을 통해 신청하신 \'' + category + '\' 상담을 도와드릴 심현진 어드바이저 입니다.');
     lines.push('');
     lines.push('상담 진행에 앞서 안심하시고 질의응답 하실 수 있도록 당사 명함 함께 첨부해드립니다.');
     lines.push('');
