@@ -1,6 +1,6 @@
 // ================================================
 // 토스DB 엑셀 보장분석 → 니즈환기 리포트 생성기
-// v5.1: 보험료 행 탐지 로직 개선(절대행번호 의존 제거) + 분석표 이미지 export 전용 카드 디자인
+// v6.0: AI(Claude) 기반 보장분석 멘트 자동 작성 추가
 // ================================================
 (function () {
 
@@ -42,7 +42,8 @@
     return                     { label: '과다',     emoji: '🔴', cls: 'lv-over' };
   }
 
-  function buildItems(lowItems, age, total, level) {
+  // ─── 규칙 기반 폴백 로직 (AI 호출 실패 시 사용) ───
+  function buildItemsFallback(lowItems, age, total, level) {
     var out = [];
     var RULES = [
       { test: function() { return lowItems.some(function(r){ return r.cat === '실비'; }); },
@@ -101,7 +102,7 @@
     return out;
   }
 
-  function buildOpinion(name, age, total, level, lowItems, items) {
+  function buildOpinionFallback(name, age, total, level, lowItems, items) {
     var cats = [];
     lowItems.forEach(function(r){ if (cats.indexOf(r.cat) === -1) cats.push(r.cat); });
     var catStr = cats.join('·') || '없음';
@@ -115,6 +116,78 @@
     return name + '님은 전반적으로 ' + level.label + ' 수준의 보험료를 납입 중이시나, ' + (catStr.length > 2 ? catStr + ' 영역에서 ' : '일부 항목에서 ') + '보장 공백이 발견되었습니다. 현재 구조를 유지하면서 핵심 공백만 효율적으로 보완하는 방향으로 상담드리겠습니다.';
   }
 
+  // ─── AI 멘트 작성 가이드 (Claude 시스템 프롬프트) ───
+  var AI_SYSTEM_PROMPT = [
+    '당신은 보험 어드바이저를 보조해 고객 보장분석 멘트의 핵심 부분을 작성하는 전문 작성자입니다.',
+    '아래 사용자 메시지로 전달되는 고객 보장 데이터(JSON)를 분석하여, 반드시 아래 JSON 형식으로만 응답하세요.',
+    'JSON 이외의 설명, 인사말, 코드블록 표시(```)는 절대 포함하지 마세요.',
+    '',
+    '응답 형식 (정확히 이 구조):',
+    '{"items":[{"emoji":"🔴 또는 🟠 또는 🟡 또는 🟢","title":"...","body":"..."} 를 정확히 3개],"opinion":"..."}',
+    '',
+    '작성 규칙:',
+    '1. items는 정확히 3개. 데이터의 "부족항목" 중 위험도(권장기준 대비 부족 정도)가 큰 순서로 우선 선정. 부족 항목이 3개 미만이면 보험료 수준 점검(과다/적정 여부)이나 전반적 보장 유지 권장 항목으로 나머지를 채움.',
+    '2. emoji는 위험도를 의미함: 🔴 매우 부족하거나 위험한 상태, 🟠 다소 부족, 🟡 경미한 보완 필요, 🟢 양호하여 유지 권장.',
+    '3. title은 "방패", "보호막", "울타리" 같은 추상적 비유 표현을 절대 쓰지 말고, 고객이 바로 이해할 수 있는 구체적인 보장 명칭으로 작성. (예: "실손의료비 한도 부족", "암 진단비 부족", "수술비 미가입")',
+    '4. body는 1~3문장. 띄어쓰기를 적절히 활용해 가독성 있게, 최대한 간결하게 작성. 무조건적인 칭찬은 피하고 보완이 필요한 이유를 데이터에 근거해 명확히 제시하여, 고객이 추가 상담을 받고 싶어지도록 자연스럽게 궁금증을 유발할 것. 단정적인 의학적·법률적 주장은 피하고 일반적인 안내 수준으로 작성.',
+    '5. opinion은 위 3개 항목과 보험료 수준을 종합한 2~4문장의 짧은 총평. 보험료 수준과 보장 공백을 함께 언급하며, 다음 상담을 받아야 하는 이유로 자연스럽게 연결.',
+    '6. 모든 문장은 한국어 존댓말로 작성.',
+    '7. 숫자나 사실은 반드시 전달받은 데이터에 근거하며, 데이터에 없는 사실을 임의로 추가하지 말 것.',
+  ].join('\n');
+
+  function buildAIPayload() {
+    var rows = exState.rows || [];
+    var lowItems = rows.filter(function(r){ return r.status === 'low'; });
+    var okItems  = rows.filter(function(r){ return r.status === 'ok'; });
+    var total = gState.premiums.reduce(function(s,p){ return s+(p.amount||0); }, 0);
+    var level = evalLevel(gState.age || 40, total);
+    return {
+      고객나이: gState.age || 40,
+      상담카테고리: gState.category || '보험 점검',
+      월납보험료합계_원: total,
+      연령대비보험료수준: level.label,
+      부족항목: lowItems.map(function(r){
+        return { 대분류: r.cat, 소분류: r.label, 고객보장합산_만원: r.customerSum, 권장기준_만원: r.recommend };
+      }),
+      적정항목: okItems.map(function(r){ return { 대분류: r.cat, 소분류: r.label }; }),
+    };
+  }
+
+  // ─── AI 호출 + 결과를 textarea에 반영 ───
+  window.rptExGenerateAIMessage = async function() {
+    if (!gState) return;
+    var btn = document.getElementById('rptex-ai-gen-btn');
+    var ta  = document.getElementById('rptex-msg-output');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-stars"></i> AI 분석 중...'; }
+    if (ta && !ta.value) ta.value = '🤖 AI가 보장분석 데이터를 검토해 멘트를 작성하고 있습니다...';
+
+    try {
+      var payload = buildAIPayload();
+      var resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1000,
+          system: AI_SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: '고객 보장 데이터:\n' + JSON.stringify(payload) }],
+        }),
+      });
+      var data = await resp.json();
+      var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+      var clean = text.replace(/```json|```/g, '').trim();
+      var parsed = JSON.parse(clean);
+      if (!parsed.items || parsed.items.length < 1 || !parsed.opinion) throw new Error('AI 응답 형식 오류');
+      gState.aiContent = parsed;
+    } catch (err) {
+      console.error('AI 멘트 생성 실패 — 기본 로직으로 대체합니다.', err);
+      gState.aiContent = null; // makeMsg에서 자동으로 폴백 로직 사용
+    }
+
+    refreshMsg();
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-stars"></i> AI 멘트 재생성'; }
+  };
+
   function makeMsg(state) {
     var name     = state.customerName || '고객';
     var age      = state.age || 40;
@@ -123,11 +196,19 @@
     var lowItems = state.lowItems || [];
     var total    = premiums.reduce(function(s, p){ return s + (p.amount || 0); }, 0);
     var level    = evalLevel(age, total);
-    var items    = buildItems(lowItems, age, total, level);
-    var opinion  = buildOpinion(name, age, total, level, lowItems, items);
+
+    var items, opinion;
+    if (state.aiContent && Array.isArray(state.aiContent.items) && state.aiContent.items.length) {
+      items = state.aiContent.items;
+      opinion = state.aiContent.opinion || '';
+    } else {
+      items = buildItemsFallback(lowItems, age, total, level);
+      opinion = buildOpinionFallback(name, age, total, level, lowItems, items);
+    }
+
     var lines = [];
     lines.push('안녕하세요 ' + name + '님');
-    lines.push('토스 앱을 통해 신청하신 \'' + category + '\' 상담을 도와드릴 심현진 어드바이저 입니다.');
+    lines.push('토스 앱을 통해 신청하신 \'' + category + '\' 상담을 도와드릴 ' + advisorName + ' 어드바이저 입니다.');
     lines.push('');
     lines.push('상담 진행에 앞서 안심하시고 질의응답 하실 수 있도록 당사 명함 함께 첨부해드립니다.');
     lines.push('');
@@ -136,7 +217,7 @@
     lines.push('[ 보장 분석 ]');
     items.forEach(function(it, i) {
       lines.push((i+1) + '. ' + it.emoji + ' ' + it.title);
-      it.body.split('\n').forEach(function(l){ lines.push('   ' + l); });
+      String(it.body || '').split('\n').forEach(function(l){ lines.push('   ' + l); });
       if (i < items.length - 1) lines.push('');
     });
     lines.push('');
@@ -226,10 +307,11 @@
       + '<button class="rptex-add-co-btn" onclick="window.rptExAddCompany()">+ 보험사 추가</button>'
       + '</div></div>'
 
-      + '<p style="font-size:13px;font-weight:700;color:#334155;margin-bottom:6px;">📋 니즈환기 멘트</p>'
+      + '<p style="font-size:13px;font-weight:700;color:#334155;margin-bottom:6px;">📋 니즈환기 멘트 <span style="font-weight:400;color:#94A3B8;font-size:11px;">— 🤖 AI가 보장분석 데이터를 보고 직접 작성합니다. 나이/카테고리/보험료 수정 후 재생성 버튼을 눌러주세요.</span></p>'
       + '<textarea id="rptex-msg-output" style="width:100%;height:300px;border:1.5px solid #E2E8F0;border-radius:10px;padding:14px;font-size:13px;font-family:\'Noto Sans KR\',sans-serif;color:#334155;resize:vertical;box-sizing:border-box;line-height:1.7;background:#F8FAFC;"></textarea>'
 
       + '<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">'
+      + '<button class="btn-action" style="width:auto;padding:10px 22px;background:#7C3AED;" id="rptex-ai-gen-btn" onclick="window.rptExGenerateAIMessage()"><i class="bi bi-stars"></i> AI 멘트 재생성</button>'
       + '<button class="btn-action" style="width:auto;padding:10px 22px;" onclick="window.rptExCopyMsg()"><i class="bi bi-clipboard-check"></i> 멘트 복사</button>'
       + '<button class="btn-action" style="width:auto;padding:10px 22px;background:#0F172A;" id="rptex-img-copy-btn" onclick="window.rptExCopyTableImage()"><i class="bi bi-image"></i> 분석표 이미지 복사</button>'
       + '<button style="background:none;border:1px solid #E2E8F0;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;color:#475569;font-family:\'Noto Sans KR\',sans-serif;" onclick="window.rptExReset()"><i class="bi bi-arrow-counterclockwise"></i> 다시 시작</button>'
@@ -445,6 +527,7 @@
         return { name: name, amount: premiumAmounts[i] || 0 };
       }),
       lowItems: lowItems,
+      aiContent: null, // AI가 생성한 {items, opinion}; 없으면 폴백 로직 사용
     };
 
     renderAnalysisTable();
@@ -458,6 +541,9 @@
       refreshPremiumSummary(); refreshAnalysisPremiumRow(); refreshMsg();
     });
     if (catEl) catEl.addEventListener('input', function() { gState.category = this.value; refreshMsg(); });
+
+    // 업로드 완료 직후 AI 멘트 1차 자동 생성
+    window.rptExGenerateAIMessage();
   }
 
   // ─── 분석표 렌더 (보험료 행 포함, 편집용 인터랙티브 테이블) ───
