@@ -126,8 +126,13 @@
     '{"items":[{"emoji":"이모지","title":"제목","body":"내용"}, ...3개],"opinion":"종합의견"}',
     '',
     '[ items 작성 규칙 ]',
-    '1. 부족항목 중 권장기준 대비 부족 정도가 큰 순서로 3개 선정.',
-    '   부족항목이 3개 미만이면 보험료 과다/적정 점검 또는 유지 권장 항목으로 채움.',
+    '1. 전체보장항목과 보험사별 데이터를 종합 분석하여 가장 중요한 인사이트 3개 선정.',
+    '   단순 부족항목 나열이 아닌, 아래 관점에서 고객에게 실질적으로 중요한 항목을 우선:',
+    '   - 중복 가입 여부 (동일 보장을 여러 보험사에서 가입 → 실제 지급은 비례 보상)',
+    '   - 보험료 대비 보장 효율 (보험료는 높은데 핵심 보장이 부족한 구조)',
+    '   - 갱신형 위험 (나이 들수록 보험료 급등 가능성)',
+    '   - 미가입이거나 권장 대비 현저히 부족한 핵심 보장',
+    '   부족항목이 없으면 보험료 과다/중복/비효율 관점으로 채움.',
     '2. emoji 기준:',
     '   🔴 미가입이거나 권장기준 대비 50% 미만 → 매우 위험',
     '   🟠 권장기준 대비 50~80% 수준 → 다소 부족',
@@ -154,19 +159,41 @@
 
   function buildAIPayload() {
     var rows = exState.rows || [];
+    var companies = exState.companies || [];
     var lowItems = rows.filter(function(r){ return r.status === 'low'; });
     var okItems  = rows.filter(function(r){ return r.status === 'ok'; });
     var total = gState.premiums.reduce(function(s,p){ return s+(p.amount||0); }, 0);
     var level = evalLevel(gState.age || 40, total);
+
+    // 보험사별 보험료 상세
+    var premiumDetail = gState.premiums.map(function(p) {
+      return { 보험사: p.name, 월납보험료_원: p.amount };
+    });
+
+    // 전체 보장 항목 상세 (보험사별 금액 포함)
+    var allItems = rows.map(function(r) {
+      var detail = { 대분류: r.cat, 소분류: r.label, 고객보장합산_만원: r.customerSum, 권장기준_만원: r.recommend !== undefined ? r.recommend : null, 상태: r.status };
+      // 보험사별 개별 금액
+      if (r.perProduct && companies.length > 0) {
+        var byCompany = {};
+        companies.forEach(function(c, i) { if (r.perProduct[i]) byCompany[c] = r.perProduct[i]; });
+        if (Object.keys(byCompany).length > 0) detail.보험사별_만원 = byCompany;
+      }
+      return detail;
+    });
+
     return {
       고객나이: gState.age || 40,
       상담카테고리: gState.category || '또래월보험비교',
+      가입보험사수: companies.length,
+      가입보험사목록: companies,
+      보험사별월납보험료: premiumDetail,
       월납보험료합계_원: total,
       연령대비보험료수준: level.label,
-      부족항목: lowItems.map(function(r){
+      전체보장항목: allItems,
+      부족항목요약: lowItems.map(function(r){
         return { 대분류: r.cat, 소분류: r.label, 고객보장합산_만원: r.customerSum, 권장기준_만원: r.recommend };
       }),
-      적정항목: okItems.map(function(r){ return { 대분류: r.cat, 소분류: r.label }; }),
     };
   }
 
@@ -631,8 +658,7 @@
     });
     if (catEl) catEl.addEventListener('change', function() { gState.category = this.value; refreshMsg(); });
 
-    // 업로드 완료 직후 AI 멘트 1차 자동 생성
-    window.rptExGenerateAIMessage();
+    // AI 멘트는 버튼 클릭 시에만 실행
   }
 
   // ─── 분석표 렌더 (보험료 행 포함, 편집용 인터랙티브 테이블) ───
