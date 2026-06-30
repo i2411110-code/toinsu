@@ -181,7 +181,7 @@
     var btn = document.getElementById('rptex-ai-gen-btn');
     var ta  = document.getElementById('rptex-msg-output');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-stars"></i> AI 분석 중...'; }
-    if (ta && !ta.value) ta.value = '🤖 AI가 보장분석 데이터를 검토해 멘트를 작성하고 있습니다...';
+    if (ta) ta.value = '🤖 AI가 보장분석 데이터를 검토해 멘트를 작성하고 있습니다...';
 
     try {
       var payload = buildAIPayload();
@@ -222,6 +222,16 @@ var parsed = JSON.parse(clean);
       gState.aiContent = null; // makeMsg에서 자동으로 폴백 로직 사용
     }
 
+    clearInterval(loadingInterval);
+    var loadingEl2 = document.getElementById('rptex-ai-loading');
+    if (loadingEl2) loadingEl2.style.display = 'none';
+    var ta2 = document.getElementById('rptex-msg-output');
+    if (ta2) ta2.style.display = '';
+    clearInterval(loadingInterval);
+    var loadingEl2 = document.getElementById('rptex-ai-loading');
+    if (loadingEl2) loadingEl2.style.display = 'none';
+    var ta2 = document.getElementById('rptex-msg-output');
+    if (ta2) ta2.style.display = '';
     refreshMsg();
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-stars"></i> AI 멘트 재생성'; }
   };
@@ -416,6 +426,18 @@ var parsed = JSON.parse(clean);
       '.rptex-meta-input{padding:7px 10px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;font-family:"Noto Sans KR",sans-serif;outline:none;}',
       '.rptex-meta-input:focus{border-color:#3182F6;}',
       '.lv-ok{color:#16A34A;} .lv-warn{color:#D97706;} .lv-over{color:#DC2626;} .lv-low{color:#DC2626;}',
+      '.rptex-ai-dots{display:flex;gap:8px;align-items:center;}',
+      '.rptex-ai-dots span{width:10px;height:10px;border-radius:50%;background:#3182F6;animation:rptex-bounce 1.2s infinite ease-in-out;}',
+      '.rptex-ai-dots span:nth-child(1){animation-delay:0s;}',
+      '.rptex-ai-dots span:nth-child(2){animation-delay:0.2s;}',
+      '.rptex-ai-dots span:nth-child(3){animation-delay:0.4s;}',
+      '@keyframes rptex-bounce{0%,80%,100%{transform:scale(0.6);opacity:.4;}40%{transform:scale(1.1);opacity:1;}}',
+      '.rptex-ai-dots{display:flex;gap:8px;align-items:center;}',
+      '.rptex-ai-dots span{width:10px;height:10px;border-radius:50%;background:#3182F6;animation:rptex-bounce 1.2s infinite ease-in-out;}',
+      '.rptex-ai-dots span:nth-child(1){animation-delay:0s;}',
+      '.rptex-ai-dots span:nth-child(2){animation-delay:0.2s;}',
+      '.rptex-ai-dots span:nth-child(3){animation-delay:0.4s;}',
+      '@keyframes rptex-bounce{0%,80%,100%{transform:scale(0.6);opacity:.4;}40%{transform:scale(1.1);opacity:1;}}',
     ].join('');
     document.head.appendChild(s);
   }
@@ -589,7 +611,6 @@ var parsed = JSON.parse(clean);
 
     renderAnalysisTable();
     renderPremiumTable();
-    refreshMsg();
 
     var ageEl = document.getElementById('rptex-age');
     var catEl = document.getElementById('rptex-category');
