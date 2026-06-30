@@ -220,6 +220,7 @@ var parsed = JSON.parse(clean);
     var name     = state.customerName || '고객';
     var age      = state.age || 40;
     var category = state.category || '보험 점검';
+    var advisorName = '심현진'; // 💡 이렇게 변수를 선언해 주거나 혹은 다른 데서 가져오는 로직을 넣어줍니다.
     var advisorName = getCurrentAdvisorName(); // 정상 선언됨
     var premiums = state.premiums || [];
     var lowItems = state.lowItems || [];
