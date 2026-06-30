@@ -6,8 +6,8 @@
 
   // ─── 기준금액 (만원) ───
   const RECOMMEND = {
-    '질병입원의료비': 5000, '질병외래의료비': 30, 
-    '상해입원의료비': 5000, '상해외래의료비': 30,
+    '질병입원의료비': 5000, '질병외래의료비': 25, '질병처방조제료': 5,
+    '상해입원의료비': 5000, '상해외래의료비': 25, '상해처방조제료': 5,
     '일반암진단': 5000, '소액암(유사암)진단': 1000, '고액암진단': 2000,
     '뇌혈관질환진단': 2000, '뇌졸중질환진단': 2000, '뇌출혈질환진단': 1000,
     '허혈성심장질환진단': 2000, '급성심근경색진단': 1000,
@@ -26,6 +26,7 @@
 
   // ─── 연령별 보험료 기준 (원) ───
   const PREMIUM_STD = [
+    { maxAge: 20, low: 80000,  high: 150000, over: 220000 },
     { maxAge: 30, low: 80000,  high: 150000, over: 220000 },
     { maxAge: 40, low: 100000, high: 200000, over: 300000 },
     { maxAge: 50, low: 150000, high: 280000, over: 420000 },
@@ -126,7 +127,7 @@
     var opinion  = buildOpinion(name, age, total, level, lowItems, items);
     var lines = [];
     lines.push('안녕하세요 ' + name + '님');
-    lines.push('토스 앱을 통해 신청하신 \'' + category + '\' 상담을 도와드릴 OOO 어드바이저 입니다.');
+    lines.push('토스 앱을 통해 신청하신 \'' + category + '\' 상담을 도와드릴 심현진 어드바이저 입니다.');
     lines.push('');
     lines.push('상담 진행에 앞서 안심하시고 질의응답 하실 수 있도록 당사 명함 함께 첨부해드립니다.');
     lines.push('');
@@ -379,6 +380,10 @@
 
       var catVal = String(row[catCol]||'').trim();
       var subVal = String(row[subCol]||'').trim();
+
+      // 엑셀 중간에 헤더 행("대분류"/"소분류")이 반복되는 경우 건너뛰기
+      if (catVal === '대분류' && subVal === '소분류') continue;
+
       var b = catVal;
       var lbl = subVal;
       if (b) currentCat = b;
