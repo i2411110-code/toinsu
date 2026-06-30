@@ -1,6 +1,6 @@
 // ================================================
 // 토스DB 엑셀 보장분석 → 니즈환기 리포트 생성기
-// v3.0: 분석표 + 보험료입력 + 멘트 통합 원패널
+// v4.0: 보험료 행 표 상단 포함 + HTML 클립보드 복사 + 상태 토글
 // ================================================
 (function () {
 
@@ -204,11 +204,13 @@
       + '<input type="text" id="rptex-category" class="rptex-meta-input" value="보험 점검" style="width:160px;"></div>'
       + '</div>'
 
+      /* ── 통합 분석표 (보험료 행 포함) ── */
+      + '<p style="font-size:12px;font-weight:700;color:#334155;margin-bottom:6px;">📊 보장 분석표 <span style="font-weight:400;color:#94A3B8;font-size:11px;">— 상태 셀 클릭 시 적정↔부족 전환 · 합산금액 셀 클릭 시 직접 수정</span></p>'
       + '<div style="overflow-x:auto;border-radius:10px;border:1px solid #E2E8F0;margin-bottom:6px;"><div id="rptex-table"></div></div>'
-      + '<p style="font-size:11px;color:#94A3B8;margin-bottom:16px;">💡 고객 보장합산 금액 셀을 클릭하면 직접 수정할 수 있습니다.</p>'
 
+      /* ── 보험사 보험료 입력 패널 ── */
       + '<div style="border:1.5px solid #E2E8F0;border-radius:12px;overflow:hidden;margin-bottom:16px;">'
-      + '<div style="background:#001E42;color:#fff;padding:10px 14px;font-size:13px;font-weight:700;">💰 보험사별 월납 보험료 입력 → 멘트 자동 생성</div>'
+      + '<div style="background:#001E42;color:#fff;padding:10px 14px;font-size:13px;font-weight:700;">💰 보험사별 월납 보험료 입력 → 표 및 멘트 자동 반영</div>'
       + '<div style="padding:14px;">'
       + '<table style="border-collapse:collapse;width:100%;font-size:13px;">'
       + '<thead><tr>'
@@ -230,7 +232,7 @@
 
       + '<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">'
       + '<button class="btn-action" style="width:auto;padding:10px 22px;" onclick="window.rptExCopyMsg()"><i class="bi bi-clipboard-check"></i> 멘트 복사</button>'
-      + '<button class="btn-action" style="width:auto;padding:10px 22px;background:#0F172A;" onclick="window.rptExCopyTable()"><i class="bi bi-table"></i> 분석표 복사</button>'
+      + '<button class="btn-action" style="width:auto;padding:10px 22px;background:#0F172A;" onclick="window.rptExCopyTable()"><i class="bi bi-table"></i> 분석표 복사 (카카오톡용)</button>'
       + '<button style="background:none;border:1px solid #E2E8F0;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;color:#475569;font-family:\'Noto Sans KR\',sans-serif;" onclick="window.rptExReset()"><i class="bi bi-arrow-counterclockwise"></i> 다시 시작</button>'
       + '</div>'
       + '</div></div>';
@@ -249,10 +251,16 @@
       '#rptex-table th{background:#001E42;color:#fff;font-weight:700;}',
       '.rptex-cat{background:#D6DEE7;font-weight:700;color:#001E42;}',
       '.rptex-label{text-align:left;font-weight:600;color:#334155;min-width:120px;}',
-      '.rptex-status{font-weight:800;border-radius:6px;padding:2px 9px;font-size:11px;display:inline-block;}',
+      /* 보험료 행 스타일 */
+      '.rptex-premium-row td{background:#EFF6FF !important;font-weight:700;color:#001E42;}',
+      '.rptex-premium-row .rptex-cat{background:#C7D9F5 !important;color:#001E42;}',
+      '.rptex-total-row td{background:#001E42 !important;color:#fff !important;font-weight:800;}',
+      /* 상태 뱃지 */
+      '.rptex-status{font-weight:800;border-radius:6px;padding:2px 9px;font-size:11px;display:inline-block;cursor:pointer;user-select:none;transition:opacity .1s;}',
+      '.rptex-status:hover{opacity:0.75;}',
       '.rptex-status.ok{background:#EFF6FF;color:#3182F6;}',
       '.rptex-status.low{background:#FEF2F2;color:#DC2626;}',
-      '.rptex-status.none{background:#F1F5F9;color:#64748B;}',
+      '.rptex-status.none{background:#F1F5F9;color:#64748B;cursor:default;}',
       '.rptex-amt-low{color:#DC2626!important;font-weight:800;background:#FEF2F2!important;}',
       '.rptex-editable-cell{cursor:text;}',
       '.rptex-editable-cell:hover{outline:1px dashed #3182F6;border-radius:3px;background:rgba(49,130,246,.06);}',
@@ -382,44 +390,113 @@
       lowItems: lowItems,
     };
 
-    renderAnalysisTable(rows, companies);
+    renderAnalysisTable();
     renderPremiumTable();
     refreshMsg();
 
     var ageEl = document.getElementById('rptex-age');
     var catEl = document.getElementById('rptex-category');
-    if (ageEl) ageEl.addEventListener('input', function() { gState.age = Number(this.value) || 40; refreshPremiumSummary(); refreshMsg(); });
+    if (ageEl) ageEl.addEventListener('input', function() { gState.age = Number(this.value) || 40; refreshPremiumSummary(); refreshAnalysisPremiumRows(); refreshMsg(); });
     if (catEl) catEl.addEventListener('input', function() { gState.category = this.value; refreshMsg(); });
   }
 
-  function renderAnalysisTable(rows, companies) {
+  // ─── 분석표 렌더 (보험료 행 포함) ───
+  function renderAnalysisTable() {
+    var rows = exState.rows;
+    var companies = exState.companies;
+
+    // rowspan 계산
     var spans = {}, last = null, si = 0;
     rows.forEach(function(r, i) {
       if (r.cat !== last) { if (last !== null) spans[si] = i - si; last = r.cat; si = i; }
     });
     if (last !== null) spans[si] = rows.length - si;
 
-    var html = '<table><tr><th>대분류</th><th>소분류</th><th>고객 보장합산<br>(만원)</th><th>권장 기준<br>(만원)</th><th>상태</th>';
+    var colCount = 5 + companies.length;
+
+    // 헤더
+    var html = '<table id="rptex-analysis-table"><thead><tr>'
+      + '<th>대분류</th><th>소분류</th>'
+      + '<th>고객 보장합산<br>(만원)</th>'
+      + '<th>권장 기준<br>(만원)</th>'
+      + '<th>상태</th>';
     companies.forEach(function(c){ html += '<th style="font-size:10px;color:#FBBF24;">' + esc(c) + '</th>'; });
+    html += '</tr></thead><tbody>';
+
+    // 보험료 행 (상단 고정)
+    var total = gState.premiums.reduce(function(s,p){ return s+(p.amount||0); }, 0);
+    var level = evalLevel(gState.age || 40, total);
+    html += '<tr class="rptex-premium-row" id="rptex-prem-summary-row">'
+      + '<td class="rptex-cat">💰 월납보험료</td>'
+      + '<td style="text-align:left;font-weight:700;">보험사별 합계</td>'
+      + '<td colspan="2" style="font-weight:800;color:#001E42;">' + total.toLocaleString() + '원</td>'
+      + '<td id="rptex-prem-level-cell" style="font-weight:800;">' + level.emoji + ' ' + level.label + '</td>';
+    companies.forEach(function(c, ci) {
+      var amt = (gState.premiums[ci] && gState.premiums[ci].amount) ? gState.premiums[ci].amount : 0;
+      html += '<td id="rptex-prem-co-' + ci + '" style="font-weight:700;">' + (amt ? amt.toLocaleString() + '원' : '-') + '</td>';
+    });
     html += '</tr>';
 
+    // 보장 항목 행
     rows.forEach(function(r, i) {
       html += '<tr>';
-      if (spans[i] !== undefined) html += '<td class="rptex-cat" rowspan="' + spans[i] + '">' + esc(r.cat) + '</td>';
+      if (spans[i] !== undefined) {
+        html += '<td class="rptex-cat" rowspan="' + spans[i] + '">' + esc(r.cat) + '</td>';
+      }
       var amtCls = r.status === 'low' ? 'rptex-amt-low' : '';
       var stLbl  = r.status === 'ok' ? '적정' : r.status === 'low' ? '부족' : '기준없음';
       var stCls  = r.status === 'ok' ? 'ok' : r.status === 'low' ? 'low' : 'none';
+      var toggleAttr = r.status !== 'none' ? ' onclick="window.rptExToggleStatus(' + i + ')"' : '';
       html += '<td class="rptex-label">' + esc(r.label) + '</td>';
-      html += '<td class="rptex-editable-cell ' + amtCls + '" contenteditable="true" spellcheck="false"'
+      html += '<td class="rptex-editable-cell ' + amtCls + '" id="rptex-amt-' + i + '" contenteditable="true" spellcheck="false"'
             + ' onblur="window.rptExCellEdit(this,' + i + ')">' + (r.customerSum || '-') + '</td>';
       html += '<td>' + (r.recommend !== undefined ? r.recommend.toLocaleString() : '-') + '</td>';
-      html += '<td><span class="rptex-status ' + stCls + '" id="rptex-st-' + i + '">' + stLbl + '</span></td>';
+      html += '<td><span class="rptex-status ' + stCls + '" id="rptex-st-' + i + '"' + toggleAttr + '>' + stLbl + '</span></td>';
       r.perProduct.forEach(function(v){ html += '<td>' + (v ? v.toLocaleString() : '-') + '</td>'; });
       html += '</tr>';
     });
-    html += '</table>';
+
+    html += '</tbody></table>';
     document.getElementById('rptex-table').innerHTML = html;
   }
+
+  // 보험료 요약 행만 갱신
+  function refreshAnalysisPremiumRows() {
+    var summaryRow = document.getElementById('rptex-prem-summary-row');
+    if (!summaryRow || !gState) return;
+    var total = gState.premiums.reduce(function(s,p){ return s+(p.amount||0); }, 0);
+    var level = evalLevel(gState.age || 40, total);
+    // 합계·수준 셀
+    var cells = summaryRow.querySelectorAll('td');
+    if (cells[2]) cells[2].textContent = total.toLocaleString() + '원';
+    var lvCell = document.getElementById('rptex-prem-level-cell');
+    if (lvCell) lvCell.textContent = level.emoji + ' ' + level.label;
+    // 각 보험사별 금액
+    gState.premiums.forEach(function(p, ci) {
+      var el = document.getElementById('rptex-prem-co-' + ci);
+      if (el) el.textContent = p.amount ? p.amount.toLocaleString() + '원' : '-';
+    });
+  }
+
+  // ─── 상태 토글 (적정↔부족) ───
+  window.rptExToggleStatus = function(rowIdx) {
+    var r = exState.rows[rowIdx];
+    if (r.status === 'none') return;
+    r.status = r.status === 'ok' ? 'low' : 'ok';
+    // 뱃지 갱신
+    var stEl = document.getElementById('rptex-st-' + rowIdx);
+    if (stEl) {
+      stEl.className = 'rptex-status ' + (r.status === 'ok' ? 'ok' : 'low');
+      stEl.textContent = r.status === 'ok' ? '적정' : '부족';
+    }
+    // 합산금액 셀 색상 갱신
+    var amtEl = document.getElementById('rptex-amt-' + rowIdx);
+    if (amtEl) {
+      amtEl.className = 'rptex-editable-cell' + (r.status === 'low' ? ' rptex-amt-low' : '');
+    }
+    gState.lowItems = exState.rows.filter(function(r){ return r.status === 'low'; });
+    refreshMsg();
+  };
 
   window.rptExCellEdit = function(el, rowIdx) {
     var raw = el.innerText.replace(/,/g,'').trim();
@@ -458,9 +535,11 @@
       if (isNaN(idx)) return;
       if (el.dataset.field === 'name') {
         gState.premiums[idx].name = el.value;
+        refreshAnalysisPremiumRows();
       } else if (el.dataset.field === 'amount') {
         gState.premiums[idx].amount = parseFloat(el.value.replace(/,/g,'')) || 0;
         refreshPremiumSummary();
+        refreshAnalysisPremiumRows();
         refreshMsg();
       }
     });
@@ -476,6 +555,7 @@
       gState.premiums.splice(Number(btn.dataset.del), 1);
       renderPremiumTable();
       refreshPremiumSummary();
+      refreshAnalysisPremiumRows();
       refreshMsg();
     });
 
@@ -485,6 +565,7 @@
   window.rptExAddCompany = function() {
     gState.premiums.push({ name: '', amount: 0 });
     renderPremiumTable();
+    refreshAnalysisPremiumRows();
   };
 
   function refreshPremiumSummary() {
@@ -510,21 +591,126 @@
       .catch(function(){ ta.select(); document.execCommand('copy'); alert('✅ 복사 완료'); });
   };
 
+  // ─── 분석표 HTML 복사 (카카오톡 서식 붙여넣기용) ───
   window.rptExCopyTable = function() {
+    var tbl = document.getElementById('rptex-analysis-table');
+    if (!tbl) return alert('분석표가 없습니다.');
+
+    // 인라인 스타일 포함한 HTML 생성
+    var html = buildCopyHTML();
+    var plain = buildCopyPlain();
+
+    try {
+      var clipItems = {
+        'text/html': new Blob([html], { type: 'text/html' }),
+        'text/plain': new Blob([plain], { type: 'text/plain' }),
+      };
+      navigator.clipboard.write([new ClipboardItem(clipItems)])
+        .then(function(){ alert('✅ 분석표가 복사되었습니다.\n카카오톡 채팅창에 바로 붙여넣기 하세요!'); })
+        .catch(function(){ fallbackCopy(plain); });
+    } catch(e) {
+      fallbackCopy(plain);
+    }
+  };
+
+  function fallbackCopy(plain) {
+    var ta = document.createElement('textarea');
+    ta.value = plain; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); alert('✅ 텍스트로 복사되었습니다.\n카카오톡에 붙여넣기 하세요.'); }
+    catch(e) { alert('복사에 실패했습니다. 직접 선택 후 복사해주세요.'); }
+    document.body.removeChild(ta);
+  }
+
+  // 카카오톡 호환 인라인 스타일 HTML 테이블 생성
+  function buildCopyHTML() {
+    var rows = exState.rows;
+    var companies = exState.companies;
+    var total = gState.premiums.reduce(function(s,p){ return s+(p.amount||0); }, 0);
+    var level = evalLevel(gState.age || 40, total);
+
+    var thStyle = 'background:#001E42;color:#fff;font-weight:700;padding:6px 10px;border:1px solid #334155;text-align:center;font-size:12px;white-space:nowrap;';
+    var tdBase  = 'padding:6px 10px;border:1px solid #CBD5E1;font-size:12px;white-space:nowrap;text-align:center;';
+    var tdCat   = tdBase + 'background:#D6DEE7;font-weight:700;color:#001E42;';
+    var tdLabel = tdBase + 'text-align:left;font-weight:600;color:#334155;';
+    var tdPrem  = tdBase + 'background:#EFF6FF;font-weight:700;color:#001E42;';
+    var tdLow   = tdBase + 'background:#FEF2F2;color:#DC2626;font-weight:800;';
+    var tdOk    = tdBase + 'background:#F0FDF4;color:#16A34A;font-weight:700;';
+    var tdNone  = tdBase + 'background:#F8FAFC;color:#94A3B8;';
+
+    var h = '<table style="border-collapse:collapse;font-family:\'Malgun Gothic\',\'Apple SD Gothic Neo\',sans-serif;">';
+    // 헤더
+    h += '<tr>';
+    h += '<th style="' + thStyle + '">대분류</th>';
+    h += '<th style="' + thStyle + '">소분류</th>';
+    h += '<th style="' + thStyle + '">고객합산(만원)</th>';
+    h += '<th style="' + thStyle + '">권장기준(만원)</th>';
+    h += '<th style="' + thStyle + '">상태</th>';
+    companies.forEach(function(c){ h += '<th style="' + thStyle + 'color:#FBBF24;">' + esc(c) + '</th>'; });
+    h += '</tr>';
+
+    // 보험료 행
+    h += '<tr>';
+    h += '<td style="' + tdPrem + 'background:#C7D9F5;">💰 월납보험료</td>';
+    h += '<td style="' + tdPrem + 'text-align:left;">보험사별 합계</td>';
+    h += '<td colspan="2" style="' + tdPrem + '">' + total.toLocaleString() + '원</td>';
+    h += '<td style="' + tdPrem + '">' + level.emoji + ' ' + level.label + '</td>';
+    companies.forEach(function(c, ci) {
+      var amt = (gState.premiums[ci] && gState.premiums[ci].amount) ? gState.premiums[ci].amount : 0;
+      h += '<td style="' + tdPrem + '">' + (amt ? amt.toLocaleString() + '원' : '-') + '</td>';
+    });
+    h += '</tr>';
+
+    // 보장 항목
+    var spans = {}, last = null, si = 0;
+    rows.forEach(function(r, i) {
+      if (r.cat !== last) { if (last !== null) spans[si] = i - si; last = r.cat; si = i; }
+    });
+    if (last !== null) spans[si] = rows.length - si;
+
+    rows.forEach(function(r, i) {
+      h += '<tr>';
+      if (spans[i] !== undefined) {
+        h += '<td rowspan="' + spans[i] + '" style="' + tdCat + '">' + esc(r.cat) + '</td>';
+      }
+      var amtStyle = r.status === 'low' ? tdLow : tdBase;
+      var stStyle  = r.status === 'ok'  ? tdOk : r.status === 'low' ? tdLow : tdNone;
+      var stText   = r.status === 'ok'  ? '✅ 적정' : r.status === 'low' ? '❌ 부족' : '─';
+      h += '<td style="' + tdLabel + '">' + esc(r.label) + '</td>';
+      h += '<td style="' + amtStyle + '">' + (r.customerSum ? r.customerSum.toLocaleString() : '-') + '</td>';
+      h += '<td style="' + tdBase + '">' + (r.recommend !== undefined ? r.recommend.toLocaleString() : '-') + '</td>';
+      h += '<td style="' + stStyle + '">' + stText + '</td>';
+      r.perProduct.forEach(function(v){ h += '<td style="' + tdBase + '">' + (v ? v.toLocaleString() : '-') + '</td>'; });
+      h += '</tr>';
+    });
+    h += '</table>';
+    return h;
+  }
+
+  // 텍스트 fallback
+  function buildCopyPlain() {
     var rows = exState.rows, companies = exState.companies;
-    if (!rows.length) return alert('분석표가 없습니다.');
-    var txt = '보장분석 결과표\n대분류\t소분류\t고객합산(만원)\t권장기준(만원)\t상태';
+    var total = gState.premiums.reduce(function(s,p){ return s+(p.amount||0); }, 0);
+    var level = evalLevel(gState.age || 40, total);
+    var txt = '[ 보장 분석표 ]\n';
+    txt += '대분류\t소분류\t고객합산(만원)\t권장기준(만원)\t상태';
     companies.forEach(function(c){ txt += '\t' + c; });
     txt += '\n';
+    // 보험료 행
+    txt += '💰월납보험료\t보험사별합계\t' + total.toLocaleString() + '원\t\t' + level.emoji + level.label;
+    companies.forEach(function(c, ci) {
+      var amt = (gState.premiums[ci] && gState.premiums[ci].amount) ? gState.premiums[ci].amount : 0;
+      txt += '\t' + (amt ? amt.toLocaleString() + '원' : '-');
+    });
+    txt += '\n';
     rows.forEach(function(r) {
-      txt += r.cat + '\t' + r.label + '\t' + (r.customerSum||0) + '\t' + (r.recommend!==undefined?r.recommend:'-') + '\t' + (r.status==='ok'?'적정':r.status==='low'?'부족':'기준없음');
+      var st = r.status === 'ok' ? '✅적정' : r.status === 'low' ? '❌부족' : '─';
+      txt += r.cat + '\t' + r.label + '\t' + (r.customerSum||'-') + '\t' + (r.recommend!==undefined?r.recommend:'-') + '\t' + st;
       r.perProduct.forEach(function(v){ txt += '\t' + (v||'-'); });
       txt += '\n';
     });
-    navigator.clipboard.writeText(txt)
-      .then(function(){ alert('✅ 분석표가 복사되었습니다.\n엑셀에 붙여넣기 하세요.'); })
-      .catch(function(){ alert('복사에 실패했습니다.'); });
-  };
+    return txt;
+  }
 
   window.rptExReset = function() {
     exState = { customerName:'', companies:[], rows:[] };
