@@ -1,7 +1,8 @@
 // ================================================
 // 토스DB 엑셀 보장분석 → 니즈환기 리포트 생성기
-// v6.2: 필수 보장 분석 카드 스타일 통일 + 실제 데이터 자동 매핑
-//       + AI 멘트 생성 안정화(재시도 + 폴백 즉시 표시)
+// v6.3: 필수 보장 분석 '미가입→미보장' 매핑 버그 수정
+//       + 카톡 발송 순서(6단계) 재구성: 인사 → 분석표 첨부 →
+//         신청내역체크 → 필수보장 첨부 → 상담안내/질문 → AI멘트
 // ================================================
 (function () {
 
@@ -41,6 +42,20 @@
     if (total <= s.high) return { label: '적정',     emoji: '🟢', cls: 'lv-ok'   };
     if (total <= s.over) return { label: '다소 높음', emoji: '🟠', cls: 'lv-warn' };
     return                     { label: '과다',     emoji: '🔴', cls: 'lv-over' };
+  }
+
+  // ─── 날짜/시간 포맷 헬퍼 (신청 내역 체크 멘트용) ───
+  function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+  function formatKoreanDateTime(d) {
+    d = d || new Date();
+    var days = ['일', '월', '화', '수', '목', '금', '토'];
+    var y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
+    var dow = days[d.getDay()];
+    var h = d.getHours();
+    var ampm = h < 12 ? '오전' : '오후';
+    var h12 = h % 12; if (h12 === 0) h12 = 12;
+    var min = d.getMinutes();
+    return y + '-' + pad2(m) + '-' + pad2(day) + ' (' + dow + ') ' + ampm + ' ' + h12 + '시 ' + min + '분';
   }
 
   // ─── 규칙 기반 폴백 로직 (AI 호출 실패 시 사용) ───
@@ -252,7 +267,7 @@
     if (!loadingEl) {
       loadingEl = document.createElement('div');
       loadingEl.id = 'rptex-ai-loading';
-      loadingEl.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;height:300px;border:1.5px solid #E2E8F0;border-radius:10px;background:#F8FAFC;';
+      loadingEl.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;height:280px;border:1.5px solid #E2E8F0;border-radius:10px;background:#F8FAFC;';
       loadingEl.innerHTML = '<div class="rptex-ai-dots"><span></span><span></span><span></span></div>'
         + '<div style="font-size:13px;color:#64748B;font-weight:600;" id="rptex-ai-loading-text">🤖 보장 데이터 분석 중...</div>';
       if (ta && ta.parentNode) ta.parentNode.insertBefore(loadingEl, ta);
@@ -309,11 +324,66 @@
     return '어드바이저';
   }
 
+  // ================================================================
+  // ✅ 카톡 발송 순서(6단계) 멘트 빌더
+  // 1) 인사 → 2) 분석표 이미지 첨부 → 3) 신청내역 체크 →
+  // 4) 필수보장 이미지 첨부 → 5) 상담안내/질문 → 6) AI 니즈환기 멘트
+  // ================================================================
+
+  // STEP 1. 인사 멘트
+  function buildGreetingMsg(state) {
+    var name = state.customerName || '고객';
+    var category = state.category || '보험 점검';
+    var advisorName = getCurrentAdvisorName();
+    var lines = [];
+    lines.push('안녕하세요 ' + name + '님');
+    lines.push('');
+    lines.push('토스 앱을 통해 신청하신 \'' + category + '\' 상담을 도와드릴 ' + advisorName + ' 어드바이저 입니다.');
+    lines.push('');
+    lines.push('상담 진행에 앞서 안심하시고 질의응답 하실 수 있도록 당사 명함 함께 첨부해드립니다.');
+    return lines.join('\n');
+  }
+
+  // STEP 3. 신청 내역 체크 멘트 (신청 일시 필요)
+  function buildTimeCheckMsg(state) {
+    var applyDT = state.applyDateTime || formatKoreanDateTime();
+    var lines = [];
+    lines.push(applyDT + '에 신청하신 보험 내역을 살펴봤어요. 🔍');
+    lines.push('');
+    lines.push('소중한 보험료가 낭비되지 않도록, 앞으로 평생 보험 때문에 머리 아플 일 없게 마침표를 찍어드리는 것!');
+    lines.push('특히 3가지는 확실히 체크해 드릴게요🔥');
+    lines.push('');
+    lines.push('✅ 중복되거나 불필요하게 새는 돈 잡기');
+    lines.push('✅ 지금 나이에 꼭 필요한 핵심 보장 확인');
+    lines.push('✅ 유지할지, 조정할지 딱 정해드리기');
+    return lines.join('\n');
+  }
+
+  // STEP 5. 상담 안내 & 질문 멘트
+  function buildQuestionMsg() {
+    var lines = [];
+    lines.push('보험에 대해 궁금하신 내용이 있으시다면, 1~3일 내로 분석 결과를 안내해 드릴 예정인데요.');
+    lines.push('더 정확한 분석을 위해, 지금 어떤 게 가장 궁금하신가요?');
+    lines.push('');
+    lines.push('1⃣ 매달 내는 보험료 줄이기 💸');
+    lines.push('2⃣ 나중에 아플 때 받을 보장 채우기 🏥');
+    lines.push('3⃣ 내가 든 보험 내용 정확히 알기 📋');
+    lines.push('');
+    lines.push('번호 하나만 툭! 남겨주시면, 그 부분을 집중적으로 분석해서 안내 드릴게요. 🚀');
+    lines.push('');
+    lines.push('👨‍👩‍👦 통화가 편하신 시간을 미리 남겨주시면 전문가의 도움을 받으실 수 있습니다.');
+    lines.push('🧑‍💻토스보험 상담서비스 시간');
+    lines.push('');
+    lines.push('* 평일 오전 10시 ~ 오후 8시');
+    lines.push('* 일요일, 공휴일은 전화상담 불가(카톡 가능)');
+    return lines.join('\n');
+  }
+
+  // STEP 6. AI 니즈환기 멘트 (앞 단계에서 인사·상담안내를 이미 보냈으므로
+  // 여기서는 보장 분석 상세 + 종합의견 + 마무리 인사만 담는다)
   function makeMsg(state) {
     var name     = state.customerName || '고객';
     var age      = state.age || 40;
-    var category = state.category || '보험 점검';
-    var advisorName = getCurrentAdvisorName();
     var premiums = state.premiums || [];
     var lowItems = state.lowItems || [];
     var total    = premiums.reduce(function(s, p){ return s + (p.amount || 0); }, 0);
@@ -329,14 +399,6 @@
     }
 
     var lines = [];
-    lines.push('안녕하세요 ' + name + '님');
-    lines.push('');
-    lines.push('토스 앱을 통해 신청하신 \'' + category + '\' 상담을 도와드릴 ' + advisorName + ' 어드바이저 입니다.');
-    lines.push('');
-    lines.push('상담 진행에 앞서 안심하시고 질의응답 하실 수 있도록 당사 명함 함께 첨부해드립니다.');
-    lines.push('');
-    lines.push('신청해 주신 \'' + category + '\' 내용으로 분석한 결과 안내드리겠습니다.');
-    lines.push('');
     lines.push('[ 보장 분석 ]');
     items.forEach(function(it, i) {
       lines.push((i+1) + '. ' + it.emoji + ' ' + it.title);
@@ -353,6 +415,26 @@
     lines.push('');
     lines.push('감사합니다.');
     return lines.join('\n');
+  }
+
+  // ─── 발송 순서 1/3/5단계 멘트를 화면에 갱신 (+ 6단계는 refreshMsg에 위임) ───
+  function refreshFlowMessages() {
+    if (!gState) return;
+
+    var greetEl = document.getElementById('rptex-flow-greet');
+    if (greetEl) greetEl.value = buildGreetingMsg(gState);
+
+    var dtInput = document.getElementById('rptex-apply-dt');
+    if (dtInput && !dtInput.value) dtInput.value = gState.applyDateTime || formatKoreanDateTime();
+    gState.applyDateTime = (dtInput && dtInput.value) || gState.applyDateTime || formatKoreanDateTime();
+
+    var timeEl = document.getElementById('rptex-flow-time');
+    if (timeEl) timeEl.value = buildTimeCheckMsg(gState);
+
+    var qEl = document.getElementById('rptex-flow-q');
+    if (qEl) qEl.value = buildQuestionMsg();
+
+    refreshMsg();
   }
 
   // ─── 내부 상태 ───
@@ -434,6 +516,9 @@
   }
 
   // ─── 업로드된 엑셀 파싱 결과(rows)를 기반으로 필수 보장 카드에 자동 매핑 ───
+  // ⚠️ 버그 수정: 엑셀에 항목은 있으나 고객 보장합산이 0(=미가입)인 경우
+  //    이전에는 '부족'으로 표시되었지만, 실제로는 아예 가입되지 않은 상태이므로
+  //    '미보장' 뱃지로 표시되어야 한다. (항목 자체가 엑셀에 없는 경우와 동일하게 처리)
   function autoMapEssential(rows) {
     var byLabel = {};
     (rows || []).forEach(function(r) { byLabel[r.label] = r; });
@@ -446,8 +531,9 @@
           it.amount = r.customerSum.toLocaleString() + '만원';
           it.status = r.status === 'ok' ? '적정' : '부족';
         } else if (r) {
+          // 엑셀상 항목은 존재하지만 고객 보장합산이 0원 → 미가입 상태 → '미보장'
           it.amount = '미가입';
-          it.status = '부족';
+          it.status = '미보장';
         } else {
           it.amount = '미가입';
           it.status = '미보장';
@@ -596,14 +682,56 @@
       /* ── ✅ 필수 보장 분석 카드 섹션 ── */
       + getEssentialHTML()
 
-      + '<p style="font-size:13px;font-weight:700;color:#334155;margin-bottom:6px;">📋 니즈환기 멘트 <span style="font-weight:400;color:#94A3B8;font-size:11px;">— 🤖 AI가 보장분석 데이터를 보고 직접 작성합니다. 나이/카테고리/보험료 수정 후 생성 버튼을 눌러주세요.</span></p>'
-      + '<textarea id="rptex-msg-output" style="width:100%;height:300px;border:1.5px solid #E2E8F0;border-radius:10px;padding:14px;font-size:13px;font-family:\'Noto Sans KR\',sans-serif;color:#334155;resize:vertical;box-sizing:border-box;line-height:1.7;background:#F8FAFC;"></textarea>'
+      /* ── ✅ 카톡 발송 순서 (6단계) ── */
+      + '<div class="rptex-flow-wrap">'
+      + '<div class="rptex-flow-title">📤 카톡 발송 순서 <span class="rptex-flow-sub">— 순서대로 복사해서 카카오톡으로 보내주세요</span></div>'
 
-      + '<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">'
-      + '<button class="btn-action" style="width:auto;padding:10px 22px;background:#7C3AED;" id="rptex-ai-gen-btn" onclick="window.rptExGenerateAIMessage()"><i class="bi bi-stars"></i> AI 멘트 생성</button>'
-      + '<button class="btn-action" style="width:auto;padding:10px 22px;" onclick="window.rptExCopyMsg()"><i class="bi bi-clipboard-check"></i> 멘트 복사</button>'
-      + '<button class="btn-action" style="width:auto;padding:10px 22px;background:#0F172A;" id="rptex-img-copy-btn" onclick="window.rptExCopyTableImage()"><i class="bi bi-image"></i> 분석표 이미지 복사</button>'
-      + '<button class="btn-action" style="width:auto;padding:10px 22px;background:#3182F6;" id="rptex-ess-img-copy-btn" onclick="window.rptExCopyEssentialImage()"><i class="bi bi-image"></i> 필수보장 이미지 복사</button>'
+      + '<div class="rptex-flow-step">'
+      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">1</span>인사 멘트</div>'
+      + '<textarea id="rptex-flow-greet" class="rptex-flow-ta" readonly></textarea>'
+      + '<div class="rptex-flow-actions">'
+      + '<button class="btn-action" style="width:auto;padding:8px 18px;" onclick="window.rptExCopyFlow(\'rptex-flow-greet\')"><i class="bi bi-clipboard-check"></i> 복사</button>'
+      + '<span class="rptex-flow-note">📎 이 메시지와 함께 어드바이저 명함을 첨부해주세요.</span>'
+      + '</div></div>'
+
+      + '<div class="rptex-flow-step">'
+      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">2</span>보장 분석 결과 첨부</div>'
+      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 분석표 이미지를 복사해서 전송하세요.</div>'
+      + '<button class="btn-action" style="width:auto;padding:8px 18px;background:#0F172A;" id="rptex-img-copy-btn" onclick="window.rptExCopyTableImage()"><i class="bi bi-image"></i> 분석표 이미지 복사</button>'
+      + '</div>'
+
+      + '<div class="rptex-flow-step">'
+      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">3</span>신청 내역 체크 멘트</div>'
+      + '<div class="rptex-meta-item" style="margin-bottom:10px;"><label class="rptex-meta-label">신청 일시</label>'
+      + '<input type="text" id="rptex-apply-dt" class="rptex-meta-input" style="width:230px;" placeholder="예) 2026-07-01 (수) 오후 4시 24분"></div>'
+      + '<textarea id="rptex-flow-time" class="rptex-flow-ta" readonly></textarea>'
+      + '<div class="rptex-flow-actions"><button class="btn-action" style="width:auto;padding:8px 18px;" onclick="window.rptExCopyFlow(\'rptex-flow-time\')"><i class="bi bi-clipboard-check"></i> 복사</button></div>'
+      + '</div>'
+
+      + '<div class="rptex-flow-step">'
+      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">4</span>필수 보장 분석 첨부</div>'
+      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 필수보장 이미지를 복사해서 전송하세요.</div>'
+      + '<button class="btn-action" style="width:auto;padding:8px 18px;background:#3182F6;" id="rptex-ess-img-copy-btn" onclick="window.rptExCopyEssentialImage()"><i class="bi bi-image"></i> 필수보장 이미지 복사</button>'
+      + '</div>'
+
+      + '<div class="rptex-flow-step">'
+      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">5</span>상담 안내 &amp; 질문 멘트</div>'
+      + '<textarea id="rptex-flow-q" class="rptex-flow-ta" readonly></textarea>'
+      + '<div class="rptex-flow-actions"><button class="btn-action" style="width:auto;padding:8px 18px;" onclick="window.rptExCopyFlow(\'rptex-flow-q\')"><i class="bi bi-clipboard-check"></i> 복사</button></div>'
+      + '</div>'
+
+      + '<div class="rptex-flow-step">'
+      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">6</span>AI 니즈환기 멘트 <span class="rptex-flow-sub">— 고객 답변 확인 후 전송</span></div>'
+      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">💬 고객이 선택한 항목이나 직접 짚어줄 부분을 확인한 뒤, AI 멘트를 생성해서 전송하세요.</div>'
+      + '<textarea id="rptex-msg-output" class="rptex-flow-ta" style="height:280px;"></textarea>'
+      + '<div class="rptex-flow-actions">'
+      + '<button class="btn-action" style="width:auto;padding:8px 18px;background:#7C3AED;" id="rptex-ai-gen-btn" onclick="window.rptExGenerateAIMessage()"><i class="bi bi-stars"></i> AI 멘트 생성</button>'
+      + '<button class="btn-action" style="width:auto;padding:8px 18px;" onclick="window.rptExCopyFlow(\'rptex-msg-output\')"><i class="bi bi-clipboard-check"></i> 복사</button>'
+      + '</div></div>'
+
+      + '</div>'
+
+      + '<div style="margin-top:16px;">'
       + '<button style="background:none;border:1px solid #E2E8F0;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;color:#475569;font-family:\'Noto Sans KR\',sans-serif;" onclick="window.rptExReset()"><i class="bi bi-arrow-counterclockwise"></i> 다시 시작</button>'
       + '</div>'
       + '</div></div>';
@@ -671,6 +799,16 @@
       '.rptex-ess-blue{background:#E8F3FF;color:#3182F6;}',
       '.rptex-ess-red{background:#FFF0F0;color:#F04452;}',
       '.rptex-ess-gray{background:#F2F4F6;color:#8B95A1;}',
+      /* ── 카톡 발송 순서(6단계) 스타일 ── */
+      '.rptex-flow-wrap{margin-bottom:16px;}',
+      '.rptex-flow-title{font-size:14px;font-weight:800;color:#001E42;margin-bottom:14px;}',
+      '.rptex-flow-sub{font-weight:400;color:#94A3B8;font-size:11.5px;}',
+      '.rptex-flow-step{background:#fff;border:1.5px solid #E2E8F0;border-radius:14px;padding:18px 18px 16px;margin-bottom:14px;}',
+      '.rptex-flow-step-head{font-size:14px;font-weight:800;color:#191F28;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}',
+      '.rptex-flow-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#3182F6;color:#fff;font-size:12px;font-weight:800;flex:none;}',
+      '.rptex-flow-ta{width:100%;min-height:110px;border:1.5px solid #E2E8F0;border-radius:10px;padding:12px 14px;font-size:13px;font-family:"Noto Sans KR",sans-serif;color:#334155;resize:vertical;box-sizing:border-box;line-height:1.7;background:#F8FAFC;}',
+      '.rptex-flow-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;}',
+      '.rptex-flow-note{font-size:12px;color:#64748B;}',
     ].join('');
     document.head.appendChild(s);
   }
@@ -842,19 +980,31 @@
       lowItems: lowItems,
       aiContent: null,
       essentialGroups: ESSENTIAL_GROUPS,
+      applyDateTime: formatKoreanDateTime(new Date()),
     };
 
     renderAnalysisTable();
     renderPremiumTable();
     renderEssentialGrid();
 
+    var dtInputInit = document.getElementById('rptex-apply-dt');
+    if (dtInputInit) dtInputInit.value = gState.applyDateTime;
+
+    refreshFlowMessages();
+
     var ageEl = document.getElementById('rptex-age');
     var catEl = document.getElementById('rptex-category');
+    var dtEl  = document.getElementById('rptex-apply-dt');
     if (ageEl) ageEl.addEventListener('input', function() {
       gState.age = Number(this.value) || 40;
       refreshPremiumSummary(); refreshAnalysisPremiumRow(); refreshMsg();
     });
-    if (catEl) catEl.addEventListener('change', function() { gState.category = this.value; refreshMsg(); });
+    if (catEl) catEl.addEventListener('change', function() { gState.category = this.value; refreshFlowMessages(); });
+    if (dtEl) dtEl.addEventListener('input', function() {
+      gState.applyDateTime = this.value;
+      var timeEl = document.getElementById('rptex-flow-time');
+      if (timeEl) timeEl.value = buildTimeCheckMsg(gState);
+    });
   }
 
   // ─── 분석표 렌더 (보험료 행 포함, 편집용 인터랙티브 테이블) ───
@@ -1047,12 +1197,17 @@
     ta.value = makeMsg(gState);
   }
 
+  // ─── 발송 순서 단계별 텍스트 공통 복사 함수 ───
+  window.rptExCopyFlow = function(id) {
+    var el = document.getElementById(id);
+    if (!el || !el.value) return alert('복사할 내용이 없습니다.');
+    navigator.clipboard.writeText(el.value)
+      .then(function(){ alert('✅ 복사되었습니다.'); })
+      .catch(function(){ el.select(); document.execCommand('copy'); alert('✅ 복사 완료'); });
+  };
+
   window.rptExCopyMsg = function() {
-    var ta = document.getElementById('rptex-msg-output');
-    if (!ta || !ta.value) return alert('생성된 멘트가 없습니다.');
-    navigator.clipboard.writeText(ta.value)
-      .then(function(){ alert('✅ 멘트가 클립보드에 복사되었습니다.'); })
-      .catch(function(){ ta.select(); document.execCommand('copy'); alert('✅ 복사 완료'); });
+    window.rptExCopyFlow('rptex-msg-output');
   };
 
   // ─── 분석표 이미지 복사 (html2canvas, 카톡 전송용 별도 카드 디자인) ───
@@ -1234,6 +1389,7 @@
     var r = document.getElementById('rptex-result'); if(r) r.style.display='none';
     var d = document.getElementById('rptex-drop-text'); if(d) d.textContent='클릭하거나 파일을 끌어다 놓으세요 (.xlsx)';
     var f = document.getElementById('rptex-file-input'); if(f) f.value='';
+    var dt = document.getElementById('rptex-apply-dt'); if(dt) dt.value='';
     hideError();
   };
 
