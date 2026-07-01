@@ -330,6 +330,7 @@
 
     var lines = [];
     lines.push('안녕하세요 ' + name + '님');
+    lines.push('');
     lines.push('토스 앱을 통해 신청하신 \'' + category + '\' 상담을 도와드릴 ' + advisorName + ' 어드바이저 입니다.');
     lines.push('');
     lines.push('상담 진행에 앞서 안심하시고 질의응답 하실 수 있도록 당사 명함 함께 첨부해드립니다.');
