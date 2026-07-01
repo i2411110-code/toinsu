@@ -478,7 +478,7 @@
 
   function essentialGroupHTML(g, gi) {
     var itemsHtml = g.items.map(function (it, ii) { return essentialItemHTML(g, gi, it, ii); }).join('');
-    var gridClass = 'rptex-ess-grid' + (g.key === '항암' ? ' rptex-ess-grid-2col' : '');
+    var gridClass = 'rptex-ess-grid' + (g.key === '항암' ? ' rptex-ess-grid-4col' : '');
     return '<div class="rptex-ess-card">'
       + '<div class="rptex-ess-card-title">' + esc(g.title) + '</div>'
       + '<div class="rptex-ess-card-desc">' + esc(g.desc) + '</div>'
@@ -660,7 +660,7 @@
       '.rptex-ess-card-title{font-size:20px;font-weight:800;color:#191F28;margin-bottom:2px;letter-spacing:-0.3px;}',
       '.rptex-ess-card-desc{font-size:13px;color:#6B7684;margin-bottom:26px;font-weight:500;}',
       '.rptex-ess-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:36px 16px;}',
-      '.rptex-ess-grid-2col{grid-template-columns:repeat(2,1fr)!important;gap:28px 24px;}',
+      '.rptex-ess-grid-4col{grid-template-columns:repeat(4,1fr)!important;gap:28px 16px;}',
       '.rptex-ess-item{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0;}',
       '.rptex-ess-item-name{font-size:14px;font-weight:700;color:#191F28;margin-bottom:6px;letter-spacing:-0.2px;line-height:1.3;white-space:nowrap;}',
       '.rptex-ess-item-input{width:100%;text-align:center;border:none;background:transparent;font-size:13px;color:#8B95A1;font-weight:500;padding:0;margin-bottom:12px;font-family:"Noto Sans KR",sans-serif;outline:none;}',
@@ -1169,7 +1169,7 @@
       }
 
       var groupsHtml = ESSENTIAL_GROUPS.map(function(g) {
-        var cols = g.key === '항암' ? 2 : 4;
+        var cols = 4;
         var itemsHtml = g.items.map(function(it) {
           var c = statusColor(it.status);
           return '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0;">'
