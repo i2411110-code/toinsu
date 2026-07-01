@@ -283,8 +283,7 @@ window.initRptModule = function () {
   app.innerHTML = getRptHTML();
   injectRptStyles();
 };
-window.rptSwitchMode('excel');
-};
+
 
 // ✅ [수정] 탭 버튼 순서 변경: "보장분석 리포트 생성기" 관련 안내 → "텍스트 붙여넣기 분석" 버튼이 먼저, "토스DB 엑셀 분석" 버튼이 뒤로 이동
 function getRptHTML() {
