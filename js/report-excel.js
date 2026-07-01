@@ -477,10 +477,11 @@
 
   function essentialGroupHTML(g, gi) {
     var itemsHtml = g.items.map(function (it, ii) { return essentialItemHTML(g, gi, it, ii); }).join('');
+    var gridClass = 'rptex-ess-grid' + (g.key === '항암' ? ' rptex-ess-grid-2col' : '');
     return '<div class="rptex-ess-card">'
       + '<div class="rptex-ess-card-title">' + esc(g.title) + '</div>'
       + '<div class="rptex-ess-card-desc">' + esc(g.desc) + '</div>'
-      + '<div class="rptex-ess-grid">' + itemsHtml + '</div>'
+      + '<div class="' + gridClass + '">' + itemsHtml + '</div>'
       + '</div>';
   }
 
@@ -601,6 +602,7 @@
       + '<button class="btn-action" style="width:auto;padding:10px 22px;background:#7C3AED;" id="rptex-ai-gen-btn" onclick="window.rptExGenerateAIMessage()"><i class="bi bi-stars"></i> AI 멘트 재생성</button>'
       + '<button class="btn-action" style="width:auto;padding:10px 22px;" onclick="window.rptExCopyMsg()"><i class="bi bi-clipboard-check"></i> 멘트 복사</button>'
       + '<button class="btn-action" style="width:auto;padding:10px 22px;background:#0F172A;" id="rptex-img-copy-btn" onclick="window.rptExCopyTableImage()"><i class="bi bi-image"></i> 분석표 이미지 복사</button>'
+      + '<button class="btn-action" style="width:auto;padding:10px 22px;background:#3182F6;" id="rptex-ess-img-copy-btn" onclick="window.rptExCopyEssentialImage()"><i class="bi bi-image"></i> 필수보장 이미지 복사</button>'
       + '<button style="background:none;border:1px solid #E2E8F0;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;color:#475569;font-family:\'Noto Sans KR\',sans-serif;" onclick="window.rptExReset()"><i class="bi bi-arrow-counterclockwise"></i> 다시 시작</button>'
       + '</div>'
       + '</div></div>';
@@ -657,8 +659,9 @@
       '.rptex-ess-card-title{font-size:20px;font-weight:800;color:#191F28;margin-bottom:2px;letter-spacing:-0.3px;}',
       '.rptex-ess-card-desc{font-size:13px;color:#6B7684;margin-bottom:26px;font-weight:500;}',
       '.rptex-ess-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:36px 16px;}',
-      '.rptex-ess-item{display:flex;flex-direction:column;align-items:center;text-align:center;}',
-      '.rptex-ess-item-name{font-size:14.5px;font-weight:700;color:#191F28;margin-bottom:4px;letter-spacing:-0.2px;line-height:1.3;min-height:38px;display:flex;align-items:center;justify-content:center;}',
+      '.rptex-ess-grid-2col{grid-template-columns:repeat(2,1fr)!important;gap:28px 24px;}',
+      '.rptex-ess-item{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0;}',
+      '.rptex-ess-item-name{font-size:14px;font-weight:700;color:#191F28;margin-bottom:6px;letter-spacing:-0.2px;line-height:1.3;white-space:nowrap;}',
       '.rptex-ess-item-input{width:100%;text-align:center;border:none;background:transparent;font-size:13px;color:#8B95A1;font-weight:500;padding:0;margin-bottom:12px;font-family:"Noto Sans KR",sans-serif;outline:none;}',
       '.rptex-ess-item-input:focus{color:#3182F6;}',
       '.rptex-ess-item-btn{width:100%;max-width:112px;border:none;border-radius:16px;padding:10px 0;font-size:14px;font-weight:800;cursor:pointer;font-family:"Noto Sans KR",sans-serif;transition:transform .1s,opacity .12s;}',
@@ -1143,6 +1146,83 @@
       console.error(err);
       alert('이미지 생성 실패: ' + err.message);
       if (btn) { btn.innerHTML = '<i class="bi bi-image"></i> 분석표 이미지 복사'; btn.disabled = false; }
+    }
+  };
+
+  // ─── 필수 보장 분석 카드 → 이미지 복사 (카톡 전송용) ───
+  window.rptExCopyEssentialImage = async function() {
+    if (!gState) return alert('먼저 엑셀을 업로드해주세요.');
+
+    var btn = document.getElementById('rptex-ess-img-copy-btn');
+    if (btn) { btn.innerHTML = '⏳ 이미지 생성 중...'; btn.disabled = true; }
+
+    try {
+      if (!window.html2canvas) {
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+      }
+
+      function statusColor(status) {
+        if (status === '적정') return { bg: '#E8F3FF', text: '#3182F6' };
+        if (status === '부족') return { bg: '#FFF0F0', text: '#F04452' };
+        return { bg: '#F2F4F6', text: '#8B95A1' };
+      }
+
+      var groupsHtml = ESSENTIAL_GROUPS.map(function(g) {
+        var cols = g.key === '항암' ? 2 : 4;
+        var itemsHtml = g.items.map(function(it) {
+          var c = statusColor(it.status);
+          return '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0;">'
+            + '<div style="font-size:14px;font-weight:700;color:#191F28;margin-bottom:6px;white-space:nowrap;">' + esc(it.name) + '</div>'
+            + '<div style="font-size:12.5px;color:#8B95A1;font-weight:500;margin-bottom:10px;">' + esc(it.amount || '미가입') + '</div>'
+            + '<div style="background:' + c.bg + ';color:' + c.text + ';font-weight:800;font-size:13px;border-radius:14px;padding:9px 0;width:100%;max-width:104px;">' + esc(it.status) + '</div>'
+            + '</div>';
+        }).join('');
+        return '<div style="background:#fff;border:1px solid #EDF0F3;border-radius:24px;padding:26px 24px;margin-bottom:16px;">'
+          + '<div style="font-size:17px;font-weight:800;color:#191F28;margin-bottom:2px;">' + esc(g.title) + '</div>'
+          + '<div style="font-size:12.5px;color:#6B7684;margin-bottom:22px;">' + esc(g.desc) + '</div>'
+          + '<div style="display:grid;grid-template-columns:repeat(' + cols + ',1fr);gap:26px 16px;">' + itemsHtml + '</div>'
+          + '</div>';
+      }).join('');
+
+      var html = '<div style="width:640px;background:#F2F4F6;border-radius:24px;padding:26px;font-family:\'Malgun Gothic\',\'Apple SD Gothic Neo\',\'Noto Sans KR\',sans-serif;">'
+        + '<div style="font-size:17px;font-weight:800;color:#191F28;margin:4px 4px 18px;letter-spacing:-0.2px;">' + esc(gState.customerName) + '님의 필수 보장 분석</div>'
+        + groupsHtml
+        + '<div style="padding:10px 6px 2px;font-size:11px;color:#94A3B8;line-height:1.6;">본 분석은 고객 제공 가입설계서 기준의 참고 자료이며, 실제 보장 내용은 약관을 기준으로 합니다.</div>'
+        + '</div>';
+
+      var wrapper = document.createElement('div');
+      wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;';
+      wrapper.innerHTML = html;
+      document.body.appendChild(wrapper);
+
+      var canvas = await window.html2canvas(wrapper.firstElementChild, {
+        scale: 2.5,
+        useCORS: true,
+        backgroundColor: '#F2F4F6',
+        logging: false,
+      });
+      document.body.removeChild(wrapper);
+
+      canvas.toBlob(async function(blob) {
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob })
+          ]);
+          alert('✅ 필수 보장 분석 이미지가 복사되었습니다!\n카카오톡 채팅창에 바로 붙여넣기(Ctrl+V) 하세요.');
+        } catch(e) {
+          var a = document.createElement('a');
+          a.href = canvas.toDataURL('image/png');
+          a.download = '필수보장분석.png';
+          a.click();
+          alert('📥 클립보드 복사가 차단되어 이미지를 다운로드했습니다.\n다운로드된 이미지를 카카오톡에 첨부해주세요.');
+        }
+        if (btn) { btn.innerHTML = '<i class="bi bi-image"></i> 필수보장 이미지 복사'; btn.disabled = false; }
+      }, 'image/png');
+
+    } catch(err) {
+      console.error(err);
+      alert('이미지 생성 실패: ' + err.message);
+      if (btn) { btn.innerHTML = '<i class="bi bi-image"></i> 필수보장 이미지 복사'; btn.disabled = false; }
     }
   };
 
