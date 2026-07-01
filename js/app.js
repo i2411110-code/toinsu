@@ -997,8 +997,6 @@ window.switchGaonOfficeTab = function(tab) {
     if (tab === 'rpt' && window.initRptModule) window.initRptModule();
     // 캘린더 탭: 렌더
     if (tab === 'cal' && window.calendarRender) setTimeout(() => window.calendarRender(), 50);
-    // 항암 보장 분석 탭: 최초 1회 렌더
-    if (tab === 'cca' && window.renderCcaGrid) window.renderCcaGrid();
 };
 
 // ── 개인공간 전산실 전용: 2탭 전환 (input / list) ──
@@ -2003,67 +2001,3 @@ window.deleteCurrentNotice = async function() {
     }
 };
 
-// =====================================================
-// ✅ [신규 추가] 항암 보장 분석 솔루션 — 그리드 렌더 & 상태 토글
-// =====================================================
-// =====================================================
-// ✅ [수정] 항암 보장 분석 솔루션 — 그리드 렌더 & 상태 토글 (순수 CSS 버전)
-// =====================================================
-window.renderCcaGrid = function () {
-    const grid = document.getElementById('ccaItemsGrid');
-    if (!grid || grid.dataset.rendered === '1') return; // 중복 렌더링 방지
-    grid.dataset.rendered = '1';
-
-    const itemsData = [
-        { name: "표적항암약물허가", amount: "3,000만원", status: "부족" },
-        { name: "중입자치료",       amount: "미가입",     status: "미보장" },
-        { name: "세기조절방사선",   amount: "미가입",     status: "미보장" },
-        { name: "양성자치료",       amount: "미가입",     status: "미보장" },
-        { name: "CAR-T항암",        amount: "미가입",     status: "미보장" },
-        { name: "로봇암 수술비",    amount: "300만원",    status: "부족" },
-        { name: "암수술비",         amount: "300만원",    status: "부족" },
-        { name: "항암방사선약물",   amount: "300만원",    status: "부족" },
-    ];
-
-    // style.css에 만들어둔 클래스명과 매핑
-    const statusConfig = {
-        "적정":   "cca-btn-blue",
-        "부족":   "cca-btn-red",
-        "미보장": "cca-btn-gray",
-    };
-    const statuses = ["적정", "부족", "미보장"];
-
-    itemsData.forEach(item => {
-        const container = document.createElement('div');
-        container.className = "cca-item";
-
-        const nameSpan = document.createElement('div');
-        nameSpan.className = "cca-item-name";
-        nameSpan.innerText = item.name;
-
-        const amountInput = document.createElement('input');
-        amountInput.type = "text";
-        amountInput.value = item.amount;
-        amountInput.className = "cca-item-input";
-
-        const btn = document.createElement('button');
-        const updateBtnStyle = (status) => {
-            btn.className = `cca-item-btn ${statusConfig[status]}`;
-            btn.innerText = status;
-        };
-
-        let currentStatus = item.status;
-        updateBtnStyle(currentStatus);
-
-        btn.onclick = () => {
-            const nextIdx = (statuses.indexOf(currentStatus) + 1) % statuses.length;
-            currentStatus = statuses[nextIdx];
-            updateBtnStyle(currentStatus);
-        };
-
-        container.appendChild(nameSpan);
-        container.appendChild(amountInput);
-        container.appendChild(btn);
-        grid.appendChild(container);
-    });
-};

@@ -1,6 +1,6 @@
 // ================================================
 // 토스DB 엑셀 보장분석 → 니즈환기 리포트 생성기
-// v6.0: AI(Claude) 기반 보장분석 멘트 자동 작성 추가
+// v6.1: 필수 보장 분석(실비/3대진단/항암/운전자) 카드 섹션 추가
 // ================================================
 (function () {
 
@@ -165,15 +165,12 @@
     var total = gState.premiums.reduce(function(s,p){ return s+(p.amount||0); }, 0);
     var level = evalLevel(gState.age || 40, total);
 
-    // 보험사별 보험료 상세
     var premiumDetail = gState.premiums.map(function(p) {
       return { 보험사: p.name, 월납보험료_원: p.amount };
     });
 
-    // 전체 보장 항목 상세 (보험사별 금액 포함)
     var allItems = rows.map(function(r) {
       var detail = { 대분류: r.cat, 소분류: r.label, 고객보장합산_만원: r.customerSum, 권장기준_만원: r.recommend !== undefined ? r.recommend : null, 상태: r.status };
-      // 보험사별 개별 금액
       if (r.perProduct && companies.length > 0) {
         var byCompany = {};
         companies.forEach(function(c, i) { if (r.perProduct[i]) byCompany[c] = r.perProduct[i]; });
@@ -198,8 +195,6 @@
   }
 
   // ─── 백엔드 프록시 엔드포인트 ───
-  // 실제 Gemini API 키는 서버(GEMINI_API_KEY 환경변수)에만 보관되고,
-  // 프론트엔드는 이 엔드포인트로만 요청을 보냅니다. 경로는 운영 환경에 맞게 수정하세요.
   var AI_PROXY_ENDPOINT = '/api/generate-message';
 
   // ─── AI 호출 + 결과를 textarea에 반영 (백엔드 프록시 경유) ───
@@ -208,10 +203,8 @@
     var btn = document.getElementById('rptex-ai-gen-btn');
     var ta  = document.getElementById('rptex-msg-output');
 
-    // ── 버튼 비활성화 ──
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-stars"></i> AI 분석 중...'; }
 
-    // ── textarea 숨기고 로딩 UI 표시 ──
     if (ta) { ta.value = ''; ta.style.display = 'none'; }
     var loadingEl = document.getElementById('rptex-ai-loading');
     if (!loadingEl) {
@@ -232,7 +225,6 @@
       if (loadingTextEl) loadingTextEl.textContent = loadingMsgs[msgIdx];
     }, 900);
 
-    // ── API 호출 ──
     try {
       var payload = buildAIPayload();
       var fullPrompt = AI_SYSTEM_PROMPT + '\n\n고객 보장 데이터:\n' + JSON.stringify(payload);
@@ -261,7 +253,6 @@
       gState.aiContent = null;
     }
 
-    // ── 로딩 종료 ──
     clearInterval(loadingInterval);
     if (loadingEl) loadingEl.style.display = 'none';
     if (ta) ta.style.display = '';
@@ -271,11 +262,9 @@
 
   // ─── 로그인한 어드바이저 이름 가져오기 ───
   function getCurrentAdvisorName() {
-    // app.js에서 로그인 후 window.currentUserDisplayName에 저장됨
     if (window.currentUserDisplayName && window.currentUserDisplayName.trim()) {
       return window.currentUserDisplayName.trim();
     }
-    // 폴백: #main-user-name DOM 텍스트 (끝에 '님' 제거)
     var el = document.getElementById('main-user-name');
     if (el) {
       var name = el.textContent.replace(/님$/, '').trim();
@@ -305,7 +294,6 @@
 
     var lines = [];
     lines.push('안녕하세요 ' + name + '님');
-    // 💡 고정된 '심현진' 대신 advisorName 변수를 사용하도록 안전하게 수정
     lines.push('토스 앱을 통해 신청하신 \'' + category + '\' 상담을 도와드릴 ' + advisorName + ' 어드바이저 입니다.');
     lines.push('');
     lines.push('상담 진행에 앞서 안심하시고 질의응답 하실 수 있도록 당사 명함 함께 첨부해드립니다.');
@@ -342,6 +330,148 @@
       document.head.appendChild(s);
     });
   }
+
+  // ================================================================
+  // ✅ [신규] 필수 보장 분석 (실비/3대진단/항암/운전자) — 카드형 그리드
+  // app.js의 renderCcaGrid(항암 보장 분석) 인터랙션을 그대로 가져와
+  // "배재영님의 필수 보장 내용" 이미지의 카테고리와 합쳤습니다.
+  // ================================================================
+  var ESSENTIAL_GROUPS = [
+    {
+      key: '실비',
+      title: '실비보험',
+      desc: '병원비를 돌려받는 기본 보장',
+      items: [
+        { name: '질병 입원비', amount: '', status: '적정' },
+        { name: '질병 통원비', amount: '', status: '적정' },
+        { name: '상해 입원비', amount: '', status: '적정' },
+        { name: '상해 통원비', amount: '', status: '적정' },
+      ],
+    },
+    {
+      key: '3대진단',
+      title: '3대 진단비 (암/뇌/심장)',
+      desc: '치료비와 생활비가 많이 필요한 질병 준비',
+      items: [
+        { name: '일반암', amount: '', status: '적정' },
+        { name: '유사암', amount: '', status: '적정' },
+        { name: '뇌혈관질환', amount: '', status: '적정' },
+        { name: '허혈성심장질환', amount: '', status: '적정' },
+      ],
+    },
+    {
+      key: '항암',
+      title: '항암 치료비',
+      desc: '암 진단 이후 치료 단계별 고액 비급여 치료비 대비',
+      items: [
+        { name: '표적항암약물허가치료비', amount: '미가입', status: '미보장' },
+        { name: '중입자치료비',           amount: '미가입', status: '미보장' },
+        { name: '세기조절방사선치료비',   amount: '미가입', status: '미보장' },
+        { name: '양성자치료비',           amount: '미가입', status: '미보장' },
+        { name: 'CAR-T항암치료비',        amount: '미가입', status: '미보장' },
+        { name: '로봇암 수술비',          amount: '300만원', status: '부족' },
+        { name: '암 수술비',              amount: '300만원', status: '부족' },
+        { name: '항암방사선·약물치료비',  amount: '300만원', status: '부족' },
+      ],
+    },
+    {
+      key: '운전자',
+      title: '운전자 보험',
+      desc: "자동차 사고 '형사적 책임' 준비",
+      items: [
+        { name: '교통사고처리지원금', amount: '', status: '적정' },
+        { name: '벌금(대물)',         amount: '', status: '적정' },
+        { name: '벌금(대인)',         amount: '', status: '적정' },
+        { name: '변호사선임비용',     amount: '', status: '적정' },
+      ],
+    },
+  ];
+
+  var ESSENTIAL_STATUS_CYCLE = ['적정', '부족', '미보장'];
+  var ESSENTIAL_STATUS_CLASS = {
+    '적정': 'rptex-ess-blue',
+    '부족': 'rptex-ess-red',
+    '미보장': 'rptex-ess-gray',
+  };
+
+  function getEssentialHTML() {
+    var groupsHtml = ESSENTIAL_GROUPS.map(function (g, gi) {
+      var itemsHtml = g.items.map(function (it, ii) {
+        return '<div class="rptex-ess-item">'
+          + '<div class="rptex-ess-item-name">' + esc(it.name) + '</div>'
+          + '<input type="text" class="rptex-ess-item-input" '
+          +   'value="' + esc(it.amount) + '" placeholder="-" '
+          +   'data-g="' + gi + '" data-i="' + ii + '" '
+          +   'oninput="window.rptExEssAmountEdit(this,' + gi + ',' + ii + ')">'
+          + '<button class="rptex-ess-item-btn ' + ESSENTIAL_STATUS_CLASS[it.status] + '" '
+          +   'data-g="' + gi + '" data-i="' + ii + '" '
+          +   'onclick="window.rptExEssToggle(' + gi + ',' + ii + ')">' + it.status + '</button>'
+          + '</div>';
+      }).join('');
+
+      return '<div class="rptex-ess-card">'
+        + '<div class="rptex-ess-card-title">' + esc(g.title) + '</div>'
+        + '<div class="rptex-ess-card-desc">' + esc(g.desc) + '</div>'
+        + '<div class="rptex-ess-grid">' + itemsHtml + '</div>'
+        + '</div>';
+    }).join('');
+
+    return '<div class="rpt-card">'
+      + '<div class="rpt-step-label">STEP 3</div>'
+      + '<h3 class="rpt-step-title">필수 보장 분석</h3>'
+      + '<p class="rpt-step-desc">실비·3대진단비·항암치료비·운전자보험 핵심 항목을 한눈에 점검합니다.<br>'
+      + '<span style="color:#64748B;font-size:12px;">📌 금액 직접 입력 · 상태버튼 클릭 시 적정 → 부족 → 미보장 순으로 전환됩니다.</span></p>'
+      + '<div id="rptex-essential-wrap">' + groupsHtml + '</div>'
+      + '</div>';
+  }
+
+  window.rptExEssToggle = function (gi, ii) {
+    var item = ESSENTIAL_GROUPS[gi].items[ii];
+    var idx = ESSENTIAL_STATUS_CYCLE.indexOf(item.status);
+    item.status = ESSENTIAL_STATUS_CYCLE[(idx + 1) % ESSENTIAL_STATUS_CYCLE.length];
+    var btn = document.querySelector(
+      '.rptex-ess-item-btn[data-g="' + gi + '"][data-i="' + ii + '"]'
+    );
+    if (btn) {
+      btn.className = 'rptex-ess-item-btn ' + ESSENTIAL_STATUS_CLASS[item.status];
+      btn.textContent = item.status;
+    }
+    if (gState) gState.essentialGroups = ESSENTIAL_GROUPS;
+  };
+
+  window.rptExEssAmountEdit = function (el, gi, ii) {
+    ESSENTIAL_GROUPS[gi].items[ii].amount = el.value;
+    if (gState) gState.essentialGroups = ESSENTIAL_GROUPS;
+  };
+
+  function renderEssentialGrid() {
+    var wrap = document.getElementById('rptex-essential-wrap');
+    if (!wrap) return;
+    var groupsHtml = ESSENTIAL_GROUPS.map(function (g, gi) {
+      var itemsHtml = g.items.map(function (it, ii) {
+        return '<div class="rptex-ess-item">'
+          + '<div class="rptex-ess-item-name">' + esc(it.name) + '</div>'
+          + '<input type="text" class="rptex-ess-item-input" '
+          +   'value="' + esc(it.amount) + '" placeholder="-" '
+          +   'data-g="' + gi + '" data-i="' + ii + '" '
+          +   'oninput="window.rptExEssAmountEdit(this,' + gi + ',' + ii + ')">'
+          + '<button class="rptex-ess-item-btn ' + ESSENTIAL_STATUS_CLASS[it.status] + '" '
+          +   'data-g="' + gi + '" data-i="' + ii + '" '
+          +   'onclick="window.rptExEssToggle(' + gi + ',' + ii + ')">' + it.status + '</button>'
+          + '</div>';
+      }).join('');
+      return '<div class="rptex-ess-card">'
+        + '<div class="rptex-ess-card-title">' + esc(g.title) + '</div>'
+        + '<div class="rptex-ess-card-desc">' + esc(g.desc) + '</div>'
+        + '<div class="rptex-ess-grid">' + itemsHtml + '</div>'
+        + '</div>';
+    }).join('');
+    wrap.innerHTML = groupsHtml;
+    if (gState) gState.essentialGroups = ESSENTIAL_GROUPS;
+  }
+  // ================================================================
+  // ✅ 필수 보장 분석 섹션 끝
+  // ================================================================
 
   window.initRptExcelModule = function () {
     var panel = document.getElementById('rpt-mode-excel-panel');
@@ -410,6 +540,9 @@
       + '<button class="rptex-add-co-btn" onclick="window.rptExAddCompany()">+ 보험사 추가</button>'
       + '</div></div>'
 
+      /* ── ✅ 신규: 필수 보장 분석 카드 섹션 ── */
+      + getEssentialHTML()
+
       + '<p style="font-size:13px;font-weight:700;color:#334155;margin-bottom:6px;">📋 니즈환기 멘트 <span style="font-weight:400;color:#94A3B8;font-size:11px;">— 🤖 AI가 보장분석 데이터를 보고 직접 작성합니다. 나이/카테고리/보험료 수정 후 재생성 버튼을 눌러주세요.</span></p>'
       + '<textarea id="rptex-msg-output" style="width:100%;height:300px;border:1.5px solid #E2E8F0;border-radius:10px;padding:14px;font-size:13px;font-family:\'Noto Sans KR\',sans-serif;color:#334155;resize:vertical;box-sizing:border-box;line-height:1.7;background:#F8FAFC;"></textarea>'
 
@@ -435,13 +568,11 @@
       '#rptex-table th{background:#001E42;color:#fff;font-weight:700;border-color:#001E42;}',
       '.rptex-cat{background:#D6DEE7;font-weight:700;color:#001E42;}',
       '.rptex-label{text-align:left;font-weight:600;color:#334155;min-width:120px;}',
-      /* 보험료 행 */
       '.rptex-premium-row td{background:#EFF6FF;font-weight:700;color:#001E42;border-color:#C7D9F5;}',
       '.rptex-premium-row .rptex-cat{background:#C7D9F5;color:#001E42;}',
       '.rptex-prem-editable{cursor:text;min-width:60px;}',
       '.rptex-prem-editable:hover{outline:1px dashed #3182F6;border-radius:3px;background:rgba(49,130,246,.06);}',
       '.rptex-prem-editable:focus{outline:2px solid #3182F6;border-radius:3px;background:#fff;}',
-      /* 상태 뱃지 */
       '.rptex-status{font-weight:800;border-radius:6px;padding:2px 9px;font-size:11px;display:inline-block;cursor:pointer;user-select:none;transition:opacity .1s;}',
       '.rptex-status:hover{opacity:0.75;}',
       '.rptex-status.ok{background:#EFF6FF;color:#3182F6;}',
@@ -470,12 +601,19 @@
       '.rptex-ai-dots span:nth-child(2){animation-delay:0.2s;}',
       '.rptex-ai-dots span:nth-child(3){animation-delay:0.4s;}',
       '@keyframes rptex-bounce{0%,80%,100%{transform:scale(0.6);opacity:.4;}40%{transform:scale(1.1);opacity:1;}}',
-      '.rptex-ai-dots{display:flex;gap:8px;align-items:center;}',
-      '.rptex-ai-dots span{width:10px;height:10px;border-radius:50%;background:#3182F6;animation:rptex-bounce 1.2s infinite ease-in-out;}',
-      '.rptex-ai-dots span:nth-child(1){animation-delay:0s;}',
-      '.rptex-ai-dots span:nth-child(2){animation-delay:0.2s;}',
-      '.rptex-ai-dots span:nth-child(3){animation-delay:0.4s;}',
-      '@keyframes rptex-bounce{0%,80%,100%{transform:scale(0.6);opacity:.4;}40%{transform:scale(1.1);opacity:1;}}',
+      '.rptex-ess-card{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:16px;padding:20px;margin-bottom:16px;}',
+      '.rptex-ess-card-title{font-size:16px;font-weight:800;color:#0F172A;margin-bottom:4px;}',
+      '.rptex-ess-card-desc{font-size:12px;color:#64748B;margin-bottom:14px;}',
+      '.rptex-ess-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}',
+      '.rptex-ess-item{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 12px;text-align:center;}',
+      '.rptex-ess-item-name{font-size:12.5px;font-weight:700;color:#334155;margin-bottom:8px;min-height:32px;display:flex;align-items:center;justify-content:center;}',
+      '.rptex-ess-item-input{width:100%;text-align:center;border:none;border-bottom:1px solid #E2E8F0;background:transparent;font-size:13px;color:#0F172A;font-weight:600;padding:4px 2px;margin-bottom:10px;font-family:"Noto Sans KR",sans-serif;outline:none;box-sizing:border-box;}',
+      '.rptex-ess-item-input:focus{border-bottom-color:#3182F6;}',
+      '.rptex-ess-item-btn{width:100%;border:none;border-radius:8px;padding:8px 0;font-size:13px;font-weight:800;cursor:pointer;font-family:"Noto Sans KR",sans-serif;transition:opacity .12s;}',
+      '.rptex-ess-item-btn:hover{opacity:.8;}',
+      '.rptex-ess-blue{background:#EFF6FF;color:#3182F6;}',
+      '.rptex-ess-red{background:#FEF2F2;color:#DC2626;}',
+      '.rptex-ess-gray{background:#F1F5F9;color:#64748B;}',
     ].join('');
     document.head.appendChild(s);
   }
@@ -539,7 +677,6 @@
     var catCol = -1, subCol = -1, amtCol = -1, coStart = -1;
     var premiumAmounts = [];
 
-    // 행 전체(어느 셀이든)에서 보험료 관련 키워드 탐지
     function rowHasPremiumKeyword(row) {
       for (var i = 0; i < row.length; i++) {
         var v = String(row[i] || '').replace(/\s/g, '');
@@ -565,20 +702,18 @@
         continue;
       }
 
-      // 헤더 이후 모든 행 대상으로 보험료 행 탐지 (행 번호에 의존하지 않음)
       if (companies.length > 0 && premiumAmounts.length === 0 && rowHasPremiumKeyword(row)) {
         for (var pc2 = coStart; pc2 < coStart + companies.length; pc2++) {
           var pv = String(row[pc2]||'').replace(/,/g,'').trim();
           var pn = parseFloat(pv) || 0;
           premiumAmounts.push(pn);
         }
-        continue; // 보험료 행은 보장 항목 목록에서 제외
+        continue;
       }
 
       var catVal = String(row[catCol]||'').trim();
       var subVal = String(row[subCol]||'').trim();
 
-      // 엑셀 중간에 헤더 행("대분류"/"소분류")이 반복되는 경우 건너뛰기
       if (catVal === '대분류' && subVal === '소분류') continue;
 
       var b = catVal;
@@ -593,8 +728,6 @@
         status: rec === undefined ? 'none' : sum >= rec ? 'ok' : 'low', perProduct: per });
     }
 
-    // 폴백: 위 로직으로 보험료를 못 찾았을 경우, 시트 전체를 한 번 더 훑어서
-    // "보험료"라는 단어가 포함된 행을 모두 검사 (헤더 발견 전이라도 탐지)
     if (companies.length > 0 && premiumAmounts.length === 0) {
       for (var ri2 = 0; ri2 < aoa.length; ri2++) {
         var row2 = aoa[ri2] || [];
@@ -644,11 +777,13 @@
         return { name: name, amount: premiumAmounts[i] || 0 };
       }),
       lowItems: lowItems,
-      aiContent: null, // AI가 생성한 {items, opinion}; 없으면 폴백 로직 사용
+      aiContent: null,
+      essentialGroups: ESSENTIAL_GROUPS,
     };
 
     renderAnalysisTable();
     renderPremiumTable();
+    renderEssentialGrid();
 
     var ageEl = document.getElementById('rptex-age');
     var catEl = document.getElementById('rptex-category');
@@ -683,7 +818,6 @@
     companies.forEach(function(c){ html += '<th style="font-size:10px;color:#FBBF24;">' + esc(c) + '</th>'; });
     html += '</tr></thead><tbody>';
 
-    // ── 보험료 행 (편집 가능) ──
     html += '<tr class="rptex-premium-row" id="rptex-prem-row">'
       + '<td class="rptex-cat">💰 월납보험료</td>'
       + '<td style="text-align:left;font-weight:700;">보험사별 합계</td>'
@@ -698,7 +832,6 @@
     });
     html += '</tr>';
 
-    // ── 보장 항목 행 ──
     rows.forEach(function(r, i) {
       html += '<tr>';
       if (spans[i] !== undefined) {
@@ -723,13 +856,11 @@
     document.getElementById('rptex-table').innerHTML = html;
   }
 
-  // 표 안 보험료 셀 직접 편집
   window.rptExPremCellEdit = function(el, ci) {
     var raw = el.innerText.replace(/,/g,'').replace(/원/g,'').trim();
     var val = parseFloat(raw) || 0;
     if (gState.premiums[ci]) gState.premiums[ci].amount = val;
     el.innerText = val ? val.toLocaleString() : '-';
-    // 하단 입력 패널 동기화
     var inputs = document.querySelectorAll('#rptex-premium-tbody input[data-field="amount"]');
     if (inputs[ci]) inputs[ci].value = val ? val.toLocaleString() : '';
     refreshPremiumSummary();
@@ -737,7 +868,6 @@
     refreshMsg();
   };
 
-  // 보험료 요약 행 갱신
   function refreshAnalysisPremiumRow() {
     if (!gState) return;
     var total = gState.premiums.reduce(function(s,p){ return s+(p.amount||0); }, 0);
@@ -752,7 +882,6 @@
     });
   }
 
-  // ─── 상태 토글 ───
   window.rptExToggleStatus = function(rowIdx) {
     var r = exState.rows[rowIdx];
     if (r.status === 'none') return;
@@ -813,7 +942,6 @@
       if (e.target.dataset.field === 'amount') {
         var n = parseFloat(e.target.value.replace(/,/g,'')) || 0;
         e.target.value = n ? n.toLocaleString() : '';
-        // 분석표 보험료 셀도 동기화
         var idx = Number(e.target.dataset.idx);
         var pCell = document.getElementById('rptex-prem-co-' + idx);
         if (pCell) pCell.textContent = n ? n.toLocaleString() : '-';
@@ -850,7 +978,6 @@
   function refreshMsg() {
     var ta = document.getElementById('rptex-msg-output');
     if (!ta || !gState) return;
-    // AI 멘트가 아직 생성되지 않았으면 textarea 비워두기
     if (!gState.aiContent) { ta.value = ''; return; }
     ta.value = makeMsg(gState);
   }
@@ -878,7 +1005,6 @@
       var total = gState.premiums.reduce(function(s,p){ return s+(p.amount||0); }, 0);
       var level = evalLevel(gState.age || 40, total);
 
-      // 대분류 rowspan 계산
       var spans = {}, last = null, si = 0;
       exState.rows.forEach(function(r, i) {
         if (r.cat !== last) { if (last !== null) spans[si] = i - si; last = r.cat; si = i; }
