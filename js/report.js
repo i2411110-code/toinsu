@@ -284,7 +284,7 @@ window.initRptModule = function () {
   injectRptStyles();
 };
 
-// ✅ [수정] rpt-mode-text-panel 닫는 태그 추가 + 엑셀 패널 분리
+// ✅ [수정] 탭 버튼 순서 변경: "보장분석 리포트 생성기" 관련 안내 → "텍스트 붙여넣기 분석" 버튼이 먼저, "토스DB 엑셀 분석" 버튼이 뒤로 이동
 function getRptHTML() {
   return `
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
@@ -296,11 +296,11 @@ function getRptHTML() {
 
   <!-- 모드 탭 -->
   <div style="display:flex;gap:8px;margin-bottom:18px;">
-    <button id="rpt-mode-text-btn" class="rpt-mode-btn active" onclick="window.rptSwitchMode('text')">
-      <i class="bi bi-clipboard-fill"></i> 텍스트 붙여넣기 분석
-    </button>
     <button id="rpt-mode-excel-btn" class="rpt-mode-btn" onclick="window.rptSwitchMode('excel')">
       <i class="bi bi-file-earmark-excel-fill"></i> 토스DB 엑셀 분석 (니즈환기)
+    </button>
+    <button id="rpt-mode-text-btn" class="rpt-mode-btn active" onclick="window.rptSwitchMode('text')">
+      <i class="bi bi-clipboard-fill"></i> 텍스트 붙여넣기 분석
     </button>
   </div>
 
