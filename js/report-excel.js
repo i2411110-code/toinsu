@@ -596,11 +596,11 @@
       /* ── ✅ 필수 보장 분석 카드 섹션 ── */
       + getEssentialHTML()
 
-      + '<p style="font-size:13px;font-weight:700;color:#334155;margin-bottom:6px;">📋 니즈환기 멘트 <span style="font-weight:400;color:#94A3B8;font-size:11px;">— 🤖 AI가 보장분석 데이터를 보고 직접 작성합니다. 나이/카테고리/보험료 수정 후 재생성 버튼을 눌러주세요.</span></p>'
+      + '<p style="font-size:13px;font-weight:700;color:#334155;margin-bottom:6px;">📋 니즈환기 멘트 <span style="font-weight:400;color:#94A3B8;font-size:11px;">— 🤖 AI가 보장분석 데이터를 보고 직접 작성합니다. 나이/카테고리/보험료 수정 후 생성 버튼을 눌러주세요.</span></p>'
       + '<textarea id="rptex-msg-output" style="width:100%;height:300px;border:1.5px solid #E2E8F0;border-radius:10px;padding:14px;font-size:13px;font-family:\'Noto Sans KR\',sans-serif;color:#334155;resize:vertical;box-sizing:border-box;line-height:1.7;background:#F8FAFC;"></textarea>'
 
       + '<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">'
-      + '<button class="btn-action" style="width:auto;padding:10px 22px;background:#7C3AED;" id="rptex-ai-gen-btn" onclick="window.rptExGenerateAIMessage()"><i class="bi bi-stars"></i> AI 멘트 재생성</button>'
+      + '<button class="btn-action" style="width:auto;padding:10px 22px;background:#7C3AED;" id="rptex-ai-gen-btn" onclick="window.rptExGenerateAIMessage()"><i class="bi bi-stars"></i> AI 멘트 생성</button>'
       + '<button class="btn-action" style="width:auto;padding:10px 22px;" onclick="window.rptExCopyMsg()"><i class="bi bi-clipboard-check"></i> 멘트 복사</button>'
       + '<button class="btn-action" style="width:auto;padding:10px 22px;background:#0F172A;" id="rptex-img-copy-btn" onclick="window.rptExCopyTableImage()"><i class="bi bi-image"></i> 분석표 이미지 복사</button>'
       + '<button class="btn-action" style="width:auto;padding:10px 22px;background:#3182F6;" id="rptex-ess-img-copy-btn" onclick="window.rptExCopyEssentialImage()"><i class="bi bi-image"></i> 필수보장 이미지 복사</button>'
