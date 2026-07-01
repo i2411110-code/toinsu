@@ -1,5 +1,8 @@
 // ================================================
 // 토스DB 엑셀 보장분석 → 니즈환기 리포트 생성기
+// v6.5: 하단에 '+ 연령대별 적정 보험료 가이드' 토글 카드 추가
+//       — 고객 나이에 맞춰 해당 연령대 자동 하이라이트
+//       — '가이드 이미지 복사' 버튼으로 카톡 전송용 이미지 생성
 // v6.4: '분석표 이미지 복사' 버튼 색상 통일(#3182F6)
 //       + makeMsg() 내 따옴표 이스케이프 누락으로 인한
 //         스크립트 전체 로드 실패 버그 수정
@@ -42,6 +45,23 @@
     if (total <= s.high) return { label: '적정',     emoji: '🟢', cls: 'lv-ok'   };
     if (total <= s.over) return { label: '다소 높음', emoji: '🟠', cls: 'lv-warn' };
     return                     { label: '과다',     emoji: '🔴', cls: 'lv-over' };
+  }
+
+  // ─── ✅ 연령대별 적정 보험료 가이드 (참고용 · 소득 대비 % 기준) ───
+  const AGE_GUIDE = [
+    { label: '20대',     maxAge: 29,  ratio: '5~10%',   premium: '5만 ~ 10만 원',  coverage: '실손의료보험, 3대 질병(암·뇌·심장) 진단비' },
+    { label: '30대',     maxAge: 39,  ratio: '10~15%',  premium: '10만 ~ 25만 원', coverage: '20대 기본 보장 + 정기/종신보험(가장인 경우), 태아/어린이보험' },
+    { label: '40대',     maxAge: 49,  ratio: '12~18%',  premium: '15만 ~ 35만 원', coverage: '3대 중대질병 보장 한도 확대, 수술비/입원비 보강' },
+    { label: '50대',     maxAge: 59,  ratio: '10~15%',  premium: '15만 ~ 30만 원', coverage: '노후/간병 대비, 질병 이력이 있다면 유병자 보험' },
+    { label: '60대 이상', maxAge: 999, ratio: '5~10%',   premium: '10만 ~ 20만 원', coverage: '기존 보험 유지, 치매/간병보험, 유병자 보험' },
+  ];
+
+  function ageGuideIndex(age) {
+    var a = Number(age) || 40;
+    for (var i = 0; i < AGE_GUIDE.length; i++) {
+      if (a <= AGE_GUIDE[i].maxAge) return i;
+    }
+    return AGE_GUIDE.length - 1;
   }
 
   // ─── 날짜/시간 포맷 헬퍼 (신청 내역 체크 멘트용) ───
@@ -613,6 +633,126 @@
   // ✅ 필수 보장 분석 섹션 끝
   // ================================================================
 
+  // ================================================================
+  // ✅ 연령대별 적정 보험료 가이드 (하단 + 토글, 선택 첨부)
+  // ================================================================
+  function renderAgeGuideTable() {
+    var wrap = document.getElementById('rptex-ageguide-table');
+    if (!wrap || !gState) return;
+    var hi = ageGuideIndex(gState.age || 40);
+    var rowsHtml = AGE_GUIDE.map(function (g, i) {
+      var hl = i === hi;
+      return '<tr' + (hl ? ' class="rptex-ageguide-hl"' : '') + '>'
+        + '<td style="text-align:center;font-weight:' + (hl ? '800' : '700') + ';">' + esc(g.label)
+        +   (hl ? ' <span class="rptex-ageguide-tag">고객 연령대</span>' : '') + '</td>'
+        + '<td style="text-align:center;">' + esc(g.ratio) + '</td>'
+        + '<td style="text-align:center;">' + esc(g.premium) + '</td>'
+        + '<td style="text-align:left;">' + esc(g.coverage) + '</td>'
+        + '</tr>';
+    }).join('');
+    wrap.innerHTML = '<table class="rptex-ageguide-tbl">'
+      + '<thead><tr><th>연령대</th><th>적정 비율<br><span style="font-weight:400;">(월소득 대비)</span></th><th>예상 월보험료</th><th style="text-align:left;">꼭 챙겨야 할 핵심 보험</th></tr></thead>'
+      + '<tbody>' + rowsHtml + '</tbody></table>';
+  }
+
+  window.rptExToggleAgeGuide = function () {
+    var body = document.getElementById('rptex-ageguide-body');
+    var btn  = document.getElementById('rptex-ageguide-toggle-btn');
+    if (!body) return;
+    var isOpen = body.style.display !== 'none';
+    if (isOpen) {
+      body.style.display = 'none';
+      if (btn) btn.classList.remove('open');
+    } else {
+      renderAgeGuideTable();
+      body.style.display = 'block';
+      if (btn) btn.classList.add('open');
+    }
+  };
+
+  // ─── 연령대 가이드 → 이미지 복사 (카톡 전송용) ───
+  window.rptExCopyAgeGuideImage = async function () {
+    if (!gState) return alert('먼저 엑셀을 업로드해주세요.');
+
+    var btn = document.getElementById('rptex-ageguide-img-btn');
+    if (btn) { btn.innerHTML = '⏳ 이미지 생성 중...'; btn.disabled = true; }
+
+    try {
+      if (!window.html2canvas) {
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+      }
+
+      var hi = ageGuideIndex(gState.age || 40);
+      var rowsHtml = AGE_GUIDE.map(function (g, i) {
+        var hl = i === hi;
+        var bg = hl ? '#EFF6FF' : '#fff';
+        var nameColor = hl ? '#0C447C' : '#001E42';
+        return '<tr style="background:' + bg + ';">'
+          + '<td style="padding:12px 10px;border:1px solid #E2E8F0;text-align:center;font-weight:' + (hl ? '800' : '700') + ';color:' + nameColor + ';font-size:13.5px;">'
+          +   esc(g.label) + (hl ? '<div style="font-size:10.5px;color:#3182F6;font-weight:700;margin-top:2px;">고객 연령대</div>' : '') + '</td>'
+          + '<td style="padding:12px 10px;border:1px solid #E2E8F0;text-align:center;color:#334155;font-size:13px;">' + esc(g.ratio) + '</td>'
+          + '<td style="padding:12px 10px;border:1px solid #E2E8F0;text-align:center;color:#334155;font-size:13px;">' + esc(g.premium) + '</td>'
+          + '<td style="padding:12px 16px;border:1px solid #E2E8F0;text-align:left;color:#334155;font-size:12.5px;line-height:1.6;">' + esc(g.coverage) + '</td>'
+          + '</tr>';
+      }).join('');
+
+      var html =
+        '<div style="width:640px;background:#fff;border-radius:18px;overflow:hidden;font-family:\'Malgun Gothic\',\'Apple SD Gothic Neo\',\'Noto Sans KR\',sans-serif;box-shadow:0 1px 3px rgba(0,0,0,0.06);">'
+          + '<div style="background:linear-gradient(135deg,#001E42,#0B3A6F);padding:26px 28px;">'
+            + '<div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-0.3px;">' + esc(gState.customerName) + '님을 위한 연령대별 적정 보험료 가이드</div>'
+            + '<div style="font-size:12.5px;color:#BFD4EE;margin-top:6px;">월 소득 대비 권장 비율 기준 참고 자료</div>'
+          + '</div>'
+          + '<table style="width:100%;border-collapse:collapse;table-layout:fixed;">'
+            + '<thead><tr>'
+              + '<th style="background:#F1F5F9;padding:12px 10px;border:1px solid #E2E8F0;color:#334155;font-size:12px;width:15%;">연령대</th>'
+              + '<th style="background:#F1F5F9;padding:12px 10px;border:1px solid #E2E8F0;color:#334155;font-size:12px;width:16%;">적정 비율</th>'
+              + '<th style="background:#F1F5F9;padding:12px 10px;border:1px solid #E2E8F0;color:#334155;font-size:12px;width:19%;">예상 월 보험료</th>'
+              + '<th style="background:#F1F5F9;padding:12px 14px;border:1px solid #E2E8F0;color:#334155;font-size:12px;text-align:left;width:50%;">꼭 챙겨야 할 핵심 보험</th>'
+            + '</tr></thead>'
+            + '<tbody>' + rowsHtml + '</tbody>'
+          + '</table>'
+          + '<div style="padding:14px 28px;font-size:11px;color:#94A3B8;background:#F8FAFC;line-height:1.6;">※ 예상 월 보험료는 연령별 평균 소득을 바탕으로 계산된 일반적 가이드라인이며, 개인의 소득과 가족력에 따라 달라질 수 있습니다.</div>'
+        + '</div>';
+
+      var wrapper = document.createElement('div');
+      wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;';
+      wrapper.innerHTML = html;
+      document.body.appendChild(wrapper);
+
+      var canvas = await window.html2canvas(wrapper.firstElementChild, {
+        scale: 2.5,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+      document.body.removeChild(wrapper);
+
+      canvas.toBlob(async function (blob) {
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob })
+          ]);
+          alert('✅ 연령대별 가이드 이미지가 복사되었습니다!\n카카오톡 채팅창에 바로 붙여넣기(Ctrl+V) 하세요.');
+        } catch (e) {
+          var a = document.createElement('a');
+          a.href = canvas.toDataURL('image/png');
+          a.download = '연령대별보험료가이드.png';
+          a.click();
+          alert('📥 클립보드 복사가 차단되어 이미지를 다운로드했습니다.\n다운로드된 이미지를 카카오톡에 첨부해주세요.');
+        }
+        if (btn) { btn.innerHTML = '<i class="bi bi-image"></i> 가이드 이미지 복사'; btn.disabled = false; }
+      }, 'image/png');
+
+    } catch (err) {
+      console.error(err);
+      alert('이미지 생성 실패: ' + err.message);
+      if (btn) { btn.innerHTML = '<i class="bi bi-image"></i> 가이드 이미지 복사'; btn.disabled = false; }
+    }
+  };
+  // ================================================================
+  // ✅ 연령대별 적정 보험료 가이드 섹션 끝
+  // ================================================================
+
   window.initRptExcelModule = function () {
     var panel = document.getElementById('rpt-mode-excel-panel');
     if (!panel || panel.dataset.inited) return;
@@ -732,6 +872,20 @@
 
       + '</div>'
 
+      /* ── ✅ 연령대별 적정 보험료 가이드 (하단 + 토글, 선택 첨부) ── */
+      + '<div class="rptex-ageguide-wrap">'
+      + '<button class="rptex-ageguide-toggle" id="rptex-ageguide-toggle-btn" onclick="window.rptExToggleAgeGuide()">'
+      + '<span class="rptex-ageguide-plus">+</span> 연령대별 적정 보험료 가이드 <span class="rptex-ageguide-toggle-sub">(선택 첨부 · 참고용)</span>'
+      + '</button>'
+      + '<div class="rptex-ageguide-body" id="rptex-ageguide-body" style="display:none;">'
+      + '<div id="rptex-ageguide-table"></div>'
+      + '<div class="rptex-flow-actions" style="margin-top:12px;">'
+      + '<button class="btn-action" style="width:auto;padding:8px 18px;background:#3182F6;" id="rptex-ageguide-img-btn" onclick="window.rptExCopyAgeGuideImage()"><i class="bi bi-image"></i> 가이드 이미지 복사</button>'
+      + '<span class="rptex-flow-note">📎 고객 나이에 맞는 연령대가 자동으로 강조 표시됩니다.</span>'
+      + '</div>'
+      + '</div>'
+      + '</div>'
+
       + '<div style="margin-top:16px;">'
       + '<button style="background:none;border:1px solid #E2E8F0;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;color:#475569;font-family:\'Noto Sans KR\',sans-serif;" onclick="window.rptExReset()"><i class="bi bi-arrow-counterclockwise"></i> 다시 시작</button>'
       + '</div>'
@@ -810,6 +964,20 @@
       '.rptex-flow-ta{width:100%;min-height:110px;border:1.5px solid #E2E8F0;border-radius:10px;padding:12px 14px;font-size:13px;font-family:"Noto Sans KR",sans-serif;color:#334155;resize:vertical;box-sizing:border-box;line-height:1.7;background:#F8FAFC;}',
       '.rptex-flow-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;}',
       '.rptex-flow-note{font-size:12px;color:#64748B;}',
+      /* ── 연령대별 적정 보험료 가이드 (하단 + 토글) ── */
+      '.rptex-ageguide-wrap{margin-top:4px;margin-bottom:16px;display:flex;flex-direction:column;align-items:flex-start;}',
+      '.rptex-ageguide-toggle{display:inline-flex;align-items:center;gap:8px;background:#F8FBFF;border:1.5px dashed #BAD7FB;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;color:#3182F6;font-family:"Noto Sans KR",sans-serif;transition:all .15s;}',
+      '.rptex-ageguide-toggle:hover{background:#EFF6FF;border-color:#3182F6;}',
+      '.rptex-ageguide-toggle.open{background:#EFF6FF;}',
+      '.rptex-ageguide-toggle-sub{font-weight:400;color:#94A3B8;font-size:11px;}',
+      '.rptex-ageguide-plus{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#3182F6;color:#fff;font-size:14px;font-weight:800;line-height:1;flex:none;transition:transform .2s ease;}',
+      '.rptex-ageguide-toggle.open .rptex-ageguide-plus{transform:rotate(45deg);}',
+      '.rptex-ageguide-body{margin-top:10px;width:100%;border:1.5px solid #E2E8F0;border-radius:12px;padding:14px;background:#fff;box-sizing:border-box;}',
+      '.rptex-ageguide-tbl{border-collapse:collapse;width:100%;font-size:12px;font-family:"Noto Sans KR",sans-serif;}',
+      '.rptex-ageguide-tbl th,.rptex-ageguide-tbl td{border:1px solid #E2E8F0;padding:9px 10px;}',
+      '.rptex-ageguide-tbl th{background:#001E42;color:#fff;font-weight:700;text-align:center;}',
+      '.rptex-ageguide-hl{background:#EFF6FF;}',
+      '.rptex-ageguide-tag{display:inline-block;font-size:9.5px;font-weight:700;color:#3182F6;background:#DCEBFF;border-radius:8px;padding:1px 6px;margin-left:4px;vertical-align:middle;}',
     ].join('');
     document.head.appendChild(s);
   }
@@ -988,6 +1156,10 @@
     renderPremiumTable();
     renderEssentialGrid();
 
+    // 가이드가 이미 펼쳐져 있는 상태였다면(고객 전환 시) 새 나이 기준으로 갱신
+    var ageGuideBody = document.getElementById('rptex-ageguide-body');
+    if (ageGuideBody && ageGuideBody.style.display !== 'none') renderAgeGuideTable();
+
     var dtInputInit = document.getElementById('rptex-apply-dt');
     if (dtInputInit) dtInputInit.value = gState.applyDateTime;
 
@@ -999,6 +1171,8 @@
     if (ageEl) ageEl.addEventListener('input', function() {
       gState.age = Number(this.value) || 40;
       refreshPremiumSummary(); refreshAnalysisPremiumRow(); refreshMsg();
+      var body = document.getElementById('rptex-ageguide-body');
+      if (body && body.style.display !== 'none') renderAgeGuideTable();
     });
     if (catEl) catEl.addEventListener('change', function() { gState.category = this.value; refreshFlowMessages(); });
     if (dtEl) dtEl.addEventListener('input', function() {
@@ -1391,6 +1565,10 @@
     var d = document.getElementById('rptex-drop-text'); if(d) d.textContent='클릭하거나 파일을 끌어다 놓으세요 (.xlsx)';
     var f = document.getElementById('rptex-file-input'); if(f) f.value='';
     var dt = document.getElementById('rptex-apply-dt'); if(dt) dt.value='';
+    var ageGuideBody = document.getElementById('rptex-ageguide-body');
+    var ageGuideBtn  = document.getElementById('rptex-ageguide-toggle-btn');
+    if (ageGuideBody) ageGuideBody.style.display = 'none';
+    if (ageGuideBtn) ageGuideBtn.classList.remove('open');
     hideError();
   };
 
