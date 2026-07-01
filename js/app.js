@@ -78,7 +78,10 @@ async function updateVisitCounter(email) {
     const excludedEmails = ['dlsqh814@naver.com'];
     const isExcluded = excludedEmails.includes(email);
 
-    const today = new Date().toISOString().slice(0, 10);
+   const now = new Date();
+    const today = now.getFullYear() + '-'
+        + String(now.getMonth() + 1).padStart(2, '0') + '-'
+        + String(now.getDate()).padStart(2, '0');
     const statsRef = doc(db, "site_stats", "visit_counter");
     try {
         const snap = await getDoc(statsRef);
