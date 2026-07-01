@@ -1,6 +1,6 @@
 // ================================================
 // 보장분석 리포트 생성기 - 가온사업단 오피스 모듈
-// v7.1: 엑셀 패널 div 중첩 버그 수정 + rptSwitchMode null 체크 추가
+// v7.2: 탭 순서 변경 (엑셀 분석 우선) + 엑셀 패널 div 중첩 버그 수정 + rptSwitchMode null 체크 추가
 // ================================================
 
 (function () {
@@ -282,9 +282,12 @@ window.initRptModule = function () {
   app.dataset.inited = '1';
   app.innerHTML = getRptHTML();
   injectRptStyles();
+  // ✅ [수정] 엑셀 모드가 기본 화면이므로 최초 로드 시에도 엑셀 모듈을 미리 초기화
+  if (window.initRptExcelModule) window.initRptExcelModule();
 };
 
-// ✅ [수정] rpt-mode-text-panel 닫는 태그 추가 + 엑셀 패널 분리
+// ✅ [수정] 탭 순서: 엑셀 분석(니즈환기)이 먼저, 텍스트 분석이 두 번째
+//    + 엑셀 패널을 기본 노출(display:none 제거), 텍스트 패널은 기본 숨김
 function getRptHTML() {
   return `
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
@@ -296,16 +299,19 @@ function getRptHTML() {
 
   <!-- 모드 탭 -->
   <div style="display:flex;gap:8px;margin-bottom:18px;">
-    <button id="rpt-mode-text-btn" class="rpt-mode-btn active" onclick="window.rptSwitchMode('text')">
-      <i class="bi bi-clipboard-fill"></i> 텍스트 붙여넣기 분석
-    </button>
-    <button id="rpt-mode-excel-btn" class="rpt-mode-btn" onclick="window.rptSwitchMode('excel')">
+    <button id="rpt-mode-excel-btn" class="rpt-mode-btn active" onclick="window.rptSwitchMode('excel')">
       <i class="bi bi-file-earmark-excel-fill"></i> 토스DB 엑셀 분석 (니즈환기)
+    </button>
+    <button id="rpt-mode-text-btn" class="rpt-mode-btn" onclick="window.rptSwitchMode('text')">
+      <i class="bi bi-clipboard-fill"></i> 텍스트 붙여넣기 분석
     </button>
   </div>
 
-  <!-- ===== 모드 1: 텍스트 분석 ===== -->
-  <div id="rpt-mode-text-panel">
+  <!-- ===== 모드 2: 엑셀 분석 (report-excel.js 가 채워줌) — 기본 노출 ===== -->
+  <div id="rpt-mode-excel-panel"></div>
+
+  <!-- ===== 모드 1: 텍스트 분석 — 기본 숨김 ===== -->
+  <div id="rpt-mode-text-panel" style="display:none;">
 
     <!-- STEP 1 -->
     <div class="rpt-card">
@@ -403,10 +409,7 @@ function getRptHTML() {
     </div>
 
   </div>
-  <!-- ✅ [수정] rpt-mode-text-panel 여기서 닫기 (엑셀 패널과 분리) -->
-
-  <!-- ===== 모드 2: 엑셀 분석 (report-excel.js 가 채워줌) ===== -->
-  <div id="rpt-mode-excel-panel" style="display:none;"></div>
+  <!-- rpt-mode-text-panel 닫기 -->
   `;
 }
 
@@ -918,7 +921,7 @@ if (document.readyState === 'loading') {
 
 })();
 
-// ✅ [수정] rptSwitchMode — IIFE 밖에 위치 + null 체크 추가
+// ✅ rptSwitchMode — IIFE 밖에 위치 + null 체크 유지 (탭 순서만 바뀌었을 뿐 로직은 동일)
 window.rptSwitchMode = function (mode) {
   const textBtn    = document.getElementById('rpt-mode-text-btn');
   const excelBtn   = document.getElementById('rpt-mode-excel-btn');
