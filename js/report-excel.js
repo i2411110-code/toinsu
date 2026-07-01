@@ -293,7 +293,7 @@
     } else {
       refreshMsg();
     }
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-stars"></i> AI 멘트 재생성'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-stars"></i> AI 멘트 생성'; }
   };
 
   // ─── 로그인한 어드바이저 이름 가져오기 ───
