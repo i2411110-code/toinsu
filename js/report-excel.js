@@ -268,6 +268,7 @@
     }, 900);
 
     var parsed = null;
+    var failed = false;
     try {
       parsed = await attemptAIGeneration();
     } catch (firstErr) {
@@ -275,16 +276,23 @@
       try {
         parsed = await attemptAIGeneration();
       } catch (secondErr) {
-        console.error('AI 2차 시도도 실패 — 기본 로직으로 대체합니다.', secondErr);
+        console.error('AI 2차 시도도 실패했습니다.', secondErr);
         parsed = null;
+        failed = true;
       }
     }
-    gState.aiContent = parsed; // 실패 시 null → makeMsg가 자동으로 규칙기반 폴백 사용
+    gState.aiContent = parsed;
 
     clearInterval(loadingInterval);
     if (loadingEl) loadingEl.style.display = 'none';
     if (ta) ta.style.display = '';
-    refreshMsg();
+
+    if (failed) {
+      // 기본 멘트(규칙기반 폴백)는 사용하지 않음. 실패 사실만 안내.
+      if (ta) ta.value = '⚠️ AI 멘트 생성에 실패했습니다. 잠시 후 [AI 멘트 재생성] 버튼을 다시 눌러주세요.';
+    } else {
+      refreshMsg();
+    }
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-stars"></i> AI 멘트 재생성'; }
   };
 
@@ -843,10 +851,6 @@
       refreshPremiumSummary(); refreshAnalysisPremiumRow(); refreshMsg();
     });
     if (catEl) catEl.addEventListener('change', function() { gState.category = this.value; refreshMsg(); });
-
-    // AI 멘트는 버튼 클릭 시에만 실행되지만, 클릭 전에도 규칙기반 폴백
-    // 멘트를 즉시 보여줘서 textarea가 비어보이지 않게 한다.
-    refreshMsg();
   }
 
   // ─── 분석표 렌더 (보험료 행 포함, 편집용 인터랙티브 테이블) ───
@@ -1031,10 +1035,11 @@
     if (lEl) { lEl.textContent = level.emoji + ' ' + level.label; lEl.className = level.cls; }
   }
 
-  // ─── 텍스트영역 갱신: AI 결과가 없어도 규칙기반 폴백 멘트를 항상 즉시 표시 ───
+  // ─── 텍스트영역 갱신: AI 결과가 있을 때만 멘트를 표시. 없으면 빈칸 유지 ───
   function refreshMsg() {
     var ta = document.getElementById('rptex-msg-output');
     if (!ta || !gState) return;
+    if (!gState.aiContent) { ta.value = ''; return; }
     ta.value = makeMsg(gState);
   }
 
