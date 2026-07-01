@@ -296,11 +296,11 @@ function getRptHTML() {
 
   <!-- 모드 탭 -->
   <div style="display:flex;gap:8px;margin-bottom:18px;">
-    <button id="rpt-mode-excel-btn" class="rpt-mode-btn" onclick="window.rptSwitchMode('excel')">
-      <i class="bi bi-file-earmark-excel-fill"></i> 토스DB 엑셀 분석 (니즈환기)
-    </button>
     <button id="rpt-mode-text-btn" class="rpt-mode-btn active" onclick="window.rptSwitchMode('text')">
       <i class="bi bi-clipboard-fill"></i> 텍스트 붙여넣기 분석
+    </button>
+    <button id="rpt-mode-excel-btn" class="rpt-mode-btn" onclick="window.rptSwitchMode('excel')">
+      <i class="bi bi-file-earmark-excel-fill"></i> 토스DB 엑셀 분석 (니즈환기)
     </button>
   </div>
 
