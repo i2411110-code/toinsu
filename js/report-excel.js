@@ -373,8 +373,8 @@
     lines.push('해당되는 번호를 보내주시면 그 고민을 중심으로 집중 분석해 드릴게요.');
     lines.push('');
     lines.push('📞 통화가 편하신 시간을 미리 남겨주시면 전문가의 도움을 받으실 수 있습니다.');
-    lines.push('상담 가능 시간');
     lines.push('');
+    lines.push('상담 가능 시간');
     lines.push('* 평일 오전 10시 ~ 오후 8시');
     lines.push('* 일요일, 공휴일은 전화상담 불가(카톡 가능)');
     return lines.join('\n');
