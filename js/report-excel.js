@@ -1,8 +1,8 @@
 // ================================================
 // 토스DB 엑셀 보장분석 → 니즈환기 리포트 생성기
-// v6.3: 필수 보장 분석 '미가입→미보장' 매핑 버그 수정
-//       + 카톡 발송 순서(6단계) 재구성: 인사 → 분석표 첨부 →
-//         신청내역체크 → 필수보장 첨부 → 상담안내/질문 → AI멘트
+// v6.4: '분석표 이미지 복사' 버튼 색상 통일(#3182F6)
+//       + makeMsg() 내 따옴표 이스케이프 누락으로 인한
+//         스크립트 전체 로드 실패 버그 수정
 // ================================================
 (function () {
 
@@ -350,29 +350,30 @@
     var lines = [];
     lines.push(applyDT + '에 신청하신 보험 내역을 살펴봤어요. 🔍');
     lines.push('');
-    lines.push('소중한 보험료가 낭비되지 않도록, 앞으로 평생 보험 때문에 머리 아플 일 없게 마침표를 찍어드리는 것!');
-    lines.push('특히 3가지는 확실히 체크해 드릴게요🔥');
+    lines.push('소중한 보험료가 허투루 쓰이지 않게,');
+    lines.push('딱 3가지만 확실하게 짚어드릴게요.');
     lines.push('');
-    lines.push('✅ 중복되거나 불필요하게 새는 돈 잡기');
-    lines.push('✅ 지금 나이에 꼭 필요한 핵심 보장 확인');
-    lines.push('✅ 유지할지, 조정할지 딱 정해드리기');
+    lines.push('▪ 매달 낭비되는 보험료 잡아내기');
+    lines.push('▪ 내 나이에 꼭 필요한 핵심 보장 체크');
+    lines.push('▪ 유지할지, 조정할지 명쾌한 결론');
     return lines.join('\n');
   }
 
   // STEP 5. 상담 안내 & 질문 멘트
   function buildQuestionMsg() {
     var lines = [];
-    lines.push('보험에 대해 궁금하신 내용이 있으시다면, 1~3일 내로 분석 결과를 안내해 드릴 예정인데요.');
-    lines.push('더 정확한 분석을 위해, 지금 어떤 게 가장 궁금하신가요?');
+    lines.push('분석 결과는 1~3일 내로 안내해 드릴 예정이에요.');
+    lines.push('분석 결과를 준비하기 전에 질문을 하나 드릴게요.');
+    lines.push('지금 내 보험에 대해 어떤 생각이 가장 먼저 드시나요?');
     lines.push('');
-    lines.push('1⃣ 매달 내는 보험료 줄이기 💸');
-    lines.push('2⃣ 나중에 아플 때 받을 보장 채우기 🏥');
-    lines.push('3⃣ 내가 든 보험 내용 정확히 알기 📋');
+    lines.push('1️⃣ 매달 나가는 보험료가 너무 부담돼요.');
+    lines.push('2️⃣ 나중에 아플 때 제대로 보장받을 수 있을지 불안해요');
+    lines.push('3️⃣ 사실 내가 무슨 보험에 들었는지 잘 모르겠어요');
     lines.push('');
-    lines.push('번호 하나만 툭! 남겨주시면, 그 부분을 집중적으로 분석해서 안내 드릴게요. 🚀');
+    lines.push('해당되는 번호를 보내주시면 그 고민을 중심으로 집중 분석해 드릴게요.');
     lines.push('');
-    lines.push('👨‍👩‍👦 통화가 편하신 시간을 미리 남겨주시면 전문가의 도움을 받으실 수 있습니다.');
-    lines.push('🧑‍💻토스보험 상담서비스 시간');
+    lines.push('📞 통화가 편하신 시간을 미리 남겨주시면 전문가의 도움을 받으실 수 있습니다.');
+    lines.push('상담 가능 시간');
     lines.push('');
     lines.push('* 평일 오전 10시 ~ 오후 8시');
     lines.push('* 일요일, 공휴일은 전화상담 불가(카톡 가능)');
@@ -409,10 +410,13 @@
     lines.push('💡 어드바이저의 종합 분석 의견');
     lines.push(opinion);
     lines.push('');
-    lines.push('✅ ' + name + '님의 편의에 맞춰 카카오톡, 전화, 대면 상담 중 선택하실 수 있습니다.');
-    lines.push('✅ 상담은 신청하신 순서대로 진행되나, 최대한 원하시는 일정에 맞춰 조율해 드립니다.');
-    lines.push('✅ 궁금하신 점이나 상담 희망 시간을 회신 주시면 바로 확인하겠습니다.');
+    // ⚠️ 수정: 아래 줄에 작은따옴표 문자열 안에 이스케이프 없는 '비교' 가 들어있어
+    // 문법 오류(스크립트 전체 로드 실패)를 일으키던 부분을 큰따옴표로 교체
+    lines.push('✅ ' + name + '님 지금 발견된 보장의 문제점을 가장 현명하게 해결하는 방법은 "비교"해보는 것입니다.');
+    lines.push('✅ 토스에서는 국내 34개 보험사의 상품을 한눈에 비교 분석해 드릴 수 있어요.');
+    lines.push('✅ 비교해 보시고, 그때 가서 "아, 이게 맞다"고 판단되시면 추가로 이야기를 나누셔도 늦지 않습니다.');
     lines.push('');
+    lines.push('더 이상 아까운 보험료가 낭비되지 않도록 가장 빠른 길을 안내 드리겠습니다.');
     lines.push('감사합니다.');
     return lines.join('\n');
   }
@@ -516,9 +520,6 @@
   }
 
   // ─── 업로드된 엑셀 파싱 결과(rows)를 기반으로 필수 보장 카드에 자동 매핑 ───
-  // ⚠️ 버그 수정: 엑셀에 항목은 있으나 고객 보장합산이 0(=미가입)인 경우
-  //    이전에는 '부족'으로 표시되었지만, 실제로는 아예 가입되지 않은 상태이므로
-  //    '미보장' 뱃지로 표시되어야 한다. (항목 자체가 엑셀에 없는 경우와 동일하게 처리)
   function autoMapEssential(rows) {
     var byLabel = {};
     (rows || []).forEach(function(r) { byLabel[r.label] = r; });
@@ -697,7 +698,7 @@
       + '<div class="rptex-flow-step">'
       + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">2</span>보장 분석 결과 첨부</div>'
       + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 분석표 이미지를 복사해서 전송하세요.</div>'
-      + '<button class="btn-action" style="width:auto;padding:8px 18px;background:#0F172A;" id="rptex-img-copy-btn" onclick="window.rptExCopyTableImage()"><i class="bi bi-image"></i> 분석표 이미지 복사</button>'
+      + '<button class="btn-action" style="width:auto;padding:8px 18px;background:#3182F6;" id="rptex-img-copy-btn" onclick="window.rptExCopyTableImage()"><i class="bi bi-image"></i> 분석표 이미지 복사</button>'
       + '</div>'
 
       + '<div class="rptex-flow-step">'
