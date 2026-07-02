@@ -680,7 +680,6 @@ window.generateHyundai5PagePDF = async function(mode) {
 
     const fd   = collectFormData();
     const date = getTodayDateFields();
-    const jm   = splitJumin(fd.jumin);
     const signImage = await getSignImage(pdfDoc, 'signature-pad');
 
     const [ty, tm, td] = (fd.treatDate || '').split('-');
@@ -705,8 +704,16 @@ window.generateHyundai5PagePDF = async function(mode) {
     // ── 1페이지 기입 ──
     const p1 = C.page1;
     if (p1.name)    pages[0].drawText(fd.insuredName, { x: p1.name.x,       y: p1.name.y,       ...txtOpt });
-    if (p1.jumin1)  pages[0].drawText(jm.jumin1,      { x: p1.jumin1.x,     y: p1.jumin1.y,     ...txtOpt });
-    if (p1.jumin2)  pages[0].drawText(jm.jumin2,      { x: p1.jumin2.x,     y: p1.jumin2.y,     ...txtOpt });
+
+    // 주민번호 13자리 - juminCoords(자리별 좌표 배열)에 한 글자씩 출력
+    // (HYUNDAI_COORDS.page1은 jumin1/jumin2 두 블록이 아니라 juminCoords 배열 구조)
+    if (p1.juminCoords && fd.jumin) {
+        fd.jumin.replace(/[^0-9]/g, '').split('').forEach((char, idx) => {
+            const pos = p1.juminCoords[idx];
+            if (pos) pages[0].drawText(char, { x: pos.x, y: pos.y, ...txtOpt });
+        });
+    }
+
     if (p1.phone)   pages[0].drawText(fd.phone,       { x: p1.phone.x,      y: p1.phone.y,      ...txtOpt });
     if (p1.content) pages[0].drawText(fd.content,     { x: p1.content.x,    y: p1.content.y,    ...txtOpt });
     if (p1.year2)   pages[0].drawText(treat.year2,    { x: p1.year2.x,      y: p1.year2.y,      ...txtOpt });
@@ -726,17 +733,18 @@ window.generateHyundai5PagePDF = async function(mode) {
     if (fd.account && p1.account)       pages[0].drawText(fd.account,  { x: p1.account.x,  y: p1.account.y,  ...txtOpt });
     if (fd.accountHolder && p1.accountHolder) pages[0].drawText(fd.accountHolder, { x: p1.accountHolder.x, y: p1.accountHolder.y, ...txtOpt });
 
-    // 대리인 고유 칸 기입
-    if (usesBenType && p1.contractor) {
-        const pc = p1.contractor;
+    // 대리인(계약자) 고유 칸 기입
+    // ⚠️ HYUNDAI_COORDS.page1은 계약자 정보를 p1.contractor.{name,jumin1,jumin2,phone,sign}처럼
+    //    중첩 객체로 두지 않고, contractorName / contractorJumin1 / contractorJumin2 키로 평평하게(flat)
+    //    올려두었습니다. 또한 계약자 전용 phone / sign 좌표는 아직 측정되지 않아 좌표 파일에 없으므로
+    //    (실제 양식에 별도 칸이 있다면 좌표 확인 후 HYUNDAI_COORDS.page1에 추가해 주세요) 여기서는
+    //    이름과 주민번호만 채워 넣습니다.
+    if (usesBenType) {
         const cjm = splitJumin(fd.contractorJumin);
-        const contractorSig = await getSignImage(pdfDoc, 'signature-pad-contractor');
 
-        if (pc.name && fd.contractorName)   pages[0].drawText(fd.contractorName,  { x: pc.name.x,   y: pc.name.y,   ...txtOpt });
-        if (pc.jumin1 && cjm.jumin1)        pages[0].drawText(cjm.jumin1,         { x: pc.jumin1.x, y: pc.jumin1.y, ...txtOpt });
-        if (pc.jumin2 && cjm.jumin2)        pages[0].drawText(cjm.jumin2,         { x: pc.jumin2.x, y: pc.jumin2.y, ...txtOpt });
-        if (pc.phone && fd.contractorPhone) pages[0].drawText(fd.contractorPhone, { x: pc.phone.x,  y: pc.phone.y,  ...txtOpt });
-        if (contractorSig && pc.sign) pages[0].drawImage(contractorSig, { x: pc.sign.x, y: pc.sign.y, width: pc.sign.width, height: pc.sign.height });
+        if (p1.contractorName && fd.contractorName) pages[0].drawText(fd.contractorName, { x: p1.contractorName.x,   y: p1.contractorName.y,   ...txtOpt });
+        if (p1.contractorJumin1 && cjm.jumin1)      pages[0].drawText(cjm.jumin1,         { x: p1.contractorJumin1.x, y: p1.contractorJumin1.y, ...txtOpt });
+        if (p1.contractorJumin2 && cjm.jumin2)      pages[0].drawText(cjm.jumin2,         { x: p1.contractorJumin2.x, y: p1.contractorJumin2.y, ...txtOpt });
     }
 
     // ── 2 ~ 4페이지 동의서 체크마크 ──
@@ -752,14 +760,12 @@ window.generateHyundai5PagePDF = async function(mode) {
         if (p5.year)  pages[4].drawText(date.year,      { x: p5.year.x,  y: p5.year.y,  ...txtOpt });
         if (p5.month) pages[4].drawText(date.month,     { x: p5.month.x, y: p5.month.y, ...txtOpt });
         if (p5.day)   pages[4].drawText(date.day,       { x: p5.day.x,   y: p5.day.y,   ...txtOpt });
+        // p5.name / p5.sign 한 칸만 존재하므로 usesBenType일 때 이미 effectiveName / mainSig로
+        // 계약자 정보로 스위칭되어 채워집니다. (HYUNDAI_COORDS.page5에 계약자 전용
+        // contractorSign / contractorName 좌표는 없음 — 실제 양식에 별도 칸이 있다면 좌표
+        // 확인 후 HYUNDAI_COORDS.page5에 추가해 주세요.)
         if (p5.name)  pages[4].drawText(effectiveName, { x: p5.name.x,  y: p5.name.y,  ...txtOpt });
         if (mainSig && p5.sign) pages[4].drawImage(mainSig, { x: p5.sign.x, y: p5.sign.y, width: p5.sign.width, height: p5.sign.height });
-        
-        if (usesBenType && p5.contractorSign) {
-            const contractorSig5 = await getSignImage(pdfDoc, 'signature-pad-contractor');
-            if (contractorSig5) pages[4].drawImage(contractorSig5, { x: p5.contractorSign.x, y: p5.contractorSign.y, width: p5.contractorSign.width, height: p5.contractorSign.height });
-            if (p5.contractorName && fd.contractorName) pages[4].drawText(fd.contractorName, { x: p5.contractorName.x, y: p5.contractorName.y, ...txtOpt });
-        }
     }
 
     const fileName = `${fd.insuredName || '청구서'}_${window.selectedClaimInsurance || ''}.pdf`;
