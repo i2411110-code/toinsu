@@ -10,9 +10,10 @@
     </div>
 
     <div style="display: flex; background: white; padding: 4px; border-radius: 12px; margin: 0 4px 16px; border: 1px solid #F2F4F6;">
-        <button id="tab-calc-1" onclick="window.switchCalcTab('calc-1')" style="flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; background: #EFF6FF; color: #2563EB; transition: all 0.2s;">화폐가치</button>
-        <button id="tab-calc-2" onclick="window.switchCalcTab('calc-2')" style="flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; background: transparent; color: #8B95A1; transition: all 0.2s;">예금·적금</button>
-        <button id="tab-calc-3" onclick="window.switchCalcTab('calc-3')" style="flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; background: transparent; color: #8B95A1; transition: all 0.2s;">연금</button>
+        <button id="tab-calc-1" onclick="window.switchCalcTab('calc-1')" style="flex: 1; padding: 12px 4px; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; background: #EFF6FF; color: #2563EB; transition: all 0.2s;">화폐가치</button>
+        <button id="tab-calc-2" onclick="window.switchCalcTab('calc-2')" style="flex: 1; padding: 12px 4px; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; background: transparent; color: #8B95A1; transition: all 0.2s;">예금·적금</button>
+        <button id="tab-calc-3" onclick="window.switchCalcTab('calc-3')" style="flex: 1; padding: 12px 4px; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; background: transparent; color: #8B95A1; transition: all 0.2s;">연금</button>
+        <button id="tab-calc-4" onclick="window.switchCalcTab('calc-4')" style="flex: 1; padding: 12px 4px; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; background: transparent; color: #8B95A1; transition: all 0.2s;">적금 vs 보험</button>
     </div>
 
     <div style="padding: 0 4px;">
@@ -285,6 +286,76 @@
             </div>
         </div>
 
+        <div id="view-calc-4" class="toss-card" style="display: none;">
+            <div class="toss-card-title" style="margin-bottom: 4px;">적금(단리) vs 보험(연복리) 이자구조 비교</div>
+            <p style="font-size:12px; color:#8B95A1; margin-bottom:16px; line-height:1.6;">실제 정기적금은 대부분 단리 구조입니다. 같은 금액을 같은 기간 넣었을 때, 단리·과세되는 적금과 연복리·비과세 요건을 충족한 저축성보험의 실수령액 차이를 비교합니다.</p>
+
+            <div class="form-group">
+                <label>월 납입액 (만원, 동일 조건)</label>
+                <input type="number" id="cp_amount" class="form-control" placeholder="예: 50" oninput="window.calcCompare()">
+            </div>
+            <div class="form-group">
+                <label>납입·유지 기간 (년)</label>
+                <input type="number" id="cp_years" class="form-control" placeholder="예: 10" value="10" oninput="window.calcCompare()">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div class="form-group">
+                    <label style="color:#16A34A;">적금 금리 (연, %)</label>
+                    <input type="number" id="cp_saving_rate" class="form-control" placeholder="예: 3.5" oninput="window.calcCompare()">
+                </div>
+                <div class="form-group">
+                    <label style="color:#7C3AED;">보험 공시이율 (연, %)</label>
+                    <input type="number" id="cp_ins_rate" class="form-control" placeholder="예: 4.5" oninput="window.calcCompare()">
+                </div>
+            </div>
+
+            <div id="cp_result_box" style="display:none;">
+
+                <div id="cp_under10_alert" style="display:none; font-size:12px; color:#B45309; background:#FFFBEB; border:1px dashed #FCD34D; border-radius:10px; padding:10px 12px; margin-bottom:12px; line-height:1.6;">
+                    ⚠️ 유지기간이 10년 미만이면 보험도 이자소득에 대해 과세될 수 있습니다. 아래 결과는 <b>10년 이상 유지(비과세 요건 충족)</b> 가정입니다. 실제 비과세는 계약 형태·납입한도(예: 월적립식 150만원 이하 등) 요건 충족 시 적용됩니다.
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+                    <div style="background:#F0FDF4; border:1px solid #16A34A; border-radius:12px; padding:14px; text-align:center;">
+                        <p style="font-size:12px; color:#166534; font-weight:700; margin-bottom:6px;">적금 (단리·과세)</p>
+                        <h3 id="cp_saving_net" style="font-size:20px; font-weight:900; color:#16A34A;">0만원</h3>
+                        <p style="font-size:11px; color:#64748B; margin-top:4px;">이자소득세 <span id="cp_saving_tax">0</span>만원 차감</p>
+                    </div>
+                    <div style="background:#F5F3FF; border:1px solid #7C3AED; border-radius:12px; padding:14px; text-align:center;">
+                        <p style="font-size:12px; color:#5B21B6; font-weight:700; margin-bottom:6px;">보험 (연복리·비과세)</p>
+                        <h3 id="cp_ins_net" style="font-size:20px; font-weight:900; color:#7C3AED;">0만원</h3>
+                        <p style="font-size:11px; color:#64748B; margin-top:4px;">비과세로 <span id="cp_ins_tax_saved">0</span>만원 세금 안 냄</p>
+                    </div>
+                </div>
+
+                <div id="cp_diff_banner" style="background:#191F28; border-radius:12px; padding:16px; text-align:center; margin-bottom:16px;">
+                    <p style="font-size:12px; color:#D1D5DB; font-weight:700;">동일 조건 대비 실수령액 차이</p>
+                    <h2 id="cp_diff_val" style="font-size:26px; font-weight:900; color:white; margin-top:4px;">+0만원</h2>
+                    <p id="cp_diff_desc" style="font-size:11px; color:#9CA3AF; margin-top:6px;">복리방식(연복리) 효과 + 비과세 효과 합산</p>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;">
+                    <div style="background:white; border:1px solid #E5E8EB; border-radius:10px; padding:12px; text-align:center;">
+                        <p style="font-size:11px; color:#64748B; font-weight:700; margin-bottom:4px;">① 복리방식 효과</p>
+                        <p id="cp_factor_compound" style="font-size:14px; font-weight:900; color:#191F28;">0만원</p>
+                        <p style="font-size:10px; color:#8B95A1; margin-top:2px;">단리(적금) → 연복리(보험) 전환 효과</p>
+                    </div>
+                    <div style="background:white; border:1px solid #E5E8EB; border-radius:10px; padding:12px; text-align:center;">
+                        <p style="font-size:11px; color:#64748B; font-weight:700; margin-bottom:4px;">② 비과세 효과</p>
+                        <p id="cp_factor_tax" style="font-size:14px; font-weight:900; color:#191F28;">0만원</p>
+                        <p style="font-size:10px; color:#8B95A1; margin-top:2px;">보험 이자소득세 15.4% 면제분</p>
+                    </div>
+                </div>
+
+                <canvas id="cpChart" style="max-height: 220px; margin-bottom:12px;"></canvas>
+
+                <p style="font-size:11px; color:#8B95A1; line-height:1.6;">
+                    * 본 비교는 이자구조(복리방식·과세여부) 차이만을 단순화하여 보여주는 예시이며, 실제 보험 상품은 사업비·위험보험료 등이 공제되어 초기 해약환급금이 납입원금보다 낮을 수 있습니다.<br>
+                    * 적금 금리·보험 공시이율은 시장 상황에 따라 변동되며, 비과세는 세법 및 상품 요건 충족 시에만 적용됩니다.
+                </p>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -303,6 +374,7 @@
 let fvChartInstance = null;
 let pvChartInstance = null;
 let svChartInstance = null;
+let cpChartInstance = null;
 
 // 연금 소득 세액공제 한도 상태 관리 변수
 window.rtIncomeLimit = 5500; 
@@ -311,8 +383,8 @@ window.rtIncomeLimit = 5500;
 // [탭 전환]
 // ==========================================
 window.switchCalcTab = function(tabId) {
-    const colors = {'calc-1':'#2563EB','calc-2':'#16A34A','calc-3':'#D97706'};
-    const bgs    = {'calc-1':'#EFF6FF','calc-2':'#F0FDF4','calc-3':'#FEF3C7'};
+    const colors = {'calc-1':'#2563EB','calc-2':'#16A34A','calc-3':'#D97706','calc-4':'#7C3AED'};
+    const bgs    = {'calc-1':'#EFF6FF','calc-2':'#F0FDF4','calc-3':'#FEF3C7','calc-4':'#F5F3FF'};
     document.querySelectorAll('[id^="tab-calc-"]').forEach(btn => {
         btn.style.background = 'transparent';
         btn.style.color = '#8B95A1';
@@ -730,6 +802,124 @@ window.calcPension = function() {
 
     document.getElementById('pn_result_total').innerText = fmt(fv) + '만원';
     document.getElementById('pn_result_box').style.display = 'block';
+};
+
+// ==========================================
+// [탭4: 적금(단리) vs 보험(연복리) 비교]
+// ==========================================
+window.calcCompare = function() {
+    const amount = Number(document.getElementById('cp_amount').value);
+    const years  = Number(document.getElementById('cp_years').value);
+    const rSaving = Number(document.getElementById('cp_saving_rate').value) / 100;
+    const rIns    = Number(document.getElementById('cp_ins_rate').value) / 100;
+
+    if (!amount || !years || !rSaving || !rIns) {
+        document.getElementById('cp_result_box').style.display = 'none';
+        return;
+    }
+
+    const TAX = 0.154; // 이자소득세율
+    const months = years * 12;
+    const principal = amount * months;
+
+    // --- 적금: 단리(실제 시중 정기적금 방식). 각 회차 납입금이 만기까지 단리로만 이자 발생 ---
+    //     이자 = 월납입액 × 연이율 × n(n+1)/2 ÷ 12   (탭2 calcSavings와 동일 공식)
+    function savingFV(rateAnnual, m) {
+        const simpleInterest = amount * rateAnnual * (m * (m + 1) / 2) / 12;
+        return amount * m + simpleInterest;
+    }
+
+    // --- 보험: 연복리(=연 1회 이율 확정), 매월 납입금이 연 단위로 복리 적용되도록
+    //      "연 실효금리와 동일한 월 환산율"을 사용해 연복리 효과를 정확히 반영 ---
+    function insuranceFV(rateAnnual, m) {
+        const rmEff = Math.pow(1 + rateAnnual, 1/12) - 1; // 연복리와 동일한 실효 월이율
+        if (rmEff === 0) return amount * m;
+        return amount * ((Math.pow(1 + rmEff, m) - 1) / rmEff) * (1 + rmEff);
+    }
+
+    // 연차별 시계열 데이터 (그래프용)
+    let labels = [], savingNetData = [], insNetData = [];
+    for (let y = 1; y <= years; y++) {
+        const m = y * 12;
+        const svGross = savingFV(rSaving, m);
+        const svTax = (svGross - amount * m) * TAX;
+        const svNet = svGross - svTax;
+
+        const insGross = insuranceFV(rIns, m);
+        // 10년 이상 구간만 비과세로 표시(가정), 10년 미만 구간은 참고용으로 동일 과세 적용
+        const insNet = (y >= 10) ? insGross : (insGross - (insGross - amount * m) * TAX);
+
+        labels.push(y + '년차');
+        savingNetData.push(svNet);
+        insNetData.push(insNet);
+    }
+
+    // 최종 값
+    const svGrossFinal = savingFV(rSaving, months);
+    const svInterest = svGrossFinal - principal;
+    const svTaxFinal = svInterest * TAX;
+    const svNetFinal = svGrossFinal - svTaxFinal;
+
+    const insGrossFinal = insuranceFV(rIns, months);
+    const insInterest = insGrossFinal - principal;
+    const isNonTaxable = years >= 10;
+    const insTaxFinal = isNonTaxable ? 0 : insInterest * TAX;
+    const insNetFinal = insGrossFinal - insTaxFinal;
+
+    // 요인 분해: ① 복리방식효과 = (보험 세전 - 적금 세전), ② 비과세효과 = 보험이 안 낸 세금(세전 보험 이자 기준 15.4%)
+    const compoundEffect = insGrossFinal - svGrossFinal;
+    const taxSavedEffect = insInterest * TAX - insTaxFinal; // 비과세면 이 값 전체가 절세액
+
+    document.getElementById('cp_under10_alert').style.display = isNonTaxable ? 'none' : 'block';
+
+    document.getElementById('cp_saving_net').innerText = fmt(svNetFinal) + '만원';
+    document.getElementById('cp_saving_tax').innerText = fmt(svTaxFinal);
+
+    document.getElementById('cp_ins_net').innerText = fmt(insNetFinal) + '만원';
+    document.getElementById('cp_ins_tax_saved').innerText = fmt(taxSavedEffect);
+
+    const diff = insNetFinal - svNetFinal;
+    const diffColor = diff >= 0 ? '#4ADE80' : '#F87171';
+    document.getElementById('cp_diff_val').innerText = (diff >= 0 ? '+' : '') + fmt(diff) + '만원';
+    document.getElementById('cp_diff_val').style.color = diffColor;
+    document.getElementById('cp_diff_desc').innerText = diff >= 0
+        ? '보험이 적금보다 실수령액이 더 많습니다 (연복리 + 비과세 효과)'
+        : '이번 조건에서는 적금 실수령액이 더 많습니다 (금리 차이 확인 필요)';
+
+    document.getElementById('cp_factor_compound').innerText = (compoundEffect >= 0 ? '+' : '') + fmt(compoundEffect) + '만원';
+    document.getElementById('cp_factor_tax').innerText = '+' + fmt(taxSavedEffect) + '만원';
+
+    document.getElementById('cp_result_box').style.display = 'block';
+
+    if (typeof Chart === 'undefined') return;
+
+    if (cpChartInstance) cpChartInstance.destroy();
+    const ctx = document.getElementById('cpChart').getContext('2d');
+    cpChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '적금 세후 누적액',
+                    data: savingNetData,
+                    backgroundColor: '#86EFAC',
+                    borderRadius: 4
+                },
+                {
+                    label: '보험 세후 누적액',
+                    data: insNetData,
+                    backgroundColor: '#7C3AED',
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } },
+            scales: { y: { beginAtZero: false } }
+        }
+    });
 };
 
 // ==========================================
