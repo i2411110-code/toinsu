@@ -245,19 +245,6 @@ window.handleAuthSubmit = function() {
     }
 }
 
-// ✨ [신규 추가] 로그인/회원가입 인풋에서 Enter 키로 제출 가능하도록 처리
-['auth-email', 'auth-password', 'auth-password-confirm', 'auth-name', 'auth-invite-code'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-        el.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                window.handleAuthSubmit();
-            }
-        });
-    }
-});
-
 
 // ⚠️ 중복 분량을 완전히 제거하고 하나로 통합한 상태 제어 엔진
 onAuthStateChanged(auth, (user) => {
