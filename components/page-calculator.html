@@ -895,28 +895,68 @@ window.calcCompare = function() {
 
     if (cpChartInstance) cpChartInstance.destroy();
     const ctx = document.getElementById('cpChart').getContext('2d');
+
+    // 마지막 연차 포인트만 크게 강조 (격차를 눈으로 확인시키는 포인트)
+    const lastIdx = savingNetData.length - 1;
+    const svPointRadius = savingNetData.map((_, i) => i === lastIdx ? 6 : 2);
+    const insPointRadius = insNetData.map((_, i) => i === lastIdx ? 7 : 2);
+
     cpChartInstance = new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: labels,
             datasets: [
                 {
-                    label: '적금 세후 누적액',
+                    label: '적금 (단리·과세)',
                     data: savingNetData,
-                    backgroundColor: '#86EFAC',
-                    borderRadius: 4
+                    borderColor: '#94A3B8',
+                    backgroundColor: 'rgba(148,163,184,0.08)',
+                    borderWidth: 2,
+                    borderDash: [6, 4],
+                    pointRadius: svPointRadius,
+                    pointBackgroundColor: '#94A3B8',
+                    pointBorderColor: 'white',
+                    pointBorderWidth: 1.5,
+                    tension: 0.35,
+                    fill: false,
+                    order: 2
                 },
                 {
-                    label: '보험 세후 누적액',
+                    label: '보험 (연복리·비과세)',
                     data: insNetData,
-                    backgroundColor: '#7C3AED',
-                    borderRadius: 4
+                    borderColor: '#7C3AED',
+                    backgroundColor: 'rgba(124,58,237,0.22)',
+                    borderWidth: 3,
+                    pointRadius: insPointRadius,
+                    pointBackgroundColor: '#7C3AED',
+                    pointBorderColor: 'white',
+                    pointBorderWidth: 1.5,
+                    tension: 0.35,
+                    fill: 0, // 적금(0번 데이터셋)까지 색을 채워 '격차'를 시각화
+                    order: 1
                 }
             ]
         },
         options: {
             responsive: true,
-            plugins: { legend: { position: 'bottom' } },
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'bottom' },
+                title: {
+                    display: true,
+                    text: '가입 기간이 길어질수록 벌어지는 실수령액 격차',
+                    font: { size: 12, weight: '600' },
+                    color: '#64748B',
+                    padding: { bottom: 8 }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            return ctx.dataset.label + ': ' + fmt(ctx.parsed.y) + '만원';
+                        }
+                    }
+                }
+            },
             scales: { y: { beginAtZero: false } }
         }
     });
