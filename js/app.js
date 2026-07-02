@@ -245,6 +245,19 @@ window.handleAuthSubmit = function() {
     }
 }
 
+// 👇 여기에 추가
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    const target = e.target;
+    if (!target || !target.id) return;
+    const authInputIds = ['auth-email', 'auth-password', 'auth-password-confirm', 'auth-name', 'auth-invite-code'];
+    if (authInputIds.includes(target.id)) {
+        e.preventDefault();
+        if (typeof window.handleAuthSubmit === 'function') {
+            window.handleAuthSubmit();
+        }
+    }
+});
 
 // ⚠️ 중복 분량을 완전히 제거하고 하나로 통합한 상태 제어 엔진
 onAuthStateChanged(auth, (user) => {
