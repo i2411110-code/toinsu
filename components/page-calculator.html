@@ -349,6 +349,11 @@
 
                 <canvas id="cpChart" style="max-height: 220px; margin-bottom:12px;"></canvas>
 
+                <div style="background:#F5F3FF; border-radius:12px; padding:14px 12px 6px; margin-bottom:12px;">
+                    <p style="font-size:12px; color:#5B21B6; font-weight:700; text-align:center; margin-bottom:4px;">📈 해마다 벌어지는 격차만 따로 보면</p>
+                    <canvas id="cpGapChart" style="max-height: 160px;"></canvas>
+                </div>
+
                 <p style="font-size:11px; color:#8B95A1; line-height:1.6;">
                     * 본 비교는 이자구조(복리방식·과세여부) 차이만을 단순화하여 보여주는 예시이며, 실제 보험 상품은 사업비·위험보험료 등이 공제되어 초기 해약환급금이 납입원금보다 낮을 수 있습니다.<br>
                     * 적금 금리·보험 공시이율은 시장 상황에 따라 변동되며, 비과세는 세법 및 상품 요건 충족 시에만 적용됩니다.
@@ -375,6 +380,7 @@ let fvChartInstance = null;
 let pvChartInstance = null;
 let svChartInstance = null;
 let cpChartInstance = null;
+let cpGapChartInstance = null;
 
 // 연금 소득 세액공제 한도 상태 관리 변수
 window.rtIncomeLimit = 5500; 
@@ -958,6 +964,48 @@ window.calcCompare = function() {
                 }
             },
             scales: { y: { beginAtZero: false } }
+        }
+    });
+
+    // --- 격차 전용 그래프: 원금에 묻히지 않도록 '차액'만 따로 그려서 벌어지는 폭을 그대로 보여줌 ---
+    const gapData = insNetData.map((v, i) => v - savingNetData[i]);
+    const gapCtx = document.getElementById('cpGapChart').getContext('2d');
+    const gapGradient = gapCtx.createLinearGradient(0, 0, 0, 160);
+    gapGradient.addColorStop(0, 'rgba(124,58,237,0.5)');
+    gapGradient.addColorStop(1, 'rgba(124,58,237,0.03)');
+
+    if (cpGapChartInstance) cpGapChartInstance.destroy();
+    cpGapChartInstance = new Chart(gapCtx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '실수령액 격차 (보험-적금)',
+                data: gapData,
+                borderColor: '#7C3AED',
+                backgroundColor: gapGradient,
+                borderWidth: 3,
+                pointRadius: gapData.map((_, i) => i === gapData.length - 1 ? 6 : 0),
+                pointBackgroundColor: '#7C3AED',
+                pointBorderColor: 'white',
+                pointBorderWidth: 1.5,
+                tension: 0.35,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) { return '격차: ' + fmt(ctx.parsed.y) + '만원'; }
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: (v) => fmt(v) + '만' } }
+            }
         }
     });
 };
