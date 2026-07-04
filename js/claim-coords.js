@@ -28,6 +28,14 @@
 // ⚠️ hanalife(하나생명), lina(라이나손해보험)는 좌표.js에 1페이지(page:0) 서명
 //    필드 자체가 없어서(다른 페이지에만 존재) 임의로 추정하지 않고 기존 값을
 //    그대로 두었습니다 — 아래 해당 줄의 주석 참고, 수동 확인이 필요합니다.
+//
+// 🆕 [DB손해보험 - 5페이지 전용 좌표로 전환 - 2026-07-04]
+// DB손해보험 실제 양식을 확인해보니 현대해상과 동일하게 본문 1페이지 +
+// 동의서 3페이지(2,3,4) + 마지막 서명페이지(5)로 구성된 5페이지 양식이었습니다.
+// 그래서 기존 FIELD_COORDS.db(1페이지 전용, 아래에 계속 남겨둠 - 더 이상 참조되지
+// 않지만 백업 차원에서 유지)는 사용을 중단하고, HYUNDAI_COORDS와 동일한 구조의
+// window.DB_COORDS를 새로 만들어 적용했습니다. claim.js의
+// generateDB5PagePDF() 함수가 이 값을 참조합니다.
 // ==========================================
 
 window.FIELD_COORDS = {
@@ -80,6 +88,9 @@ window.FIELD_COORDS = {
     },
 
     samsung:      { name: { x: 140, y: 648 }, jumin1: { x: 260, y: 648 }, jumin2: { x: 355, y: 648 }, phone: { x: 140, y: 598 }, content: { x: 140, y: 390 }, year2: { x: 105, y: 128 }, month: { x: 158, y: 128 }, day: { x: 203, y: 128 }, signerName: { x: 365, y: 128 }, sign: { x: 505, y: 172, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
+    // ⚠️ [FIELD_COORDS.db는 더 이상 사용되지 않습니다] DB손해보험은 실제로 5페이지
+    //    양식이라 window.DB_COORDS(아래)를 사용하도록 변경했습니다. 이 줄은 과거
+    //    1페이지 전용 좌표 백업으로만 남겨둡니다.
     db:           { name: { x: 140, y: 645 }, jumin1: { x: 258, y: 645 }, jumin2: { x: 353, y: 645 }, phone: { x: 140, y: 595 }, content: { x: 140, y: 385 }, year2: { x: 107, y: 126 }, month: { x: 160, y: 126 }, day: { x: 205, y: 126 }, signerName: { x: 368, y: 126 }, sign: { x: 535, y: 145, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
     kb:           { name: { x: 143, y: 647 }, jumin1: { x: 262, y: 647 }, jumin2: { x: 357, y: 647 }, phone: { x: 143, y: 597 }, content: { x: 143, y: 388 }, year2: { x: 108, y: 127 }, month: { x: 161, y: 127 }, day: { x: 206, y: 127 }, signerName: { x: 370, y: 127 }, sign: { x: 515, y: 65, width: 65, height: 22 }, bankName: { x: 143, y: 290 }, account: { x: 243, y: 290 } },
     meritz:       { name: { x: 141, y: 643 }, jumin1: { x: 259, y: 643 }, jumin2: { x: 354, y: 643 }, phone: { x: 141, y: 593 }, content: { x: 141, y: 383 }, year2: { x: 106, y: 124 }, month: { x: 159, y: 124 }, day: { x: 204, y: 124 }, signerName: { x: 366, y: 124 }, sign: { x: 495, y: 72, width: 65, height: 22 }, bankName: { x: 141, y: 290 }, account: { x: 241, y: 290 } },
@@ -180,5 +191,121 @@ window.HYUNDAI_COORDS = {
         day:        { x: 460, y: 381 },
         name:       { x: 200, y: 320 },
         sign:       { x: 460, y: 295, width: 70, height: 25 },
+    },
+};
+
+// ==========================================
+// [DB손해보험 - 5페이지 전용 좌표 - 2026-07-04 실측 반영]
+// ------------------------------------------
+// DB손해보험도 현대해상과 마찬가지로 본문 1페이지 + 동의서 3페이지(2,3,4) +
+// 마지막 서명페이지(5)로 구성된 5페이지 양식입니다.
+// claim.js의 generateDB5PagePDF()에서 이 값을 참조합니다.
+//
+// ⚠️ 주민번호(jumin)는 다른 보험사처럼 앞자리(jumin1)/뒷자리(jumin2)로 나뉜
+//    두 칸이 아니라, 좌표 1곳에 "990101-1234567" 형태로 하이픈 포함 전체를
+//    한 줄로 적는 구조입니다. (generateDB5PagePDF에서 splitJumin으로 나눈 뒤
+//    다시 하이픈으로 합쳐서 한 번에 출력합니다.)
+//
+// ⚠️ 1페이지·5페이지 모두 "성함/서명" 칸이 위·아래 2개씩 존재합니다.
+//    위쪽 칸(y가 더 큼)은 청구인(피보험자 또는 대리 청구 시 대리인) 서명,
+//    아래쪽 칸은 계약자 서명으로 가정해 매핑했습니다. 실제 양식에서 이 두 칸의
+//    라벨을 한 번 확인해 보시고, 반대라면 signerName/sign ↔
+//    contractorSignerName/contractorSign 값만 서로 바꿔주시면 됩니다.
+//
+// ⚠️ "보상안내 받으실 분" 항목에 텍스트 기입란이 두 곳(담당 설계사 / 로그인한
+//    계정 이름)인데 정확한 용도 구분이 어려워 우선 둘 다 동일하게
+//    window.__currentAgentName 값을 채우도록 처리했습니다(claim.js 참고).
+//    실제로 서로 다른 값이 들어가야 한다면 claim.js의 해당 부분만 고치면 됩니다.
+//
+// ⚠️ 주소(address)는 이번에 새로 추가된 필드입니다. 이 값이 정상적으로
+//    채워지려면 청구서 작성 폼(HTML)에 id="form-address" 인풋이 있어야 합니다.
+//    아직 없다면 폼에 주소 입력칸을 추가해 주세요.
+// ==========================================
+window.DB_COORDS = {
+    page1: {
+        name:    { x: 159, y: 696 },
+        jumin:   { x: 311, y: 694 }, // 주민번호 전체(하이픈 포함) 한 줄 출력
+        job:     { x: 479, y: 673 },
+        address: { x: 161, y: 653 }, // ✅ 신규: 주소
+
+        // 사고 유형 체크 (교통/질병/상해)
+        accidentType: {
+            traffic: { x: 211, y: 498 }, // 교통
+            disease: { x: 168, y: 498 }, // 질병
+            injury:  { x: 128, y: 498 }, // 상해
+        },
+
+        baseConsentCheck: { x: 523, y: 701 }, // 기본 동의 체크 (항상 체크)
+
+        // 보상안내 받으실 분
+        compensationRecipient: {
+            agentNameField:     { x: 440, y: 631 }, // 담당 설계사 성명 기입란
+            loginUserNameField: { x: 276, y: 630 }, // 로그인한 계정(설계사) 이름 기입란
+            agentCheck:         { x: 219, y: 631 }, // 보험 설계사 체크
+            claimantCheck:      { x: 114, y: 631 }, // 보험 계약자 체크
+        },
+
+        // 자료 첨부 목록 (2줄에 나눠 기입)
+        attachmentLines: [
+            { x: 125, y: 446 },
+            { x: 123, y: 420 },
+        ],
+
+        // 작성일자 (오늘 날짜)
+        year2: { x: 97, y: 154 },
+        month: { x: 147, y: 154 },
+        day:   { x: 197, y: 154 },
+
+        // 상단 성함/서명 (청구인)
+        signerName: { x: 425, y: 153 },
+        sign:       { x: 557, y: 156, width: 65, height: 22 },
+
+        // 하단 성함/서명 (계약자)
+        contractorSignerName: { x: 425, y: 118 },
+        contractorSign:       { x: 555, y: 117, width: 65, height: 22 },
+
+        // 계좌정보
+        prepaidAccountCheck: { x: 381, y: 292 }, // 기지급 계좌 체크
+        account:       { x: 180, y: 293 },
+        bankName:      { x: 381, y: 293 },
+        accountHolder: { x: 487, y: 293 },
+    },
+    page2: {
+        checkmarks: [
+            { x: 545, y: 443 },
+            { x: 545, y: 353 },
+            { x: 545, y: 261 },
+        ],
+    },
+    page3: {
+        checkmarks: [
+            { x: 545, y: 339 },
+            { x: 545, y: 235 },
+            { x: 545, y: 101 },
+        ],
+    },
+    page4: {
+        checkmarks: [
+            { x: 546, y: 345 },
+            { x: 548, y: 244 },
+        ],
+    },
+    page5: {
+        checkmarks: [
+            { x: 547, y: 665 },
+            { x: 547, y: 594 },
+            { x: 545, y: 460 },
+        ],
+        year2: { x: 100, y: 168 }, // 작성 년(뒤 두자리)
+        month: { x: 149, y: 167 },
+        day:   { x: 206, y: 167 },
+
+        // 상단 성함/서명 (청구인)
+        signerName: { x: 422, y: 171 },
+        sign:       { x: 553, y: 171, width: 65, height: 22 },
+
+        // 하단 성함/서명 (계약자)
+        contractorSignerName: { x: 423, y: 133 },
+        contractorSign:       { x: 553, y: 132, width: 65, height: 22 },
     },
 };

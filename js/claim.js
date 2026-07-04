@@ -76,7 +76,7 @@ const CLAIM_PDF_MAP = {
     '현대해상':          { file: 'hyundai',        pages: 5 },
     'AIG손해보험':       { file: 'aig',            pages: 1 },
     'AXA손해보험':       { file: 'axa',            pages: 1 },
-    'DB손해보험':        { file: 'db',             pages: 1 },
+    'DB손해보험':        { file: 'db',             pages: 5 },
     'KB손해보험':        { file: 'kb',             pages: 1 },
     'NH농협손해보험':    { file: 'nh',             pages: 1 },
     '교직원공제':        { file: 'thek',           pages: 1 },
@@ -319,6 +319,8 @@ function collectFormData() {
     const content      = (document.getElementById('form-content')?.value      || '').trim();
     const accidentType = (document.getElementById('form-accident-type')?.value|| '').trim();
     const job          = (document.getElementById('form-job')?.value          || '').trim();
+    // ✅ 주소 (DB손해보험 전용 신규 필드 - HTML 폼에 id="form-address" 인풋 필요)
+    const address       = (document.getElementById('form-address')?.value     || '').trim();
 
     const insuredUnder14 = (document.getElementById('form-under14')?.value || '아니오').trim();
 
@@ -346,7 +348,7 @@ function collectFormData() {
     const jumin = (juminFront + juminBack).replace(/[^0-9]/g, '').trim();
 
     return {
-        insuredName, phone, content, treatDate, jumin, accidentType, job, bankName, account,
+        insuredName, phone, content, treatDate, jumin, accidentType, job, address, bankName, account,
         insuredUnder14, sameAsInsured, contractorName, contractorPhone, contractorJumin,
         compensationRecipient, accountType, accountHolder,
     };
@@ -647,6 +649,8 @@ window.processClaimPDF = async function(mode) {
     try {
         if (company === '현대해상') {
             await window.generateHyundai5PagePDF(mode);
+        } else if (company === 'DB손해보험') {
+            await window.generateDB5PagePDF(mode);
         } else {
             await window.generateGenericPDF(info.file, company, mode);
         }
@@ -734,11 +738,6 @@ window.generateHyundai5PagePDF = async function(mode) {
     if (fd.accountHolder && p1.accountHolder) pages[0].drawText(fd.accountHolder, { x: p1.accountHolder.x, y: p1.accountHolder.y, ...txtOpt });
 
     // 대리인(계약자) 고유 칸 기입
-    // ⚠️ HYUNDAI_COORDS.page1은 계약자 정보를 p1.contractor.{name,jumin1,jumin2,phone,sign}처럼
-    //    중첩 객체로 두지 않고, contractorName / contractorJumin1 / contractorJumin2 키로 평평하게(flat)
-    //    올려두었습니다. 또한 계약자 전용 phone / sign 좌표는 아직 측정되지 않아 좌표 파일에 없으므로
-    //    (실제 양식에 별도 칸이 있다면 좌표 확인 후 HYUNDAI_COORDS.page1에 추가해 주세요) 여기서는
-    //    이름과 주민번호만 채워 넣습니다.
     if (usesBenType) {
         const cjm = splitJumin(fd.contractorJumin);
 
@@ -760,15 +759,134 @@ window.generateHyundai5PagePDF = async function(mode) {
         if (p5.year)  pages[4].drawText(date.year,      { x: p5.year.x,  y: p5.year.y,  ...txtOpt });
         if (p5.month) pages[4].drawText(date.month,     { x: p5.month.x, y: p5.month.y, ...txtOpt });
         if (p5.day)   pages[4].drawText(date.day,       { x: p5.day.x,   y: p5.day.y,   ...txtOpt });
-        // p5.name / p5.sign 한 칸만 존재하므로 usesBenType일 때 이미 effectiveName / mainSig로
-        // 계약자 정보로 스위칭되어 채워집니다. (HYUNDAI_COORDS.page5에 계약자 전용
-        // contractorSign / contractorName 좌표는 없음 — 실제 양식에 별도 칸이 있다면 좌표
-        // 확인 후 HYUNDAI_COORDS.page5에 추가해 주세요.)
         if (p5.name)  pages[4].drawText(effectiveName, { x: p5.name.x,  y: p5.name.y,  ...txtOpt });
         if (mainSig && p5.sign) pages[4].drawImage(mainSig, { x: p5.sign.x, y: p5.sign.y, width: p5.sign.width, height: p5.sign.height });
     }
 
     const fileName = `${fd.insuredName || '청구서'}_${window.selectedClaimInsurance || ''}.pdf`;
+    await outputPdf(pdfDoc, mode, fileName);
+};
+
+// ==========================================
+// [DB손해보험 - 5페이지 전용 로직 - 2026-07-04 신규]
+// ==========================================
+window.generateDB5PagePDF = async function(mode) {
+    const { PDFDocument, rgb } = window.PDFLib;
+    const { pdfBytes, fontBytes } = await loadPdfAndFont(null, 'db');
+
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+    pdfDoc.registerFontkit(window.fontkit);
+    const customFont = await pdfDoc.embedFont(fontBytes);
+    const pages = pdfDoc.getPages();
+
+    const fd   = collectFormData();
+    const date = getTodayDateFields();
+    const signImage           = await getSignImage(pdfDoc, 'signature-pad');
+    const contractorSignImage = await getSignImage(pdfDoc, 'signature-pad-contractor');
+
+    const txtOpt   = { font: customFont, size: 11, color: rgb(0, 0, 0) };
+    const checkOpt = { font: customFont, size: 14, color: rgb(0.15, 0.38, 0.92) };
+    const CHECK = 'V';
+
+    const C  = window.DB_COORDS;
+    const p1 = C.page1;
+
+    console.log(`[DEBUG] contact branch check - company: DB손해보험`);
+
+    // ── 1페이지 ──
+    if (p1.name) pages[0].drawText(fd.insuredName, { x: p1.name.x, y: p1.name.y, ...txtOpt });
+
+    // 주민번호 - 앞/뒤 6+7자리를 하이픈으로 이어붙여 한 줄로 출력 (다른 보험사와 달리
+    // 앞/뒤 칸이 분리되어 있지 않고 좌표가 1곳뿐입니다)
+    if (p1.jumin && fd.jumin) {
+        const jm = splitJumin(fd.jumin);
+        const juminText = jm.jumin1 && jm.jumin2 ? `${jm.jumin1}-${jm.jumin2}` : (jm.jumin1 || '');
+        pages[0].drawText(juminText, { x: p1.jumin.x, y: p1.jumin.y, ...txtOpt });
+    }
+
+    if (p1.job && fd.job) pages[0].drawText(fd.job, { x: p1.job.x, y: p1.job.y, ...txtOpt });
+
+    // ✅ 주소 (신규) - HTML 폼에 id="form-address" 인풋이 있어야 값이 채워집니다.
+    if (p1.address && fd.address) pages[0].drawText(fd.address, { x: p1.address.x, y: p1.address.y, ...txtOpt });
+
+    // 사고 유형 체크 (교통/질병/상해) - fd.accidentType 문자열에 해당 키워드가 포함되어 있으면 체크
+    if (p1.accidentType && fd.accidentType) {
+        const at = p1.accidentType;
+        if (fd.accidentType.includes('교통') && at.traffic) pages[0].drawText(CHECK, { x: at.traffic.x, y: at.traffic.y, ...checkOpt });
+        if (fd.accidentType.includes('질병') && at.disease) pages[0].drawText(CHECK, { x: at.disease.x, y: at.disease.y, ...checkOpt });
+        if (fd.accidentType.includes('상해') && at.injury)  pages[0].drawText(CHECK, { x: at.injury.x,  y: at.injury.y,  ...checkOpt });
+    }
+
+    // 기본 동의 체크 (항상 체크)
+    if (p1.baseConsentCheck) pages[0].drawText(CHECK, { x: p1.baseConsentCheck.x, y: p1.baseConsentCheck.y, ...checkOpt });
+
+    // 보상안내 받으실 분
+    // ⚠️ "담당 설계사" 기입란과 "로그인한 계정 이름" 기입란의 정확한 역할 구분이
+    //    불확실하여 우선 둘 다 동일하게 로그인한 설계사 이름을 채우도록 처리했습니다.
+    //    필요 시 window.__currentAgentName 대신 별도 값을 넣어 구분해주세요.
+    if (p1.compensationRecipient) {
+        const cr = p1.compensationRecipient;
+        const agentName = window.__currentAgentName || '';
+        if (fd.compensationRecipient === '보험설계사') {
+            if (cr.agentCheck) pages[0].drawText(CHECK, { x: cr.agentCheck.x, y: cr.agentCheck.y, ...checkOpt });
+            if (cr.agentNameField && agentName)     pages[0].drawText(agentName, { x: cr.agentNameField.x,     y: cr.agentNameField.y,     ...txtOpt });
+            if (cr.loginUserNameField && agentName) pages[0].drawText(agentName, { x: cr.loginUserNameField.x, y: cr.loginUserNameField.y, ...txtOpt });
+        } else if (cr.claimantCheck) {
+            pages[0].drawText(CHECK, { x: cr.claimantCheck.x, y: cr.claimantCheck.y, ...checkOpt });
+        }
+    }
+
+    // 첨부서류 목록 - 2줄에 나눠 기입
+    if (p1.attachmentLines && window.claimAttachments?.length) {
+        const names = window.claimAttachments.map(a => a.name);
+        const half  = Math.ceil(names.length / 2);
+        const line1 = names.slice(0, half).join(', ');
+        const line2 = names.slice(half).join(', ');
+        if (p1.attachmentLines[0] && line1) pages[0].drawText(line1, { x: p1.attachmentLines[0].x, y: p1.attachmentLines[0].y, ...txtOpt });
+        if (p1.attachmentLines[1] && line2) pages[0].drawText(line2, { x: p1.attachmentLines[1].x, y: p1.attachmentLines[1].y, ...txtOpt });
+    }
+
+    // 작성일자 (오늘 날짜)
+    if (p1.year2) pages[0].drawText(date.year2, { x: p1.year2.x, y: p1.year2.y, ...txtOpt });
+    if (p1.month) pages[0].drawText(date.month, { x: p1.month.x, y: p1.month.y, ...txtOpt });
+    if (p1.day)   pages[0].drawText(date.day,   { x: p1.day.x,   y: p1.day.y,   ...txtOpt });
+
+    // 상단(청구인) 성함/서명
+    if (p1.signerName) pages[0].drawText(fd.insuredName, { x: p1.signerName.x, y: p1.signerName.y, ...txtOpt });
+    if (signImage && p1.sign) pages[0].drawImage(signImage, { x: p1.sign.x, y: p1.sign.y, width: p1.sign.width, height: p1.sign.height });
+
+    // 하단(계약자) 성함/서명 - 계약자 정보가 입력된 경우에만 기입
+    if (fd.contractorName && p1.contractorSignerName) pages[0].drawText(fd.contractorName, { x: p1.contractorSignerName.x, y: p1.contractorSignerName.y, ...txtOpt });
+    if (contractorSignImage && p1.contractorSign) pages[0].drawImage(contractorSignImage, { x: p1.contractorSign.x, y: p1.contractorSign.y, width: p1.contractorSign.width, height: p1.contractorSign.height });
+
+    // 계좌정보
+    if (p1.prepaidAccountCheck && fd.accountType === '기지급') pages[0].drawText(CHECK, { x: p1.prepaidAccountCheck.x, y: p1.prepaidAccountCheck.y, ...checkOpt });
+    if (p1.account && fd.account)             pages[0].drawText(fd.account, { x: p1.account.x, y: p1.account.y, ...txtOpt });
+    if (p1.bankName && fd.bankName)           pages[0].drawText(fd.bankName, { x: p1.bankName.x, y: p1.bankName.y, ...txtOpt });
+    if (p1.accountHolder && fd.accountHolder) pages[0].drawText(fd.accountHolder, { x: p1.accountHolder.x, y: p1.accountHolder.y, ...txtOpt });
+
+    // ── 2~4페이지 동의서 체크마크 ──
+    if (C.page2?.checkmarks) C.page2.checkmarks.forEach(m => pages[1].drawText(CHECK, { x: m.x, y: m.y, ...checkOpt }));
+    if (C.page3?.checkmarks) C.page3.checkmarks.forEach(m => pages[2].drawText(CHECK, { x: m.x, y: m.y, ...checkOpt }));
+    if (C.page4?.checkmarks) C.page4.checkmarks.forEach(m => pages[3].drawText(CHECK, { x: m.x, y: m.y, ...checkOpt }));
+
+    // ── 5페이지 ──
+    const p5 = C.page5;
+    if (p5?.checkmarks) p5.checkmarks.forEach(m => pages[4].drawText(CHECK, { x: m.x, y: m.y, ...checkOpt }));
+
+    if (p5) {
+        if (p5.year2) pages[4].drawText(date.year2, { x: p5.year2.x, y: p5.year2.y, ...txtOpt });
+        if (p5.month) pages[4].drawText(date.month, { x: p5.month.x, y: p5.month.y, ...txtOpt });
+        if (p5.day)   pages[4].drawText(date.day,   { x: p5.day.x,   y: p5.day.y,   ...txtOpt });
+
+        if (p5.signerName) pages[4].drawText(fd.insuredName, { x: p5.signerName.x, y: p5.signerName.y, ...txtOpt });
+        if (signImage && p5.sign) pages[4].drawImage(signImage, { x: p5.sign.x, y: p5.sign.y, width: p5.sign.width, height: p5.sign.height });
+
+        if (fd.contractorName && p5.contractorSignerName) pages[4].drawText(fd.contractorName, { x: p5.contractorSignerName.x, y: p5.contractorSignerName.y, ...txtOpt });
+        if (contractorSignImage && p5.contractorSign) pages[4].drawImage(contractorSignImage, { x: p5.contractorSign.x, y: p5.contractorSign.y, width: p5.contractorSign.width, height: p5.contractorSign.height });
+    }
+
+    const fileName = `${fd.insuredName || '청구서'}_${window.selectedClaimInsurance || 'DB손해보험'}.pdf`;
     await outputPdf(pdfDoc, mode, fileName);
 };
 
