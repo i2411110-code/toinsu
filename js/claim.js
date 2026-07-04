@@ -126,6 +126,11 @@ window.initClaimCanvas = function() {
     const titleEl = document.getElementById('claim-form-title');
     if (titleEl) titleEl.innerText = company + ' 청구서 작성';
 
+    const isDB = (company === 'DB손해보험');
+    document.querySelectorAll('.db-only-field').forEach(el => {
+        el.style.display = isDB ? 'block' : 'none';
+    });
+
     window.initUiToggleGroups();
 
     window.claimAttachments = [];
@@ -221,8 +226,8 @@ window.initUiToggleGroups = function() {
         const applyVisibility = (val) => {
             if (!showTargetId) return;
             const showEl = document.getElementById(showTargetId);
-            if (showEl) showEl.style.display = (val === showWhen) ? 'block' : 'none';
-        };
+            if (showEl) showEl.style.display = showWhen.split(',').includes(val) ? 'block' : 'none';
+};
 
         group.querySelectorAll('.toggle-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -256,8 +261,8 @@ function setToggleGroupValue(targetId, value) {
     const showWhen      = group.dataset.showWhen;
     if (showTargetId) {
         const showEl = document.getElementById(showTargetId);
-        if (showEl) showEl.style.display = (value === showWhen) ? 'block' : 'none';
-    }
+        if (showEl) showEl.style.display = showWhen.split(',').includes(value) ? 'block' : 'none';
+}
 }
 
 // ==========================================

@@ -84,7 +84,7 @@
                    autocomplete="off">
         </div>
         <!-- ✅ 신규: 주소 (DB손해보험 등에서 사용) -->
-        <div class="form-group">
+        <div class="form-group db-only-field" style="display:none;">
             <label class="form-label">주소</label>
             <input type="text" id="form-address" class="input-base" placeholder="예) 서울시 강남구 ..."
                    autocomplete="off">
@@ -181,15 +181,15 @@
         </div>
 
         <!-- ✅ 신규: 사고 상세정보 (DB손해보험 등에서 사용) -->
-        <div class="form-group">
+        <div class="form-group db-only-field" style="display:none;">
             <label class="form-label">질병내용 (진단명)</label>
             <input type="text" id="form-disease-info" class="input-base" placeholder="진단받은 질병명" autocomplete="off">
         </div>
-        <div class="form-group">
+        <div class="form-group db-only-field" style="display:none;">
             <label class="form-label">사고장소</label>
             <input type="text" id="form-accident-place" class="input-base" placeholder="사고 발생 장소" autocomplete="off">
         </div>
-        <div class="form-group">
+        <div class="form-group db-only-field" style="display:none;">
             <label class="form-label">병원명</label>
             <input type="text" id="form-hospital-name" class="input-base" placeholder="치료받은 병원명" autocomplete="off">
         </div>
@@ -218,18 +218,21 @@
             </div>
         </div>
     </div>
-
-    <div class="card">
-        <div class="card-title"><div class="icon-box"><i class="bi bi-bank"></i></div> 계좌정보</div>
-        <div class="form-group">
-            <label class="form-label">계좌 유형 <span class="required">*</span></label>
-            <div class="btn-group ui-toggle" data-target="form-account-type">
-                <button type="button" class="toggle-btn" data-val="기지급">기지급</button>
-                <button type="button" class="toggle-btn active" data-val="일반">일반</button>
-                <button type="button" class="toggle-btn" data-val="자동이체">자동이체</button>
-            </div>
-            <input type="hidden" id="form-account-type" value="일반">
+<div class="card">
+    <div class="card-title"><div class="icon-box"><i class="bi bi-bank"></i></div> 계좌정보</div>
+    <div class="form-group">
+        <label class="form-label">계좌 유형 <span class="required">*</span></label>
+        <!-- 👇 data-show-target과 data-show-when="일반,자동이체" 추가 -->
+        <div class="btn-group ui-toggle" data-target="form-account-type" data-show-target="account-input-fields" data-show-when="일반,자동이체">
+            <button type="button" class="toggle-btn" data-val="기지급">기지급</button>
+            <button type="button" class="toggle-btn active" data-val="일반">일반</button>
+            <button type="button" class="toggle-btn" data-val="자동이체">자동이체</button>
         </div>
+        <input type="hidden" id="form-account-type" value="일반">
+    </div>
+
+    <!-- 👇 숨김/노출의 대상이 될 부분을 id="account-input-fields" 로 감싸기 -->
+    <div id="account-input-fields">
         <div class="form-group">
             <label class="form-label">은행명 <span class="required">*</span></label>
             <input type="text" id="form-bank-name" class="input-base" placeholder="예) 국민은행" autocomplete="off">
@@ -242,15 +245,18 @@
             <label class="form-label">예금주 <span class="required">*</span></label>
             <input type="text" id="form-account-holder" class="input-base" placeholder="예금주명" autocomplete="off">
         </div>
-        <div class="form-group">
-            <label class="form-label">보상안내 받으실 분 <span class="required">*</span></label>
-            <div class="btn-group ui-toggle" data-target="form-compensation-recipient">
-                <button type="button" class="toggle-btn" data-val="보험설계사">보험설계사</button>
-                <button type="button" class="toggle-btn active" data-val="보험청구인">보험청구인(본인)</button>
-            </div>
-            <input type="hidden" id="form-compensation-recipient" value="보험청구인">
-        </div>
     </div>
+    <!-- 👆 묶기 끝 -->
+    
+    <div class="form-group">
+        <label class="form-label">보상안내 받으실 분 <span class="required">*</span></label>
+        <div class="btn-group ui-toggle" data-target="form-compensation-recipient">
+            <button type="button" class="toggle-btn" data-val="보험설계사">보험설계사</button>
+            <button type="button" class="toggle-btn active" data-val="보험청구인">보험청구인(본인)</button>
+        </div>
+        <input type="hidden" id="form-compensation-recipient" value="보험청구인">
+    </div>
+</div>
 
     <div class="card">
         <div class="card-title"><div class="icon-box"><i class="bi bi-pen"></i></div> 서명</div>
