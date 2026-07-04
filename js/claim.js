@@ -394,21 +394,39 @@ function drawJumin(pdfPage, juminValue, insuranceKey) {
 async function getSignImage(pdfDoc, canvasId) {
     canvasId = canvasId || 'signature-pad';
     const canvas = document.getElementById(canvasId);
-    if (!canvas) return null;
-    const signDataUrl = canvas.toDataURL('image/png');
-    const blank = document.createElement('canvas').toDataURL('image/png');
-    if (signDataUrl === blank) return null;
-    const signBytes = await fetch(signDataUrl).then(r => r.arrayBuffer());
-    return await pdfDoc.embedPng(signBytes);
+    // ⚠️ [방어 코드 - 2026-07-04 추가] 계약자 서명칸처럼 화면에서 display:none으로
+    // 숨겨진 상태로 초기화된 캔버스는 offsetWidth가 0이 되어(initClaimCanvas의
+    // canvas.width = canvas.parentElement.offsetWidth 로직 때문) 크기가 0인 캔버스가
+    // 됩니다. 이 상태에서 toDataURL()을 호출하면 "data:," 같은 깨진 값이 나와서
+    // embedPng()가 "The input is not a PNG file!" 오류를 던집니다. 아래에서
+    // 캔버스 크기와 dataURL 형식을 먼저 검증해 서명이 없는 것으로 안전하게 처리합니다.
+    if (!canvas || !canvas.width || !canvas.height) return null;
+    try {
+        const signDataUrl = canvas.toDataURL('image/png');
+        if (!signDataUrl || !signDataUrl.startsWith('data:image/png')) return null;
+        const blank = document.createElement('canvas').toDataURL('image/png');
+        if (signDataUrl === blank) return null;
+        const signBytes = await fetch(signDataUrl).then(r => r.arrayBuffer());
+        return await pdfDoc.embedPng(signBytes);
+    } catch (e) {
+        console.warn(`[서명 이미지 무시] "${canvasId}" 캔버스에서 서명을 읽는 중 오류가 발생해 서명 없이 진행합니다:`, e);
+        return null;
+    }
 }
 
 function getSignDataUrl(canvasId) {
     canvasId = canvasId || 'signature-pad';
     const canvas = document.getElementById(canvasId);
-    if (!canvas) return null;
-    const dataUrl = canvas.toDataURL('image/png');
-    const blank = document.createElement('canvas').toDataURL('image/png');
-    return dataUrl === blank ? null : dataUrl;
+    if (!canvas || !canvas.width || !canvas.height) return null;
+    try {
+        const dataUrl = canvas.toDataURL('image/png');
+        if (!dataUrl || !dataUrl.startsWith('data:image/png')) return null;
+        const blank = document.createElement('canvas').toDataURL('image/png');
+        return dataUrl === blank ? null : dataUrl;
+    } catch (e) {
+        console.warn(`[서명 저장 무시] "${canvasId}" 캔버스 dataURL 변환 중 오류:`, e);
+        return null;
+    }
 }
 
 async function restoreSignFromDataUrl(dataUrl, canvasId) {
