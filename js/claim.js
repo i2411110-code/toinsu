@@ -126,9 +126,14 @@ window.initClaimCanvas = function() {
     const titleEl = document.getElementById('claim-form-title');
     if (titleEl) titleEl.innerText = company + ' 청구서 작성';
 
-    const isDB = (company === 'DB손해보험');
-    document.querySelectorAll('.db-only-field').forEach(el => {
-        el.style.display = isDB ? 'block' : 'none';
+    // 👇 [수정된 로직] 노출이 필요한 보험사 이름을 이곳에 쉼표로 구분하여 추가하세요.
+    const specialCompanies = ['DB손해보험', '현대해상', '메리츠화재']; 
+    
+    // 현재 선택된 보험사가 위 목록에 포함되어 있는지 확인
+    const isSpecial = specialCompanies.includes(company);
+    
+    document.querySelectorAll('.special-company-field').forEach(el => {
+        el.style.display = isSpecial ? 'block' : 'none';
     });
 
     window.initUiToggleGroups();
@@ -261,8 +266,8 @@ function setToggleGroupValue(targetId, value) {
     const showWhen      = group.dataset.showWhen;
     if (showTargetId) {
         const showEl = document.getElementById(showTargetId);
-        if (showEl) showEl.style.display = showWhen.split(',').includes(value) ? 'block' : 'none';
-}
+        if (showEl) showEl.style.display = (value === showWhen) ? 'block' : 'none';
+    }
 }
 
 // ==========================================
@@ -1043,3 +1048,4 @@ window.generateGenericPDF = async function(fileKey, companyName, mode) {
     const fileName = `${fd.insuredName || '청구서'}_${companyName || ''}.pdf`;
     await outputPdf(pdfDoc, mode, fileName);
 };
+
