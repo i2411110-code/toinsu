@@ -142,6 +142,17 @@ window.initClaimCanvas = function() {
         ctx.strokeStyle = '#0F172A';
     });
 
+     ['signature-pad', 'signature-pad-contractor', 'signature-pad-agent'].forEach(id => {
+        const canvas = document.getElementById(id);
+        if (!canvas) return;
+        canvas.width = canvas.parentElement.offsetWidth;
+        canvas.height = 200;
+        const ctx = canvas.getContext('2d');
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#0F172A';
+    });
+
     if (window.currentDraftId) {
         window._restoreDraftToForm(window.currentDraftId);
     }
@@ -151,8 +162,11 @@ window.initClaimCanvas = function() {
 window._signDrawState = {};
 
 function _signPlaceholderId(canvasId) {
-    return canvasId === 'signature-pad-contractor' ? 'sign-placeholder-contractor' : 'sign-placeholder';
+    if (canvasId === 'signature-pad-contractor') return 'sign-placeholder-contractor';
+    if (canvasId === 'signature-pad-agent')       return 'sign-placeholder-agent';
+    return 'sign-placeholder';
 }
+
 
 window.startSign = function(e, canvasId) {
     canvasId = canvasId || 'signature-pad';
@@ -712,7 +726,9 @@ window.generateHyundai5PagePDF = async function(mode) {
     };
 
     const txtOpt   = { font: customFont, size: 11, color: rgb(50, 50, 50) };
-    const checkOpt = { font: customFont, size: 14, color: rgb(50, 50, 50) };
+    const checkOpt = { font: customFont, size: 14, color: rgb(50, 50, 50
+
+    ) };
     const checkMark = 'V';
 
     const C = window.HYUNDAI_COORDS;
@@ -801,9 +817,10 @@ window.generateDB5PagePDF = async function(mode) {
     const date = getTodayDateFields();
     const signImage           = await getSignImage(pdfDoc, 'signature-pad');
     const contractorSignImage = await getSignImage(pdfDoc, 'signature-pad-contractor');
+    const agentSignImage      = await getSignImage(pdfDoc, 'signature-pad-agent');
 
     const txtOpt   = { font: customFont, size: 11, color: rgb(0, 0, 0) };
-    const checkOpt = { font: customFont, size: 14, color: rgb(0, 0, 0) }; // ✅ 검은색으로 변경
+    const checkOpt = { font: customFont, size: 14, color: rgb(0, 0, 0) };
     const CHECK = 'V';
 
     const C  = window.DB_COORDS;
@@ -814,17 +831,31 @@ window.generateDB5PagePDF = async function(mode) {
     // ── 1페이지 ──
     if (p1.name) pages[0].drawText(fd.insuredName, { x: p1.name.x, y: p1.name.y, ...txtOpt });
 
-    // 주민번호 - 앞/뒤 6+7자리를 하이픈으로 이어붙여 한 줄로 출력
     if (p1.jumin && fd.jumin) {
         const jm = splitJumin(fd.jumin);
         const juminText = jm.jumin1 && jm.jumin2 ? `${jm.jumin1}-${jm.jumin2}` : (jm.jumin1 || '');
         pages[0].drawText(juminText, { x: p1.jumin.x, y: p1.jumin.y, ...txtOpt });
     }
 
-    if (p1.job && fd.job) pages[0].drawText(fd.job, { x: p1.job.x, y: p1.job.y, ...txtOpt });
-
-    // ✅ 주소
     if (p1.address && fd.address) pages[0].drawText(fd.address, { x: p1.address.x, y: p1.address.y, ...txtOpt });
+    if (p1.phone && fd.phone)     pages[0].drawText(fd.phone,   { x: p1.phone.x,   y: p1.phone.y,   ...txtOpt });
+
+    // ✅ 사고 상세정보
+    if (p1.diseaseInfo && fd.diseaseInfo)                 pages[0].drawText(fd.diseaseInfo,         { x: p1.diseaseInfo.x,         y: p1.diseaseInfo.y,         ...txtOpt });
+    if (p1.accidentPlace && fd.accidentPlace)             pages[0].drawText(fd.accidentPlace,       { x: p1.accidentPlace.x,       y: p1.accidentPlace.y,       ...txtOpt });
+    if (p1.hospitalName && fd.hospitalName)               pages[0].drawText(fd.hospitalName,        { x: p1.hospitalName.x,        y: p1.hospitalName.y,        ...txtOpt });
+    if (p1.accidentDescription && fd.content)             pages[0].drawText(fd.content,             { x: p1.accidentDescription.x, y: p1.accidentDescription.y, ...txtOpt });
+
+    // ✅ 자동차사고 처리여부 (교통사고 선택시에만)
+    if (fd.accidentType && fd.accidentType.includes('교통')) {
+        if (p1.autoInsurance) {
+            if (fd.autoInsuranceYn === '예'   && p1.autoInsurance.yes) pages[0].drawText(CHECK, { x: p1.autoInsurance.yes.x, y: p1.autoInsurance.yes.y, ...checkOpt });
+            if (fd.autoInsuranceYn === '아니오' && p1.autoInsurance.no)  pages[0].drawText(CHECK, { x: p1.autoInsurance.no.x,  y: p1.autoInsurance.no.y,  ...checkOpt });
+        }
+        if (p1.autoInsuranceCompany && fd.autoInsuranceCompany) pages[0].drawText(fd.autoInsuranceCompany, { x: p1.autoInsuranceCompany.x, y: p1.autoInsuranceCompany.y, ...txtOpt });
+        if (p1.autoInsuranceContact && fd.autoInsuranceContact) pages[0].drawText(fd.autoInsuranceContact, { x: p1.autoInsuranceContact.x, y: p1.autoInsuranceContact.y, ...txtOpt });
+        if (p1.vehicleNumber && fd.vehicleNumber)               pages[0].drawText(fd.vehicleNumber,        { x: p1.vehicleNumber.x,        y: p1.vehicleNumber.y,        ...txtOpt });
+    }
 
     // 사고 유형 체크 (교통/질병/상해)
     if (p1.accidentType && fd.accidentType) {
@@ -834,23 +865,25 @@ window.generateDB5PagePDF = async function(mode) {
         if (fd.accidentType.includes('상해') && at.injury)  pages[0].drawText(CHECK, { x: at.injury.x,  y: at.injury.y,  ...checkOpt });
     }
 
-    // 기본 동의 체크 (항상 체크)
-    if (p1.baseConsentCheck) pages[0].drawText(CHECK, { x: p1.baseConsentCheck.x, y: p1.baseConsentCheck.y, ...checkOpt });
+    // 항상 체크되는 동의 체크마크 3개
+    if (p1.page1Checkmarks) p1.page1Checkmarks.forEach(m => pages[0].drawText(CHECK, { x: m.x, y: m.y, ...checkOpt }));
 
-    // 보상안내 받으실 분
+    // 보상안내 받으실 분 (계약자 / 피보험자 / 설계사)
     if (p1.compensationRecipient) {
         const cr = p1.compensationRecipient;
-        const agentName = window.__currentAgentName || '';
+        const agentName = window.__currentAgentName || window.currentUserDisplayName || '';
         if (fd.compensationRecipient === '보험설계사') {
             if (cr.agentCheck) pages[0].drawText(CHECK, { x: cr.agentCheck.x, y: cr.agentCheck.y, ...checkOpt });
-            if (cr.agentNameField && agentName)     pages[0].drawText(agentName, { x: cr.agentNameField.x,     y: cr.agentNameField.y,     ...txtOpt });
-            if (cr.loginUserNameField && agentName) pages[0].drawText(agentName, { x: cr.loginUserNameField.x, y: cr.loginUserNameField.y, ...txtOpt });
-        } else if (cr.claimantCheck) {
-            pages[0].drawText(CHECK, { x: cr.claimantCheck.x, y: cr.claimantCheck.y, ...checkOpt });
+            if (cr.agentNameField && agentName)     pages[0].drawText(agentName,   { x: cr.agentNameField.x,     y: cr.agentNameField.y,     ...txtOpt });
+            if (cr.agentRelationField)              pages[0].drawText('담당설계사', { x: cr.agentRelationField.x, y: cr.agentRelationField.y, ...txtOpt });
+        } else if (fd.sameAsInsured === '예') {
+            if (cr.insuredCheck) pages[0].drawText(CHECK, { x: cr.insuredCheck.x, y: cr.insuredCheck.y, ...checkOpt });
+        } else {
+            if (cr.contractorCheck) pages[0].drawText(CHECK, { x: cr.contractorCheck.x, y: cr.contractorCheck.y, ...checkOpt });
         }
     }
 
-    // 첨부서류 목록 - 2줄에 나눠 기입
+    // 첨부서류 목록 (2줄에 나눠 기입)
     if (p1.attachmentLines && window.claimAttachments?.length) {
         const names = window.claimAttachments.map(a => a.name);
         const half  = Math.ceil(names.length / 2);
@@ -865,19 +898,19 @@ window.generateDB5PagePDF = async function(mode) {
     if (p1.month) pages[0].drawText(date.month, { x: p1.month.x, y: p1.month.y, ...txtOpt });
     if (p1.day)   pages[0].drawText(date.day,   { x: p1.day.x,   y: p1.day.y,   ...txtOpt });
 
-    // 상단(청구인) 성함/서명
+    // 상단 3단 성함/서명 (청구인 / 설계사 / 계약자·수익자)
     if (p1.signerName) pages[0].drawText(fd.insuredName, { x: p1.signerName.x, y: p1.signerName.y, ...txtOpt });
     if (signImage && p1.sign) pages[0].drawImage(signImage, { x: p1.sign.x, y: p1.sign.y, width: p1.sign.width, height: p1.sign.height });
 
-    // 하단(계약자) 성함/서명
+    const agentDisplayName = window.currentUserDisplayName || '';
+    if (p1.agentSignerName && agentDisplayName) pages[0].drawText(agentDisplayName, { x: p1.agentSignerName.x, y: p1.agentSignerName.y, ...txtOpt });
+    if (agentSignImage && p1.agentSign) pages[0].drawImage(agentSignImage, { x: p1.agentSign.x, y: p1.agentSign.y, width: p1.agentSign.width, height: p1.agentSign.height });
+
     if (fd.contractorName && p1.contractorSignerName) pages[0].drawText(fd.contractorName, { x: p1.contractorSignerName.x, y: p1.contractorSignerName.y, ...txtOpt });
     if (contractorSignImage && p1.contractorSign) pages[0].drawImage(contractorSignImage, { x: p1.contractorSign.x, y: p1.contractorSign.y, width: p1.contractorSign.width, height: p1.contractorSign.height });
 
     // 계좌정보
-    // ✅ 기지급 계좌: 체크마크(V)가 아니라 "기지급 계좌" 텍스트를 직접 출력
-    if (p1.prepaidAccountLabel && fd.accountType === '기지급') {
-        pages[0].drawText('기지급 계좌', { x: p1.prepaidAccountLabel.x, y: p1.prepaidAccountLabel.y, ...txtOpt });
-    }
+    if (p1.existingAccountCheck && fd.accountType === '기지급') pages[0].drawText(CHECK, { x: p1.existingAccountCheck.x, y: p1.existingAccountCheck.y, ...checkOpt });
     if (p1.account && fd.account)             pages[0].drawText(fd.account, { x: p1.account.x, y: p1.account.y, ...txtOpt });
     if (p1.bankName && fd.bankName)           pages[0].drawText(fd.bankName, { x: p1.bankName.x, y: p1.bankName.y, ...txtOpt });
     if (p1.accountHolder && fd.accountHolder) pages[0].drawText(fd.accountHolder, { x: p1.accountHolder.x, y: p1.accountHolder.y, ...txtOpt });
@@ -898,6 +931,9 @@ window.generateDB5PagePDF = async function(mode) {
 
         if (p5.signerName) pages[4].drawText(fd.insuredName, { x: p5.signerName.x, y: p5.signerName.y, ...txtOpt });
         if (signImage && p5.sign) pages[4].drawImage(signImage, { x: p5.sign.x, y: p5.sign.y, width: p5.sign.width, height: p5.sign.height });
+
+        if (p5.agentSignerName && agentDisplayName) pages[4].drawText(agentDisplayName, { x: p5.agentSignerName.x, y: p5.agentSignerName.y, ...txtOpt });
+        if (agentSignImage && p5.agentSign) pages[4].drawImage(agentSignImage, { x: p5.agentSign.x, y: p5.agentSign.y, width: p5.agentSign.width, height: p5.agentSign.height });
 
         if (fd.contractorName && p5.contractorSignerName) pages[4].drawText(fd.contractorName, { x: p5.contractorSignerName.x, y: p5.contractorSignerName.y, ...txtOpt });
         if (contractorSignImage && p5.contractorSign) pages[4].drawImage(contractorSignImage, { x: p5.contractorSign.x, y: p5.contractorSign.y, width: p5.contractorSign.width, height: p5.contractorSign.height });

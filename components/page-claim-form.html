@@ -27,6 +27,7 @@
         .card-title .icon-box { background: #E8F3FF; color: #3182F6; width: 28px; height: 28px; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 14px; }
         .card-title.pink .icon-box { background: #FFE8EF; color: #F04452; }
         .card-title.orange .icon-box { background: #FFF0E6; color: #F08244; }
+        .card-title.purple .icon-box { background: #F3E8FF; color: #8B5CF6; }
         
         .form-group { margin-bottom: 20px; }
         .form-label { display: block; font-size: 14px; font-weight: 600; color: #4E5968; margin-bottom: 8px; }
@@ -80,6 +81,12 @@
         <div class="form-group">
             <label class="form-label">연락처 <span class="required">*</span></label>
             <input type="tel" id="form-phone" class="input-base" placeholder="010-0000-0000"
+                   autocomplete="off">
+        </div>
+        <!-- ✅ 신규: 주소 (DB손해보험 등에서 사용) -->
+        <div class="form-group">
+            <label class="form-label">주소</label>
+            <input type="text" id="form-address" class="input-base" placeholder="예) 서울시 강남구 ..."
                    autocomplete="off">
         </div>
         <div class="form-group">
@@ -153,7 +160,7 @@
         <div class="card-title pink"><div class="icon-box"><i class="bi bi-hospital"></i></div> 진료정보</div>
         <div class="form-group">
             <label class="form-label">사고 유형 <span class="required">*</span></label>
-            <div class="btn-group ui-toggle" data-target="form-accident-type">
+            <div class="btn-group ui-toggle" data-target="form-accident-type" data-show-target="auto-insurance-section" data-show-when="교통사고">
                 <button type="button" class="toggle-btn active" data-val="질병">질병</button>
                 <button type="button" class="toggle-btn" data-val="상해">상해</button>
                 <button type="button" class="toggle-btn" data-val="교통사고">교통사고</button>
@@ -171,6 +178,44 @@
         <div class="form-group">
             <label class="form-label">질병/사고내용 <span class="required">*</span></label>
             <textarea id="form-content" class="input-base" placeholder="질병(사고)내용을 간단히 작성해 주세요" style="height:80px; resize:none;" autocomplete="off"></textarea>
+        </div>
+
+        <!-- ✅ 신규: 사고 상세정보 (DB손해보험 등에서 사용) -->
+        <div class="form-group">
+            <label class="form-label">질병내용 (진단명)</label>
+            <input type="text" id="form-disease-info" class="input-base" placeholder="진단받은 질병명" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label class="form-label">사고장소</label>
+            <input type="text" id="form-accident-place" class="input-base" placeholder="사고 발생 장소" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label class="form-label">병원명</label>
+            <input type="text" id="form-hospital-name" class="input-base" placeholder="치료받은 병원명" autocomplete="off">
+        </div>
+
+        <!-- ✅ 신규: 자동차사고 처리여부 - '교통사고' 선택시에만 노출 -->
+        <div id="auto-insurance-section" style="display:none;">
+            <div class="form-group">
+                <label class="form-label">자동차보험 처리여부</label>
+                <div class="btn-group ui-toggle" data-target="form-auto-insurance">
+                    <button type="button" class="toggle-btn active" data-val="예">예</button>
+                    <button type="button" class="toggle-btn" data-val="아니오">아니오</button>
+                </div>
+                <input type="hidden" id="form-auto-insurance" value="예">
+            </div>
+            <div class="form-group">
+                <label class="form-label">상대 보험사</label>
+                <input type="text" id="form-auto-insurance-company" class="input-base" placeholder="예) 흥국화재" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label class="form-label">담당자 연락처</label>
+                <input type="tel" id="form-auto-insurance-contact" class="input-base" placeholder="'-' 없이 입력" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label class="form-label">본인 차량번호</label>
+                <input type="text" id="form-vehicle-number" class="input-base" placeholder="예) 12가9876" autocomplete="off">
+            </div>
         </div>
     </div>
 
@@ -221,6 +266,25 @@
                         ontouchstart="window.startSign(event)" ontouchmove="window.drawSign(event)" 
                         ontouchend="window.stopSign()" style="width:100%; height:200px; cursor:crosshair;"></canvas>
                 <div id="sign-placeholder" class="sign-placeholder"><i class="bi bi-pencil"></i> 여기에 서명해주세요</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ 신규: 설계사 서명 (DB손해보험 등 3단 서명 구조에서 사용) -->
+    <div class="card">
+        <div class="card-title purple"><div class="icon-box"><i class="bi bi-briefcase"></i></div> 설계사 확인 서명</div>
+        <div class="form-group">
+            <div class="sign-header">
+                <label class="form-label" style="margin:0;">설계사 서명란</label>
+                <button type="button" class="retry-btn" onclick="window.clearSignature('signature-pad-agent')"><i class="bi bi-arrow-clockwise"></i> 다시 서명</button>
+            </div>
+            <div class="sign-box">
+                <canvas id="signature-pad-agent"
+                        onmousedown="window.startSign(event,'signature-pad-agent')" onmousemove="window.drawSign(event,'signature-pad-agent')"
+                        onmouseup="window.stopSign('signature-pad-agent')" onmouseleave="window.stopSign('signature-pad-agent')"
+                        ontouchstart="window.startSign(event,'signature-pad-agent')" ontouchmove="window.drawSign(event,'signature-pad-agent')"
+                        ontouchend="window.stopSign('signature-pad-agent')" style="width:100%; height:200px; cursor:crosshair;"></canvas>
+                <div id="sign-placeholder-agent" class="sign-placeholder"><i class="bi bi-pencil"></i> 여기에 서명해주세요</div>
             </div>
         </div>
     </div>
