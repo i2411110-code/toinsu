@@ -223,89 +223,89 @@ window.HYUNDAI_COORDS = {
 // ==========================================
 window.DB_COORDS = {
     page1: {
-        name:    { x: 159, y: 696 },
-        jumin:   { x: 311, y: 694 }, // 주민번호 전체(하이픈 포함) 한 줄 출력
-        job:     { x: 479, y: 673 },
-        address: { x: 161, y: 653 }, // ✅ 신규: 주소
+        name:    { x: 159, y: 676 },
+        jumin:   { x: 311, y: 674 }, // 주민번호 전체(하이픈 포함) 한 줄 출력
+        job:     { x: 479, y: 653 },
+        address: { x: 161, y: 633 }, // ✅ 주소
 
         // 사고 유형 체크 (교통/질병/상해)
         accidentType: {
-            traffic: { x: 211, y: 498 }, // 교통
-            disease: { x: 168, y: 498 }, // 질병
-            injury:  { x: 128, y: 498 }, // 상해
+            traffic: { x: 211, y: 478 }, // 교통
+            disease: { x: 168, y: 478 }, // 질병
+            injury:  { x: 128, y: 478 }, // 상해
         },
 
-        baseConsentCheck: { x: 523, y: 701 }, // 기본 동의 체크 (항상 체크)
+        baseConsentCheck: { x: 523, y: 681 }, // 기본 동의 체크 (항상 체크)
 
         // 보상안내 받으실 분
         compensationRecipient: {
-            agentNameField:     { x: 440, y: 631 }, // 담당 설계사 성명 기입란
-            loginUserNameField: { x: 276, y: 630 }, // 로그인한 계정(설계사) 이름 기입란
-            agentCheck:         { x: 219, y: 631 }, // 보험 설계사 체크
-            claimantCheck:      { x: 114, y: 631 }, // 보험 계약자 체크
+            agentNameField:     { x: 440, y: 611 }, // 담당 설계사 성명 기입란
+            loginUserNameField: { x: 276, y: 610 }, // 로그인한 계정(설계사) 이름 기입란
+            agentCheck:         { x: 219, y: 611 }, // 보험 설계사 체크
+            claimantCheck:      { x: 114, y: 611 }, // 보험 계약자 체크
         },
 
         // 자료 첨부 목록 (2줄에 나눠 기입)
         attachmentLines: [
-            { x: 125, y: 446 },
-            { x: 123, y: 420 },
+            { x: 125, y: 426 },
+            { x: 123, y: 400 },
         ],
 
         // 작성일자 (오늘 날짜)
-        year2: { x: 97, y: 154 },
-        month: { x: 147, y: 154 },
-        day:   { x: 197, y: 154 },
+        year2: { x: 97, y: 134 },
+        month: { x: 147, y: 134 },
+        day:   { x: 197, y: 134 },
 
         // 상단 성함/서명 (청구인)
-        signerName: { x: 425, y: 153 },
-        sign:       { x: 557, y: 156, width: 65, height: 22 },
+        signerName: { x: 425, y: 133 },
+        sign:       { x: 537, y: 136, width: 65, height: 22 },
 
         // 하단 성함/서명 (계약자)
-        contractorSignerName: { x: 425, y: 118 },
-        contractorSign:       { x: 555, y: 117, width: 65, height: 22 },
+        contractorSignerName: { x: 425, y: 98 },
+        contractorSign:       { x: 535, y: 97, width: 65, height: 22 },
 
         // 계좌정보
-        prepaidAccountCheck: { x: 381, y: 292 }, // 기지급 계좌 체크
-        account:       { x: 180, y: 293 },
-        bankName:      { x: 381, y: 293 },
-        accountHolder: { x: 487, y: 293 },
+        prepaidAccountLabel: { x: 381, y: 272 }, // ✅ "기지급 계좌" 텍스트 출력 위치 (체크 아님)
+        account:       { x: 180, y: 273 },
+        bankName:      { x: 381, y: 273 },
+        accountHolder: { x: 487, y: 273 },
     },
     page2: {
         checkmarks: [
-            { x: 545, y: 443 },
-            { x: 545, y: 353 },
-            { x: 545, y: 261 },
+            { x: 545, y: 423 },
+            { x: 545, y: 333 },
+            { x: 545, y: 241 },
         ],
     },
     page3: {
         checkmarks: [
-            { x: 545, y: 339 },
-            { x: 545, y: 235 },
-            { x: 545, y: 101 },
+            { x: 545, y: 319 },
+            { x: 545, y: 215 },
+            { x: 545, y: 81 },
         ],
     },
     page4: {
         checkmarks: [
-            { x: 546, y: 345 },
-            { x: 548, y: 244 },
+            { x: 546, y: 325 },
+            { x: 548, y: 224 },
         ],
     },
     page5: {
         checkmarks: [
-            { x: 547, y: 665 },
-            { x: 547, y: 594 },
-            { x: 545, y: 460 },
+            { x: 547, y: 645 },
+            { x: 547, y: 574 },
+            { x: 545, y: 440 },
         ],
-        year2: { x: 100, y: 168 }, // 작성 년(뒤 두자리)
-        month: { x: 149, y: 167 },
-        day:   { x: 206, y: 167 },
+        year2: { x: 100, y: 148 }, // 작성 년(뒤 두자리)
+        month: { x: 149, y: 147 },
+        day:   { x: 206, y: 147 },
 
         // 상단 성함/서명 (청구인)
-        signerName: { x: 422, y: 171 },
-        sign:       { x: 553, y: 171, width: 65, height: 22 },
+        signerName: { x: 422, y: 151 },
+        sign:       { x: 533, y: 151, width: 65, height: 22 },
 
         // 하단 성함/서명 (계약자)
-        contractorSignerName: { x: 423, y: 133 },
-        contractorSign:       { x: 553, y: 132, width: 65, height: 22 },
+        contractorSignerName: { x: 423, y: 113 },
+        contractorSign:       { x: 533, y: 112, width: 65, height: 22 },
     },
 };

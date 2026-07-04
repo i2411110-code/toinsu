@@ -711,8 +711,8 @@ window.generateHyundai5PagePDF = async function(mode) {
         day:   td || '',
     };
 
-    const txtOpt   = { font: customFont, size: 11, color: rgb(0, 0, 0) };
-    const checkOpt = { font: customFont, size: 14, color: rgb(0.15, 0.38, 0.92) };
+    const txtOpt   = { font: customFont, size: 11, color: rgb(50, 50, 50) };
+    const checkOpt = { font: customFont, size: 14, color: rgb(50, 50, 50) };
     const checkMark = 'V';
 
     const C = window.HYUNDAI_COORDS;
@@ -803,7 +803,7 @@ window.generateDB5PagePDF = async function(mode) {
     const contractorSignImage = await getSignImage(pdfDoc, 'signature-pad-contractor');
 
     const txtOpt   = { font: customFont, size: 11, color: rgb(0, 0, 0) };
-    const checkOpt = { font: customFont, size: 14, color: rgb(0.15, 0.38, 0.92) };
+    const checkOpt = { font: customFont, size: 14, color: rgb(0, 0, 0) }; // ✅ 검은색으로 변경
     const CHECK = 'V';
 
     const C  = window.DB_COORDS;
@@ -814,8 +814,7 @@ window.generateDB5PagePDF = async function(mode) {
     // ── 1페이지 ──
     if (p1.name) pages[0].drawText(fd.insuredName, { x: p1.name.x, y: p1.name.y, ...txtOpt });
 
-    // 주민번호 - 앞/뒤 6+7자리를 하이픈으로 이어붙여 한 줄로 출력 (다른 보험사와 달리
-    // 앞/뒤 칸이 분리되어 있지 않고 좌표가 1곳뿐입니다)
+    // 주민번호 - 앞/뒤 6+7자리를 하이픈으로 이어붙여 한 줄로 출력
     if (p1.jumin && fd.jumin) {
         const jm = splitJumin(fd.jumin);
         const juminText = jm.jumin1 && jm.jumin2 ? `${jm.jumin1}-${jm.jumin2}` : (jm.jumin1 || '');
@@ -824,10 +823,10 @@ window.generateDB5PagePDF = async function(mode) {
 
     if (p1.job && fd.job) pages[0].drawText(fd.job, { x: p1.job.x, y: p1.job.y, ...txtOpt });
 
-    // ✅ 주소 (신규) - HTML 폼에 id="form-address" 인풋이 있어야 값이 채워집니다.
+    // ✅ 주소
     if (p1.address && fd.address) pages[0].drawText(fd.address, { x: p1.address.x, y: p1.address.y, ...txtOpt });
 
-    // 사고 유형 체크 (교통/질병/상해) - fd.accidentType 문자열에 해당 키워드가 포함되어 있으면 체크
+    // 사고 유형 체크 (교통/질병/상해)
     if (p1.accidentType && fd.accidentType) {
         const at = p1.accidentType;
         if (fd.accidentType.includes('교통') && at.traffic) pages[0].drawText(CHECK, { x: at.traffic.x, y: at.traffic.y, ...checkOpt });
@@ -839,9 +838,6 @@ window.generateDB5PagePDF = async function(mode) {
     if (p1.baseConsentCheck) pages[0].drawText(CHECK, { x: p1.baseConsentCheck.x, y: p1.baseConsentCheck.y, ...checkOpt });
 
     // 보상안내 받으실 분
-    // ⚠️ "담당 설계사" 기입란과 "로그인한 계정 이름" 기입란의 정확한 역할 구분이
-    //    불확실하여 우선 둘 다 동일하게 로그인한 설계사 이름을 채우도록 처리했습니다.
-    //    필요 시 window.__currentAgentName 대신 별도 값을 넣어 구분해주세요.
     if (p1.compensationRecipient) {
         const cr = p1.compensationRecipient;
         const agentName = window.__currentAgentName || '';
@@ -873,12 +869,15 @@ window.generateDB5PagePDF = async function(mode) {
     if (p1.signerName) pages[0].drawText(fd.insuredName, { x: p1.signerName.x, y: p1.signerName.y, ...txtOpt });
     if (signImage && p1.sign) pages[0].drawImage(signImage, { x: p1.sign.x, y: p1.sign.y, width: p1.sign.width, height: p1.sign.height });
 
-    // 하단(계약자) 성함/서명 - 계약자 정보가 입력된 경우에만 기입
+    // 하단(계약자) 성함/서명
     if (fd.contractorName && p1.contractorSignerName) pages[0].drawText(fd.contractorName, { x: p1.contractorSignerName.x, y: p1.contractorSignerName.y, ...txtOpt });
     if (contractorSignImage && p1.contractorSign) pages[0].drawImage(contractorSignImage, { x: p1.contractorSign.x, y: p1.contractorSign.y, width: p1.contractorSign.width, height: p1.contractorSign.height });
 
     // 계좌정보
-    if (p1.prepaidAccountCheck && fd.accountType === '기지급') pages[0].drawText(CHECK, { x: p1.prepaidAccountCheck.x, y: p1.prepaidAccountCheck.y, ...checkOpt });
+    // ✅ 기지급 계좌: 체크마크(V)가 아니라 "기지급 계좌" 텍스트를 직접 출력
+    if (p1.prepaidAccountLabel && fd.accountType === '기지급') {
+        pages[0].drawText('기지급 계좌', { x: p1.prepaidAccountLabel.x, y: p1.prepaidAccountLabel.y, ...txtOpt });
+    }
     if (p1.account && fd.account)             pages[0].drawText(fd.account, { x: p1.account.x, y: p1.account.y, ...txtOpt });
     if (p1.bankName && fd.bankName)           pages[0].drawText(fd.bankName, { x: p1.bankName.x, y: p1.bankName.y, ...txtOpt });
     if (p1.accountHolder && fd.accountHolder) pages[0].drawText(fd.accountHolder, { x: p1.accountHolder.x, y: p1.accountHolder.y, ...txtOpt });
@@ -928,7 +927,7 @@ window.generateGenericPDF = async function(fileKey, companyName, mode) {
 
     const coords = { ...window.FIELD_COORDS.DEFAULT, ...(window.FIELD_COORDS[fileKey] || {}) };
     const txtOpt   = { font: customFont, size: 12, color: rgb(50, 50, 50) };
-    const checkOpt = { font: customFont, size: 13, color: rgb(0.15, 0.38, 0.92) };
+    const checkOpt = { font: customFont, size: 13, color: rgb(50, 50, 50) };
     const CHECK = 'V';
 
     // 9번째 원본 데이터 관계 연산 정밀 구동
