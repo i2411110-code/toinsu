@@ -771,10 +771,8 @@ window.generateHyundai5PagePDF = async function(mode) {
         day:   td || '',
     };
 
-    const txtOpt   = { font: customFont, size: 11, color: rgb(50, 50, 50) };
-    const checkOpt = { font: customFont, size: 14, color: rgb(50, 50, 50
-
-    ) };
+    const txtOpt   = { font: customFont, size: 11, color: rgb(50/255, 50/255, 50/255) };
+    const checkOpt = { font: customFont, size: 14, color: rgb(50/255, 50/255, 50/255) };
     const checkMark = 'V';
 
     const C = window.HYUNDAI_COORDS;
@@ -1010,8 +1008,8 @@ window.generateGenericPDF = async function(fileKey, companyName, mode) {
     const sig  = await getSignImage(pdfDoc, 'signature-pad');
 
     const coords = { ...window.FIELD_COORDS.DEFAULT, ...(window.FIELD_COORDS[fileKey] || {}) };
-    const txtOpt   = { font: customFont, size: 12, color: rgb(50, 50, 50) };
-    const checkOpt = { font: customFont, size: 13, color: rgb(50, 50, 50) };
+    const txtOpt   = { font: customFont, size: 12, color: rgb(50/255, 50/255, 50/255) };
+    const checkOpt = { font: customFont, size: 13, color: rgb(50/255, 50/255, 50/255) };
     const CHECK = 'V';
 
     // 9번째 원본 데이터 관계 연산 정밀 구동
