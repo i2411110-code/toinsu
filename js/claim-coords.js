@@ -221,7 +221,7 @@ window.HYUNDAI_COORDS = {
 //    채워지려면 청구서 작성 폼(HTML)에 id="form-address" 인풋이 있어야 합니다.
 //    아직 없다면 폼에 주소 입력칸을 추가해 주세요.
 // ==========================================
-window.DB_COORDS = {window.DB_COORDS = {
+window.DB_COORDS = {
     page1: {
         name:    { x: 153.1, y: 694 },
         address: { x: 153.1, y: 648.6 },

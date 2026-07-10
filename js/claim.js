@@ -136,6 +136,12 @@ window.initClaimCanvas = function() {
         el.style.display = isSpecial ? 'block' : 'none';
     });
 
+    // ✅ 주소(address)는 DB손해보험 양식에서만 사용하는 필드라 별도 클래스로 분리 노출
+    const isDb = (company === 'DB손해보험');
+    document.querySelectorAll('.db-only-field').forEach(el => {
+        el.style.display = isDb ? 'block' : 'none';
+    });
+
     window.initUiToggleGroups();
 
     window.claimAttachments = [];
@@ -346,6 +352,17 @@ function collectFormData() {
     // ✅ 주소 (DB손해보험 전용 신규 필드 - HTML 폼에 id="form-address" 인풋 필요)
     const address       = (document.getElementById('form-address')?.value     || '').trim();
 
+    // ✅ 사고 상세정보 (DB손해보험 등 special-company-field)
+    const diseaseInfo    = (document.getElementById('form-disease-info')?.value    || '').trim();
+    const accidentPlace  = (document.getElementById('form-accident-place')?.value  || '').trim();
+    const hospitalName   = (document.getElementById('form-hospital-name')?.value   || '').trim();
+
+    // ✅ 자동차사고 처리여부 (교통사고 선택시에만 노출되는 섹션)
+    const autoInsuranceYn      = (document.getElementById('form-auto-insurance')?.value          || '').trim();
+    const autoInsuranceCompany = (document.getElementById('form-auto-insurance-company')?.value  || '').trim();
+    const autoInsuranceContact = (document.getElementById('form-auto-insurance-contact')?.value  || '').trim();
+    const vehicleNumber        = (document.getElementById('form-vehicle-number')?.value          || '').trim();
+
     const insuredUnder14 = (document.getElementById('form-under14')?.value || '아니오').trim();
 
     const sameAsInsured        = (document.getElementById('form-same-as-insured')?.value || '예').trim();
@@ -375,6 +392,8 @@ function collectFormData() {
         insuredName, phone, content, treatDate, jumin, accidentType, job, address, bankName, account,
         insuredUnder14, sameAsInsured, contractorName, contractorPhone, contractorJumin,
         compensationRecipient, accountType, accountHolder,
+        diseaseInfo, accidentPlace, hospitalName,
+        autoInsuranceYn, autoInsuranceCompany, autoInsuranceContact, vehicleNumber,
     };
 }
 
@@ -544,6 +563,14 @@ window.saveDraft = async function() {
             content:      fd.content,
             accidentType: fd.accidentType,
             job:          fd.job,
+            address:      fd.address,
+            diseaseInfo:  fd.diseaseInfo,
+            accidentPlace: fd.accidentPlace,
+            hospitalName:  fd.hospitalName,
+            autoInsuranceYn:      fd.autoInsuranceYn,
+            autoInsuranceCompany: fd.autoInsuranceCompany,
+            autoInsuranceContact: fd.autoInsuranceContact,
+            vehicleNumber:        fd.vehicleNumber,
             bankName:     fd.bankName,
             account:      fd.account,
             accountHolder: fd.accountHolder,
@@ -601,6 +628,14 @@ window._restoreDraftToForm = async function(draftId) {
         setVal('form-name',    d.insuredName);
         setVal('form-phone',   d.phone);
         setVal('form-content', d.content);
+        setVal('form-address', d.address);
+        setVal('form-disease-info',           d.diseaseInfo);
+        setVal('form-accident-place',         d.accidentPlace);
+        setVal('form-hospital-name',          d.hospitalName);
+        setVal('form-auto-insurance-company', d.autoInsuranceCompany);
+        setVal('form-auto-insurance-contact', d.autoInsuranceContact);
+        setVal('form-vehicle-number',         d.vehicleNumber);
+        if (d.autoInsuranceYn) setToggleGroupValue('form-auto-insurance', d.autoInsuranceYn);
 
         if (d.jumin) {
             setVal('form-jumin-front', d.jumin.slice(0, 6));
@@ -726,6 +761,7 @@ window.generateHyundai5PagePDF = async function(mode) {
 
     const fd   = collectFormData();
     const date = getTodayDateFields();
+    const jm   = splitJumin(fd.jumin);
     const signImage = await getSignImage(pdfDoc, 'signature-pad');
 
     const [ty, tm, td] = (fd.treatDate || '').split('-');
@@ -752,16 +788,8 @@ window.generateHyundai5PagePDF = async function(mode) {
     // ── 1페이지 기입 ──
     const p1 = C.page1;
     if (p1.name)    pages[0].drawText(fd.insuredName, { x: p1.name.x,       y: p1.name.y,       ...txtOpt });
-
-    // 주민번호 13자리 - juminCoords(자리별 좌표 배열)에 한 글자씩 출력
-    // (HYUNDAI_COORDS.page1은 jumin1/jumin2 두 블록이 아니라 juminCoords 배열 구조)
-    if (p1.juminCoords && fd.jumin) {
-        fd.jumin.replace(/[^0-9]/g, '').split('').forEach((char, idx) => {
-            const pos = p1.juminCoords[idx];
-            if (pos) pages[0].drawText(char, { x: pos.x, y: pos.y, ...txtOpt });
-        });
-    }
-
+    if (p1.jumin1)  pages[0].drawText(jm.jumin1,      { x: p1.jumin1.x,     y: p1.jumin1.y,     ...txtOpt });
+    if (p1.jumin2)  pages[0].drawText(jm.jumin2,      { x: p1.jumin2.x,     y: p1.jumin2.y,     ...txtOpt });
     if (p1.phone)   pages[0].drawText(fd.phone,       { x: p1.phone.x,      y: p1.phone.y,      ...txtOpt });
     if (p1.content) pages[0].drawText(fd.content,     { x: p1.content.x,    y: p1.content.y,    ...txtOpt });
     if (p1.year2)   pages[0].drawText(treat.year2,    { x: p1.year2.x,      y: p1.year2.y,      ...txtOpt });
@@ -781,13 +809,17 @@ window.generateHyundai5PagePDF = async function(mode) {
     if (fd.account && p1.account)       pages[0].drawText(fd.account,  { x: p1.account.x,  y: p1.account.y,  ...txtOpt });
     if (fd.accountHolder && p1.accountHolder) pages[0].drawText(fd.accountHolder, { x: p1.accountHolder.x, y: p1.accountHolder.y, ...txtOpt });
 
-    // 대리인(계약자) 고유 칸 기입
-    if (usesBenType) {
+    // 대리인 고유 칸 기입
+    if (usesBenType && p1.contractor) {
+        const pc = p1.contractor;
         const cjm = splitJumin(fd.contractorJumin);
+        const contractorSig = await getSignImage(pdfDoc, 'signature-pad-contractor');
 
-        if (p1.contractorName && fd.contractorName) pages[0].drawText(fd.contractorName, { x: p1.contractorName.x,   y: p1.contractorName.y,   ...txtOpt });
-        if (p1.contractorJumin1 && cjm.jumin1)      pages[0].drawText(cjm.jumin1,         { x: p1.contractorJumin1.x, y: p1.contractorJumin1.y, ...txtOpt });
-        if (p1.contractorJumin2 && cjm.jumin2)      pages[0].drawText(cjm.jumin2,         { x: p1.contractorJumin2.x, y: p1.contractorJumin2.y, ...txtOpt });
+        if (pc.name && fd.contractorName)   pages[0].drawText(fd.contractorName,  { x: pc.name.x,   y: pc.name.y,   ...txtOpt });
+        if (pc.jumin1 && cjm.jumin1)        pages[0].drawText(cjm.jumin1,         { x: pc.jumin1.x, y: pc.jumin1.y, ...txtOpt });
+        if (pc.jumin2 && cjm.jumin2)        pages[0].drawText(cjm.jumin2,         { x: pc.jumin2.x, y: pc.jumin2.y, ...txtOpt });
+        if (pc.phone && fd.contractorPhone) pages[0].drawText(fd.contractorPhone, { x: pc.phone.x,  y: pc.phone.y,  ...txtOpt });
+        if (contractorSig && pc.sign) pages[0].drawImage(contractorSig, { x: pc.sign.x, y: pc.sign.y, width: pc.sign.width, height: pc.sign.height });
     }
 
     // ── 2 ~ 4페이지 동의서 체크마크 ──
@@ -805,6 +837,12 @@ window.generateHyundai5PagePDF = async function(mode) {
         if (p5.day)   pages[4].drawText(date.day,       { x: p5.day.x,   y: p5.day.y,   ...txtOpt });
         if (p5.name)  pages[4].drawText(effectiveName, { x: p5.name.x,  y: p5.name.y,  ...txtOpt });
         if (mainSig && p5.sign) pages[4].drawImage(mainSig, { x: p5.sign.x, y: p5.sign.y, width: p5.sign.width, height: p5.sign.height });
+        
+        if (usesBenType && p5.contractorSign) {
+            const contractorSig5 = await getSignImage(pdfDoc, 'signature-pad-contractor');
+            if (contractorSig5) pages[4].drawImage(contractorSig5, { x: p5.contractorSign.x, y: p5.contractorSign.y, width: p5.contractorSign.width, height: p5.contractorSign.height });
+            if (p5.contractorName && fd.contractorName) pages[4].drawText(fd.contractorName, { x: p5.contractorName.x, y: p5.contractorName.y, ...txtOpt });
+        }
     }
 
     const fileName = `${fd.insuredName || '청구서'}_${window.selectedClaimInsurance || ''}.pdf`;
@@ -1048,4 +1086,3 @@ window.generateGenericPDF = async function(fileKey, companyName, mode) {
     const fileName = `${fd.insuredName || '청구서'}_${companyName || ''}.pdf`;
     await outputPdf(pdfDoc, mode, fileName);
 };
-
