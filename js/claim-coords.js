@@ -38,6 +38,15 @@
 // generateDB5PagePDF() 함수가 이 값을 참조합니다.
 // ==========================================
 
+// 🖊️ [설계사 확인 서명(agentSign) 좌표 추가 - 원본 사이트 index.js 참고]
+// index.js에 있는 각 보험사별 AgentSignature 필드 중, 우리 프로젝트가 다루는
+// "1페이지(page:0)" 또는 현대해상의 "마지막 페이지" 범위 안에 실제로 서명란이
+// 존재하는 곳만 반영했습니다: samsung, linalife, hanhwa, 그리고 HYUNDAI_COORDS.page5.
+// (DB손해보험은 이전에 이미 반영되어 있음)
+// 나머지 보험사는 원본 양식에서도 설계사 서명란이 우리가 다루는 페이지 범위 밖에
+// 있거나(뒷장/동의서 페이지), 애초에 서명란 없이 담당자 이름만 받는 구조라서
+// 추가하지 않았습니다. 실제로 필요하다면 index.js의 해당 보험사 AgentSignature
+// 필드(다른 page 번호)를 참고해서 개별적으로 추가해주시면 됩니다.
 window.FIELD_COORDS = {
     DEFAULT: {
         // ── 피보험자 기본 정보 ──
@@ -87,7 +96,7 @@ window.FIELD_COORDS = {
         },
     },
 
-    samsung:      { name: { x: 140, y: 648 }, jumin1: { x: 260, y: 648 }, jumin2: { x: 355, y: 648 }, phone: { x: 140, y: 598 }, content: { x: 140, y: 390 }, year2: { x: 105, y: 128 }, month: { x: 158, y: 128 }, day: { x: 203, y: 128 }, signerName: { x: 365, y: 128 }, sign: { x: 505, y: 172, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
+    samsung:      { name: { x: 140, y: 648 }, jumin1: { x: 260, y: 648 }, jumin2: { x: 355, y: 648 }, phone: { x: 140, y: 598 }, content: { x: 140, y: 390 }, year2: { x: 105, y: 128 }, month: { x: 158, y: 128 }, day: { x: 203, y: 128 }, signerName: { x: 365, y: 128 }, sign: { x: 505, y: 172, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 }, agentSignerName: { x: 440, y: 160 }, agentSign: { x: 505, y: 155, width: 65, height: 22 } },
     // ⚠️ [FIELD_COORDS.db는 더 이상 사용되지 않습니다] DB손해보험은 실제로 5페이지
     //    양식이라 window.DB_COORDS(아래)를 사용하도록 변경했습니다. 이 줄은 과거
     //    1페이지 전용 좌표 백업으로만 남겨둡니다.
@@ -109,10 +118,10 @@ window.FIELD_COORDS = {
     hanalife:     { name: { x: 140, y: 644 }, jumin1: { x: 258, y: 644 }, jumin2: { x: 353, y: 644 }, phone: { x: 140, y: 594 }, content: { x: 140, y: 384 }, year2: { x: 105, y: 123 }, month: { x: 158, y: 123 }, day: { x: 203, y: 123 }, signerName: { x: 366, y: 123 }, sign: { x: 430, y: 110, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } }, // ⚠️ sign 미반영: 좌표.js "하나생명"에 1페이지 서명 필드 없음(가장 가까운 건 2페이지 p2BeneficiarySignature x:400,y:205) — 기존 값 유지
     dongyanglife: { name: { x: 138, y: 643 }, jumin1: { x: 256, y: 643 }, jumin2: { x: 351, y: 643 }, phone: { x: 138, y: 593 }, content: { x: 138, y: 383 }, year2: { x: 103, y: 122 }, month: { x: 156, y: 122 }, day: { x: 201, y: 122 }, signerName: { x: 364, y: 122 }, sign: { x: 455, y: 185, width: 65, height: 22 }, bankName: { x: 138, y: 290 }, account: { x: 238, y: 290 } },
     heungkuklife: { name: { x: 139, y: 641 }, jumin1: { x: 257, y: 641 }, jumin2: { x: 352, y: 641 }, phone: { x: 139, y: 591 }, content: { x: 139, y: 381 }, year2: { x: 104, y: 120 }, month: { x: 157, y: 120 }, day: { x: 202, y: 120 }, signerName: { x: 364, y: 120 }, sign: { x: 480, y: 60, width: 65, height: 22 }, bankName: { x: 139, y: 290 }, account: { x: 239, y: 290 } },
-    linalife:     { name: { x: 140, y: 642 }, jumin1: { x: 258, y: 642 }, jumin2: { x: 353, y: 642 }, phone: { x: 140, y: 592 }, content: { x: 140, y: 382 }, year2: { x: 105, y: 121 }, month: { x: 158, y: 121 }, day: { x: 203, y: 121 }, signerName: { x: 365, y: 121 }, sign: { x: 210, y: 40, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
+    linalife:     { name: { x: 140, y: 642 }, jumin1: { x: 258, y: 642 }, jumin2: { x: 353, y: 642 }, phone: { x: 140, y: 592 }, content: { x: 140, y: 382 }, year2: { x: 105, y: 121 }, month: { x: 158, y: 121 }, day: { x: 203, y: 121 }, signerName: { x: 365, y: 121 }, sign: { x: 210, y: 40, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 }, agentSignerName: { x: 405, y: 65 }, agentSign: { x: 490, y: 60, width: 65, height: 22 } },
     dblife:       { name: { x: 139, y: 643 }, jumin1: { x: 257, y: 643 }, jumin2: { x: 352, y: 643 }, phone: { x: 139, y: 593 }, content: { x: 139, y: 383 }, year2: { x: 104, y: 122 }, month: { x: 157, y: 122 }, day: { x: 202, y: 122 }, signerName: { x: 364, y: 122 }, sign: { x: 510, y: 110, width: 65, height: 22 }, bankName: { x: 139, y: 290 }, account: { x: 239, y: 290 } },
     kblife:       { name: { x: 141, y: 645 }, jumin1: { x: 259, y: 645 }, jumin2: { x: 354, y: 645 }, phone: { x: 141, y: 595 }, content: { x: 141, y: 385 }, year2: { x: 106, y: 124 }, month: { x: 159, y: 124 }, day: { x: 204, y: 124 }, signerName: { x: 366, y: 124 }, sign: { x: 215, y: 140, width: 65, height: 22 }, bankName: { x: 141, y: 290 }, account: { x: 241, y: 290 } },
-    hanhwa:       { name: { x: 140, y: 644 }, jumin1: { x: 258, y: 644 }, jumin2: { x: 353, y: 644 }, phone: { x: 140, y: 594 }, content: { x: 140, y: 384 }, year2: { x: 105, y: 123 }, month: { x: 158, y: 123 }, day: { x: 203, y: 123 }, signerName: { x: 365, y: 123 }, sign: { x: 505, y: 120, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
+    hanhwa:       { name: { x: 140, y: 644 }, jumin1: { x: 258, y: 644 }, jumin2: { x: 353, y: 644 }, phone: { x: 140, y: 594 }, content: { x: 140, y: 384 }, year2: { x: 105, y: 123 }, month: { x: 158, y: 123 }, day: { x: 203, y: 123 }, signerName: { x: 365, y: 123 }, sign: { x: 505, y: 120, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 }, agentSign: { x: 505, y: 95, width: 65, height: 22 } }, // ⚠️ agentSignerName(성명 텍스트칸)은 원본 1페이지에 없어서 서명란만 추가함
     hana:         { name: { x: 139, y: 643 }, jumin1: { x: 257, y: 643 }, jumin2: { x: 352, y: 643 }, phone: { x: 139, y: 593 }, content: { x: 139, y: 383 }, year2: { x: 104, y: 122 }, month: { x: 157, y: 122 }, day: { x: 202, y: 122 }, signerName: { x: 364, y: 122 }, sign: { x: 505, y: 90, width: 65, height: 22 }, bankName: { x: 139, y: 290 }, account: { x: 239, y: 290 } },
     miraeassetlife:{ name: { x: 142, y: 647 }, jumin1: { x: 260, y: 647 }, jumin2: { x: 355, y: 647 }, phone: { x: 142, y: 597 }, content: { x: 142, y: 387 }, year2: { x: 107, y: 126 }, month: { x: 160, y: 126 }, day: { x: 205, y: 126 }, signerName: { x: 368, y: 126 }, sign: { x: 400, y: 196, width: 65, height: 22 }, bankName: { x: 142, y: 290 }, account: { x: 242, y: 290 } },
     imlife:       { name: { x: 138, y: 641 }, jumin1: { x: 256, y: 641 }, jumin2: { x: 351, y: 641 }, phone: { x: 138, y: 591 }, content: { x: 138, y: 381 }, year2: { x: 103, y: 120 }, month: { x: 156, y: 120 }, day: { x: 201, y: 120 }, signerName: { x: 363, y: 120 }, sign: { x: 130, y: 115, width: 65, height: 22 }, bankName: { x: 138, y: 290 }, account: { x: 238, y: 290 } },
@@ -191,6 +200,8 @@ window.HYUNDAI_COORDS = {
         day:        { x: 460, y: 381 },
         name:       { x: 200, y: 320 },
         sign:       { x: 460, y: 295, width: 70, height: 25 },
+        agentSignerName: { x: 290, y: 290 },
+        agentSign:       { x: 460, y: 285, width: 70, height: 25 },
     },
 };
 
