@@ -38,15 +38,6 @@
 // generateDB5PagePDF() 함수가 이 값을 참조합니다.
 // ==========================================
 
-// 🖊️ [설계사 확인 서명(agentSign) 좌표 추가 - 원본 사이트 index.js 참고]
-// index.js에 있는 각 보험사별 AgentSignature 필드 중, 우리 프로젝트가 다루는
-// "1페이지(page:0)" 또는 현대해상의 "마지막 페이지" 범위 안에 실제로 서명란이
-// 존재하는 곳만 반영했습니다: samsung, linalife, hanhwa, 그리고 HYUNDAI_COORDS.page5.
-// (DB손해보험은 이전에 이미 반영되어 있음)
-// 나머지 보험사는 원본 양식에서도 설계사 서명란이 우리가 다루는 페이지 범위 밖에
-// 있거나(뒷장/동의서 페이지), 애초에 서명란 없이 담당자 이름만 받는 구조라서
-// 추가하지 않았습니다. 실제로 필요하다면 index.js의 해당 보험사 AgentSignature
-// 필드(다른 page 번호)를 참고해서 개별적으로 추가해주시면 됩니다.
 window.FIELD_COORDS = {
     DEFAULT: {
         // ── 피보험자 기본 정보 ──
@@ -96,7 +87,7 @@ window.FIELD_COORDS = {
         },
     },
 
-    samsung:      { name: { x: 140, y: 648 }, jumin1: { x: 260, y: 648 }, jumin2: { x: 355, y: 648 }, phone: { x: 140, y: 598 }, content: { x: 140, y: 390 }, year2: { x: 105, y: 128 }, month: { x: 158, y: 128 }, day: { x: 203, y: 128 }, signerName: { x: 365, y: 128 }, sign: { x: 505, y: 172, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 }, agentSignerName: { x: 440, y: 160 }, agentSign: { x: 505, y: 155, width: 65, height: 22 } },
+    samsung:      { name: { x: 140, y: 648 }, jumin1: { x: 260, y: 648 }, jumin2: { x: 355, y: 648 }, phone: { x: 140, y: 598 }, content: { x: 140, y: 390 }, year2: { x: 105, y: 128 }, month: { x: 158, y: 128 }, day: { x: 203, y: 128 }, signerName: { x: 365, y: 128 }, sign: { x: 505, y: 172, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
     // ⚠️ [FIELD_COORDS.db는 더 이상 사용되지 않습니다] DB손해보험은 실제로 5페이지
     //    양식이라 window.DB_COORDS(아래)를 사용하도록 변경했습니다. 이 줄은 과거
     //    1페이지 전용 좌표 백업으로만 남겨둡니다.
@@ -118,10 +109,10 @@ window.FIELD_COORDS = {
     hanalife:     { name: { x: 140, y: 644 }, jumin1: { x: 258, y: 644 }, jumin2: { x: 353, y: 644 }, phone: { x: 140, y: 594 }, content: { x: 140, y: 384 }, year2: { x: 105, y: 123 }, month: { x: 158, y: 123 }, day: { x: 203, y: 123 }, signerName: { x: 366, y: 123 }, sign: { x: 430, y: 110, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } }, // ⚠️ sign 미반영: 좌표.js "하나생명"에 1페이지 서명 필드 없음(가장 가까운 건 2페이지 p2BeneficiarySignature x:400,y:205) — 기존 값 유지
     dongyanglife: { name: { x: 138, y: 643 }, jumin1: { x: 256, y: 643 }, jumin2: { x: 351, y: 643 }, phone: { x: 138, y: 593 }, content: { x: 138, y: 383 }, year2: { x: 103, y: 122 }, month: { x: 156, y: 122 }, day: { x: 201, y: 122 }, signerName: { x: 364, y: 122 }, sign: { x: 455, y: 185, width: 65, height: 22 }, bankName: { x: 138, y: 290 }, account: { x: 238, y: 290 } },
     heungkuklife: { name: { x: 139, y: 641 }, jumin1: { x: 257, y: 641 }, jumin2: { x: 352, y: 641 }, phone: { x: 139, y: 591 }, content: { x: 139, y: 381 }, year2: { x: 104, y: 120 }, month: { x: 157, y: 120 }, day: { x: 202, y: 120 }, signerName: { x: 364, y: 120 }, sign: { x: 480, y: 60, width: 65, height: 22 }, bankName: { x: 139, y: 290 }, account: { x: 239, y: 290 } },
-    linalife:     { name: { x: 140, y: 642 }, jumin1: { x: 258, y: 642 }, jumin2: { x: 353, y: 642 }, phone: { x: 140, y: 592 }, content: { x: 140, y: 382 }, year2: { x: 105, y: 121 }, month: { x: 158, y: 121 }, day: { x: 203, y: 121 }, signerName: { x: 365, y: 121 }, sign: { x: 210, y: 40, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 }, agentSignerName: { x: 405, y: 65 }, agentSign: { x: 490, y: 60, width: 65, height: 22 } },
+    linalife:     { name: { x: 140, y: 642 }, jumin1: { x: 258, y: 642 }, jumin2: { x: 353, y: 642 }, phone: { x: 140, y: 592 }, content: { x: 140, y: 382 }, year2: { x: 105, y: 121 }, month: { x: 158, y: 121 }, day: { x: 203, y: 121 }, signerName: { x: 365, y: 121 }, sign: { x: 210, y: 40, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
     dblife:       { name: { x: 139, y: 643 }, jumin1: { x: 257, y: 643 }, jumin2: { x: 352, y: 643 }, phone: { x: 139, y: 593 }, content: { x: 139, y: 383 }, year2: { x: 104, y: 122 }, month: { x: 157, y: 122 }, day: { x: 202, y: 122 }, signerName: { x: 364, y: 122 }, sign: { x: 510, y: 110, width: 65, height: 22 }, bankName: { x: 139, y: 290 }, account: { x: 239, y: 290 } },
     kblife:       { name: { x: 141, y: 645 }, jumin1: { x: 259, y: 645 }, jumin2: { x: 354, y: 645 }, phone: { x: 141, y: 595 }, content: { x: 141, y: 385 }, year2: { x: 106, y: 124 }, month: { x: 159, y: 124 }, day: { x: 204, y: 124 }, signerName: { x: 366, y: 124 }, sign: { x: 215, y: 140, width: 65, height: 22 }, bankName: { x: 141, y: 290 }, account: { x: 241, y: 290 } },
-    hanhwa:       { name: { x: 140, y: 644 }, jumin1: { x: 258, y: 644 }, jumin2: { x: 353, y: 644 }, phone: { x: 140, y: 594 }, content: { x: 140, y: 384 }, year2: { x: 105, y: 123 }, month: { x: 158, y: 123 }, day: { x: 203, y: 123 }, signerName: { x: 365, y: 123 }, sign: { x: 505, y: 120, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 }, agentSign: { x: 505, y: 95, width: 65, height: 22 } }, // ⚠️ agentSignerName(성명 텍스트칸)은 원본 1페이지에 없어서 서명란만 추가함
+    hanhwa:       { name: { x: 140, y: 644 }, jumin1: { x: 258, y: 644 }, jumin2: { x: 353, y: 644 }, phone: { x: 140, y: 594 }, content: { x: 140, y: 384 }, year2: { x: 105, y: 123 }, month: { x: 158, y: 123 }, day: { x: 203, y: 123 }, signerName: { x: 365, y: 123 }, sign: { x: 505, y: 120, width: 65, height: 22 }, bankName: { x: 140, y: 290 }, account: { x: 240, y: 290 } },
     hana:         { name: { x: 139, y: 643 }, jumin1: { x: 257, y: 643 }, jumin2: { x: 352, y: 643 }, phone: { x: 139, y: 593 }, content: { x: 139, y: 383 }, year2: { x: 104, y: 122 }, month: { x: 157, y: 122 }, day: { x: 202, y: 122 }, signerName: { x: 364, y: 122 }, sign: { x: 505, y: 90, width: 65, height: 22 }, bankName: { x: 139, y: 290 }, account: { x: 239, y: 290 } },
     miraeassetlife:{ name: { x: 142, y: 647 }, jumin1: { x: 260, y: 647 }, jumin2: { x: 355, y: 647 }, phone: { x: 142, y: 597 }, content: { x: 142, y: 387 }, year2: { x: 107, y: 126 }, month: { x: 160, y: 126 }, day: { x: 205, y: 126 }, signerName: { x: 368, y: 126 }, sign: { x: 400, y: 196, width: 65, height: 22 }, bankName: { x: 142, y: 290 }, account: { x: 242, y: 290 } },
     imlife:       { name: { x: 138, y: 641 }, jumin1: { x: 256, y: 641 }, jumin2: { x: 351, y: 641 }, phone: { x: 138, y: 591 }, content: { x: 138, y: 381 }, year2: { x: 103, y: 120 }, month: { x: 156, y: 120 }, day: { x: 201, y: 120 }, signerName: { x: 363, y: 120 }, sign: { x: 130, y: 115, width: 65, height: 22 }, bankName: { x: 138, y: 290 }, account: { x: 238, y: 290 } },
@@ -200,8 +191,6 @@ window.HYUNDAI_COORDS = {
         day:        { x: 460, y: 381 },
         name:       { x: 200, y: 320 },
         sign:       { x: 460, y: 295, width: 70, height: 25 },
-        agentSignerName: { x: 290, y: 290 },
-        agentSign:       { x: 460, y: 285, width: 70, height: 25 },
     },
 };
 
@@ -234,110 +223,89 @@ window.HYUNDAI_COORDS = {
 // ==========================================
 window.DB_COORDS = {
     page1: {
-        name:    { x: 153.1, y: 694 },
-        address: { x: 153.1, y: 648.6 },
-        jumin:   { x: 303.3, y: 694 }, // 주민번호 전체(하이픈 포함) 한 줄 출력
-        phone:   { x: 150.2, y: 603.2 }, // 청구인(피보험자) 연락처
-
-        // ✅ 신규: 사고 상세정보
-        diseaseInfo:         { x: 375, y: 470 }, // 질병내용
-        accidentPlace:       { x: 105, y: 445 }, // 사고장소
-        hospitalName:        { x: 375, y: 445 }, // 병원명
-        accidentDescription: { x: 105, y: 418 }, // 사고경위 (기존 form-content 재사용)
-
-        // ✅ 신규: 자동차사고 처리여부 (교통사고 선택시)
-        autoInsurance: {
-            yes: { x: 175, y: 393 },
-            no:  { x: 205, y: 393 },
-        },
-        autoInsuranceCompany: { x: 293, y: 393 }, // 상대 보험사명
-        autoInsuranceContact: { x: 475, y: 393 }, // 담당자 연락처
-        vehicleNumber:        { x: 180, y: 367 }, // 본인 차량번호
+        name:    { x: 159, y: 696 },
+        jumin:   { x: 311, y: 694 }, // 주민번호 전체(하이픈 포함) 한 줄 출력
+        job:     { x: 479, y: 673 },
+        address: { x: 161, y: 653 }, // ✅ 신규: 주소
 
         // 사고 유형 체크 (교통/질병/상해)
         accidentType: {
-            traffic: { x: 206, y: 493 },
-            disease: { x: 165, y: 493 },
-            injury:  { x: 125, y: 493 },
+            traffic: { x: 211, y: 498 }, // 교통
+            disease: { x: 168, y: 498 }, // 질병
+            injury:  { x: 128, y: 498 }, // 상해
         },
 
-        // 항상 체크되는 동의 체크마크 3개 (기존엔 1개만 처리했음)
-        page1Checkmarks: [
-            { x: 518.7, y: 694 },
-            { x: 382.7, y: 566.4 },
-            { x: 400,   y: 495 },
-        ],
+        baseConsentCheck: { x: 523, y: 701 }, // 기본 동의 체크 (항상 체크)
 
-        // 보상안내 받으실 분 (계약자 / 피보험자(청구인) / 설계사 3지선다)
+        // 보상안내 받으실 분
         compensationRecipient: {
-            contractorCheck: { x: 112,   y: 625 }, // 계약자
-            insuredCheck:    { x: 167.2, y: 628 }, // 피보험자 본인(청구인)
-            agentCheck:      { x: 215,   y: 625 }, // 설계사
-            agentNameField:     { x: 280, y: 625 },
-            agentRelationField: { x: 440, y: 625 },
+            agentNameField:     { x: 440, y: 631 }, // 담당 설계사 성명 기입란
+            loginUserNameField: { x: 276, y: 630 }, // 로그인한 계정(설계사) 이름 기입란
+            agentCheck:         { x: 219, y: 631 }, // 보험 설계사 체크
+            claimantCheck:      { x: 114, y: 631 }, // 보험 계약자 체크
         },
 
-        // 자료 첨부 목록 (좌표 정보 없음 - 기존 값 유지, 필요시 실측 필요)
+        // 자료 첨부 목록 (2줄에 나눠 기입)
         attachmentLines: [
             { x: 125, y: 446 },
             { x: 123, y: 420 },
         ],
 
         // 작성일자 (오늘 날짜)
-        year2: { x: 73.7,  y: 149.7 },
-        month: { x: 136.1, y: 149.7 },
-        day:   { x: 184.3, y: 149.7 },
+        year2: { x: 97, y: 154 },
+        month: { x: 147, y: 154 },
+        day:   { x: 197, y: 154 },
+
+        // 상단 성함/서명 (청구인)
+        signerName: { x: 425, y: 153 },
+        sign:       { x: 557, y: 156, width: 65, height: 22 },
+
+        // 하단 성함/서명 (계약자)
+        contractorSignerName: { x: 425, y: 118 },
+        contractorSign:       { x: 555, y: 117, width: 65, height: 22 },
 
         // 계좌정보
-        existingAccountCheck: { x: 137, y: 313 }, // "기지급(기존) 계좌" 체크박스
-        account:       { x: 175, y: 288 },
-        bankName:      { x: 380, y: 288 },
-        accountHolder: { x: 473, y: 288 },
-
-        // 상단 3단 성함/서명 (청구인 / 설계사 / 계약자·수익자)
-        signerName:           { x: 420, y: 150 }, // 청구인(피보험자)
-        sign:                 { x: 535, y: 145, width: 65, height: 22 },
-        agentSignerName:      { x: 420, y: 130 }, // 설계사
-        agentSign:            { x: 535, y: 125, width: 65, height: 22 },
-        contractorSignerName: { x: 420, y: 115 }, // 계약자(수익자)
-        contractorSign:       { x: 535, y: 105, width: 65, height: 22 },
+        prepaidAccountCheck: { x: 381, y: 292 }, // 기지급 계좌 체크
+        account:       { x: 180, y: 293 },
+        bankName:      { x: 381, y: 293 },
+        accountHolder: { x: 487, y: 293 },
     },
     page2: {
         checkmarks: [
-            { x: 544.3, y: 438.4 },
-            { x: 544.3, y: 348.4 },
-            { x: 544.3, y: 255.5 },
+            { x: 545, y: 443 },
+            { x: 545, y: 353 },
+            { x: 545, y: 261 },
         ],
     },
     page3: {
         checkmarks: [
-            { x: 544.3, y: 335.7 },
-            { x: 544.3, y: 233.3 },
-            { x: 544.3, y: 95.6 },
+            { x: 545, y: 339 },
+            { x: 545, y: 235 },
+            { x: 545, y: 101 },
         ],
     },
     page4: {
         checkmarks: [
-            { x: 544.3, y: 339.9 },
-            { x: 544.3, y: 240.1 },
+            { x: 546, y: 345 },
+            { x: 548, y: 244 },
         ],
     },
     page5: {
         checkmarks: [
-            { x: 544.3, y: 660.5 },
-            { x: 544.3, y: 589.6 },
-            { x: 544.3, y: 454.7 },
+            { x: 547, y: 665 },
+            { x: 547, y: 594 },
+            { x: 545, y: 460 },
         ],
-        year2: { x: 96,  y: 163.7 }, // 작성 년(뒤 두자리)
-        month: { x: 145, y: 163.7 },
-        day:   { x: 197, y: 163.7 },
+        year2: { x: 100, y: 168 }, // 작성 년(뒤 두자리)
+        month: { x: 149, y: 167 },
+        day:   { x: 206, y: 167 },
 
-        // 상단 3단 성함/서명 (청구인 / 설계사 / 계약자·수익자)
-        signerName:           { x: 425, y: 165.1 },
-        sign:                 { x: 520, y: 160, width: 65, height: 22 },
-        agentSignerName:      { x: 425, y: 145 },
-        agentSign:            { x: 520, y: 140, width: 65, height: 22 },
-        contractorSignerName: { x: 425, y: 129.1 },
-        contractorSign:       { x: 520, y: 124, width: 65, height: 22 },
+        // 상단 성함/서명 (청구인)
+        signerName: { x: 422, y: 171 },
+        sign:       { x: 553, y: 171, width: 65, height: 22 },
+
+        // 하단 성함/서명 (계약자)
+        contractorSignerName: { x: 423, y: 133 },
+        contractorSign:       { x: 553, y: 132, width: 65, height: 22 },
     },
 };
