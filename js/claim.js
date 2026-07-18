@@ -71,53 +71,60 @@ window.selectClaimCompany = function(cardElement, companyName) {
 // ==========================================
 
 // ─── 보험사명 → PDF 파일명 매핑 테이블 (정식 명칭 100% 매치 완료) ───
+// ⚠️ [2026-07-19] pages 값을 엑셀 자동 분석 결과로 갱신했습니다.
+// pages > 1 인 회사는 window.MULTI_PAGE_COORDS에 좌표가 있으면
+// processClaimPDF()에서 자동으로 generateMultiPagePDF()를 사용합니다.
+// (엑셀에 시트가 없던 회사는 기존 pages:1 값을 그대로 두었습니다 —
+//  교직원공제/새마을금고공제/수협공제/신한EZ손해보험/신협공제/우체국보험/
+//  DB생명/iM생명/교보라이프플래닛생명/라이나생명/오렌지라이프/처브라이프생명/
+//  푸르덴셜생명 등. 이 회사들은 실제 양식 페이지 수를 실측해서 넣어주세요.)
 const CLAIM_PDF_MAP = {
     // ── 손해보험 ──
     '현대해상':          { file: 'hyundai',        pages: 5 },
-    'AIG손해보험':       { file: 'aig',            pages: 1 },
+    'AIG손해보험':       { file: 'aig',            pages: 3 },
     'AXA손해보험':       { file: 'axa',            pages: 1 },
     'DB손해보험':        { file: 'db',             pages: 5 },
-    'KB손해보험':        { file: 'kb',             pages: 1 },
-    'NH농협손해보험':    { file: 'nh',             pages: 1 },
+    'KB손해보험':        { file: 'kb',             pages: 2 },
+    'NH농협손해보험':    { file: 'nh',             pages: 2 },
     '교직원공제':        { file: 'thek',           pages: 1 },
-    '라이나손해보험':    { file: 'lina',           pages: 1 },
-    '롯데손해보험':      { file: 'lotte',          pages: 1 },
-    '메리츠화재':        { file: 'meritz',         pages: 1 },
-    '삼성화재':          { file: 'samsung',        pages: 1 },
+    '라이나손해보험':    { file: 'lina',           pages: 2 },
+    '롯데손해보험':      { file: 'lotte',          pages: 2 },
+    '메리츠화재':        { file: 'meritz',         pages: 3 },
+    '삼성화재':          { file: 'samsung',        pages: 3 },
     '새마을금고공제':    { file: 'mg',             pages: 1 },
     '수협공제':          { file: 'suhyup',         pages: 1 },
     '신한EZ손해보험':    { file: 'shinhanez',      pages: 1 },
     '신협공제':          { file: 'sinhup',         pages: 1 },
     '예별손해보험':      { file: 'ybi',            pages: 1 },
     '우체국보험':        { file: 'epost',          pages: 1 },
-    '하나손해보험':      { file: 'hana',           pages: 1 },
+    '하나손해보험':      { file: 'hana',           pages: 3 },
     '한화손해보험':      { file: 'hanwha',         pages: 1 },
-    '흥국화재':          { file: 'heungkuk',       pages: 1 },
+    '흥국화재':          { file: 'heungkuk',       pages: 2 },
 
     // ── 생명보험 ──
-    'ABL생명':           { file: 'abllife',        pages: 1 },
-    'AIA생명':           { file: 'aialife',        pages: 1 },
-    'BNP파리바카디프생명': { file: 'fubonlife',    pages: 1 },
+    'ABL생명':           { file: 'abllife',        pages: 3 },
+    'AIA생명':           { file: 'aialife',        pages: 4 },
+    'BNP파리바카디프생명': { file: 'fubonlife',    pages: 2 },
     'DB생명':            { file: 'dblife',         pages: 1 },
-    'KB라이프생명':      { file: 'kblife',         pages: 1 },
-    'KDB생명':           { file: 'kdblife',        pages: 1 },
-    'NH농협생명':        { file: 'nhlife',         pages: 1 },
+    'KB라이프생명':      { file: 'kblife',         pages: 2 },
+    'KDB생명':           { file: 'kdblife',        pages: 3 },
+    'NH농협생명':        { file: 'nhlife',         pages: 2 },
     'iM생명':            { file: 'imlife',         pages: 1 },
     '교보라이프플래닛생명': { file: 'lifeplanet',   pages: 1 },
-    '교보생명':          { file: 'kyobolife',      pages: 1 },
-    '동양생명':          { file: 'dongyanglife',   pages: 1 },
+    '교보생명':          { file: 'kyobolife',      pages: 2 },
+    '동양생명':          { file: 'dongyanglife',   pages: 3 },
     '라이나생명':        { file: 'linalife',       pages: 1 },
-    '메트라이프생명':    { file: 'metlife',        pages: 1 },
-    '미래에셋생명':      { file: 'miraeassetlife', pages: 1 },
-    '삼성생명':          { file: 'samsunglife',    pages: 1 },
-    '신한라이프':        { file: 'shinhanlife',    pages: 1 },
+    '메트라이프생명':    { file: 'metlife',        pages: 3 },
+    '미래에셋생명':      { file: 'miraeassetlife', pages: 2 },
+    '삼성생명':          { file: 'samsunglife',    pages: 2 },
+    '신한라이프':        { file: 'shinhanlife',    pages: 3 },
     '오렌지라이프':      { file: 'orangelife',     pages: 1 },
     '처브라이프생명':    { file: 'chubblife',      pages: 1 },
     '푸르덴셜생명':      { file: 'prudential',     pages: 1 },
-    '푸본현대생명':      { file: 'fubonlife',      pages: 1 },
-    '하나생명':          { file: 'hanalife',       pages: 1 },
-    '한화생명':          { file: 'hanhwalife',     pages: 1 },
-    '흥국생명':          { file: 'heungkuklife',   pages: 1 }
+    '푸본현대생명':      { file: 'fubonlife',      pages: 2 },
+    '하나생명':          { file: 'hanalife',       pages: 4 },
+    '한화생명':          { file: 'hanhwalife',     pages: 3 },
+    '흥국생명':          { file: 'heungkuklife',   pages: 3 }
 };
 
 // ─── 화면 초기화 ───
@@ -728,6 +735,10 @@ window.processClaimPDF = async function(mode) {
             await window.generateHyundai5PagePDF(mode);
         } else if (company === 'DB손해보험') {
             await window.generateDB5PagePDF(mode);
+        } else if (window.MULTI_PAGE_COORDS && window.MULTI_PAGE_COORDS[info.file]) {
+            // ✅ [2026-07-19 신규] 엑셀 분석으로 다페이지임이 확인된 회사들은
+            // 범용 다페이지 생성기를 사용합니다 (아래 generateMultiPagePDF 참고)
+            await window.generateMultiPagePDF(info.file, company, mode);
         } else {
             await window.generateGenericPDF(info.file, company, mode);
         }
@@ -1080,6 +1091,80 @@ window.generateGenericPDF = async function(fileKey, companyName, mode) {
             page.drawText(fd.contractorName, { x: c.signerName.x, y: c.signerName.y, ...txtOpt });
         }
     }
+
+    const fileName = `${fd.insuredName || '청구서'}_${companyName || ''}.pdf`;
+    await outputPdf(pdfDoc, mode, fileName);
+};
+
+// ==========================================
+// [범용 다페이지 PDF 생성 - 2026-07-19 신규]
+// ------------------------------------------
+// 엑셀 분석 결과 여러 페이지로 구성된 것으로 확인된 회사들을 위한 범용
+// 생성기입니다. window.MULTI_PAGE_COORDS[fileKey] = { 페이지번호: {필드:좌표} }
+// 구조를 그대로 순회하며 그려줍니다. 회사마다 별도 generate○○PDF() 함수를
+// 만들 필요 없이, claim-coords.js에 좌표만 추가하면 바로 동작합니다.
+//
+// ⚠️ 좌표 자체가 엑셀 근사치이므로 실제 인쇄 결과와 다를 수 있습니다.
+//    회사별로 확인 후 claim-coords.js의 MULTI_PAGE_COORDS[해당키] 숫자만
+//    수정하면 됩니다 (이 함수는 그대로 두셔도 됩니다).
+// ==========================================
+window.generateMultiPagePDF = async function(fileKey, companyName, mode) {
+    const { PDFDocument, rgb } = window.PDFLib;
+    const { pdfBytes, fontBytes } = await loadPdfAndFont(null, fileKey);
+
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+    pdfDoc.registerFontkit(window.fontkit);
+    const customFont = await pdfDoc.embedFont(fontBytes);
+    const pages = pdfDoc.getPages();
+
+    const fd   = collectFormData();
+    const jm   = splitJumin(fd.jumin);
+    const juminText = (jm.jumin1 && jm.jumin2) ? `${jm.jumin1}-${jm.jumin2}` : (jm.jumin1 || '');
+
+    const isSameAsInsured = (fd.sameAsInsured === '예');
+    const isUnder14 = (fd.insuredUnder14 === '예');
+    const usesBenType = isUnder14 || !isSameAsInsured;
+    const effectiveName = usesBenType ? fd.contractorName : fd.insuredName;
+    const mainSig = usesBenType ? await getSignImage(pdfDoc, 'signature-pad-contractor') : await getSignImage(pdfDoc, 'signature-pad');
+    const contractorSig = await getSignImage(pdfDoc, 'signature-pad-contractor');
+
+    const txtOpt = { font: customFont, size: 11, color: rgb(50/255, 50/255, 50/255) };
+
+    const coordsAllPages = window.MULTI_PAGE_COORDS[fileKey] || {};
+    const pageNumbers = Object.keys(coordsAllPages).map(Number).sort((a, b) => a - b);
+    const mainPageNum = pageNumbers[0]; // 이름/주민번호/계좌 등이 있는 본문 페이지
+
+    console.log(`[DEBUG] generateMultiPagePDF - company: ${companyName}, fileKey: ${fileKey}, pages: ${pageNumbers.join(',')}, usesBenType: ${usesBenType}`);
+
+    pageNumbers.forEach(pageNum => {
+        const pdfPage = pages[pageNum - 1];
+        if (!pdfPage) {
+            console.warn(`[generateMultiPagePDF] "${fileKey}" ${pageNum}페이지가 PDF 템플릿에 없습니다 (템플릿 페이지 수 확인 필요)`);
+            return;
+        }
+        const c = coordsAllPages[pageNum];
+        const isMainPage = (pageNum === mainPageNum);
+
+        if (c.name)  pdfPage.drawText(isMainPage ? (fd.insuredName || '') : (effectiveName || ''), { x: c.name.x, y: c.name.y, ...txtOpt });
+        if (c.jumin && isMainPage) pdfPage.drawText(juminText, { x: c.jumin.x, y: c.jumin.y, ...txtOpt });
+        if (c.phone && isMainPage) pdfPage.drawText(fd.phone || '', { x: c.phone.x, y: c.phone.y, ...txtOpt });
+        if (c.bankName && fd.bankName)   pdfPage.drawText(fd.bankName, { x: c.bankName.x, y: c.bankName.y, ...txtOpt });
+        if (c.account && fd.account)     pdfPage.drawText(fd.account,  { x: c.account.x, y: c.account.y, ...txtOpt });
+        // ⚠️ beneficiaryName은 엑셀상 "수익자 이름" 자리이나, 예금주(accountHolder)
+        //    자리와 겹치는 경우가 많아 우선 accountHolder로 매핑했습니다.
+        //    실제 양식 확인 후 다르면 fd.insuredName 등으로 바꿔주세요.
+        if (c.beneficiaryName && fd.accountHolder) pdfPage.drawText(fd.accountHolder, { x: c.beneficiaryName.x, y: c.beneficiaryName.y, ...txtOpt });
+
+        if (c.sign && mainSig) pdfPage.drawImage(mainSig, { x: c.sign.x, y: c.sign.y, width: 65, height: 22 });
+
+        // 법정대리인 = 기존 코드의 "계약자(contractor)" 개념으로 매핑
+        if (usesBenType && c.legalRepName && fd.contractorName) pdfPage.drawText(fd.contractorName, { x: c.legalRepName.x, y: c.legalRepName.y, ...txtOpt });
+        if (usesBenType && c.legalRepSign && contractorSig) pdfPage.drawImage(contractorSig, { x: c.legalRepSign.x, y: c.legalRepSign.y, width: 65, height: 22 });
+
+        // relation, legalRepRelation, beneficiaryJumin, beneficiarySign은 현재
+        // collectFormData()에 대응 필드/서명 캔버스가 없어 그리지 않습니다.
+        // (좌표는 MULTI_PAGE_COORDS에 남겨두었으니 필드 추가 시 활용하세요)
+    });
 
     const fileName = `${fd.insuredName || '청구서'}_${companyName || ''}.pdf`;
     await outputPdf(pdfDoc, mode, fileName);

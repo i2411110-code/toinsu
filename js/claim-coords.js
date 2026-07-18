@@ -309,3 +309,181 @@ window.DB_COORDS = {
         contractorSign:       { x: 553, y: 132, width: 65, height: 22 },
     },
 };
+// ==========================================
+// [26개사 - 엑셀 기반 근사 좌표 - 2026-07-19 자동 추출]
+// ------------------------------------------
+// 첨부하신 "청구서자동작성_..._Microsoft_print_to_PDF_260622.xlsx" 파일은
+// 실측 좌표표가 아니라, 실제 청구서 양식 위에 텍스트가 겹치도록 열 너비/행
+// 높이를 한 칸씩 맞춰놓은 "인쇄용 목업 시트"였습니다. 그래서 셀 좌표를 직접
+// 읽지 않고, 아래 방식으로 좌표를 역산했습니다.
+//
+//   1) 시트마다 '정보' 시트와 동일한 테스트 데이터(이재희/241015-3704783/
+//      010-5807-1470/농협/352-2333-1925-43/아나/이창현 등)가 들어있어서,
+//      값이 일치하는 셀을 찾아 그 값이 어떤 필드인지 자동 매칭했습니다.
+//   2) 그 셀의 열 누적 너비 · 행 누적 높이를 pt 단위로 환산해 x, y를 계산
+//      했습니다. (A4 기준 595.28 x 841.89pt, 열너비는 Excel의 문자단위 폭을
+//      px≈width*7+5, pt=px*0.75 공식으로 근사 변환)
+//   3) 시트 내 세로 길이가 A4 한 페이지(841.89pt)를 넘어가면 다음 페이지로
+//      자동 판정했고, "회사명4"/"회사명4-5" 처럼 별도 시트로 분리된 서명
+//      페이지는 본문 시트의 마지막 페이지 다음 페이지로 이어붙였습니다.
+//
+// ⚠️ DB손보/현대해상 때와 달리 이번 값은 "실측"이 아니라 "근사치"입니다.
+//    검증 결과 기존에 실측으로 확인된 DB손보 name 좌표(x:159,y:696)와
+//    비교했을 때 약 5~15pt 오차가 있었습니다. 즉 위치가 대략 맞긴 하지만
+//    실제 인쇄 결과를 보고 미세 조정이 필요할 가능성이 높습니다.
+//
+// ⚠️ 필드명 해석 (엑셀 '정보' 시트 기준):
+//    name/jumin/phone      = 피보험자(손보청구자) 본인 정보
+//    beneficiaryName/Jumin = 수익자(생보청구자) 정보 — 예금주(accountHolder)
+//                            위치로 추정해 매핑했으나, 실제로는 수익자 이름일
+//                            수 있으니 실제 양식과 대조 확인 필요
+//    legalRepName/Sign     = 법정대리인 정보 — 기존 코드의 "계약자(contractor)"
+//                            개념과 동일한 자리로 간주해 매핑했습니다
+//    sign                  = 본인(청구인) 서명 위치
+//    beneficiarySign       = 수익자 서명란 위치 — 현재 코드에는 대응하는
+//                            서명 캔버스가 없어 좌표만 기록해두었습니다
+//                            (추후 서명 캔버스 추가 시 사용 가능)
+//    relation/legalRepRelation = "피보험자와의 관계" 텍스트란 — 현재 코드에는
+//                            대응 필드가 없어 draw 로직에서는 사용하지 않음
+//
+// ⚠️ job(직업)/address(주소)/content(사고내용)/작성일자/체크박스류는 엑셀
+//    '정보' 시트에 테스트값이 없어 자동 추출이 불가능했습니다. 이 필드들은
+//    기존처럼 실제 양식을 보고 실측해서 추가해주셔야 합니다.
+//
+// ⚠️ 이 좌표들은 window.MULTI_PAGE_COORDS[회사키][페이지번호] 구조이며,
+//    claim.js의 새 window.generateMultiPagePDF() 함수가 참조합니다.
+//    (기존 FIELD_COORDS의 1페이지 전용 항목들은 그대로 두었습니다 —
+//    같은 회사키라도 이제 MULTI_PAGE_COORDS가 있으면 그쪽이 우선 사용됩니다)
+// ==========================================
+window.MULTI_PAGE_COORDS = {
+    // 삼성화재
+    samsung: {
+        1: { name: { x: 119.3, y: 671.9 }, jumin: { x: 277.1, y: 671.9 }, beneficiaryName: { x: 189.4, y: 631.7 }, phone: { x: 312.1, y: 631.7 }, bankName: { x: 189.4, y: 365.6 }, account: { x: 312.1, y: 365.6 }, sign: { x: 540.0, y: 218.3 }, legalRepName: { x: 434.8, y: 203.3 }, legalRepSign: { x: 540.0, y: 203.3 }, beneficiarySign: { x: 540.0, y: 188.3 } },
+        3: { name: { x: 352.9, y: 500.5 }, sign: { x: 409.2, y: 500.5 }, legalRepName: { x: 352.9, y: 480.4 }, legalRepSign: { x: 409.2, y: 480.4 }, beneficiaryName: { x: 352.9, y: 460.3 }, beneficiarySign: { x: 409.2, y: 460.3 } },
+    },
+    // KB손해보험
+    kb: {
+        1: { name: { x: 107.5, y: 739.4 }, jumin: { x: 214.1, y: 739.4 }, phone: { x: 107.5, y: 713.0 }, bankName: { x: 107.5, y: 215.7 }, account: { x: 214.1, y: 215.7 }, beneficiaryName: { x: 449.6, y: 215.7 }, sign: { x: 449.6, y: 118.9 } },
+        2: { name: { x: 215.2, y: 295.9 }, sign: { x: 305.4, y: 295.9 }, legalRepName: { x: 374.8, y: 295.9 }, legalRepSign: { x: 476.8, y: 295.9 } },
+    },
+    // 메리츠화재
+    meritz: {
+        1: { name: { x: 107.9, y: 713.1 }, jumin: { x: 223.1, y: 713.1 }, phone: { x: 223.1, y: 635.6 }, bankName: { x: 77.3, y: 252.4 }, beneficiaryName: { x: 189.8, y: 252.4 }, beneficiaryJumin: { x: 293.8, y: 252.4 }, relation: { x: 467.1, y: 252.4 }, account: { x: 77.3, y: 226.1 }, sign: { x: 434.5, y: 113.9 } },
+        3: { legalRepName: { x: 338.2, y: 122.8 }, legalRepSign: { x: 434.5, y: 122.8 } },
+    },
+    // 롯데손해보험
+    lotte: {
+        1: { name: { x: 165.0, y: 629.5 }, jumin: { x: 290.0, y: 629.5 }, beneficiaryName: { x: 165.0, y: 566.5 }, phone: { x: 290.0, y: 566.5 }, relation: { x: 165.0, y: 545.5 }, beneficiaryJumin: { x: 290.0, y: 294.2 }, bankName: { x: 114.0, y: 273.2 }, account: { x: 290.0, y: 273.2 }, sign: { x: 426.6, y: 160.7 } },
+        2: { name: { x: 50.0, y: 577.7 }, sign: { x: 127.9, y: 577.7 }, legalRepName: { x: 218.1, y: 577.7 }, legalRepSign: { x: 284.2, y: 577.7 } },
+    },
+    // NH농협손해보험
+    nh: {
+        1: { name: { x: 148.4, y: 673.3 }, jumin: { x: 321.3, y: 673.3 }, phone: { x: 321.3, y: 573.5 }, bankName: { x: 95.7, y: 277.7 }, beneficiaryName: { x: 200.8, y: 277.7 }, beneficiaryJumin: { x: 321.3, y: 277.7 }, relation: { x: 468.1, y: 277.7 }, account: { x: 115.8, y: 258.1 }, sign: { x: 468.1, y: 169.3 } },
+        2: { name: { x: 146.0, y: 191.5 }, legalRepName: { x: 323.2, y: 191.5 }, legalRepRelation: { x: 438.6, y: 191.5 }, sign: { x: 146.0, y: 162.4 }, legalRepSign: { x: 371.2, y: 162.4 } },
+    },
+    // 흥국화재
+    heungkuk: {
+        1: { name: { x: 156.0, y: 720.1 }, jumin: { x: 375.5, y: 720.1 }, phone: { x: 156.0, y: 700.0 }, beneficiaryName: { x: 156.0, y: 659.8 }, relation: { x: 375.5, y: 659.8 }, bankName: { x: 156.0, y: 435.4 }, account: { x: 277.9, y: 435.4 }, sign: { x: 477.5, y: 132.9 } },
+        2: { name: { x: 360.8, y: 142.6 }, sign: { x: 415.1, y: 142.6 }, legalRepName: { x: 360.8, y: 122.5 }, legalRepSign: { x: 415.1, y: 122.5 } },
+    },
+    // 삼성생명
+    samsunglife: {
+        1: { name: { x: 114.0, y: 721.7 }, jumin: { x: 214.7, y: 721.7 }, phone: { x: 339.0, y: 721.7 }, beneficiaryName: { x: 114.0, y: 518.4 }, beneficiaryJumin: { x: 214.7, y: 518.4 }, bankName: { x: 147.3, y: 410.9 }, account: { x: 371.7, y: 410.9 }, beneficiarySign: { x: 449.0, y: 163.8 } },
+        2: { name: { x: 114.0, y: 210.2 }, sign: { x: 163.1, y: 210.2 }, legalRepName: { x: 277.5, y: 210.2 }, legalRepSign: { x: 321.3, y: 210.2 }, beneficiaryName: { x: 114.0, y: 188.2 }, beneficiarySign: { x: 163.1, y: 188.2 } },
+    },
+    // 한화생명
+    hanhwalife: {
+        1: { name: { x: 117.1, y: 702.2 }, jumin: { x: 305.5, y: 702.2 }, phone: { x: 431.2, y: 684.7 }, beneficiaryName: { x: 117.1, y: 627.9 }, beneficiaryJumin: { x: 305.5, y: 627.9 }, relation: { x: 431.2, y: 610.4 }, bankName: { x: 147.1, y: 559.6 }, account: { x: 354.5, y: 559.6 }, beneficiarySign: { x: 475.0, y: 200.1 } },
+        3: { name: { x: 126.3, y: 334.5 }, sign: { x: 226.0, y: 334.5 }, legalRepName: { x: 357.6, y: 334.5 }, legalRepSign: { x: 453.6, y: 334.5 }, beneficiaryName: { x: 126.3, y: 302.4 }, beneficiarySign: { x: 226.0, y: 302.4 } },
+    },
+    // 교보생명
+    kyobolife: {
+        1: { name: { x: 98.3, y: 754.1 }, jumin: { x: 200.9, y: 754.1 }, phone: { x: 327.9, y: 754.1 }, beneficiaryName: { x: 98.3, y: 707.9 }, beneficiaryJumin: { x: 200.9, y: 707.9 }, bankName: { x: 136.2, y: 441.8 }, account: { x: 239.5, y: 441.8 }, beneficiarySign: { x: 409.1, y: 179.3 } },
+        2: { name: { x: 204.7, y: 122.0 }, sign: { x: 292.2, y: 122.0 }, legalRepName: { x: 394.2, y: 122.0 }, legalRepSign: { x: 478.5, y: 122.0 }, beneficiaryName: { x: 204.7, y: 97.1 }, beneficiarySign: { x: 292.2, y: 97.1 } },
+    },
+    // 신한라이프
+    shinhanlife: {
+        1: { bankName: { x: 124.3, y: 605.1 }, beneficiaryName: { x: 199.4, y: 605.1 }, account: { x: 273.4, y: 605.1 }, name: { x: 164.8, y: 526.0 }, jumin: { x: 296.2, y: 526.0 }, phone: { x: 426.4, y: 526.0 }, beneficiaryJumin: { x: 296.2, y: 481.3 }, beneficiarySign: { x: 411.5, y: 217.3 } },
+        3: { sign: { x: 199.4, y: 163.1 }, legalRepName: { x: 296.2, y: 163.1 }, legalRepSign: { x: 411.5, y: 163.1 }, legalRepRelation: { x: 477.4, y: 163.1 } },
+    },
+    // AIA생명
+    aialife: {
+        1: { name: { x: 135.7, y: 685.9 }, phone: { x: 241.8, y: 685.9 }, jumin: { x: 396.1, y: 685.9 }, beneficiaryName: { x: 135.7, y: 671.5 }, beneficiaryJumin: { x: 396.1, y: 671.5 }, bankName: { x: 135.7, y: 474.6 }, account: { x: 349.9, y: 474.6 }, beneficiarySign: { x: 456.1, y: 121.3 } },
+        4: { name: { x: 57.6, y: 338.9 }, sign: { x: 142.5, y: 338.9 }, beneficiaryName: { x: 217.0, y: 338.9 }, beneficiarySign: { x: 306.0, y: 338.9 }, legalRepName: { x: 57.6, y: 296.6 }, legalRepSign: { x: 142.5, y: 296.6 } },
+    },
+    // ABL생명
+    abllife: {
+        1: { name: { x: 129.8, y: 744.5 }, jumin: { x: 253.0, y: 744.5 }, phone: { x: 416.7, y: 728.6 }, beneficiaryName: { x: 129.8, y: 696.7 }, beneficiaryJumin: { x: 253.0, y: 696.7 }, bankName: { x: 129.8, y: 630.0 }, account: { x: 291.5, y: 630.0 }, beneficiarySign: { x: 416.7, y: 262.5 } },
+        3: { name: { x: 93.0, y: 181.2 }, sign: { x: 189.0, y: 181.2 }, legalRepName: { x: 333.1, y: 181.2 }, legalRepSign: { x: 424.9, y: 181.2 }, beneficiaryName: { x: 93.0, y: 154.2 }, beneficiarySign: { x: 189.0, y: 154.2 } },
+    },
+    // KDB생명
+    kdblife: {
+        1: { name: { x: 145.2, y: 740.3 }, jumin: { x: 276.8, y: 740.3 }, phone: { x: 406.0, y: 740.3 }, beneficiaryName: { x: 145.2, y: 690.8 }, beneficiaryJumin: { x: 276.8, y: 690.8 }, bankName: { x: 125.7, y: 601.5 }, account: { x: 324.8, y: 601.5 }, beneficiarySign: { x: 461.6, y: 230.9 } },
+        3: { name: { x: 119.3, y: 364.5 }, sign: { x: 215.6, y: 364.5 }, legalRepName: { x: 348.1, y: 364.5 }, legalRepSign: { x: 439.8, y: 364.5 }, beneficiaryName: { x: 119.3, y: 340.5 }, beneficiarySign: { x: 215.6, y: 340.5 } },
+    },
+    // NH농협생명
+    nhlife: {
+        1: { name: { x: 103.5, y: 752.4 }, jumin: { x: 193.1, y: 752.4 }, phone: { x: 302.9, y: 752.4 }, beneficiaryName: { x: 103.5, y: 723.2 }, beneficiaryJumin: { x: 193.1, y: 723.2 }, bankName: { x: 238.2, y: 425.6 }, account: { x: 350.9, y: 425.6 }, beneficiarySign: { x: 458.6, y: 165.1 } },
+        2: { name: { x: 98.3, y: 186.2 }, sign: { x: 152.6, y: 186.2 }, beneficiaryName: { x: 255.2, y: 186.2 }, beneficiarySign: { x: 309.5, y: 186.2 }, legalRepName: { x: 414.1, y: 186.2 }, legalRepSign: { x: 462.1, y: 186.2 } },
+    },
+    // 하나생명
+    hanalife: {
+        1: { name: { x: 98.3, y: 612.3 }, jumin: { x: 293.1, y: 612.3 }, phone: { x: 293.1, y: 594.8 }, beneficiaryName: { x: 98.3, y: 541.0 }, beneficiaryJumin: { x: 293.1, y: 541.0 }, bankName: { x: 142.1, y: 207.3 }, account: { x: 142.1, y: 189.3 } },
+        2: { beneficiarySign: { x: 344.1, y: 270.6 } },
+        4: { name: { x: 308.0, y: 342.6 }, sign: { x: 432.3, y: 342.6 }, beneficiaryName: { x: 308.0, y: 322.5 }, beneficiarySign: { x: 432.3, y: 322.5 }, legalRepName: { x: 308.0, y: 303.8 }, legalRepSign: { x: 432.3, y: 303.8 } },
+    },
+    // 하나손해보험
+    hana: {
+        1: { name: { x: 148.6, y: 666.2 }, jumin: { x: 314.5, y: 666.2 }, phone: { x: 314.5, y: 618.2 }, account: { x: 148.6, y: 364.5 }, bankName: { x: 314.5, y: 364.5 }, beneficiaryName: { x: 429.1, y: 364.5 }, sign: { x: 429.1, y: 147.0 } },
+        3: { name: { x: 109.5, y: 433.6 }, sign: { x: 205.6, y: 433.6 }, legalRepName: { x: 367.7, y: 433.6 }, legalRepSign: { x: 413.4, y: 433.6 }, beneficiaryName: { x: 367.7, y: 414.2 }, beneficiarySign: { x: 413.4, y: 414.2 } },
+    },
+    // 동양생명
+    dongyanglife: {
+        1: { name: { x: 89.1, y: 705.9 }, phone: { x: 403.6, y: 705.9 }, beneficiaryName: { x: 127.0, y: 652.9 }, relation: { x: 386.8, y: 652.9 }, bankName: { x: 175.3, y: 605.4 }, account: { x: 272.1, y: 605.4 }, beneficiarySign: { x: 403.6, y: 258.9 } },
+        2: { name: { x: 115.4, y: 234.8 }, sign: { x: 211.5, y: 234.8 }, legalRepName: { x: 331.2, y: 234.8 }, legalRepSign: { x: 447.2, y: 234.8 }, beneficiaryName: { x: 115.4, y: 214.7 }, beneficiarySign: { x: 211.5, y: 214.7 } },
+        3: { beneficiaryJumin: { x: 331.2, y: 680.2 }, phone: { x: 331.2, y: 519.6 } },
+    },
+    // 흥국생명
+    heungkuklife: {
+        1: { name: { x: 93.0, y: 737.1 }, jumin: { x: 226.1, y: 737.1 }, phone: { x: 260.0, y: 710.8 }, beneficiaryName: { x: 93.0, y: 628.1 }, beneficiaryJumin: { x: 226.1, y: 628.1 }, bankName: { x: 93.0, y: 516.7 }, account: { x: 93.0, y: 492.9 }, beneficiarySign: { x: 439.2, y: 132.5 } },
+        3: { name: { x: 97.4, y: 245.2 }, sign: { x: 193.5, y: 245.2 }, legalRepName: { x: 337.5, y: 245.2 }, legalRepSign: { x: 433.5, y: 245.2 }, beneficiaryName: { x: 97.4, y: 177.7 }, beneficiarySign: { x: 193.5, y: 177.7 } },
+    },
+    // 라이나손해보험
+    lina: {
+        1: { beneficiaryName: { x: 147.3, y: 641.6 }, beneficiaryJumin: { x: 267.7, y: 641.6 }, phone: { x: 418.4, y: 641.6 }, name: { x: 147.3, y: 619.7 }, jumin: { x: 267.7, y: 619.7 }, bankName: { x: 98.3, y: 188.9 }, account: { x: 241.6, y: 188.9 } },
+        2: { beneficiaryName: { x: 344.3, y: 152.1 }, beneficiarySign: { x: 464.1, y: 152.1 }, legalRepName: { x: 344.3, y: 132.0 }, legalRepSign: { x: 464.1, y: 132.0 } },
+    },
+    // KB라이프
+    kblife: {
+        1: { name: { x: 132.7, y: 532.7 }, jumin: { x: 238.6, y: 532.7 }, phone: { x: 347.8, y: 532.7 }, beneficiaryName: { x: 132.7, y: 518.6 }, beneficiaryJumin: { x: 238.6, y: 518.6 }, relation: { x: 132.7, y: 504.5 }, bankName: { x: 197.5, y: 436.7 }, account: { x: 289.6, y: 436.7 }, beneficiarySign: { x: 197.5, y: 195.9 } },
+        2: { name: { x: 122.4, y: 236.9 }, sign: { x: 222.4, y: 236.9 }, legalRepName: { x: 389.2, y: 236.9 }, legalRepSign: { x: 466.2, y: 236.9 }, beneficiaryName: { x: 122.4, y: 220.9 }, beneficiarySign: { x: 222.4, y: 220.9 } },
+    },
+    // 한화손해보험
+    hanhwa: {
+        1: { name: { x: 114.0, y: 719.3 }, jumin: { x: 114.0, y: 698.3 }, phone: { x: 114.0, y: 677.3 }, bankName: { x: 114.0, y: 340.7 }, account: { x: 270.1, y: 340.7 }, beneficiaryName: { x: 114.0, y: 319.3 }, beneficiaryJumin: { x: 270.1, y: 319.3 }, sign: { x: 449.6, y: 164.1 }, legalRepName: { x: 355.9, y: 143.1 }, legalRepSign: { x: 449.6, y: 143.1 } },
+    },
+    // 미래에셋생명
+    miraeassetlife: {
+        1: { name: { x: 136.6, y: 739.7 }, jumin: { x: 232.7, y: 739.7 }, phone: { x: 336.7, y: 739.7 }, beneficiaryName: { x: 136.6, y: 697.7 }, beneficiaryJumin: { x: 232.7, y: 697.7 }, bankName: { x: 136.6, y: 600.1 }, account: { x: 336.7, y: 600.1 }, beneficiarySign: { x: 387.7, y: 242.8 }, relation: { x: 480.5, y: 242.8 } },
+        2: { name: { x: 94.8, y: 231.2 }, sign: { x: 172.5, y: 231.2 }, beneficiaryName: { x: 94.8, y: 187.1 }, beneficiarySign: { x: 172.5, y: 187.1 }, legalRepName: { x: 94.8, y: 143.0 }, legalRepSign: { x: 172.5, y: 143.0 } },
+    },
+    // 푸본현대생명
+    fubonlife: {
+        1: { name: { x: 98.3, y: 708.9 }, jumin: { x: 258.5, y: 708.9 }, phone: { x: 411.0, y: 692.4 }, beneficiaryName: { x: 98.3, y: 662.2 }, beneficiaryJumin: { x: 258.5, y: 662.2 }, bankName: { x: 131.6, y: 599.8 }, account: { x: 225.9, y: 599.8 }, beneficiarySign: { x: 459.0, y: 258.7 } },
+        2: { name: { x: 338.1, y: 222.4 }, sign: { x: 434.1, y: 222.4 }, beneficiaryName: { x: 338.1, y: 199.3 }, beneficiarySign: { x: 434.1, y: 199.3 }, legalRepName: { x: 338.1, y: 174.2 }, legalRepSign: { x: 434.1, y: 174.2 } },
+    },
+    // AIG손해보험
+    aig: {
+        1: { name: { x: 122.2, y: 724.0 }, jumin: { x: 330.1, y: 724.0 }, phone: { x: 122.2, y: 708.1 }, beneficiaryName: { x: 122.2, y: 667.4 }, beneficiaryJumin: { x: 279.8, y: 667.4 }, relation: { x: 470.3, y: 667.4 }, bankName: { x: 91.5, y: 358.9 }, account: { x: 370.0, y: 358.9 }, beneficiarySign: { x: 470.3, y: 88.9 } },
+        3: { name: { x: 113.2, y: 203.8 }, sign: { x: 235.5, y: 203.8 }, beneficiaryName: { x: 113.2, y: 172.3 }, beneficiarySign: { x: 235.5, y: 172.3 } },
+    },
+    // AXA손해보험
+    axa: {
+        1: { name: { x: 117.1, y: 702.1 }, jumin: { x: 269.5, y: 702.1 }, beneficiaryName: { x: 117.1, y: 690.1 }, beneficiaryJumin: { x: 269.5, y: 690.1 }, phone: { x: 269.5, y: 678.1 }, bankName: { x: 117.1, y: 354.1 }, account: { x: 242.8, y: 354.1 }, sign: { x: 455.6, y: 210.4 }, legalRepName: { x: 385.7, y: 195.4 }, legalRepSign: { x: 455.6, y: 195.4 }, beneficiarySign: { x: 455.6, y: 180.4 } },
+    },
+    // 메트라이프
+    metlife: {
+        1: { name: { x: 116.0, y: 608.1 }, jumin: { x: 252.1, y: 608.1 }, phone: { x: 392.7, y: 608.1 }, beneficiaryName: { x: 116.0, y: 534.0 }, beneficiaryJumin: { x: 252.1, y: 534.0 }, bankName: { x: 252.1, y: 431.3 }, account: { x: 252.1, y: 417.3 }, beneficiarySign: { x: 290.7, y: 199.4 }, legalRepName: { x: 392.7, y: 199.4 }, legalRepSign: { x: 443.7, y: 199.4 } },
+        3: { sign: { x: 201.1, y: 333.0 } },
+    },
+};
