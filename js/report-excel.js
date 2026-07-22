@@ -39,6 +39,25 @@
     { maxAge: 99, low: 250000, high: 430000, over: 650000 },
   ];
 
+  // ─── 보장 항목 상태(부족/적정/미가입/과잉) 판정 & 공통 메타 ───
+  // EXCESS_MULTIPLIER: 권장 기준 대비 몇 배를 넘으면 '과잉'으로 볼지 (조정 가능)
+  var EXCESS_MULTIPLIER = 2;
+  var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
+  var ROW_STATUS_META = {
+    ok:           { label: '적정',   cls: 'ok',           color: '#3182F6', bg: '#EFF6FF' },
+    low:          { label: '부족',   cls: 'low',           color: '#DC2626', bg: '#FEF2F2' },
+    unregistered: { label: '미가입', cls: 'unregistered',  color: '#8B95A1', bg: '#F2F4F6' },
+    excess:       { label: '과잉',   cls: 'excess',        color: '#D97706', bg: '#FFFBEB' },
+    none:         { label: '기준없음', cls: 'none',        color: '#64748B', bg: '#F1F5F9' },
+  };
+  function computeRowStatus(sum, rec) {
+    if (rec === undefined) return 'none';
+    if (!sum || sum <= 0) return 'unregistered';
+    if (sum < rec) return 'low';
+    if (sum > rec * EXCESS_MULTIPLIER) return 'excess';
+    return 'ok';
+  }
+
   function evalLevel(age, total) {
     const s = PREMIUM_STD.find(r => age <= r.maxAge) || PREMIUM_STD[PREMIUM_STD.length - 1];
     if (total < s.low)   return { label: '부족',     emoji: '🔴', cls: 'lv-low'  };
@@ -206,7 +225,7 @@
     });
 
     var allItems = rows.map(function(r) {
-      var detail = { 대분류: r.cat, 소분류: r.label, 고객보장합산_만원: r.customerSum, 권장기준_만원: r.recommend !== undefined ? r.recommend : null, 상태: r.status };
+      var detail = { 대분류: r.cat, 소분류: r.label, 고객보장합산_만원: r.customerSum, 권장기준_만원: r.recommend !== undefined ? r.recommend : null, 상태: (ROW_STATUS_META[r.status] || {}).label || r.status };
       if (r.perProduct && companies.length > 0) {
         var byCompany = {};
         companies.forEach(function(c, i) { if (r.perProduct[i]) byCompany[c] = r.perProduct[i]; });
@@ -387,8 +406,8 @@
     lines.push('지금 내 보험에 대해 어떤 생각이 가장 먼저 드시나요?');
     lines.push('');
     lines.push('1️⃣ 매달 나가는 보험료가 너무 부담돼요.');
-    lines.push('2️⃣ 나중에 아플 때 제대로 보장받을 수 있을지 불안해요');
-    lines.push('3️⃣ 사실 내가 무슨 보험에 들었는지 잘 모르겠어요');
+    lines.push('2️⃣ 나중에 아플 때 제대로 보장받을 수 있을지 불안해요.');
+    lines.push('3️⃣ 사실 내가 무슨 보험에 들었는지 잘 모르겠어요.');
     lines.push('');
     lines.push('해당되는 번호를 보내주시면 그 고민을 중심으로 집중 분석해 드릴게요.');
     lines.push('');
@@ -488,10 +507,10 @@
       title: '실비보험',
       desc: '병원비를 돌려받는 기본 보장',
       items: [
-        { name: '질병 입원비', dataKey: '질병입원의료비', amount: '', status: '미보장' },
-        { name: '질병 통원비', dataKey: '질병외래의료비', amount: '', status: '미보장' },
-        { name: '상해 입원비', dataKey: '상해입원의료비', amount: '', status: '미보장' },
-        { name: '상해 통원비', dataKey: '상해외래의료비', amount: '', status: '미보장' },
+        { name: '질병 입원비', dataKey: '질병입원의료비', amount: '', status: '미가입' },
+        { name: '질병 통원비', dataKey: '질병외래의료비', amount: '', status: '미가입' },
+        { name: '상해 입원비', dataKey: '상해입원의료비', amount: '', status: '미가입' },
+        { name: '상해 통원비', dataKey: '상해외래의료비', amount: '', status: '미가입' },
       ],
     },
     {
@@ -499,10 +518,10 @@
       title: '3대 진단비 (암/뇌/심장)',
       desc: '치료비와 생활비가 많이 필요한 질병 준비',
       items: [
-        { name: '일반암', dataKey: '일반암진단', amount: '', status: '미보장' },
-        { name: '유사암', dataKey: '소액암(유사암)진단', amount: '', status: '미보장' },
-        { name: '뇌혈관질환', dataKey: '뇌혈관질환진단', amount: '', status: '미보장' },
-        { name: '허혈성심장질환', dataKey: '허혈성심장질환진단', amount: '', status: '미보장' },
+        { name: '일반암', dataKey: '일반암진단', amount: '', status: '미가입' },
+        { name: '유사암', dataKey: '소액암(유사암)진단', amount: '', status: '미가입' },
+        { name: '뇌혈관질환', dataKey: '뇌혈관질환진단', amount: '', status: '미가입' },
+        { name: '허혈성심장질환', dataKey: '허혈성심장질환진단', amount: '', status: '미가입' },
       ],
     },
     {
@@ -510,14 +529,14 @@
       title: '항암 치료비',
       desc: '암 진단 이후 치료 단계별 고액 비급여 치료비 대비',
       items: [
-        { name: '표적항암약물허가치료비', dataKey: null, amount: '', status: '미보장' },
-        { name: '중입자치료비',           dataKey: null, amount: '', status: '미보장' },
-        { name: '세기조절방사선치료비',   dataKey: null, amount: '', status: '미보장' },
-        { name: '양성자치료비',           dataKey: null, amount: '', status: '미보장' },
-        { name: 'CAR-T항암치료비',        dataKey: null, amount: '', status: '미보장' },
-        { name: '로봇암 수술비',          dataKey: null, amount: '', status: '미보장' },
-        { name: '암 수술비',              dataKey: '암수술', amount: '', status: '미보장' },
-        { name: '항암방사선·약물치료비',  dataKey: null, amount: '', status: '미보장' },
+        { name: '표적항암약물허가치료비', dataKey: null, amount: '', status: '미가입' },
+        { name: '중입자치료비',           dataKey: null, amount: '', status: '미가입' },
+        { name: '세기조절방사선치료비',   dataKey: null, amount: '', status: '미가입' },
+        { name: '양성자치료비',           dataKey: null, amount: '', status: '미가입' },
+        { name: 'CAR-T항암치료비',        dataKey: null, amount: '', status: '미가입' },
+        { name: '로봇암 수술비',          dataKey: null, amount: '', status: '미가입' },
+        { name: '암 수술비',              dataKey: '암수술', amount: '', status: '미가입' },
+        { name: '항암방사선·약물치료비',  dataKey: null, amount: '', status: '미가입' },
       ],
     },
     {
@@ -525,10 +544,10 @@
       title: '운전자 보험',
       desc: "자동차 사고 '형사적 책임' 준비",
       items: [
-        { name: '교통사고처리지원금', dataKey: '교통사고처리지원금', amount: '', status: '미보장' },
-        { name: '벌금(대물)',         dataKey: '벌금(대물)', amount: '', status: '미보장' },
-        { name: '벌금(대인)',         dataKey: '벌금(대인)', amount: '', status: '미보장' },
-        { name: '변호사선임비용',     dataKey: '변호사선임비용', amount: '', status: '미보장' },
+        { name: '교통사고처리지원금', dataKey: '교통사고처리지원금', amount: '', status: '미가입' },
+        { name: '벌금(대물)',         dataKey: '벌금(대물)', amount: '', status: '미가입' },
+        { name: '벌금(대인)',         dataKey: '벌금(대인)', amount: '', status: '미가입' },
+        { name: '변호사선임비용',     dataKey: '변호사선임비용', amount: '', status: '미가입' },
       ],
     },
   ];
@@ -550,24 +569,22 @@
         var r = byLabel[it.dataKey];
         if (r && r.customerSum > 0) {
           it.amount = r.customerSum.toLocaleString() + '만원';
-          it.status = r.status === 'ok' ? '적정' : '부족';
-        } else if (r) {
-          // 엑셀상 항목은 존재하지만 고객 보장합산이 0원 → 미가입 상태 → '미보장'
-          it.amount = '미가입';
-          it.status = '미보장';
+          it.status = r.status === 'excess' ? '과잉' : r.status === 'ok' ? '적정' : '부족';
         } else {
+          // 엑셀상 항목이 없거나 고객 보장합산이 0원 → 미가입
           it.amount = '미가입';
-          it.status = '미보장';
+          it.status = '미가입';
         }
       });
     });
   }
 
-  var ESSENTIAL_STATUS_CYCLE = ['적정', '부족', '미보장'];
+  var ESSENTIAL_STATUS_CYCLE = ['적정', '부족', '미가입', '과잉'];
   var ESSENTIAL_STATUS_CLASS = {
     '적정': 'rptex-ess-blue',
     '부족': 'rptex-ess-red',
-    '미보장': 'rptex-ess-gray',
+    '미가입': 'rptex-ess-gray',
+    '과잉': 'rptex-ess-orange',
   };
 
   function essentialItemHTML(g, gi, it, ii) {
@@ -599,7 +616,7 @@
       + '<div class="rpt-step-label">STEP 3</div>'
       + '<h3 class="rpt-step-title">필수 보장 분석</h3>'
       + '<p class="rpt-step-desc">실비·3대진단비·항암치료비·운전자보험 핵심 항목을 한눈에 점검합니다.<br>'
-      + '<span style="color:#64748B;font-size:12px;">📌 엑셀 데이터에서 자동으로 채워집니다 · 금액 직접 입력 · 상태버튼 클릭 시 적정 → 부족 → 미보장 순으로 전환됩니다.</span></p>'
+      + '<span style="color:#64748B;font-size:12px;">📌 엑셀 데이터에서 자동으로 채워집니다 · 금액 직접 입력 · 상태버튼 클릭 시 적정 → 부족 → 미가입 → 과잉 순으로 전환됩니다.</span></p>'
       + '<div id="rptex-essential-wrap">' + groupsHtml + '</div>'
       + '</div>';
   }
@@ -618,8 +635,21 @@
     if (gState) gState.essentialGroups = ESSENTIAL_GROUPS;
   };
 
+  // 숫자만 남기고 천 단위 콤마 + '만원' 단위를 붙여 표기 (예: 1000 → "1,000만원")
+  function formatManwonAmount(raw) {
+    var digits = String(raw || '').replace(/[^\d]/g, '').replace(/^0+(?=\d)/, '');
+    if (!digits) return '';
+    return Number(digits).toLocaleString('ko-KR') + '만원';
+  }
+
   window.rptExEssAmountEdit = function (el, gi, ii) {
-    ESSENTIAL_GROUPS[gi].items[ii].amount = el.value;
+    var g = ESSENTIAL_GROUPS[gi];
+    var val = el.value;
+    if (g.key === '항암') {
+      val = formatManwonAmount(val);
+      el.value = val;
+    }
+    g.items[ii].amount = val;
     if (gState) gState.essentialGroups = ESSENTIAL_GROUPS;
   };
 
@@ -791,7 +821,10 @@
       + '<option value="실비부족">실비부족</option>'
       + '<option value="종합분석">종합분석</option>'
       + '<option value="보장부족">보장부족</option>'
+      + '<option value="보장과잉">보장과잉</option>'
       + '</select></div>'
+      + '<div class="rptex-meta-item"><label class="rptex-meta-label">신청 일시</label>'
+      + '<input type="text" id="rptex-apply-dt" class="rptex-meta-input" style="width:230px;" placeholder="예) 2026-07-01 (수) 오후 4시 24분"></div>'
       + '</div>'
 
       /* ── 통합 분석표 ── */
@@ -843,8 +876,7 @@
 
       + '<div class="rptex-flow-step">'
       + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">3</span>신청 내역 체크 멘트</div>'
-      + '<div class="rptex-meta-item" style="margin-bottom:10px;"><label class="rptex-meta-label">신청 일시</label>'
-      + '<input type="text" id="rptex-apply-dt" class="rptex-meta-input" style="width:230px;" placeholder="예) 2026-07-01 (수) 오후 4시 24분"></div>'
+      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 상단의 "신청 일시" 값을 기준으로 멘트가 생성됩니다.</div>'
       + '<textarea id="rptex-flow-time" class="rptex-flow-ta" readonly></textarea>'
       + '<div class="rptex-flow-actions"><button class="btn-action" style="width:auto;padding:8px 18px;" onclick="window.rptExCopyFlow(\'rptex-flow-time\')"><i class="bi bi-clipboard-check"></i> 복사</button></div>'
       + '</div>'
@@ -914,6 +946,8 @@
       '.rptex-status:hover{opacity:0.75;}',
       '.rptex-status.ok{background:#EFF6FF;color:#3182F6;}',
       '.rptex-status.low{background:#FEF2F2;color:#DC2626;}',
+      '.rptex-status.unregistered{background:#F2F4F6;color:#8B95A1;}',
+      '.rptex-status.excess{background:#FFFBEB;color:#D97706;}',
       '.rptex-status.none{background:#F1F5F9;color:#64748B;cursor:default;}',
       '.rptex-amt-low{color:#DC2626!important;font-weight:800;background:#FEF2F2!important;}',
       '.rptex-editable-cell{cursor:text;}',
@@ -954,6 +988,7 @@
       '.rptex-ess-blue{background:#E8F3FF;color:#3182F6;}',
       '.rptex-ess-red{background:#FFF0F0;color:#F04452;}',
       '.rptex-ess-gray{background:#F2F4F6;color:#8B95A1;}',
+      '.rptex-ess-orange{background:#FFF7E8;color:#D97706;}',
       /* ── 카톡 발송 순서(6단계) 스타일 ── */
       '.rptex-flow-wrap{margin-bottom:16px;}',
       '.rptex-flow-title{font-size:14px;font-weight:800;color:#001E42;margin-bottom:14px;}',
@@ -1089,7 +1124,7 @@
       for (var pc = coStart; pc < coStart + companies.length; pc++) per.push(pMan(row[pc]));
       var rec = RECOMMEND[lbl];
       rows.push({ cat: currentCat, label: lbl, customerSum: sum, recommend: rec,
-        status: rec === undefined ? 'none' : sum >= rec ? 'ok' : 'low', perProduct: per });
+        status: computeRowStatus(sum, rec), perProduct: per });
     }
 
     if (companies.length > 0 && premiumAmounts.length === 0) {
@@ -1223,9 +1258,10 @@
       if (spans[i] !== undefined) {
         html += '<td class="rptex-cat" rowspan="' + spans[i] + '">' + esc(r.cat) + '</td>';
       }
-      var amtCls = r.status === 'low' ? 'rptex-amt-low' : '';
-      var stLbl  = r.status === 'ok' ? '적정' : r.status === 'low' ? '부족' : '기준없음';
-      var stCls  = r.status === 'ok' ? 'ok' : r.status === 'low' ? 'low' : 'none';
+      var meta   = ROW_STATUS_META[r.status] || ROW_STATUS_META.none;
+      var amtCls = (r.status === 'low' || r.status === 'excess') ? 'rptex-amt-low' : '';
+      var stLbl  = meta.label;
+      var stCls  = meta.cls;
       var toggleAttr = r.status !== 'none' ? ' onclick="window.rptExToggleStatus(' + i + ')"' : '';
       html += '<td class="rptex-label">' + esc(r.label) + '</td>';
       html += '<td class="rptex-editable-cell ' + amtCls + '" id="rptex-amt-' + i + '"'
@@ -1271,12 +1307,16 @@
   window.rptExToggleStatus = function(rowIdx) {
     var r = exState.rows[rowIdx];
     if (r.status === 'none') return;
-    r.status = r.status === 'ok' ? 'low' : 'ok';
+    var idx = ROW_STATUS_CYCLE.indexOf(r.status);
+    r.status = ROW_STATUS_CYCLE[(idx + 1) % ROW_STATUS_CYCLE.length];
+    var meta = ROW_STATUS_META[r.status];
     var stEl = document.getElementById('rptex-st-' + rowIdx);
-    if (stEl) { stEl.className = 'rptex-status ' + (r.status === 'ok' ? 'ok' : 'low'); stEl.textContent = r.status === 'ok' ? '적정' : '부족'; }
+    if (stEl) { stEl.className = 'rptex-status ' + meta.cls; stEl.textContent = meta.label; }
     var amtEl = document.getElementById('rptex-amt-' + rowIdx);
-    if (amtEl) amtEl.className = 'rptex-editable-cell' + (r.status === 'low' ? ' rptex-amt-low' : '');
+    if (amtEl) amtEl.className = 'rptex-editable-cell' + ((r.status === 'low' || r.status === 'excess') ? ' rptex-amt-low' : '');
     gState.lowItems = exState.rows.filter(function(r){ return r.status === 'low'; });
+    autoMapEssential(exState.rows);
+    renderEssentialGrid();
     refreshMsg();
   };
 
@@ -1287,10 +1327,11 @@
     el.innerText = val ? val.toLocaleString() : '-';
     var r = exState.rows[rowIdx];
     if (r.recommend !== undefined) {
-      r.status = val >= r.recommend ? 'ok' : 'low';
+      r.status = computeRowStatus(val, r.recommend);
+      var meta = ROW_STATUS_META[r.status];
       var stEl = document.getElementById('rptex-st-' + rowIdx);
-      if (stEl) { stEl.className = 'rptex-status ' + (r.status === 'ok' ? 'ok' : 'low'); stEl.textContent = r.status === 'ok' ? '적정' : '부족'; }
-      el.className = 'rptex-editable-cell' + (r.status === 'low' ? ' rptex-amt-low' : '');
+      if (stEl) { stEl.className = 'rptex-status ' + meta.cls; stEl.textContent = meta.label; }
+      el.className = 'rptex-editable-cell' + ((r.status === 'low' || r.status === 'excess') ? ' rptex-amt-low' : '');
       gState.lowItems = exState.rows.filter(function(r){ return r.status === 'low'; });
       // 통합 분석표를 수정했을 때 필수 보장 카드도 함께 갱신
       autoMapEssential(exState.rows);
@@ -1408,15 +1449,16 @@
 
       var rowsHtml = '';
       exState.rows.forEach(function(r, i) {
-        var stColor = r.status === 'ok' ? '#3182F6' : r.status === 'low' ? '#DC2626' : '#94A3B8';
-        var stBg    = r.status === 'ok' ? '#EFF6FF' : r.status === 'low' ? '#FEF2F2' : '#F1F5F9';
-        var stLbl   = r.status === 'ok' ? '적정' : r.status === 'low' ? '부족' : '기준없음';
+        var meta    = ROW_STATUS_META[r.status] || ROW_STATUS_META.none;
+        var stColor = meta.color;
+        var stBg    = meta.bg;
+        var stLbl   = meta.label;
         rowsHtml += '<tr>';
         if (spans[i] !== undefined) {
           rowsHtml += '<td rowspan="' + spans[i] + '" style="background:#F8FAFC;font-weight:700;color:#001E42;text-align:center;padding:12px 10px;border:1px solid #E2E8F0;font-size:13px;">' + esc(r.cat) + '</td>';
         }
         rowsHtml += '<td style="text-align:left;padding:12px 16px;font-weight:600;color:#334155;border:1px solid #E2E8F0;font-size:13px;">' + esc(r.label) + '</td>';
-        rowsHtml += '<td style="text-align:right;padding:12px 16px;border:1px solid #E2E8F0;font-size:13px;' + (r.status==='low'?'color:#DC2626;font-weight:700;':'color:#334155;') + '">' + (r.customerSum ? r.customerSum.toLocaleString()+'만원' : '-') + '</td>';
+        rowsHtml += '<td style="text-align:right;padding:12px 16px;border:1px solid #E2E8F0;font-size:13px;' + ((r.status==='low'||r.status==='excess')?'color:'+stColor+';font-weight:700;':'color:#334155;') + '">' + (r.customerSum ? r.customerSum.toLocaleString()+'만원' : '-') + '</td>';
         rowsHtml += '<td style="text-align:right;padding:12px 16px;color:#94A3B8;border:1px solid #E2E8F0;font-size:13px;">' + (r.recommend !== undefined ? r.recommend.toLocaleString()+'만원' : '-') + '</td>';
         rowsHtml += '<td style="text-align:center;padding:10px;border:1px solid #E2E8F0;"><span style="display:inline-block;background:' + stBg + ';color:' + stColor + ';font-weight:800;font-size:12px;padding:4px 14px;border-radius:20px;">' + stLbl + '</span></td>';
         rowsHtml += '</tr>';
@@ -1495,7 +1537,8 @@
       function statusColor(status) {
         if (status === '적정') return { bg: '#E8F3FF', text: '#3182F6' };
         if (status === '부족') return { bg: '#FFF0F0', text: '#F04452' };
-        return { bg: '#F2F4F6', text: '#8B95A1' };
+        if (status === '과잉') return { bg: '#FFF7E8', text: '#D97706' };
+        return { bg: '#F2F4F6', text: '#8B95A1' }; // 미가입
       }
 
       var groupsHtml = ESSENTIAL_GROUPS.map(function(g) {
