@@ -5,8 +5,7 @@
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 // ✅ 끝부분에 sendPasswordResetEmail이 추가되었습니다.
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ==========================================
 // 2. 전역 변수 세팅 (Import가 모두 끝난 뒤에 와야 함!)
@@ -35,6 +34,171 @@ window.__firestoreDb = db;
 
 let currentUserEmail = "";
 const MASTER_INVITE_CODE = "gaon2026";
+
+// /api/kakao-auth  (가온포탈용)
+// 카카오 로그인 버튼을 누르면 이 엔드포인트가 호출됩니다.
+// 1) 카카오 access token을 검증해서 카카오 고유 id를 얻고,
+// 2) Firestore의 kakaoLinks/{카카오id} 문서를 확인해서
+//    - 이미 "계정 연동"을 해둔 사람이면 -> 그 사람의 기존 이메일 계정으로 로그인시킴
+//    - 처음 카카오로만 로그인하는 사람이면 -> 새 계정을 만들어서 로그인시킴
+//      (이 경우 users_portal 문서 키로 쓸 실제 이메일이 없으므로 임시 식별자를 이메일 자리에 사용합니다)
+//
+// 필요한 Vercel 환경변수:
+//   FIREBASE_SERVICE_ACCOUNT_KEY - Firebase 서비스 계정 JSON (한 줄 문자열)
+//   KAKAO_APP_ID                 - 카카오 앱의 숫자 앱 ID
+
+import admin from 'firebase-admin';
+
+function getAdminApp() {
+  if (admin.apps.length) return admin.app();
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY 환경변수가 설정되지 않았습니다.');
+  return admin.initializeApp({ credential: admin.credential.cert(JSON.parse(raw)) });
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'POST 요청만 허용됩니다.' });
+  }
+
+  const { accessToken } = req.body || {};
+  if (!accessToken) {
+    return res.status(400).json({ error: 'accessToken 값이 필요합니다.' });
+  }
+
+  const kakaoAppId = process.env.KAKAO_APP_ID;
+
+  try {
+    // 1) 카카오 access token 검증
+    const tokenInfoRes = await fetch('https://kapi.kakao.com/v1/user/access_token_info', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (!tokenInfoRes.ok) {
+      return res.status(401).json({ error: '카카오 토큰 검증 실패' });
+    }
+    const tokenInfo = await tokenInfoRes.json();
+    if (kakaoAppId && String(tokenInfo.app_id) !== String(kakaoAppId)) {
+      return res.status(401).json({ error: '이 토큰은 우리 앱에서 발급된 것이 아닙니다.' });
+    }
+
+    const kakaoId = tokenInfo.id;
+    if (!kakaoId) {
+      return res.status(400).json({ error: '카카오 사용자 id를 확인할 수 없습니다.' });
+    }
+
+    const adminApp = getAdminApp();
+    const auth = adminApp.auth();
+    const db = adminApp.firestore();
+
+    // 2) 기존에 연동된 계정이 있는지 확인
+    const linkSnap = await db.collection('kakaoLinks').doc(String(kakaoId)).get();
+
+    let uid;
+    if (linkSnap.exists) {
+      // 연동된 계정 있음 -> 원래 쓰던 uid로 로그인
+      uid = linkSnap.data().uid;
+    } else {
+      // 처음 카카오로만 로그인하는 사람 -> 새 계정 생성
+      uid = `kakao_${kakaoId}`;
+      const placeholderEmail = `kakao_${kakaoId}@kakao.gaonportal.local`;
+      try {
+        await auth.getUser(uid);
+      } catch (err) {
+        if (err.code === 'auth/user-not-found') {
+          await auth.createUser({ uid, email: placeholderEmail });
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    // 3) Firebase Custom Token 발급
+    const customToken = await auth.createCustomToken(uid, { provider: 'kakao' });
+    return res.status(200).json({ token: customToken, linked: linkSnap.exists });
+  } catch (err) {
+    return res.status(500).json({ error: '카카오 로그인 처리 중 오류가 발생했습니다.', detail: String(err) });
+  }
+}
+
+/* ==========================================
+   카카오 로그인 / 계정 연동
+   - KAKAO_JS_KEY는 카카오 개발자 콘솔 > 내 애플리케이션 > 앱 키 > "JavaScript 키" 값입니다.
+   - 카카오 개발자 콘솔 > 앱 설정 > 플랫폼에 이 사이트 도메인을 등록해야 합니다.
+========================================== */
+const KAKAO_JS_KEY = 'YOUR_KAKAO_JS_KEY';
+
+if (window.Kakao && !window.Kakao.isInitialized()) {
+    window.Kakao.init(KAKAO_JS_KEY);
+}
+
+// 로그인 화면에서 "카카오로 로그인" 버튼 클릭 시
+window.handleKakaoLogin = function() {
+    const errorMsg = document.getElementById('auth-error-msg');
+    window.Kakao.Auth.login({
+        scope: 'profile_nickname',
+        success: async (authObj) => {
+            try {
+                const res = await fetch('/api/kakao-auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accessToken: authObj.access_token })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    if (errorMsg) {
+                        errorMsg.innerText = '❌ 카카오 로그인 실패: ' + (data.error || '알 수 없는 오류');
+                        errorMsg.style.display = 'block';
+                    }
+                    return;
+                }
+                await signInWithCustomToken(auth, data.token);
+            } catch (err) {
+                if (errorMsg) {
+                    errorMsg.innerText = '❌ 카카오 로그인 처리 중 오류가 발생했습니다.';
+                    errorMsg.style.display = 'block';
+                }
+            }
+        },
+        fail: () => {
+            if (errorMsg) {
+                errorMsg.innerText = '❌ 카카오 로그인이 취소되었거나 실패했습니다.';
+                errorMsg.style.display = 'block';
+            }
+        }
+    });
+};
+
+// 이미 로그인한 사람이 "카카오 계정 연동하기" 버튼을 눌렀을 때
+window.handleKakaoLink = function() {
+    if (!auth.currentUser) {
+        alert('먼저 이메일로 로그인해주세요.');
+        return;
+    }
+    window.Kakao.Auth.login({
+        scope: 'profile_nickname',
+        success: async (authObj) => {
+            try {
+                const idToken = await auth.currentUser.getIdToken();
+                const res = await fetch('/api/kakao-link', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idToken, accessToken: authObj.access_token })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert('카카오 계정 연동 실패: ' + (data.error || '알 수 없는 오류'));
+                    return;
+                }
+                alert('✅ 카카오 계정이 연동되었습니다! 다음부터는 카카오로 바로 로그인할 수 있어요.');
+            } catch (err) {
+                alert('카카오 계정 연동 중 오류가 발생했습니다.');
+            }
+        },
+        fail: () => {
+            alert('카카오 인증이 취소되었거나 실패했습니다.');
+        }
+    });
+};
 
 async function loadUserIntegratedData(email) {
     currentUserEmail = email;
