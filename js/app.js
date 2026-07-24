@@ -5,7 +5,7 @@
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 // ✅ 끝부분에 sendPasswordResetEmail이 추가되었습니다.
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ==========================================
@@ -35,6 +35,78 @@ window.__firestoreDb = db;
 
 let currentUserEmail = "";
 const MASTER_INVITE_CODE = "gaon2026";
+
+/* ==========================================
+   카카오 로그인 (Redirect 방식 — 2026-07-24 카카오 팝업 로그인 지원 종료에 따라 전환)
+   - KAKAO_JS_KEY는 카카오 개발자 콘솔 > 내 애플리케이션 > 앱 키 > "JavaScript 키" 값입니다.
+     (hospitol 저장소와 같은 카카오 앱을 재사용하는 경우, 그 앱의 JS 키를 그대로 넣으면 됩니다.)
+   - 카카오 개발자 콘솔 > 카카오 로그인 > Redirect URI 메뉴에 아래 KAKAO_REDIRECT_URI 값을
+     "정확히 그대로" 등록해야 합니다.
+   - 카카오 개발자 콘솔 > 앱 설정 > 플랫폼에 이 사이트의 실제 배포 도메인을 등록해야 합니다.
+========================================== */
+const KAKAO_JS_KEY = 'fe63758ba86171a9aa4341f1a6ae2052'; // ⚠️ hospitol과 동일한 카카오 앱 키. 다른 앱을 쓰려면 교체하세요.
+const KAKAO_REDIRECT_URI = window.location.origin + window.location.pathname;
+
+if (window.Kakao && !window.Kakao.isInitialized()) {
+    window.Kakao.init(KAKAO_JS_KEY);
+}
+
+window.handleKakaoLogin = function() {
+    const errorMsg = document.getElementById('kakao-login-error');
+    if (errorMsg) { errorMsg.style.display = 'none'; errorMsg.innerText = ''; }
+
+    if (!window.Kakao) {
+        if (errorMsg) { errorMsg.innerText = '❌ 카카오 SDK를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.'; errorMsg.style.display = 'block'; }
+        return;
+    }
+
+    // 팝업 대신 페이지 전체가 카카오 로그인 화면으로 이동했다가 redirectUri로 돌아옵니다.
+    window.Kakao.Auth.authorize({
+        redirectUri: KAKAO_REDIRECT_URI,
+        scope: 'profile_nickname'
+    });
+};
+
+// 카카오 로그인 화면에서 돌아왔을 때 (?code=... 붙어서 리다이렉트됨) 처리
+(async function handleKakaoRedirectCallback() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const kakaoError = params.get('error');
+    const errorMsg = document.getElementById('kakao-login-error');
+
+    if (kakaoError) {
+        history.replaceState(null, '', window.location.pathname);
+        if (errorMsg) { errorMsg.innerText = '❌ 카카오 로그인이 취소되었거나 실패했습니다.'; errorMsg.style.display = 'block'; }
+        return;
+    }
+    if (!code) return;
+
+    // 새로고침 시 인가 코드가 재사용되어 에러나지 않도록 URL에서 즉시 제거
+    history.replaceState(null, '', window.location.pathname);
+
+    try {
+        const res = await fetch('/api/kakao-auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, redirectUri: KAKAO_REDIRECT_URI })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            if (errorMsg) {
+                errorMsg.innerText = '❌ 카카오 로그인 실패: ' + (data.error || '알 수 없는 오류');
+                errorMsg.style.display = 'block';
+            }
+            return;
+        }
+        await signInWithCustomToken(auth, data.token);
+        document.getElementById('auth-overlay').style.display = 'none';
+    } catch (err) {
+        if (errorMsg) {
+            errorMsg.innerText = '❌ 카카오 로그인 처리 중 오류가 발생했습니다.';
+            errorMsg.style.display = 'block';
+        }
+    }
+})();
 
 async function loadUserIntegratedData(email) {
     currentUserEmail = email;
@@ -2017,4 +2089,3 @@ window.deleteCurrentNotice = async function() {
         alert('삭제 실패: ' + e.message);
     }
 };
-
