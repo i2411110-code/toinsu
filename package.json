@@ -9,4 +9,8 @@
   "dependencies": {
     "firebase-admin": "^12.6.0"
   }
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "@google/generative-ai": "^0.21.0"
+}
 }
