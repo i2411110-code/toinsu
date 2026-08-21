@@ -336,6 +336,7 @@ onAuthStateChanged(auth, (user) => {
     if (user) {
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('user-display-email').innerText = user.email;
+         window.__currentUserUid = user.uid;
         loadUserIntegratedData(user.email);
         updateVisitCounter(user.email);
         window.checkAndShowNotice();
@@ -440,7 +441,8 @@ window.loadComponent = async function(pageId, extraAction) {
             if (accessSnap.exists()) {
                 const allowedUsers = accessSnap.data().allowedUsers || [];
                 // 명단에 없을 경우
-                if (!allowedUsers.includes(currentUserEmail)) {
+               const currentUserUid = window.__currentUserUid;
+if (!allowedUsers.includes(currentUserEmail) && !allowedUsers.includes(currentUserUid)) {
                     alert("가온 오피스 접근 권한이 없습니다.\n팀장님(관리자)에게 승인을 요청해 주세요.");
                     return; // ❌ 권한 없으면 메인 화면에 그대로 머무름
                 }
@@ -1016,7 +1018,8 @@ window.unlockPrivate = async function() {
             const allowedUsers = accessSnap.data().allowedUsers || [];
 
             // 서버 명단과 현재 로그인된 이메일 대조
-            if (allowedUsers.includes(currentUserEmail)) {
+            const currentUserUid = window.__currentUserUid;
+if (allowedUsers.includes(currentUserEmail) || allowedUsers.includes(currentUserUid)) {
                 // 권한 승인: 오피스 입장
                 document.getElementById('privateAuthScreen').style.display = 'none';
                 document.getElementById('privateMainContent').style.display = 'block';
