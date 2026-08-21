@@ -429,7 +429,8 @@ window.loadComponent = async function(pageId, extraAction) {
     // 💡 1. 가온 오피스 클릭 시, 화면을 불러오기 전 서버 권한부터 즉시 체크합니다.
     if (pageId === 'page-가온 오피스') {
         const currentUserEmail = window.__currentUserEmail;
-        if (!currentUserEmail) {
+        const currentUserUid = window.__currentUserUid;
+        if (!currentUserEmail && !currentUserUid) {
             alert("로그인 정보가 확인되지 않습니다. 다시 로그인해 주세요.");
             return; // ❌ 화면 안 넘어가고 중단
         }
