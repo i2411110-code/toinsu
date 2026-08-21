@@ -995,8 +995,8 @@ window.closeNotice = function() {
 
 window.unlockPrivate = async function() {
     const currentUserEmail = window.__currentUserEmail;
-
-    if (!currentUserEmail) {
+    const currentUserUid = window.__currentUserUid;
+    if (!currentUserEmail && !currentUserUid) {
         alert("로그인 정보가 확인되지 않습니다. 다시 로그인해 주세요.");
         return;
     }
