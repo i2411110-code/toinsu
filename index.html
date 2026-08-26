@@ -1493,10 +1493,13 @@
 
             /* ── 메인 뷰 복귀 ── */
             window.switchToMainView = function() {
-                document.getElementById('pwa-news-view').style.display = 'none';
-                document.getElementById('pwa-claim-view').style.display = 'none';
-                document.getElementById('pwa-main-content-view').style.display = 'block';
-            };
+    document.getElementById('pwa-news-view').style.display = 'none';
+    document.getElementById('pwa-claim-view').style.display = 'none';
+    document.getElementById('pwa-main-content-view').style.display = 'block';
+    if (typeof window.loadComponent === 'function') {
+        window.loadComponent('main-dashboard');
+    }
+};
 
             /* ── 뉴스 뷰 (청구 뷰 닫기 포함) ── */
             const _origSwitchToNews = window.switchToNewsView;
