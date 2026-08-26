@@ -65,6 +65,7 @@ window.handleKakaoLogin = function() {
     redirectUri: KAKAO_REDIRECT_URI,
     scope: 'profile_nickname,account_email'
 });
+};
 
 // 카카오 로그인 화면에서 돌아왔을 때 (?code=... 붙어서 리다이렉트됨) 처리
 (async function handleKakaoRedirectCallback() {
