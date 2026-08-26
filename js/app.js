@@ -100,6 +100,7 @@ window.handleKakaoLogin = function() {
         }
         await signInWithCustomToken(auth, data.token);
         document.getElementById('auth-overlay').style.display = 'none';
+        await checkAndPromptUserName(db, data.uid, data.displayName);
     } catch (err) {
         if (errorMsg) {
             errorMsg.innerText = '❌ 카카오 로그인 처리 중 오류가 발생했습니다.';

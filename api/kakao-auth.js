@@ -1,232 +1,123 @@
-// name-input-modal.js
-// -----------------------------------------------------------------------
-// 카카오 로그인(닉네임만 제공) 이후, Firestore에 실명(name)이 없는 사용자에게
-// 이름 입력을 강제하는 모달 컴포넌트 + 연동 함수.
-// 순수 HTML/Vanilla JS + Firebase(Firestore) 환경 기준, 별도 프레임워크 불필요.
+// /api/kakao-auth  (Redirect 방식 — 2026-07-24 카카오 팝업 로그인 지원 종료에 따라 전환)
+// 브라우저는 Kakao.Auth.authorize({ redirectUri })로 카카오 로그인 화면에 이동했다가,
+// 로그인 후 ?code=... 를 붙여 redirectUri로 돌아옵니다.
+// 이 함수는 (1) 그 인가 코드(code)를 카카오 토큰 서버와 교환해 access token을 받고,
+// (2) 그 토큰으로 카카오 사용자 정보를 조회한 뒤,
+// (3) Firebase Admin SDK로 그 사용자에 대응하는 Firebase Custom Token을 발급합니다.
+// 프론트엔드는 이 custom token으로 signInWithCustomToken(auth, token)을 호출해 로그인을 완료합니다.
 //
-// 사용법 (기존 카카오 로그인 성공 콜백 안에서):
-//
-//   import { getFirestore } from 'firebase/firestore';
-//   import { checkAndPromptUserName } from './name-input-modal.js';
-//
-//   const db = getFirestore();
-//   const { token, uid, displayName } = await res.json(); // kakao-auth API 응답
-//   await signInWithCustomToken(auth, token);
-//   await checkAndPromptUserName(db, uid, displayName);
-//
-// -----------------------------------------------------------------------
+// 필요한 Vercel 환경변수 (Project Settings > Environment Variables):
+//   FIREBASE_SERVICE_ACCOUNT_KEY - Firebase 콘솔 > 프로젝트 설정 > 서비스 계정 > "새 비공개 키 생성"으로
+//                                  받은 JSON 파일의 내용을 "한 줄 문자열"로 그대로 붙여넣기
+//   KAKAO_REST_API_KEY           - 카카오 개발자 콘솔 > 내 애플리케이션 > 앱 키 > "REST API 키"
+//                                  (⚠️ JavaScript 키가 아닙니다! 토큰 교환에는 REST API 키를 씁니다.)
+//   KAKAO_CLIENT_SECRET          - (선택) 카카오 콘솔 > 보안 > Client Secret을 "사용함"으로 켠 경우에만 필요.
+//                                  꺼져 있으면 이 환경변수는 등록하지 않아도 됩니다.
 
-import {
-  doc,
-  getDoc,
-  setDoc,
-  serverTimestamp
-} from 'firebase/firestore';
+import admin from 'firebase-admin';
 
-// ── 스타일 주입 (최초 1회만) ─────────────────────────────────────────────
-let stylesInjected = false;
-function injectStyles() {
-  if (stylesInjected) return;
-  stylesInjected = true;
+function getAdminApp() {
+  if (admin.apps.length) return admin.app();
 
-  const style = document.createElement('style');
-  style.textContent = `
-    .nim-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    .nim-overlay.nim-show {
-      opacity: 1;
-    }
-    .nim-modal {
-      background: #ffffff;
-      border-radius: 20px;
-      width: 90%;
-      max-width: 360px;
-      padding: 28px 24px 24px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-      transform: translateY(12px);
-      transition: transform 0.2s ease;
-    }
-    .nim-overlay.nim-show .nim-modal {
-      transform: translateY(0);
-    }
-    .nim-title {
-      font-size: 19px;
-      font-weight: 700;
-      color: #191F28;
-      margin: 0 0 8px;
-    }
-    .nim-desc {
-      font-size: 14px;
-      color: #8B95A1;
-      line-height: 1.5;
-      margin: 0 0 20px;
-    }
-    .nim-input {
-      width: 100%;
-      box-sizing: border-box;
-      font-size: 16px;
-      padding: 14px 16px;
-      border: 1.5px solid #E5E8EB;
-      border-radius: 12px;
-      outline: none;
-      transition: border-color 0.15s ease;
-      color: #191F28;
-    }
-    .nim-input:focus {
-      border-color: #3182F6;
-    }
-    .nim-error {
-      font-size: 13px;
-      color: #F04452;
-      margin: 8px 0 0;
-      min-height: 16px;
-    }
-    .nim-submit {
-      width: 100%;
-      margin-top: 16px;
-      padding: 14px 0;
-      background: #3182F6;
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: background 0.15s ease, opacity 0.15s ease;
-    }
-    .nim-submit:disabled {
-      background: #B0C4DE;
-      cursor: not-allowed;
-    }
-    .nim-submit:not(:disabled):hover {
-      background: #1B64DA;
-    }
-  `;
-  document.head.appendChild(style);
-}
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  if (!raw) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY 환경변수가 설정되지 않았습니다.');
+  }
+  const serviceAccount = JSON.parse(raw);
 
-// ── 모달 표시 ────────────────────────────────────────────────────────────
-/**
- * 이름 입력 모달을 띄운다. 실명 확인이 필요한 서비스 특성상
- * 배경 클릭/ESC로 닫히지 않으며, 유효한 이름을 입력해야 닫힌다.
- *
- * @param {Object} options
- * @param {string} [options.defaultValue] - 입력창 기본값 (카카오 닉네임 등)
- * @param {(name: string) => Promise<void>} options.onSubmit - 제출 시 호출, 실패 시 throw
- */
-function showNameInputModal({ defaultValue = '', onSubmit }) {
-  injectStyles();
-
-  return new Promise((resolve) => {
-    const overlay = document.createElement('div');
-    overlay.className = 'nim-overlay';
-    overlay.innerHTML = `
-      <div class="nim-modal">
-        <p class="nim-title">이름을 입력해 주세요</p>
-        <p class="nim-desc">보험 업무 처리를 위해 실명 확인이 필요합니다.<br>정확한 이름을 입력해 주세요.</p>
-        <input class="nim-input" type="text" placeholder="홍길동" maxlength="20" />
-        <p class="nim-error"></p>
-        <button class="nim-submit" disabled>확인</button>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => overlay.classList.add('nim-show'));
-
-    const input = overlay.querySelector('.nim-input');
-    const errorEl = overlay.querySelector('.nim-error');
-    const submitBtn = overlay.querySelector('.nim-submit');
-
-    input.value = defaultValue;
-    input.focus();
-
-    // 한글/영문 2자 이상 (숫자/특수문자/공백만 있는 값 방지)
-    const isValidName = (v) => /^[가-힣a-zA-Z\s]{2,20}$/.test(v.trim());
-
-    function updateButtonState() {
-      submitBtn.disabled = !isValidName(input.value);
-    }
-    input.addEventListener('input', () => {
-      errorEl.textContent = '';
-      updateButtonState();
-    });
-    updateButtonState();
-
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !submitBtn.disabled) submit();
-    });
-    submitBtn.addEventListener('click', submit);
-
-    async function submit() {
-      const name = input.value.trim();
-      if (!isValidName(name)) {
-        errorEl.textContent = '이름은 한글 또는 영문 2자 이상으로 입력해 주세요.';
-        return;
-      }
-      submitBtn.disabled = true;
-      submitBtn.textContent = '저장 중...';
-      try {
-        await onSubmit(name);
-        overlay.classList.remove('nim-show');
-        setTimeout(() => {
-          overlay.remove();
-          resolve(name);
-        }, 200);
-      } catch (err) {
-        console.error('이름 저장 실패:', err);
-        errorEl.textContent = '저장 중 오류가 발생했습니다. 다시 시도해 주세요.';
-        submitBtn.disabled = false;
-        submitBtn.textContent = '확인';
-      }
-    }
+  return admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
   });
 }
 
-// ── Firestore 연동 함수 ─────────────────────────────────────────────────
-/**
- * users/{uid} 문서에 name 필드가 없으면 모달을 띄워 입력받고 저장한다.
- * 이미 이름이 있으면 아무 동작도 하지 않고 바로 반환한다.
- *
- * @param {import('firebase/firestore').Firestore} db
- * @param {string} uid - Firebase Auth uid (예: kakao-auth API가 반환한 uid)
- * @param {string} [kakaoDisplayName] - 카카오 닉네임, 입력창 기본값으로 사용
- * @returns {Promise<string|null>} 최종 이름 (이미 있었거나 새로 입력한 값), 실패 시 null
- */
-export async function checkAndPromptUserName(db, uid, kakaoDisplayName) {
-  const userRef = doc(db, 'users', uid);
-  const snap = await getDoc(userRef);
-  const existingName = snap.exists() ? snap.data().name : null;
-
-  if (existingName) {
-    return existingName; // 이미 이름이 있으면 모달 없이 통과
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'POST 요청만 허용됩니다.' });
   }
 
-  const name = await showNameInputModal({
-    defaultValue: kakaoDisplayName || '',
-    onSubmit: async (inputName) => {
-      await setDoc(
-        userRef,
-        {
-          name: inputName,
-          nickname: kakaoDisplayName || null,
-          updatedAt: serverTimestamp(),
-          ...(snap.exists() ? {} : { createdAt: serverTimestamp() })
-        },
-        { merge: true }
-      );
+  const { code, redirectUri } = req.body || {};
+  if (!code || !redirectUri) {
+    return res.status(400).json({ error: 'code, redirectUri 값이 필요합니다.' });
+  }
+
+  const restApiKey = process.env.KAKAO_REST_API_KEY;
+  if (!restApiKey) {
+    return res.status(500).json({ error: 'KAKAO_REST_API_KEY 환경변수가 설정되지 않았습니다.' });
+  }
+
+  try {
+    // 1) 인가 코드(code)를 access token으로 교환
+    const tokenParams = new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: restApiKey,
+      redirect_uri: redirectUri,
+      code
+    });
+    if (process.env.KAKAO_CLIENT_SECRET) {
+      tokenParams.set('client_secret', process.env.KAKAO_CLIENT_SECRET);
     }
-  });
 
-  return name;
+    const tokenRes = await fetch('https://kauth.kakao.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: tokenParams.toString()
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenRes.ok) {
+      return res.status(401).json({ error: '카카오 토큰 교환 실패', detail: tokenData });
+    }
+    const accessToken = tokenData.access_token;
+
+    // 2) 카카오 사용자 프로필 조회
+    const meRes = await fetch('https://kapi.kakao.com/v2/user/me', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (!meRes.ok) {
+      const errText = await meRes.text();
+      return res.status(401).json({ error: '카카오 사용자 정보 조회 실패', detail: errText });
+    }
+    const kakaoUser = await meRes.json();
+
+    const kakaoId = kakaoUser.id;
+    if (!kakaoId) {
+      return res.status(400).json({ error: '카카오 사용자 id를 확인할 수 없습니다.' });
+    }
+
+    const kakaoAccount = kakaoUser.kakao_account || {};
+    const profile = kakaoAccount.profile || {};
+    const email = kakaoAccount.email || null;
+    const displayName = profile.nickname || null;
+
+    // Firebase uid는 카카오 id와 1:1로 고정 매핑 (다른 로그인 수단과 겹치지 않도록 접두어 부여)
+    const uid = `kakao_${kakaoId}`;
+
+    const adminApp = getAdminApp();
+    const authAdmin = adminApp.auth();
+
+    // 3) 해당 uid의 Firebase Auth 사용자가 없으면 생성, 있으면 프로필만 최신화
+    try {
+      await authAdmin.getUser(uid);
+      await authAdmin.updateUser(uid, {
+        ...(email ? { email } : {}),
+        ...(displayName ? { displayName } : {})
+      });
+    } catch (err) {
+      if (err.code === 'auth/user-not-found') {
+        await authAdmin.createUser({
+          uid,
+          ...(email ? { email } : {}),
+          ...(displayName ? { displayName } : {})
+        });
+      } else {
+        throw err;
+      }
+    }
+
+    // 4) Firebase Custom Token 발급
+    const customToken = await authAdmin.createCustomToken(uid, { provider: 'kakao' });
+
+    return res.status(200).json({ token: customToken, uid, email, displayName });
+  } catch (err) {
+    return res.status(500).json({ error: '카카오 로그인 처리 중 오류가 발생했습니다.', detail: String(err) });
+  }
 }
-
-export { showNameInputModal };
