@@ -62,10 +62,9 @@ window.handleKakaoLogin = function() {
 
     // 팝업 대신 페이지 전체가 카카오 로그인 화면으로 이동했다가 redirectUri로 돌아옵니다.
     window.Kakao.Auth.authorize({
-        redirectUri: KAKAO_REDIRECT_URI,
-        scope: 'profile_nickname'
-    });
-};
+    redirectUri: KAKAO_REDIRECT_URI,
+    scope: 'profile_nickname,account_email'
+});
 
 // 카카오 로그인 화면에서 돌아왔을 때 (?code=... 붙어서 리다이렉트됨) 처리
 (async function handleKakaoRedirectCallback() {
