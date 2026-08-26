@@ -7,7 +7,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 // ✅ 끝부분에 sendPasswordResetEmail이 추가되었습니다.
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+import { checkAndPromptUserName } from './name-input-modal.js';
 // ==========================================
 // 2. 전역 변수 세팅 (Import가 모두 끝난 뒤에 와야 함!)
 // ==========================================
