@@ -256,6 +256,10 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
     '[ 공통 규칙 ]',
     '6. 모든 문장 한국어 존댓말.',
     '7. 숫자·사실은 반드시 전달받은 데이터 기반. 데이터에 없는 내용 임의 추가 금지.',
+    '8. 금액 단위 절대 규칙: 데이터의 "_만원"이 붙은 필드값은 이미 "만원" 단위입니다.',
+    '   예) 고객보장합산_만원: 5000 → 반드시 "5,000만원"이라고 표기하세요. "500만원"처럼 자릿수를 절대 바꾸지 마세요.',
+    '   원 단위로 환산하거나 나누거나 곱하는 등의 임의 변환을 절대 하지 마세요. 데이터에 있는 숫자를 그대로, 단위만 "만원"을 붙여 사용하세요.',
+    '   억원 단위로 바꾸지 말고("1억원" 금지) 항상 "만원" 단위 그대로 표기하세요(예: 10000 → "10,000만원").',
   ].join('\n');
 
   function buildAIPayload() {
@@ -272,7 +276,13 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
     });
 
     var allItems = rows.map(function(r) {
-      var detail = { 대분류: r.cat, 소분류: r.label, 고객보장합산_만원: r.customerSum, 권장기준_만원: r.recommend !== undefined ? r.recommend : null, 상태: (ROW_STATUS_META[r.status] || {}).label || r.status };
+      var detail = {
+        대분류: r.cat,
+        소분류: r.label,
+        고객보장합산: r.customerSum ? (r.customerSum.toLocaleString() + '만원') : '0만원',
+        권장기준: r.recommend !== undefined ? (r.recommend.toLocaleString() + '만원') : null,
+        상태: (ROW_STATUS_META[r.status] || {}).label || r.status
+      };
       if (r.perProduct && companies.length > 0) {
         var byCompany = {};
         companies.forEach(function(c, i) { if (r.perProduct[i]) byCompany[c] = r.perProduct[i]; });
@@ -292,10 +302,18 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
       연령대비보험료수준: level.label,
       전체보장항목: allItems,
       부족항목요약: lowItems.map(function(r){
-        return { 대분류: r.cat, 소분류: r.label, 고객보장합산_만원: r.customerSum, 권장기준_만원: r.recommend };
+        return {
+          대분류: r.cat, 소분류: r.label,
+          고객보장합산: r.customerSum ? (r.customerSum.toLocaleString() + '만원') : '0만원',
+          권장기준: r.recommend !== undefined ? (r.recommend.toLocaleString() + '만원') : null
+        };
       }),
       과잉항목요약: excessItems.map(function(r){
-        return { 대분류: r.cat, 소분류: r.label, 고객보장합산_만원: r.customerSum, 권장기준_만원: r.recommend };
+        return {
+          대분류: r.cat, 소분류: r.label,
+          고객보장합산: r.customerSum ? (r.customerSum.toLocaleString() + '만원') : '0만원',
+          권장기준: r.recommend !== undefined ? (r.recommend.toLocaleString() + '만원') : null
+        };
       }),
     };
   }
