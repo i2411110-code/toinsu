@@ -2515,19 +2515,36 @@ window.openTodayAccessModal = async function() {
             return;
         }
 
-        body.innerHTML = snap.docs.map(d => {
+        // ✅ users_portal에서 실시간으로 이름을 보강해서 가져오기
+        const enriched = await Promise.all(snap.docs.map(async (d) => {
             const data = d.data();
+            let displayName = data.name;
+            if (!displayName) {
+                try {
+                    const userSnap = await getDoc(doc(db, "users_portal", data.email));
+                    if (userSnap.exists()) {
+                        displayName = userSnap.data().displayName || data.email.split('@')[0];
+                    } else {
+                        displayName = data.email.split('@')[0];
+                    }
+                } catch(e) {
+                    displayName = data.email.split('@')[0];
+                }
+            }
+            return { ...data, displayName };
+        }));
+
+        body.innerHTML = enriched.map(data => {
             const t = data.lastAccessAt ? new Date(data.lastAccessAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-';
-            const displayName = data.name || data.email;
             return `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#F8FAFC; border:1px solid #F1F5F9; border-radius:10px; margin-bottom:8px;">
                     <div style="display:flex; flex-direction:column;">
-                        <span style="font-size:13.5px; font-weight:700; color:#191F28;">${displayName}</span>
+                        <span style="font-size:13.5px; font-weight:700; color:#191F28;">${data.displayName}</span>
                         <span style="font-size:11px; color:#94A3B8;">${data.email}</span>
                     </div>
                     <span style="font-size:12px; color:#94A3B8;">${t}</span>
                 </div>`;
-        }).join('') + `<div style="text-align:center; margin-top:10px; font-size:12px; color:#94A3B8;">총 ${snap.size}명 접속</div>`;
+        }).join('') + `<div style="text-align:center; margin-top:10px; font-size:12px; color:#94A3B8;">총 ${enriched.length}명 접속</div>`;
     } catch (e) {
         body.innerHTML = `<div style="text-align:center;padding:30px;color:#EF4444;font-size:13px;">조회 실패: ${e.message}</div>`;
     }
