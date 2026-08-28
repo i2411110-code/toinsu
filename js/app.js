@@ -581,16 +581,6 @@ window.handleForgotPassword = function() {
     }
 };
 
-    if (confirm(`${email} 주소로 비밀번호 재설정 링크를 전송하시겠습니까?`)) {
-        sendPasswordResetEmail(auth, email)
-            .then(() => {
-                alert("✉️ 비밀번호 재설정 이메일이 발송되었습니다.\n메일함을 확인하여 비밀번호를 변경해 주세요.");
-            })
-            .catch((error) => {
-                alert("❌ 메일 발송 실패: " + error.message);
-            });
-    }
-};
 
 // ==========================================
 // [신규 추가] 약관 동의 / 마이페이지
