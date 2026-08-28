@@ -369,7 +369,7 @@ async function updateVisitCounter(email) {
 // ==========================================
 // [신규 추가] 당일 접속자 로그 기록
 // ==========================================
-async function logDailyAccess(email) {
+async function logDailyAccess(email, name) {
     if (!email) return;
     const now = new Date();
     const today = now.getFullYear() + '-'
@@ -379,6 +379,7 @@ async function logDailyAccess(email) {
         const logRef = doc(db, "daily_access_logs", today, "users", email);
         await setDoc(logRef, {
             email,
+            name: name || email.split('@')[0],
             lastAccessAt: now.toISOString()
         }, { merge: true });
     } catch (e) {
@@ -533,9 +534,9 @@ async function proceedAfterAuth(user) {
     document.getElementById('auth-overlay').style.display = 'none';
     document.getElementById('user-display-email').innerText = user.email;
     window.__currentUserUid = user.uid;
-    loadUserIntegratedData(user.email);
+    await loadUserIntegratedData(user.email);
     updateVisitCounter(user.email);
-    logDailyAccess(user.email); // ✅ 추가: 오늘 접속자 로그 기록
+    logDailyAccess(user.email, window.currentUserDisplayName); // ✅ 이름도 함께 기록
 
     // ✅ 관리자 계정이면 접속자 목록 버튼 노출
     if (user.email === "dlsqh814@naver.com") {
@@ -2517,9 +2518,13 @@ window.openTodayAccessModal = async function() {
         body.innerHTML = snap.docs.map(d => {
             const data = d.data();
             const t = data.lastAccessAt ? new Date(data.lastAccessAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-';
+            const displayName = data.name || data.email;
             return `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#F8FAFC; border:1px solid #F1F5F9; border-radius:10px; margin-bottom:8px;">
-                    <span style="font-size:13.5px; font-weight:700; color:#191F28;">${data.email}</span>
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-size:13.5px; font-weight:700; color:#191F28;">${displayName}</span>
+                        <span style="font-size:11px; color:#94A3B8;">${data.email}</span>
+                    </div>
                     <span style="font-size:12px; color:#94A3B8;">${t}</span>
                 </div>`;
         }).join('') + `<div style="text-align:center; margin-top:10px; font-size:12px; color:#94A3B8;">총 ${snap.size}명 접속</div>`;
