@@ -316,8 +316,31 @@ function getRptHTML() {
     <!-- STEP 1 -->
     <div class="rpt-card">
       <div class="rpt-step-label">STEP 1</div>
-      <h3 class="rpt-step-title">보장 텍스트 붙여넣기</h3>
-      <p class="rpt-step-desc">보장분석 요약 텍스트를 아래 영역에 붙여넣으세요.</p>
+      <h3 class="rpt-step-title">보장 텍스트 붙여넣기 또는 PDF 업로드</h3>
+      <p class="rpt-step-desc">보장분석 요약 텍스트를 붙여넣거나, PDF 파일을 업로드하면 자동으로 텍스트를 추출합니다.</p>
+
+      <!-- PDF 업로드 영역 -->
+      <div id="rpt-pdf-dropzone"
+        style="border:1.5px dashed #BAD7FB;border-radius:10px;padding:16px;margin-bottom:12px;
+          background:#F8FBFF;text-align:center;cursor:pointer;transition:border .2s,background .2s;"
+        onclick="document.getElementById('rpt-pdf-input').click()"
+        ondragover="event.preventDefault();this.style.borderColor='#3182F6';this.style.background='#EFF6FF';"
+        ondragleave="this.style.borderColor='#BAD7FB';this.style.background='#F8FBFF';"
+        ondrop="window.rptHandlePdfDrop(event)"
+      >
+        <input type="file" id="rpt-pdf-input" accept="application/pdf" style="display:none;" onchange="window.rptHandlePdfFile(this.files[0])" />
+        <div id="rpt-pdf-dropzone-label" style="font-size:13px;color:#3182F6;font-weight:600;">
+          <i class="bi bi-file-earmark-pdf-fill"></i> PDF 파일을 클릭하거나 여기로 끌어다 놓으세요
+        </div>
+        <div id="rpt-pdf-status" style="font-size:11px;color:#94A3B8;margin-top:6px;"></div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin:14px 0;">
+        <div style="flex:1;height:1px;background:#E2E8F0;"></div>
+        <span style="font-size:11px;color:#94A3B8;">또는 직접 붙여넣기</span>
+        <div style="flex:1;height:1px;background:#E2E8F0;"></div>
+      </div>
+
       <textarea id="rpt-text-input"
         placeholder="예시)
 신정원 님
@@ -467,6 +490,104 @@ window.rptCheckInput = function () {
   if (el) el.textContent = v.length.toLocaleString() + '자 입력됨';
 };
 
+// ─── PDF.js 지연 로딩 ───
+let _pdfjsLoadingPromise = null;
+function ensurePdfJs() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (_pdfjsLoadingPromise) return _pdfjsLoadingPromise;
+  _pdfjsLoadingPromise = loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js')
+    .then(() => {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js';
+      return window.pdfjsLib;
+    });
+  return _pdfjsLoadingPromise;
+}
+
+// ─── PDF → 텍스트 추출 ───
+async function extractTextFromPdf(file) {
+  const pdfjsLib = await ensurePdfJs();
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+
+  let fullText = '';
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+
+    // y좌표 기준으로 줄을 묶어 텍스트 흐름을 최대한 원본 레이아웃과 비슷하게 재구성
+    const lineMap = new Map();
+    content.items.forEach(item => {
+      const y = Math.round(item.transform[5]);
+      if (!lineMap.has(y)) lineMap.set(y, []);
+      lineMap.get(y).push(item);
+    });
+    const sortedY = Array.from(lineMap.keys()).sort((a, b) => b - a);
+    sortedY.forEach(y => {
+      const items = lineMap.get(y).sort((a, b) => a.transform[4] - b.transform[4]);
+      const lineText = items.map(it => it.str).join(' ').replace(/\s+/g, ' ').trim();
+      if (lineText) fullText += lineText + '\n';
+    });
+    fullText += '\n';
+  }
+  return fullText.trim();
+}
+
+// ─── PDF 드롭존 UI 상태 ───
+function setPdfStatus(msg, isError) {
+  const el = document.getElementById('rpt-pdf-status');
+  if (el) {
+    el.textContent = msg;
+    el.style.color = isError ? '#DC2626' : '#94A3B8';
+  }
+}
+function setPdfDropzoneBusy(busy, label) {
+  const zone = document.getElementById('rpt-pdf-dropzone');
+  const lbl = document.getElementById('rpt-pdf-dropzone-label');
+  if (zone) zone.style.pointerEvents = busy ? 'none' : 'auto';
+  if (lbl) lbl.innerHTML = label;
+}
+
+// ─── PDF 파일 처리 (공통) ───
+window.rptHandlePdfFile = async function (file) {
+  rptHideError();
+  if (!file) return;
+  if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+    setPdfStatus('PDF 파일만 업로드할 수 있습니다.', true);
+    return;
+  }
+
+  setPdfDropzoneBusy(true, '<i class="bi bi-hourglass-split"></i> PDF에서 텍스트를 추출하는 중...');
+  setPdfStatus(file.name);
+
+  try {
+    const text = await extractTextFromPdf(file);
+    const textarea = document.getElementById('rpt-text-input');
+    if (textarea) {
+      textarea.value = text;
+      window.rptCheckInput();
+    }
+    setPdfDropzoneBusy(false, '<i class="bi bi-file-earmark-pdf-fill"></i> PDF 파일을 클릭하거나 여기로 끌어다 놓으세요');
+    if (!text) {
+      setPdfStatus('PDF에서 텍스트를 추출하지 못했습니다. (스캔 이미지 PDF일 수 있습니다)', true);
+    } else {
+      setPdfStatus(`✅ "${file.name}"에서 텍스트 추출 완료 — 아래에서 내용을 확인 후 AI 분석을 눌러주세요.`);
+    }
+  } catch (err) {
+    setPdfDropzoneBusy(false, '<i class="bi bi-file-earmark-pdf-fill"></i> PDF 파일을 클릭하거나 여기로 끌어다 놓으세요');
+    setPdfStatus('PDF 처리 중 오류가 발생했습니다: ' + err.message, true);
+  }
+};
+
+// ─── 드래그&드롭 처리 ───
+window.rptHandlePdfDrop = function (event) {
+  event.preventDefault();
+  const zone = document.getElementById('rpt-pdf-dropzone');
+  if (zone) { zone.style.borderColor = '#BAD7FB'; zone.style.background = '#F8FBFF'; }
+  const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+  if (file) window.rptHandlePdfFile(file);
+};
+
 // ─── 프로그레스 제어 ───
 function setProgress(pct, text, status) {
   const bar = document.getElementById('rpt-progress-bar');
@@ -485,7 +606,7 @@ window.rptStartParsing = function () {
   const textarea = document.getElementById('rpt-text-input');
   const text = (textarea && textarea.value) || '';
   if (text.trim().length < 10) {
-    rptShowError('텍스트를 먼저 입력해주세요. (최소 10자 이상)');
+    rptShowError('텍스트를 먼저 입력하거나 PDF를 업로드해주세요. (최소 10자 이상)');
     return;
   }
 
@@ -878,6 +999,9 @@ window.rptReset = function () {
   setProgress(0, '분석 준비 중...', '');
   const btn = document.getElementById('rpt-analyze-btn');
   if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-lightning-charge-fill"></i> AI 분석 시작'; }
+  const pdfInput = document.getElementById('rpt-pdf-input');
+  if (pdfInput) pdfInput.value = '';
+  setPdfStatus('');
   rptHideError();
 };
 
