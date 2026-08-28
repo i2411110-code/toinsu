@@ -491,16 +491,43 @@ window.rptCheckInput = function () {
 };
 
 // ─── PDF.js 지연 로딩 ───
+// jsdelivr 사용: 엑셀 다운로드(xlsx-js-style)도 이미 jsdelivr에서 로드하고 있으므로
+// 포털의 CSP(콘텐츠 보안 정책)에 이미 허용되어 있을 가능성이 높은 도메인으로 통일.
+// 혹시 jsdelivr가 막혀 있는 환경을 대비해 실패 시 cdnjs로 한 번 더 재시도한다.
+const PDFJS_VERSION = '3.11.174';
+const PDFJS_SOURCES = [
+  {
+    lib: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.min.js`,
+    worker: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.js`,
+  },
+  {
+    lib: `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.min.js`,
+    worker: `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.js`,
+  },
+];
+
 let _pdfjsLoadingPromise = null;
-function ensurePdfJs() {
-  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+async function ensurePdfJs() {
+  if (window.pdfjsLib) return window.pdfjsLib;
   if (_pdfjsLoadingPromise) return _pdfjsLoadingPromise;
-  _pdfjsLoadingPromise = loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js')
-    .then(() => {
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js';
-      return window.pdfjsLib;
-    });
+
+  _pdfjsLoadingPromise = (async () => {
+    let lastErr = null;
+    for (const src of PDFJS_SOURCES) {
+      try {
+        await loadScript(src.lib);
+        if (!window.pdfjsLib) throw new Error('pdfjsLib 전역 객체를 찾을 수 없습니다.');
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = src.worker;
+        return window.pdfjsLib;
+      } catch (e) {
+        lastErr = e;
+        // 이 CDN이 막혀있을 수 있으니 다음 후보로 넘어감
+      }
+    }
+    _pdfjsLoadingPromise = null; // 실패 시 다음 시도에서 다시 로딩할 수 있도록 초기화
+    throw lastErr || new Error('PDF.js 라이브러리를 불러오지 못했습니다.');
+  })();
+
   return _pdfjsLoadingPromise;
 }
 
@@ -575,7 +602,7 @@ window.rptHandlePdfFile = async function (file) {
     }
   } catch (err) {
     setPdfDropzoneBusy(false, '<i class="bi bi-file-earmark-pdf-fill"></i> PDF 파일을 클릭하거나 여기로 끌어다 놓으세요');
-    setPdfStatus('PDF 처리 중 오류가 발생했습니다: ' + err.message, true);
+    setPdfStatus('PDF 처리 중 오류가 발생했습니다: ' + describeError(err), true);
   }
 };
 
@@ -1030,10 +1057,26 @@ function rptHideError() {
 }
 function loadScript(src) {
   return new Promise((res, rej) => {
+    // 이미 같은 스크립트가 로드되어 있으면 중복 삽입하지 않음
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) { res(); return; }
     const s = document.createElement('script');
-    s.src = src; s.onload = res; s.onerror = rej;
+    s.src = src;
+    s.onload = () => res();
+    // onerror로 넘어오는 것은 Error가 아닌 Event 객체이므로 message가 없다.
+    // 항상 읽을 수 있는 진짜 Error로 감싸서 reject한다.
+    s.onerror = () => rej(new Error(`스크립트를 불러오지 못했습니다: ${src}`));
     document.head.appendChild(s);
   });
+}
+
+// ─── 어떤 형태의 예외든 사람이 읽을 수 있는 문자열로 변환 ───
+function describeError(err) {
+  if (!err) return '알 수 없는 오류';
+  if (typeof err === 'string') return err;
+  if (err.message) return err.message;
+  if (err.name) return err.name;
+  try { return JSON.stringify(err); } catch (e) { return String(err); }
 }
 
 // ─── 자동 초기화 ───
