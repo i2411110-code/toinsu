@@ -536,12 +536,8 @@ async function proceedAfterAuth(user) {
     loadUserIntegratedData(user.email);
     updateVisitCounter(user.email);
     logDailyAccess(user.email); // ✅ 추가: 오늘 접속자 로그 기록
-    window.checkAndShowNotice();
-    window.loadComponent('main-dashboard');
-    window.startSessionTimer();
-}
 
-// ✅ 추가: 관리자 계정이면 접속자 목록 버튼 노출
+    // ✅ 관리자 계정이면 접속자 목록 버튼 노출
     if (user.email === "dlsqh814@naver.com") {
         const btn = document.getElementById('admin-access-log-btn');
         if (btn) btn.style.display = 'flex';
