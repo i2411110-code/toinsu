@@ -351,6 +351,17 @@
                 display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;
             }
             .toss-hero-home-btn:hover { background: rgba(255,255,255,0.3); }
+
+            /* 회원가입 화면 100% 비율 시 상/하단 잘림 방지 */
+            #auth-overlay {
+                overflow-y: auto !important;
+                padding: 40px 0 !important;
+                align-items: flex-start !important;
+            }
+            #auth-overlay .auth-box {
+                margin: 0 auto !important;
+                max-height: none !important;
+            }
         </style>
     </head>
     <body>
@@ -372,6 +383,10 @@
                 <div class="form-group" id="name-input-group" style="text-align:left; display:none; margin-bottom:20px;">
                     <label>이름 (표시될 이름)</label>
                     <input type="text" id="auth-name" class="form-control" placeholder="예: 김가온">
+                </div>
+                <div class="form-group" id="affiliation-input-group" style="text-align:left; display:none; margin-bottom:20px;">
+                    <label>소속 (보험대리점/법인명)</label>
+                    <input type="text" id="auth-affiliation" class="form-control" placeholder="예: 가온사업단/토스인슈어런스">
                 </div>
                 <div class="form-group" style="text-align:left;">
                     <label>이메일 주소</label>
@@ -413,8 +428,18 @@
                     </div>
                     <div id="signup-terms-fulltext" style="display:none; margin-top:10px; max-height:200px; overflow-y:auto; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px; font-size:11.5px; line-height:1.6; color:#475569; white-space:pre-wrap;"></div>
                 </div>
+
+                <div class="form-group" id="privacy-terms-group" style="text-align:left; display:none; margin-bottom:25px;">
+                    <div style="display:flex; align-items:flex-start; gap:8px;">
+                        <input type="checkbox" id="privacy-terms-agree-chk" style="width:16px; height:16px; margin-top:2px; cursor:pointer;">
+                        <label for="privacy-terms-agree-chk" style="font-size:13px; color:#334155; cursor:pointer; line-height:1.4; margin:0;">
+                            [필수] <span onclick="event.preventDefault(); window.toggleSignupPrivacyTerms();" style="color:#2563EB; text-decoration:underline; cursor:pointer;">개인정보 수집·이용 및 제3자 제공 동의</span>에 동의합니다.
+                        </label>
+                    </div>
+                    <div id="signup-privacy-terms-fulltext" style="display:none; margin-top:10px; max-height:200px; overflow-y:auto; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px; font-size:11.5px; line-height:1.6; color:#475569; white-space:pre-wrap;"></div>
+                </div>
                 
-                <button id="auth-submit-btn" class="btn-action" style="margin-top:10px;" onclick="window.handleAuthSubmit()">포탈 접속하기</button>
+                <button id="auth-submit-btn" class="btn-action" style="margin-top:10px; width:100%; height:48px; padding:0; box-sizing:border-box; font-size:14px; border-radius:12px; display:flex; align-items:center; justify-content:center;" onclick="window.handleAuthSubmit()">포탈 접속하기</button>
                 <p id="auth-error-msg" style="color:#EF4444; font-size:13px; margin-top:15px; display:none; font-weight:500;"></p>
 
                 <div style="display:flex; align-items:center; gap:10px; margin:18px 0;">
@@ -423,7 +448,7 @@
                     <div style="flex:1; height:1px; background:#E5E8EB;"></div>
                 </div>
                 <button type="button" id="btn-kakao-login" onclick="window.handleKakaoLogin()"
-                    style="width:100%; padding:11px; border:none; border-radius:12px; font-weight:700; font-size:14px;
+                    style="width:100%; height:48px; padding:0; box-sizing:border-box; border:none; border-radius:12px; font-weight:700; font-size:14px;
                            background-color:#FEE500; color:#181600; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
                     <i class="bi bi-chat-fill"></i> 카카오로 로그인
                 </button>
@@ -883,6 +908,11 @@
                     <input type="checkbox" id="required-terms-chk" style="width:16px; height:16px; cursor:pointer;">
                     [필수] 서비스 이용약관에 동의합니다.
                 </label>
+                <div id="required-privacy-terms-fulltext" style="max-height:220px; overflow-y:auto; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px; font-size:11.5px; line-height:1.6; color:#475569; white-space:pre-wrap; margin-bottom:14px;"></div>
+                <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#334155; cursor:pointer; margin-bottom:16px;">
+                    <input type="checkbox" id="required-privacy-terms-chk" style="width:16px; height:16px; cursor:pointer;">
+                    [필수] 개인정보 수집·이용 및 제3자 제공에 동의합니다.
+                </label>
                 <button class="btn-action" onclick="window.submitRequiredTerms()">동의하고 계속하기</button>
             </div>
         </div>
@@ -898,7 +928,7 @@
                     <div style="font-size:14px; font-weight:800; color:#191F28; margin-bottom:10px;">프로필 정보</div>
                     <div class="mypage-field"><label>이메일</label><div id="mypage-email">-</div></div>
                     <div class="mypage-field"><label>이름</label><div id="mypage-name">-</div></div>
-                    <div class="mypage-field"><label>소속</label><div>토스인슈어런스 주식회사</div></div>
+                    <div class="mypage-field"><label>소속</label><div id="mypage-affiliation">-</div></div>
 
                     <div style="font-size:14px; font-weight:800; color:#191F28; margin:20px 0 10px;">약관 동의</div>
                     <div style="font-size:12px; color:#8B95A1; margin-bottom:8px;">가입 시 동의: <span id="mypage-agreed-date">-</span></div>
@@ -907,6 +937,13 @@
                         <i class="bi bi-chevron-down"></i>
                     </div>
                     <div id="mypage-terms-fulltext" style="display:none; margin-top:8px; max-height:220px; overflow-y:auto; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px; font-size:11.5px; line-height:1.6; color:#475569; white-space:pre-wrap;"></div>
+
+                    <div style="font-size:12px; color:#8B95A1; margin:12px 0 8px;">개인정보 동의: <span id="mypage-privacy-agreed-date">-</span></div>
+                    <div class="mypage-terms-row" onclick="window.toggleMypagePrivacyTerms()">
+                        <span style="font-weight:700; color:#191F28; font-size:13px;">개인정보 수집·이용 동의 <span style="color:#94A3B8; font-weight:500;">(변경 불가)</span></span>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div id="mypage-privacy-terms-fulltext" style="display:none; margin-top:8px; max-height:220px; overflow-y:auto; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px; font-size:11.5px; line-height:1.6; color:#475569; white-space:pre-wrap;"></div>
                 </div>
             </div>
         </div>

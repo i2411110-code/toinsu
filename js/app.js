@@ -126,6 +126,72 @@ const TERMS_TEXT = `제1조 (목적)
 부칙
 본 약관은 2026년 8월 28일부터 시행합니다.`;
 
+// ── 개인정보 수집·이용 및 제3자 제공 동의 (v1.0, 2026-05-15 시행) ──
+const PRIVACY_TERMS_VERSION = "2026-05-15";
+const PRIVACY_TERMS_TEXT = `개인정보 수집·이용 및 제3자 제공 동의
+v1.0·시행일 2026-08-28·심현진IA
+
+[필수] 개인정보 수집·이용 및 제3자 제공 동의
+
+심현진IA(이하 "운영자")는 보험가온포탈 서비스 제공을 위하여 아래와 같이 회원의 개인정보를 수집·이용하고, 원수사에 제공합니다.
+
+1. 개인정보 수집·이용
+
+수집·이용 목적
+- 회원 가입 의사 확인 및 본인 식별
+- 회원자격(보험설계사) 확인
+- 서비스 제공, 이용 이력 관리, 부정이용 방지
+- 고객 문의 응대 및 공지사항 전달
+- 관련법령에 따른 의무 이행
+
+수집 항목
+- 이메일
+- 비밀번호
+- 성명
+- 휴대전화번호
+- 보험설계사 자격번호
+- 소속 보험대리점/법인명
+
+보유 및 이용 기간
+- 회원 탈퇴 시 또는 동의 철회 시까지 보유
+- 단, 관계법령에 따라 보존이 필요한 경우 해당 기간 동안 보존
+  · 전자상거래 등에서의 소비자보호에 관한 법률: 계약·청약철회 기록 5년
+  · 통신비밀보호법: 로그인 기록 3개월
+  · 부정이용 기록: 1년
+
+2. 개인정보 제3자 제공 (원수사)
+
+제공받는 자
+회원이 연동·이용하는 손해보험·생명보험회사 및 공제 (이하 "원수사") 구체 목록은 아래와 같습니다.
+
+손해보험 및 공제
+AIG손해보험, AXA손해보험, DB손해보험, KB손해보험, NH농협손해보험, 교직원공제, 라이나손해보험, 롯데손해보험, 메리츠화재, 삼성화재, 새마을금고공제, 수협공제, 신한EZ손해보험, 신협공제, 예벨손해보험, 우체국보험, 하나손해보험, 한화손해보험, 현대해상화재, 흥국화재
+
+생명보험
+ABL생명, AIA생명, BNP파리바카디프생명, DB생명, KB라이프생명, KDB생명, NH농협생명, iM생명, 교보라이프플래닛생명, 교보생명, 동양생명, 라이나생명, 메트라이프생명, 미래에셋생명, 삼성생명, 신한라이프, 오렌지라이프, 처브라이프생명, 푸르덴셜생명, 푸본현대생명, 하나생명, 한화생명, 흥국생명
+
+※ 신규 원수사가 추가될 경우, 운영자는 사전에 회원에게 공지하고 별도 동의를 받습니다.
+
+제공 목적
+- 보험사 고객등록 처리
+- 보험금 청구서 접수·처리
+
+제공 항목
+- 성명
+- 보험설계사 자격번호
+- 소속 보험대리점/법인
+- 연락처
+- 회원이 입력한 고객등록 및 청구 관련 정보
+
+보유 및 이용 기간
+각 원수사의 개인정보 처리방침에 따름
+
+동의 거부 권리 및 거부 시 불이익
+정보주체는 본 동의를 거부할 권리가 있습니다. 다만, 본 동의는 서비스 제공에 필수적인 사항이므로 거부 시 회원가입 및 서비스 이용이 제한됩니다.
+
+부칙
+본 동의서는 2026년 5월 15일부터 시행합니다.`;
+
 /* ==========================================
    카카오 로그인 (Redirect 방식 — 2026-07-24 카카오 팝업 로그인 지원 종료에 따라 전환)
    - KAKAO_JS_KEY는 카카오 개발자 콘솔 > 내 애플리케이션 > 앱 키 > "JavaScript 키" 값입니다.
@@ -312,43 +378,42 @@ window.toggleAuthTab = function(mode) {
     const regBtn = document.getElementById('tab-register-btn');
     const title = document.getElementById('auth-title');
     const submitBtn = document.getElementById('auth-submit-btn');
-    
-    // 숨기고 보여줄 대상들
-        const inviteGroup = document.getElementById('invite-code-group');
+
+    const inviteGroup = document.getElementById('invite-code-group');
     const passConfirmGroup = document.getElementById('password-confirm-group');
     const nameGroup = document.getElementById('name-input-group');
-    const loginHelperGroup = document.getElementById('login-helper-group'); // ✅ 이메일기억/비번찾기 줄
-    const emailHelperText = document.getElementById('email-helper-text');   // ✅ 이메일 필수 안내 문구
-    const termsGroup = document.getElementById('terms-group'); // ✅ 필수 약관 동의 줄
-    
+    const affiliationGroup = document.getElementById('affiliation-input-group');
+    const loginHelperGroup = document.getElementById('login-helper-group');
+    const emailHelperText = document.getElementById('email-helper-text');
+    const termsGroup = document.getElementById('terms-group');
+    const privacyTermsGroup = document.getElementById('privacy-terms-group');
+
     document.getElementById('auth-error-msg').style.display = 'none';
-    
+
     if(mode === 'login') {
-        // [로그인 화면 세팅]
         loginBtn.classList.add('active'); regBtn.classList.remove('active');
         title.innerText = "보험가온포탈 로그인"; submitBtn.innerText = "포탈 접속하기";
-        
-                if(inviteGroup) inviteGroup.style.display = 'none';
+
+        if(inviteGroup) inviteGroup.style.display = 'none';
         if(nameGroup) nameGroup.style.display = 'none';
+        if(affiliationGroup) affiliationGroup.style.display = 'none';
         if(passConfirmGroup) passConfirmGroup.style.display = 'none';
         if(emailHelperText) emailHelperText.style.display = 'none';
         if(termsGroup) termsGroup.style.display = 'none';
-        
-        // 로그인 화면 전용 옵션 표시
+        if(privacyTermsGroup) privacyTermsGroup.style.display = 'none';
+
         if(loginHelperGroup) loginHelperGroup.style.display = 'flex';
     } else {
-        // [회원가입 화면 세팅]
         regBtn.classList.add('active'); loginBtn.classList.remove('active');
         title.innerText = "신규 멤버 회원가입"; submitBtn.innerText = "가입 및 로그인";
-        
+
         if(inviteGroup) inviteGroup.style.display = 'block';
         if(nameGroup) nameGroup.style.display = 'block';
-        if(passConfirmGroup) passConfirmGroup.style.display = 'block';        if(inviteGroup) inviteGroup.style.display = 'block';
-        if(nameGroup) nameGroup.style.display = 'block';
+        if(affiliationGroup) affiliationGroup.style.display = 'block';
         if(passConfirmGroup) passConfirmGroup.style.display = 'block';
         if(termsGroup) termsGroup.style.display = 'block';
-        
-        // 가입 시 이메일 안내 표시 & 기억하기 줄 숨김
+        if(privacyTermsGroup) privacyTermsGroup.style.display = 'block';
+
         if(emailHelperText) emailHelperText.style.display = 'block';
         if(loginHelperGroup) loginHelperGroup.style.display = 'none';
     }
@@ -398,14 +463,23 @@ window.handleAuthSubmit = function() {
             errorMsg.innerText = "❌ 서비스 이용약관에 동의하셔야 가입이 가능합니다.";
             errorMsg.style.display = "block"; return;
         }
+        const privacyChk = document.getElementById('privacy-terms-agree-chk');
+        if(!privacyChk || !privacyChk.checked) {
+            errorMsg.innerText = "❌ 개인정보 수집·이용 및 제3자 제공에 동의하셔야 가입이 가능합니다.";
+            errorMsg.style.display = "block"; return;
+        }
         createUserWithEmailAndPassword(auth, email, password)
             .then(async (userCred) => {
                 const userName = document.getElementById('auth-name')?.value.trim() || '';
+                const affiliation = document.getElementById('auth-affiliation')?.value.trim() || '';
                 const userRef = doc(db, "users_portal", userCred.user.email);
                 await setDoc(userRef, {
                     displayName: userName,
+                    affiliation: affiliation,
                     termsAgreedAt: new Date().toISOString(),
-                    termsVersion: TERMS_VERSION
+                    termsVersion: TERMS_VERSION,
+                    privacyTermsAgreedAt: new Date().toISOString(),
+                    privacyTermsVersion: PRIVACY_TERMS_VERSION
                 }, { merge: true });
                 if (shouldSave) {
                     localStorage.setItem('gaonSavedEmail', email);
@@ -450,13 +524,16 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         try {
             const snap = await getDoc(doc(db, "users_portal", user.email));
-            const agreed = snap.exists() && !!snap.data().termsAgreedAt;
+            const data = snap.exists() ? snap.data() : {};
+            const agreed = !!data.termsAgreedAt && !!data.privacyTermsAgreedAt;
             if (agreed) {
                 proceedAfterAuth(user);
             } else {
                 document.getElementById('auth-overlay').style.display = 'none';
                 const box = document.getElementById('required-terms-fulltext');
                 if (box && !box.textContent) box.textContent = TERMS_TEXT;
+                const privacyBox = document.getElementById('required-privacy-terms-fulltext');
+                if (privacyBox && !privacyBox.textContent) privacyBox.textContent = PRIVACY_TERMS_TEXT;
                 document.getElementById('terms-required-modal').style.display = 'flex';
             }
         } catch (e) {
@@ -504,6 +581,17 @@ window.handleForgotPassword = function() {
     }
 };
 
+    if (confirm(`${email} 주소로 비밀번호 재설정 링크를 전송하시겠습니까?`)) {
+        sendPasswordResetEmail(auth, email)
+            .then(() => {
+                alert("✉️ 비밀번호 재설정 이메일이 발송되었습니다.\n메일함을 확인하여 비밀번호를 변경해 주세요.");
+            })
+            .catch((error) => {
+                alert("❌ 메일 발송 실패: " + error.message);
+            });
+    }
+};
+
 // ==========================================
 // [신규 추가] 약관 동의 / 마이페이지
 // ==========================================
@@ -514,10 +602,18 @@ window.toggleSignupTerms = function() {
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
 };
 
+window.toggleSignupPrivacyTerms = function() {
+    const box = document.getElementById('signup-privacy-terms-fulltext');
+    if (!box) return;
+    if (!box.textContent) box.textContent = PRIVACY_TERMS_TEXT;
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+};
+
 window.submitRequiredTerms = async function() {
     const chk = document.getElementById('required-terms-chk');
-    if (!chk || !chk.checked) {
-        alert('필수 약관에 동의하셔야 서비스를 계속 이용하실 수 있습니다.');
+    const privacyChk = document.getElementById('required-privacy-terms-chk');
+    if (!chk || !chk.checked || !privacyChk || !privacyChk.checked) {
+        alert('필수 약관에 모두 동의하셔야 서비스를 계속 이용하실 수 있습니다.');
         return;
     }
     const user = auth.currentUser;
@@ -525,7 +621,9 @@ window.submitRequiredTerms = async function() {
     try {
         await setDoc(doc(db, "users_portal", user.email), {
             termsAgreedAt: new Date().toISOString(),
-            termsVersion: TERMS_VERSION
+            termsVersion: TERMS_VERSION,
+            privacyTermsAgreedAt: new Date().toISOString(),
+            privacyTermsVersion: PRIVACY_TERMS_VERSION
         }, { merge: true });
         document.getElementById('terms-required-modal').style.display = 'none';
         proceedAfterAuth(user);
@@ -542,11 +640,16 @@ window.openMypageModal = async function() {
     try {
         const snap = await getDoc(doc(db, "users_portal", user.email));
         const data = snap.exists() ? snap.data() : {};
+        document.getElementById('mypage-affiliation').innerText = data.affiliation || '-';
         document.getElementById('mypage-agreed-date').innerText = data.termsAgreedAt
             ? new Date(data.termsAgreedAt).toLocaleDateString('ko-KR')
             : '동의 기록 없음';
+        document.getElementById('mypage-privacy-agreed-date').innerText = data.privacyTermsAgreedAt
+            ? new Date(data.privacyTermsAgreedAt).toLocaleDateString('ko-KR')
+            : '동의 기록 없음';
     } catch(e) {
         document.getElementById('mypage-agreed-date').innerText = '-';
+        document.getElementById('mypage-privacy-agreed-date').innerText = '-';
     }
     document.getElementById('mypage-modal').style.display = 'flex';
 };
@@ -561,6 +664,14 @@ window.toggleMypageTerms = function() {
     if (!box.textContent) box.textContent = TERMS_TEXT;
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
 };
+
+window.toggleMypagePrivacyTerms = function() {
+    const box = document.getElementById('mypage-privacy-terms-fulltext');
+    if (!box) return;
+    if (!box.textContent) box.textContent = PRIVACY_TERMS_TEXT;
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+};
+
 
 // ==========================================
 // [신규 추가] 30분 자동 로그아웃 및 연장 시스템
