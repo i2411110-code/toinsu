@@ -31,12 +31,12 @@
 
   // ─── 연령별 보험료 기준 (원) ───
   const PREMIUM_STD = [
-    { maxAge: 20, low: 80000,  high: 150000, over: 220000 },
-    { maxAge: 30, low: 80000,  high: 150000, over: 220000 },
-    { maxAge: 40, low: 100000, high: 200000, over: 300000 },
-    { maxAge: 50, low: 150000, high: 280000, over: 420000 },
-    { maxAge: 60, low: 200000, high: 350000, over: 520000 },
-    { maxAge: 99, low: 250000, high: 430000, over: 650000 },
+    { maxAge: 20, low: 80000,  high: 150000, over: 220000, avg: 115000 },
+    { maxAge: 30, low: 80000,  high: 150000, over: 220000, avg: 115000 },
+    { maxAge: 40, low: 100000, high: 200000, over: 300000, avg: 150000 },
+    { maxAge: 50, low: 150000, high: 280000, over: 420000, avg: 215000 },
+    { maxAge: 60, low: 200000, high: 350000, over: 520000, avg: 275000 },
+    { maxAge: 99, low: 250000, high: 430000, over: 650000, avg: 340000 },
   ];
 
   // ─── 보장 항목 상태(부족/적정/미가입/과잉) 판정 & 공통 메타 ───
@@ -66,6 +66,12 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
     if (total <= s.over) return { label: '다소 높음', emoji: '🟠', cls: 'lv-warn' };
     return                     { label: '과다',     emoji: '🔴', cls: 'lv-over' };
   }
+
+   function getPeerAvgPremium(age) {
+    const s = PREMIUM_STD.find(r => age <= r.maxAge) || PREMIUM_STD[PREMIUM_STD.length - 1];
+    return s.avg;
+  }
+
 
   // ─── ✅ 연령대별 적정 보험료 가이드 (참고용 · 소득 대비 % 기준) ───
   const AGE_GUIDE = [
@@ -225,6 +231,9 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
     '[ items 작성 규칙 ]',
     '1. 전달받은 "상담요청_배경" 문구를 반드시 참고하여, items의 첫 번째 항목(1번)은',
     '   고객이 신청한 상담카테고리와 직접적으로 관련된 내용으로 작성하세요.',
+    '   상담카테고리가 "또래월보험비교"인 경우, 전달받은 "또래평균월납보험료" 값을 반드시 그대로 인용해',
+    '   "고객님과 비슷한 또래는 평균 OOO원대의 보험료를 납입하고 계십니다" 형태로 실제 숫자를 채워 문장을 완성하세요.',
+    '   이 숫자는 반드시 전달받은 데이터값을 그대로 사용하고 임의로 만들어내지 마세요.',
     '   제목이나 내용에 고객이 궁금해할 법한 질문형 뉘앙스(예: "~하지 않으셨나요?", "~괜찮으신가요?")를',
     '   자연스럽게 녹여 궁금증을 유발하세요. 단, 물음표로 끝나는 문장은 남발하지 말고 1문장 이내로 제한.',
     '2. 나머지 2개 항목은 전체보장항목과 보험사별 데이터를 종합 분석하여 선정.',
@@ -295,6 +304,7 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
       고객나이: gState.age || 40,
       상담카테고리: gState.category || '또래월보험비교',
       상담요청_배경: categoryHint(gState.category || '또래월보험비교'),
+      또래평균월납보험료: getPeerAvgPremium(gState.age || 40).toLocaleString() + '원',
       가입보험사수: companies.length,
       가입보험사목록: companies,
       보험사별월납보험료: premiumDetail,
