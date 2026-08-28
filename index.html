@@ -464,7 +464,10 @@
             <div class="nav-right">
                 <div class="user-badge user-pill"><i class="bi bi-person-badge-fill"></i> <span id="user-display-email">인증 확인 중...</span></div>
                 <button class="logout-btn mypage-btn-blue" onclick="window.openMypageModal()"><i class="bi bi-person-circle"></i> 마이페이지</button>
-                <button class="logout-btn" onclick="window.handleLogout()"><i class="bi bi-box-arrow-right"></i> 로그아웃</button>
+                <button id="admin-access-log-btn" class="logout-btn mypage-btn-blue" style="display:none;" onclick="window.openTodayAccessModal()">
+    <i class="bi bi-people-fill"></i> 접속자
+</button>
+<button class="logout-btn" onclick="window.handleLogout()"><i class="bi bi-box-arrow-right"></i> 로그아웃</button>
                 <div class="counter-pill">TODAY <span id="count-today">-</span></div>
                 <div class="counter-pill">TOTAL <span id="count-total">-</span></div>
             </div>
@@ -977,6 +980,20 @@
                     <button class="btn-action" style="flex:1; background:#E2E8F0; color:#475569;" onclick="window.closeWithdrawModal()">취소</button>
                     <button id="withdraw-submit-btn" class="btn-action" style="flex:1; background:#EF4444; color:white;" onclick="window.executeWithdraw()">탈퇴하기</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- 오늘 접속자 목록 모달 (관리자 전용) -->
+        <div id="today-access-modal" class="portal-modal" style="z-index: 4400; display: none;" onclick="window.closeTodayAccessModal()">
+            <div class="modal-body" style="max-width: 420px; width: 90%; padding: 0; background:white; border-radius:16px; overflow:hidden;" onclick="event.stopPropagation()">
+                <div style="background:#1E293B; color:white; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size:16px; font-weight:700;">
+                        <i class="bi bi-people-fill"></i> 오늘 접속자 목록
+                        <span id="today-access-date" style="font-size:12px; font-weight:500; opacity:0.7; margin-left:6px;"></span>
+                    </div>
+                    <button onclick="window.closeTodayAccessModal()" style="background:none; border:none; color:white; font-size:22px; cursor:pointer;">&times;</button>
+                </div>
+                <div id="today-access-body" style="padding:16px 20px; max-height:60vh; overflow-y:auto;"></div>
             </div>
         </div>
 

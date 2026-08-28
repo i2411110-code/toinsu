@@ -366,6 +366,26 @@ async function updateVisitCounter(email) {
     }
 }
 
+// ==========================================
+// [신규 추가] 당일 접속자 로그 기록
+// ==========================================
+async function logDailyAccess(email) {
+    if (!email) return;
+    const now = new Date();
+    const today = now.getFullYear() + '-'
+        + String(now.getMonth() + 1).padStart(2, '0') + '-'
+        + String(now.getDate()).padStart(2, '0');
+    try {
+        const logRef = doc(db, "daily_access_logs", today, "users", email);
+        await setDoc(logRef, {
+            email,
+            lastAccessAt: now.toISOString()
+        }, { merge: true });
+    } catch (e) {
+        console.error("접속 로그 기록 실패:", e);
+    }
+}
+
 window.checkAndShowNotice = function() {
     const hideUntil = localStorage.getItem('hideNoticeGaon');
     if (!hideUntil || new Date().getTime() > parseInt(hideUntil)) {
@@ -515,6 +535,18 @@ async function proceedAfterAuth(user) {
     window.__currentUserUid = user.uid;
     loadUserIntegratedData(user.email);
     updateVisitCounter(user.email);
+    logDailyAccess(user.email); // ✅ 추가: 오늘 접속자 로그 기록
+    window.checkAndShowNotice();
+    window.loadComponent('main-dashboard');
+    window.startSessionTimer();
+}
+
+// ✅ 추가: 관리자 계정이면 접속자 목록 버튼 노출
+    if (user.email === "dlsqh814@naver.com") {
+        const btn = document.getElementById('admin-access-log-btn');
+        if (btn) btn.style.display = 'flex';
+    }
+
     window.checkAndShowNotice();
     window.loadComponent('main-dashboard');
     window.startSessionTimer();
@@ -2455,4 +2487,51 @@ window.deleteCurrentNotice = async function() {
     } catch(e) {
         alert('삭제 실패: ' + e.message);
     }
+};
+
+// ==========================================
+// [신규 추가] 관리자 — 오늘 접속자 목록 조회
+// ==========================================
+const ACCESS_LOG_ADMIN_EMAIL = "dlsqh814@naver.com"; // 관리자 이메일
+
+window.openTodayAccessModal = async function() {
+    const modal = document.getElementById('today-access-modal');
+    const body  = document.getElementById('today-access-body');
+    if (!modal || !body) return;
+    modal.style.display = 'flex';
+    body.innerHTML = '<div style="text-align:center;padding:30px;color:#94A3B8;font-size:13px;">불러오는 중...</div>';
+
+    const now = new Date();
+    const today = now.getFullYear() + '-'
+        + String(now.getMonth() + 1).padStart(2, '0') + '-'
+        + String(now.getDate()).padStart(2, '0');
+    document.getElementById('today-access-date').textContent = today;
+
+    try {
+        const { collection, getDocs, orderBy, query } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        const colRef = collection(db, "daily_access_logs", today, "users");
+        const q = query(colRef, orderBy("lastAccessAt", "desc"));
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+            body.innerHTML = '<div style="text-align:center;padding:30px;color:#94A3B8;font-size:13px;">오늘 접속한 사용자가 없습니다.</div>';
+            return;
+        }
+
+        body.innerHTML = snap.docs.map(d => {
+            const data = d.data();
+            const t = data.lastAccessAt ? new Date(data.lastAccessAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '-';
+            return `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#F8FAFC; border:1px solid #F1F5F9; border-radius:10px; margin-bottom:8px;">
+                    <span style="font-size:13.5px; font-weight:700; color:#191F28;">${data.email}</span>
+                    <span style="font-size:12px; color:#94A3B8;">${t}</span>
+                </div>`;
+        }).join('') + `<div style="text-align:center; margin-top:10px; font-size:12px; color:#94A3B8;">총 ${snap.size}명 접속</div>`;
+    } catch (e) {
+        body.innerHTML = `<div style="text-align:center;padding:30px;color:#EF4444;font-size:13px;">조회 실패: ${e.message}</div>`;
+    }
+};
+
+window.closeTodayAccessModal = function() {
+    document.getElementById('today-access-modal').style.display = 'none';
 };
