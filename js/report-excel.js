@@ -99,8 +99,30 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
   }
 
   // ─── 규칙 기반 폴백 로직 (AI 호출 실패 시 사용) ───
-  function buildItemsFallback(lowItems, age, total, level) {
+  function buildItemsFallback(lowItems, age, total, level, category, excessItems) {
     var out = [];
+    excessItems = excessItems || [];
+
+    // 카테고리별 우선 규칙 — 있으면 무조건 첫 번째로 추가
+    var categoryRule = null;
+    if (category === '실비부족' && lowItems.some(function(r){ return r.cat === '실비'; })) {
+      var s0 = lowItems.filter(function(r){ return r.cat === '실비'; }).map(function(r){ return r.label; });
+      categoryRule = { emoji:'🔴', title:'실손의료비, 지금 상태로 괜찮으신가요?',
+        body:'요청하신 실비 점검 결과, 보장 한도가 권장 기준에 못 미칩니다.\n(부족 항목: ' + s0.join(', ') + ')\n실비는 실제 진료비를 직접 돌려받는 항목이라 한도 부족 시 자비 부담이 커집니다.' };
+    } else if (category === '보장과잉' && excessItems.length) {
+      var s1 = excessItems.slice(0, 3).map(function(r){ return r.label; });
+      categoryRule = { emoji:'🟠', title:'혹시 같은 보장을 여러 번 가입하고 계신 건 아닐까요?',
+        body:'요청하신 보험료 점검 결과 일부 항목이 권장 기준보다 과도하게 높습니다.\n(해당 항목: ' + s1.join(', ') + ')\n중복 보장은 사고 시 비례보상되어 실제 받는 금액은 생각보다 적을 수 있습니다.' };
+    } else if (category === '보장부족' && lowItems.length) {
+      var s2 = lowItems.slice(0, 3).map(function(r){ return r.label; });
+      categoryRule = { emoji:'🔴', title:'가장 큰 리스크부터 짚어드릴게요',
+        body:'요청하신 보장 점검 결과, 다음 항목이 권장 기준 대비 부족합니다.\n(부족 항목: ' + s2.join(', ') + ')\n특히 진단비·수술비처럼 목돈이 드는 항목의 공백은 우선 채워두시는 게 좋습니다.' };
+    } else if (category === '또래월보험비교') {
+      categoryRule = { emoji:'🟡', title: age + '세 또래들은 보통 얼마를 낼까요?',
+        body:'현재 월 ' + total.toLocaleString() + '원은 ' + age + '세 기준 ' + level.label + ' 수준입니다.\n또래 대비 보험료 수준뿐 아니라 보장 구성도 함께 비교해볼 필요가 있습니다.' };
+    }
+    if (categoryRule) out.push(categoryRule);
+
     var RULES = [
       { test: function() { return lowItems.some(function(r){ return r.cat === '실비'; }); },
         build: function() {
@@ -158,7 +180,14 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
     return out;
   }
 
-  function buildOpinionFallback(name, age, total, level, lowItems, items) {
+  function buildOpinionFallback(name, age, total, level, lowItems, items, category) {
+    var catNote = {
+      '또래월보험비교': ' 특히 또래 대비 보험료·보장 수준을 함께 짚어드렸습니다.',
+      '실비부족': ' 요청하신 실비 보장 점검 결과를 우선적으로 반영했습니다.',
+      '보장과잉': ' 요청하신 보험료 절감 가능성을 중심으로 살펴봤습니다.',
+      '보장부족': ' 요청하신 보장 공백을 우선순위로 짚어드렸습니다.',
+      '종합분석': ''
+    }[category] || '';
     var cats = [];
     lowItems.forEach(function(r){ if (cats.indexOf(r.cat) === -1) cats.push(r.cat); });
     var catStr = cats.join('·') || '없음';
@@ -169,7 +198,19 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
       return name + '님의 총 월납 보험료(' + total.toLocaleString() + '원)는 ' + age + '세 기준 ' + level.label + ' 수준입니다. ' + (catStr.length > 2 ? catStr + ' 보장이 미흡하여 ' : '') + '비용 대비 보장 효율이 떨어질 수 있습니다. 중복·불필요 특약을 정리하고 핵심 보장을 보강하는 리모델링 상담을 권장드립니다.';
     if (level.label === '부족')
       return name + '님은 ' + age + '세 기준 보험료 납입이 상대적으로 적은 편입니다. 현재 보장 공백(' + catStr + ')을 소액으로 효율적으로 채울 수 있는 구조가 있어, 추가 부담을 최소화하면서 핵심 보장을 확보하는 방향으로 안내드리겠습니다.';
-    return name + '님은 전반적으로 ' + level.label + ' 수준의 보험료를 납입 중이시나, ' + (catStr.length > 2 ? catStr + ' 영역에서 ' : '일부 항목에서 ') + '보장 공백이 발견되었습니다. 현재 구조를 유지하면서 핵심 공백만 효율적으로 보완하는 방향으로 상담드리겠습니다.';
+    return name + '님은 전반적으로 ' + level.label + ' 수준의 보험료를 납입 중이시나, ' + (catStr.length > 2 ? catStr + ' 영역에서 ' : '일부 항목에서 ') + '보장 공백이 발견되었습니다.' + catNote + ' 현재 구조를 유지하면서 핵심 공백만 효율적으로 보완하는 방향으로 상담드리겠습니다.';
+  }
+
+  // ─── 상담 카테고리별 AI 지시 힌트 ───
+  function categoryHint(category) {
+    var map = {
+      '또래월보험비교': '고객은 자신과 비슷한 나이·상황의 또래들과 비교했을 때 본인의 보험료·보장 수준이 어느 위치에 있는지를 가장 궁금해합니다. 반드시 "또래 대비" 관점(보험료 수준, 보장 공백)을 첫 번째 인사이트에서 다루고, "또래들은 보통 이런데 고객님은 어떻다"는 식으로 비교 궁금증을 자극하세요.',
+      '실비부족': '고객은 실손의료비 보장이 충분한지를 걱정하며 신청했습니다. 실비(질병/상해 입원·통원·처방조제) 관련 항목을 반드시 첫 번째 인사이트로 다루고, 실제 진료비 부담과 연결해 위기감을 조성하세요.',
+      '종합분석': '고객은 본인의 전체 보험 구성을 폭넓게 점검받고 싶어합니다. 보험료 수준과 보장 공백을 균형 있게 다루되, 가장 심각한 리스크를 첫 번째로 배치하세요.',
+      '보장부족': '고객은 특정 보장이 부족하지 않은지 걱정하며 신청했습니다. 부족항목요약 중 가장 치명적인 항목(진단비·수술비 등 고액 지출 관련)을 첫 번째 인사이트로 다루세요.',
+      '보장과잉': '고객은 보험료를 너무 많이 내고 있는 건 아닌지 걱정하며 신청했습니다. 과잉항목요약과 보험사별 중복 가입 여부를 첫 번째 인사이트로 다루고, 절약 가능성을 구체적으로 암시하세요.',
+    };
+    return map[category] || map['종합분석'];
   }
 
   // ─── AI 멘트 작성 가이드 ───
@@ -182,7 +223,11 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
     '{"items":[{"emoji":"이모지","title":"제목","body":"내용"}, ...3개],"opinion":"종합의견"}',
     '',
     '[ items 작성 규칙 ]',
-    '1. 전체보장항목과 보험사별 데이터를 종합 분석하여 가장 중요한 인사이트 3개 선정.',
+    '1. 전달받은 "상담요청_배경" 문구를 반드시 참고하여, items의 첫 번째 항목(1번)은',
+    '   고객이 신청한 상담카테고리와 직접적으로 관련된 내용으로 작성하세요.',
+    '   제목이나 내용에 고객이 궁금해할 법한 질문형 뉘앙스(예: "~하지 않으셨나요?", "~괜찮으신가요?")를',
+    '   자연스럽게 녹여 궁금증을 유발하세요. 단, 물음표로 끝나는 문장은 남발하지 말고 1문장 이내로 제한.',
+    '2. 나머지 2개 항목은 전체보장항목과 보험사별 데이터를 종합 분석하여 선정.',
     '   단순 부족항목 나열이 아닌, 아래 관점에서 고객에게 실질적으로 중요한 항목을 우선:',
     '   - 중복 가입 여부 (동일 보장을 여러 보험사에서 가입 → 실제 지급은 비례 보상)',
     '   - 보험료 대비 보장 효율 (보험료는 높은데 핵심 보장이 부족한 구조)',
@@ -217,6 +262,7 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
     var rows = exState.rows || [];
     var companies = exState.companies || [];
     var lowItems = rows.filter(function(r){ return r.status === 'low'; });
+    var excessItems = rows.filter(function(r){ return r.status === 'excess'; });
     var okItems  = rows.filter(function(r){ return r.status === 'ok'; });
     var total = gState.premiums.reduce(function(s,p){ return s+(p.amount||0); }, 0);
     var level = evalLevel(gState.age || 40, total);
@@ -238,6 +284,7 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
     return {
       고객나이: gState.age || 40,
       상담카테고리: gState.category || '또래월보험비교',
+      상담요청_배경: categoryHint(gState.category || '또래월보험비교'),
       가입보험사수: companies.length,
       가입보험사목록: companies,
       보험사별월납보험료: premiumDetail,
@@ -245,6 +292,9 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
       연령대비보험료수준: level.label,
       전체보장항목: allItems,
       부족항목요약: lowItems.map(function(r){
+        return { 대분류: r.cat, 소분류: r.label, 고객보장합산_만원: r.customerSum, 권장기준_만원: r.recommend };
+      }),
+      과잉항목요약: excessItems.map(function(r){
         return { 대분류: r.cat, 소분류: r.label, 고객보장합산_만원: r.customerSum, 권장기준_만원: r.recommend };
       }),
     };
@@ -435,8 +485,8 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
       items = state.aiContent.items;
       opinion = state.aiContent.opinion || '';
     } else {
-      items = buildItemsFallback(lowItems, age, total, level);
-      opinion = buildOpinionFallback(name, age, total, level, lowItems, items);
+      items = buildItemsFallback(lowItems, age, total, level, state.category, state.excessItems);
+      opinion = buildOpinionFallback(name, age, total, level, lowItems, items, state.category);
     }
 
     var lines = [];
@@ -1183,6 +1233,7 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
         return { name: name, amount: premiumAmounts[i] || 0 };
       }),
       lowItems: lowItems,
+      excessItems: rows.filter(function(r){ return r.status === 'excess'; }),
       aiContent: null,
       essentialGroups: ESSENTIAL_GROUPS,
       applyDateTime: formatKoreanDateTime(new Date()),
@@ -1316,6 +1367,7 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
     var amtEl = document.getElementById('rptex-amt-' + rowIdx);
     if (amtEl) amtEl.className = 'rptex-editable-cell' + ((r.status === 'low' || r.status === 'excess') ? ' rptex-amt-low' : '');
     gState.lowItems = exState.rows.filter(function(r){ return r.status === 'low'; });
+    gState.excessItems = exState.rows.filter(function(r){ return r.status === 'excess'; });
     autoMapEssential(exState.rows);
     renderEssentialGrid();
     refreshMsg();
@@ -1334,6 +1386,7 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
       if (stEl) { stEl.className = 'rptex-status ' + meta.cls; stEl.textContent = meta.label; }
       el.className = 'rptex-editable-cell' + ((r.status === 'low' || r.status === 'excess') ? ' rptex-amt-low' : '');
       gState.lowItems = exState.rows.filter(function(r){ return r.status === 'low'; });
+      gState.excessItems = exState.rows.filter(function(r){ return r.status === 'excess'; });
       // 통합 분석표를 수정했을 때 필수 보장 카드도 함께 갱신
       autoMapEssential(exState.rows);
       renderEssentialGrid();
