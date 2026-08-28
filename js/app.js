@@ -36,6 +36,96 @@ window.__firestoreDb = db;
 let currentUserEmail = "";
 const MASTER_INVITE_CODE = "gaon2026";
 
+// ── 서비스 이용약관 (2026.05.13 시행) ──
+const TERMS_VERSION = "2026-05-13";
+const TERMS_TEXT = `제1조 (목적)
+본 약관은 심현진IA(이하 "운영자")가 운영하는 보험가온포탈 서비스
+(이하 "서비스")의 이용과 관련하여 운영자와 회원 간의 권리, 의무 및 책임사항,
+기타 필요한 사항을 규정함을 목적으로 합니다.
+
+제2조 (용어의 정의)
+① "서비스"란 운영자가 보험설계사에게 제공하는 영업지원 플랫폼으로,
+   보험사 고객등록 자동화, 보험금 청구 자동화, 판례 조회 및 실비계산 지원 등을 포함합니다.
+② "회원"이란 본 약관에 동의하고 서비스 이용계약을 체결한 자로,
+   현직 보험설계사 자격을 가진 자를 의미합니다.
+③ "아이디"란 회원의 식별 및 서비스 이용을 위해 회원이 설정하고
+   운영자가 부여하는 이메일 주소를 의미합니다.
+④ "원수사"란 회원이 가입·청구 업무를 수행하는 손해보험·생명보험회사를 의미합니다.
+⑤ "GA사"란 회원이 소속된 보험대리점 또는 보험법인을 의미합니다.
+
+제3조 (약관의 효력 및 변경)
+① 본 약관은 서비스 화면에 게시하거나 기타 방법으로 회원에게 공지함으로써 효력이 발생합니다.
+② 운영자는 관련법령을 위배하지 않는 범위에서 본 약관을 개정할 수 있으며,
+   개정 시 적용일자 및 개정사유를 명시하여 적용일자 7일 전부터 서비스 초기화면에 공지합니다.
+   다만, 회원에게 불리한 약관 개정의 경우 30일 전부터 공지하고 별도 동의를 받습니다.
+③ 회원이 개정약관에 동의하지 않는 경우 이용계약을 해지할 수 있습니다.
+
+제4조 (회원가입 및 자격)
+① 회원이 되고자 하는 자는 운영자가 정한 가입 양식에 따라 회원정보를 기입한 후
+   본 약관 및 개인정보 처리방침에 동의함으로써 회원가입을 신청합니다.
+② 회원가입은 현직 보험설계사에게만 허용되며, 운영자는 자격 확인을 위해
+   설계사 자격번호, 소속 보험대리점·법인 정보 등을 요청할 수 있습니다.
+③ 운영자는 다음 각호에 해당하는 경우 회원가입을 거절하거나 사후에 이용계약을 해지할 수 있습니다.
+   1. 타인의 정보를 도용하거나 허위 정보를 기재한 경우
+   2. 보험설계사 자격이 없거나 자격이 정지·취소된 경우
+   3. 기타 운영자가 정한 가입 요건을 충족하지 못하는 경우
+④ 회원가입 신청은 만 19세 이상인 자에 한합니다.
+
+제5조 (서비스의 내용)
+① 운영자가 제공하는 서비스는 다음과 같습니다.
+   1. 보험사 고객등록 자동화 서비스
+   2. 보험금 청구서 자동 양식변환 및 일괄 발송 서비스
+   3. 보험 판례 조회 및 실비계산 지원 서비스
+   4. 기타 운영자가 추가로 개발하거나 다른 회사와의 제휴를 통해 제공하는 일체의 서비스
+② 운영자는 서비스의 내용을 변경할 수 있으며, 이 경우 변경된 내용을 회원에게 공지합니다.
+
+제6조 (서비스 이용)
+① 서비스는 연중무휴 1일 24시간 이용을 원칙으로 합니다.
+   다만, 운영자의 업무상·기술상의 사유로 서비스가 일시 중단될 수 있습니다.
+② 회원은 본인의 아이디와 비밀번호를 제3자에게 양도·대여할 수 없으며,
+   이로 인한 피해는 회원이 부담합니다.
+
+제7조 (이용계약의 해지)
+① 회원은 언제든지 서비스 내 회원탈퇴 기능 또는 고객센터를 통해 이용계약을 해지할 수 있습니다.
+② 운영자는 회원이 본 약관에 정한 의무를 위반한 경우 이용계약을 해지할 수 있습니다.
+
+제8조 (회원의 의무)
+회원은 다음 행위를 하여서는 안 됩니다.
+1. 타인의 개인정보를 도용·무단 이용하는 행위
+2. 보험사기, 명의도용 등 관계법령을 위반하는 행위
+3. 서비스의 운영을 방해하거나 시스템에 무단 접근하는 행위
+4. 회원이 처리하는 고객 정보를 서비스 외 목적으로 사용하거나 유출하는 행위
+5. 기타 공서양속에 반하거나 운영자의 정당한 운영을 방해하는 행위
+
+제9조 (운영자의 의무)
+① 운영자는 안정적인 서비스 제공을 위해 최선을 다합니다.
+② 운영자는 회원의 개인정보 보호를 위해 개인정보 처리방침을 수립하여 준수합니다.
+③ 운영자는 서비스 이용과 관련한 회원의 의견이나 불만을 처리하기 위해 고객센터를 운영합니다.
+
+제10조 (개인정보 보호)
+운영자의 개인정보 처리에 관한 사항은 별도로 정한 "개인정보 처리방침"에 따릅니다.
+
+제11조 (서비스 변경 및 중단)
+① 운영자는 운영상·기술상의 필요에 따라 서비스의 전부 또는 일부를 변경하거나 중단할 수 있습니다.
+② 무료로 제공되는 서비스의 일부 또는 전부를 변경·중단함으로 인하여 발생하는 손해에 대해
+   운영자는 별도의 보상을 하지 않습니다.
+
+제12조 (책임의 제한)
+① 운영자는 천재지변, 정전, 통신장애 등 운영자의 귀책사유가 아닌 사유로 서비스를 제공할 수 없는 경우
+   책임이 면제됩니다.
+② 운영자는 회원이 입력한 정보의 정확성에 대해 책임지지 않으며, 회원이 입력한 정보로 인해
+   발생한 결과(원수사로의 잘못된 전송, 청구 오류 등)에 대한 책임은 해당 회원에게 있습니다.
+③ 운영자는 회원과 원수사·GA사·제3자 간의 거래·분쟁에 개입하지 않으며 이에 대한
+   책임을 지지 않습니다.
+
+제13조 (분쟁해결 및 관할법원)
+① 본 약관에 명시되지 않은 사항은 관계법령 및 상관례에 따릅니다.
+② 서비스 이용과 관련하여 운영자와 회원 간 분쟁이 발생할 경우 우선 상호 협의하여 해결합니다.
+③ 협의가 이루어지지 않을 경우, 민사소송법상 관할법원을 분쟁의 관할법원으로 합니다.
+
+부칙
+본 약관은 2026년 8월 28일부터 시행합니다.`;
+
 /* ==========================================
    카카오 로그인 (Redirect 방식 — 2026-07-24 카카오 팝업 로그인 지원 종료에 따라 전환)
    - KAKAO_JS_KEY는 카카오 개발자 콘솔 > 내 애플리케이션 > 앱 키 > "JavaScript 키" 값입니다.
@@ -224,11 +314,12 @@ window.toggleAuthTab = function(mode) {
     const submitBtn = document.getElementById('auth-submit-btn');
     
     // 숨기고 보여줄 대상들
-    const inviteGroup = document.getElementById('invite-code-group');
+        const inviteGroup = document.getElementById('invite-code-group');
     const passConfirmGroup = document.getElementById('password-confirm-group');
     const nameGroup = document.getElementById('name-input-group');
     const loginHelperGroup = document.getElementById('login-helper-group'); // ✅ 이메일기억/비번찾기 줄
     const emailHelperText = document.getElementById('email-helper-text');   // ✅ 이메일 필수 안내 문구
+    const termsGroup = document.getElementById('terms-group'); // ✅ 필수 약관 동의 줄
     
     document.getElementById('auth-error-msg').style.display = 'none';
     
@@ -237,10 +328,11 @@ window.toggleAuthTab = function(mode) {
         loginBtn.classList.add('active'); regBtn.classList.remove('active');
         title.innerText = "보험가온포탈 로그인"; submitBtn.innerText = "포탈 접속하기";
         
-        if(inviteGroup) inviteGroup.style.display = 'none';
+                if(inviteGroup) inviteGroup.style.display = 'none';
         if(nameGroup) nameGroup.style.display = 'none';
         if(passConfirmGroup) passConfirmGroup.style.display = 'none';
         if(emailHelperText) emailHelperText.style.display = 'none';
+        if(termsGroup) termsGroup.style.display = 'none';
         
         // 로그인 화면 전용 옵션 표시
         if(loginHelperGroup) loginHelperGroup.style.display = 'flex';
@@ -251,7 +343,10 @@ window.toggleAuthTab = function(mode) {
         
         if(inviteGroup) inviteGroup.style.display = 'block';
         if(nameGroup) nameGroup.style.display = 'block';
+        if(passConfirmGroup) passConfirmGroup.style.display = 'block';        if(inviteGroup) inviteGroup.style.display = 'block';
+        if(nameGroup) nameGroup.style.display = 'block';
         if(passConfirmGroup) passConfirmGroup.style.display = 'block';
+        if(termsGroup) termsGroup.style.display = 'block';
         
         // 가입 시 이메일 안내 표시 & 기억하기 줄 숨김
         if(emailHelperText) emailHelperText.style.display = 'block';
@@ -289,6 +384,7 @@ window.handleAuthSubmit = function() {
     } else {
         const passwordConfirm = document.getElementById('auth-password-confirm').value;
         const inviteCode = document.getElementById('auth-invite-code').value.trim();
+        const termsChk = document.getElementById('terms-agree-chk');
         
         if(password !== passwordConfirm) {
             errorMsg.innerText = "❌ 비밀번호가 서로 일치하지 않습니다.";
@@ -298,13 +394,19 @@ window.handleAuthSubmit = function() {
             errorMsg.innerText = "❌ 추천인 코드가 올바르지 않습니다.";
             errorMsg.style.display = "block"; return;
         }
+        if(!termsChk || !termsChk.checked) {
+            errorMsg.innerText = "❌ 서비스 이용약관에 동의하셔야 가입이 가능합니다.";
+            errorMsg.style.display = "block"; return;
+        }
         createUserWithEmailAndPassword(auth, email, password)
             .then(async (userCred) => {
                 const userName = document.getElementById('auth-name')?.value.trim() || '';
-                if(userName) {
-                    const userRef = doc(db, "users_portal", userCred.user.email);
-                    await setDoc(userRef, { displayName: userName }, { merge: true });
-                }
+                const userRef = doc(db, "users_portal", userCred.user.email);
+                await setDoc(userRef, {
+                    displayName: userName,
+                    termsAgreedAt: new Date().toISOString(),
+                    termsVersion: TERMS_VERSION
+                }, { merge: true });
                 if (shouldSave) {
                     localStorage.setItem('gaonSavedEmail', email);
                 }
@@ -333,16 +435,34 @@ document.addEventListener('keydown', function(e) {
 });
 
 // ⚠️ 중복 분량을 완전히 제거하고 하나로 통합한 상태 제어 엔진
-onAuthStateChanged(auth, (user) => {
+async function proceedAfterAuth(user) {
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('user-display-email').innerText = user.email;
+    window.__currentUserUid = user.uid;
+    loadUserIntegratedData(user.email);
+    updateVisitCounter(user.email);
+    window.checkAndShowNotice();
+    window.loadComponent('main-dashboard');
+    window.startSessionTimer();
+}
+
+onAuthStateChanged(auth, async (user) => {
     if (user) {
-        document.getElementById('auth-overlay').style.display = 'none';
-        document.getElementById('user-display-email').innerText = user.email;
-         window.__currentUserUid = user.uid;
-        loadUserIntegratedData(user.email);
-        updateVisitCounter(user.email);
-        window.checkAndShowNotice();
-        window.loadComponent('main-dashboard');
-        window.startSessionTimer();
+        try {
+            const snap = await getDoc(doc(db, "users_portal", user.email));
+            const agreed = snap.exists() && !!snap.data().termsAgreedAt;
+            if (agreed) {
+                proceedAfterAuth(user);
+            } else {
+                document.getElementById('auth-overlay').style.display = 'none';
+                const box = document.getElementById('required-terms-fulltext');
+                if (box && !box.textContent) box.textContent = TERMS_TEXT;
+                document.getElementById('terms-required-modal').style.display = 'flex';
+            }
+        } catch (e) {
+            console.error('약관 동의 확인 실패:', e);
+            proceedAfterAuth(user);
+        }
     } else {
         document.getElementById('auth-overlay').style.display = 'flex';
         const savedEmail = localStorage.getItem('gaonSavedEmail');
@@ -382,6 +502,64 @@ window.handleForgotPassword = function() {
                 alert("❌ 메일 발송 실패: " + error.message);
             });
     }
+};
+
+// ==========================================
+// [신규 추가] 약관 동의 / 마이페이지
+// ==========================================
+window.toggleSignupTerms = function() {
+    const box = document.getElementById('signup-terms-fulltext');
+    if (!box) return;
+    if (!box.textContent) box.textContent = TERMS_TEXT;
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+};
+
+window.submitRequiredTerms = async function() {
+    const chk = document.getElementById('required-terms-chk');
+    if (!chk || !chk.checked) {
+        alert('필수 약관에 동의하셔야 서비스를 계속 이용하실 수 있습니다.');
+        return;
+    }
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+        await setDoc(doc(db, "users_portal", user.email), {
+            termsAgreedAt: new Date().toISOString(),
+            termsVersion: TERMS_VERSION
+        }, { merge: true });
+        document.getElementById('terms-required-modal').style.display = 'none';
+        proceedAfterAuth(user);
+    } catch (e) {
+        alert('동의 처리 중 오류가 발생했습니다: ' + e.message);
+    }
+};
+
+window.openMypageModal = async function() {
+    const user = auth.currentUser;
+    if (!user) { alert('로그인 정보가 확인되지 않습니다.'); return; }
+    document.getElementById('mypage-email').innerText = user.email;
+    document.getElementById('mypage-name').innerText = window.currentUserDisplayName || '-';
+    try {
+        const snap = await getDoc(doc(db, "users_portal", user.email));
+        const data = snap.exists() ? snap.data() : {};
+        document.getElementById('mypage-agreed-date').innerText = data.termsAgreedAt
+            ? new Date(data.termsAgreedAt).toLocaleDateString('ko-KR')
+            : '동의 기록 없음';
+    } catch(e) {
+        document.getElementById('mypage-agreed-date').innerText = '-';
+    }
+    document.getElementById('mypage-modal').style.display = 'flex';
+};
+
+window.closeMypageModal = function() {
+    document.getElementById('mypage-modal').style.display = 'none';
+};
+
+window.toggleMypageTerms = function() {
+    const box = document.getElementById('mypage-terms-fulltext');
+    if (!box) return;
+    if (!box.textContent) box.textContent = TERMS_TEXT;
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
 };
 
 // ==========================================

@@ -403,6 +403,16 @@
                     <label>가온사업단 인증 추천인 코드</label>
                     <input type="text" id="auth-invite-code" class="form-control" placeholder="추천인 코드 입력">
                 </div>
+
+                <div class="form-group" id="terms-group" style="text-align:left; display:none; margin-bottom:20px;">
+                    <div style="display:flex; align-items:flex-start; gap:8px;">
+                        <input type="checkbox" id="terms-agree-chk" style="width:16px; height:16px; margin-top:2px; cursor:pointer;">
+                        <label for="terms-agree-chk" style="font-size:13px; color:#334155; cursor:pointer; line-height:1.4; margin:0;">
+                            [필수] <span onclick="event.preventDefault(); window.toggleSignupTerms();" style="color:#2563EB; text-decoration:underline; cursor:pointer;">서비스 이용약관</span>에 동의합니다.
+                        </label>
+                    </div>
+                    <div id="signup-terms-fulltext" style="display:none; margin-top:10px; max-height:200px; overflow-y:auto; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px; font-size:11.5px; line-height:1.6; color:#475569; white-space:pre-wrap;"></div>
+                </div>
                 
                 <button id="auth-submit-btn" class="btn-action" style="margin-top:10px;" onclick="window.handleAuthSubmit()">포탈 접속하기</button>
                 <p id="auth-error-msg" style="color:#EF4444; font-size:13px; margin-top:15px; display:none; font-weight:500;"></p>
@@ -428,7 +438,15 @@
         </div>
             <div class="nav-right">
                 <div class="user-badge user-pill"><i class="bi bi-person-badge-fill"></i> <span id="user-display-email">인증 확인 중...</span></div>
-                <button class="logout-btn" onclick="window.handleLogout()"><i class="bi bi-box-arrow-right"></i> 로그아웃</button>
+                <button class="mypage-btn" onclick="window.openMypageModal()" style="background:#EFF6FF; color:#2563EB; border:1px solid #DBEAFE; padding:7px 14px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px;">
+    <i class="bi bi-person-circle"></i> 마이페이지
+</button>
+                <button onclick="window.openMypageModal()" style="padding:5px 9px; font-size:11px; background:#EFF6FF; color:#2563EB; border:none; border-radius:8px; margin-right:2px;">
+                    <i class="bi bi-person-circle"></i>
+                </button>
+                <button class="logout-btn" style="padding:5px 10px; font-size:11px;" onclick="window.handleLogout()">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
                 <div class="counter-pill">TODAY <span id="count-today">-</span></div>
                 <div class="counter-pill">TOTAL <span id="count-total">-</span></div>
             </div>
@@ -851,6 +869,55 @@
                 </div>
             </div>
         </div>
+
+        <!-- 기존 가입자 필수 약관 강제 동의 모달 -->
+        <div id="terms-required-modal" class="portal-modal" style="z-index: 4500; display: none;">
+            <div class="modal-body" style="max-width: 420px; padding: 25px;" onclick="event.stopPropagation()">
+                <h3 style="font-size:17px; font-weight:800; margin-bottom:10px;">
+                    <i class="bi bi-file-earmark-text-fill" style="color:#2563EB;"></i> 이용약관 동의 안내
+                </h3>
+                <p style="font-size:13px; color:#64748B; margin-bottom:12px; line-height:1.5;">
+                    서비스 이용을 위해 아래 필수 약관 동의가 필요합니다.
+                </p>
+                <div id="required-terms-fulltext" style="max-height:220px; overflow-y:auto; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px; font-size:11.5px; line-height:1.6; color:#475569; white-space:pre-wrap; margin-bottom:14px;"></div>
+                <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#334155; cursor:pointer; margin-bottom:16px;">
+                    <input type="checkbox" id="required-terms-chk" style="width:16px; height:16px; cursor:pointer;">
+                    [필수] 서비스 이용약관에 동의합니다.
+                </label>
+                <button class="btn-action" onclick="window.submitRequiredTerms()">동의하고 계속하기</button>
+            </div>
+        </div>
+
+        <!-- 마이페이지 모달 -->
+        <div id="mypage-modal" class="portal-modal" style="z-index: 4200; display: none;" onclick="window.closeMypageModal()">
+            <div class="modal-body" style="max-width: 480px; width: 90%; padding: 0; background:white; border-radius:16px; overflow:hidden;" onclick="event.stopPropagation()">
+                <div style="background:#1E293B; color:white; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size:16px; font-weight:700;"><i class="bi bi-person-circle"></i> 마이페이지</div>
+                    <button onclick="window.closeMypageModal()" style="background:none; border:none; color:white; font-size:22px; cursor:pointer;">&times;</button>
+                </div>
+                <div style="padding:20px; max-height:70vh; overflow-y:auto;">
+                    <div style="font-size:14px; font-weight:800; color:#191F28; margin-bottom:10px;">프로필 정보</div>
+                    <div class="mypage-field"><label>이메일</label><div id="mypage-email">-</div></div>
+                    <div class="mypage-field"><label>이름</label><div id="mypage-name">-</div></div>
+                    <div class="mypage-field"><label>소속</label><div>토스인슈어런스 주식회사</div></div>
+
+                    <div style="font-size:14px; font-weight:800; color:#191F28; margin:20px 0 10px;">약관 동의</div>
+                    <div style="font-size:12px; color:#8B95A1; margin-bottom:8px;">가입 시 동의: <span id="mypage-agreed-date">-</span></div>
+                    <div class="mypage-terms-row" onclick="window.toggleMypageTerms()">
+                        <span style="font-weight:700; color:#191F28; font-size:13px;">필수 약관 <span style="color:#94A3B8; font-weight:500;">(변경 불가)</span></span>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div id="mypage-terms-fulltext" style="display:none; margin-top:8px; max-height:220px; overflow-y:auto; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px; font-size:11.5px; line-height:1.6; color:#475569; white-space:pre-wrap;"></div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .mypage-field { display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+            .mypage-field label { font-size:12px; color:#8B95A1; font-weight:600; }
+            .mypage-field div { font-size:14px; color:#191F28; font-weight:600; background:#F8FAFC; border:1px solid #F1F5F9; border-radius:8px; padding:10px 12px; }
+            .mypage-terms-row { display:flex; justify-content:space-between; align-items:center; padding:12px; background:#F8FAFC; border:1px solid #F1F5F9; border-radius:8px; cursor:pointer; }
+        </style>
         <!-- ================================================================
             스크립트 — news.js 로드 후 뷰 전환 로직
         ================================================================ -->
