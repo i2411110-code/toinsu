@@ -746,29 +746,6 @@ window.executeWithdraw = async function() {
 };
 
 
-        // Firestore 개인 데이터 삭제 → Auth 계정 삭제 순서로 처리
-        await deleteDoc(doc(db, "users_portal", user.email));
-        await deleteUser(user);
-
-        alert('회원 탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.');
-        localStorage.removeItem('gaonSavedEmail');
-        location.reload();
-    } catch (e) {
-        console.error('회원 탈퇴 실패:', e);
-        if (e.code === 'auth/wrong-password') {
-            errorMsg.innerText = '❌ 비밀번호가 일치하지 않습니다.';
-        } else if (e.code === 'auth/requires-recent-login') {
-            errorMsg.innerText = '❌ 보안을 위해 재로그인이 필요합니다. 로그아웃 후 다시 로그인하신 뒤 탈퇴를 시도해주세요.';
-        } else {
-            errorMsg.innerText = '❌ 탈퇴 처리 중 오류가 발생했습니다: ' + e.message;
-        }
-        errorMsg.style.display = 'block';
-        btn.disabled = false;
-        btn.innerText = '탈퇴하기';
-    }
-};
-
-
 // ==========================================
 // [신규 추가] 30분 자동 로그아웃 및 연장 시스템
 // ==========================================
