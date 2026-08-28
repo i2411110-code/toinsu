@@ -438,15 +438,10 @@
         </div>
             <div class="nav-right">
                 <div class="user-badge user-pill"><i class="bi bi-person-badge-fill"></i> <span id="user-display-email">인증 확인 중...</span></div>
-                <button class="mypage-btn" onclick="window.openMypageModal()" style="background:#EFF6FF; color:#2563EB; border:1px solid #DBEAFE; padding:7px 14px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px;">
-    <i class="bi bi-person-circle"></i> 마이페이지
-</button>
-                <button onclick="window.openMypageModal()" style="padding:5px 9px; font-size:11px; background:#EFF6FF; color:#2563EB; border:none; border-radius:8px; margin-right:2px;">
-                    <i class="bi bi-person-circle"></i>
+                                <button class="mypage-btn" onclick="window.openMypageModal()" style="background:#EFF6FF; color:#2563EB; border:1px solid #DBEAFE; padding:7px 14px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                    <i class="bi bi-person-circle"></i> 마이페이지
                 </button>
-                <button class="logout-btn" style="padding:5px 10px; font-size:11px;" onclick="window.handleLogout()">
-                    <i class="bi bi-box-arrow-right"></i>
-                </button>
+                <button class="logout-btn" onclick="window.handleLogout()"><i class="bi bi-box-arrow-right"></i> 로그아웃</button>
                 <div class="counter-pill">TODAY <span id="count-today">-</span></div>
                 <div class="counter-pill">TOTAL <span id="count-total">-</span></div>
             </div>
@@ -469,11 +464,17 @@
                         <span class="pwa-slider"></span>
                     </label>
                 </div>
+                                <button onclick="window.openMypageModal()" style="padding:5px 9px; font-size:11px; background:#EFF6FF; color:#2563EB; border:none; border-radius:8px;">
+                    <i class="bi bi-person-circle"></i>
+                </button>
                 <button class="logout-btn" style="padding:5px 10px; font-size:11px;" onclick="window.handleLogout()">
                     <i class="bi bi-box-arrow-right"></i>
                 </button>
             </div>
         </div>
+
+        <!-- ================================================================
+            메인 컨텐츠 뷰
 
         <!-- ================================================================
             메인 컨텐츠 뷰
