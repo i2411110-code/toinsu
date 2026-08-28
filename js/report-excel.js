@@ -11,9 +11,9 @@
 
   // ─── 기준금액 (만원) ───
   const RECOMMEND = {
-    '질병입원의료비': 5000, '질병외래의료비': 25, '질병처방조제료': 5,
-    '상해입원의료비': 5000, '상해외래의료비': 25, '상해처방조제료': 5,
-    '일반암진단': 10000, '소액암(유사암)진단': 1000, '고액암진단': 5000,
+    '질병입원의료비': 5000, '질병외래의료비': 20, '질병처방조제료': 5,
+    '상해입원의료비': 5000, '상해외래의료비': 20, '상해처방조제료': 5,
+    '일반암진단': 10000, '소액암(유사암)진단': 2000, '고액암진단': 5000,
     '뇌혈관질환진단': 3000, '뇌졸중질환진단': 2000, '뇌출혈질환진단': 1000,
     '허혈성심장질환진단': 3000, '급성심근경색진단': 1000,
     '질병수술': 50, '상해수술': 100, '암수술': 1000,
@@ -41,8 +41,9 @@
 
   // ─── 보장 항목 상태(부족/적정/미가입/과잉) 판정 & 공통 메타 ───
   // EXCESS_MULTIPLIER: 권장 기준 대비 몇 배를 넘으면 '과잉'으로 볼지 (조정 가능)
-  var EXCESS_MULTIPLIER = 2;
-  var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
+  var EXCESS_MULTIPLIER = 1.5;
+var NEAR_THRESHOLD = 0.9;   // 권장기준의 90% 이상이면 '적정'으로 인정
+var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
   var ROW_STATUS_META = {
     ok:           { label: '적정',   cls: 'ok',           color: '#3182F6', bg: '#EFF6FF' },
     low:          { label: '부족',   cls: 'low',           color: '#DC2626', bg: '#FEF2F2' },
@@ -53,10 +54,10 @@
   function computeRowStatus(sum, rec) {
     if (rec === undefined) return 'none';
     if (!sum || sum <= 0) return 'unregistered';
-    if (sum < rec) return 'low';
+    if (sum < rec * NEAR_THRESHOLD) return 'low';
     if (sum > rec * EXCESS_MULTIPLIER) return 'excess';
     return 'ok';
-  }
+}
 
   function evalLevel(age, total) {
     const s = PREMIUM_STD.find(r => age <= r.maxAge) || PREMIUM_STD[PREMIUM_STD.length - 1];
