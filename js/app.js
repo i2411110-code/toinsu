@@ -5,8 +5,8 @@
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 // ✅ 끝부분에 sendPasswordResetEmail이 추가되었습니다.
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, signInWithCustomToken, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { checkAndPromptUserName } from './name-input-modal.js';
 // ==========================================
 // 2. 전역 변수 세팅 (Import가 모두 끝난 뒤에 와야 함!)
@@ -660,6 +660,112 @@ window.toggleMypagePrivacyTerms = function() {
     if (!box) return;
     if (!box.textContent) box.textContent = PRIVACY_TERMS_TEXT;
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
+};
+
+// ==========================================
+// [신규 추가] 회원 탈퇴
+// ==========================================
+window.openWithdrawModal = function() {
+    window.closeMypageModal();
+    const user = auth.currentUser;
+    if (!user) { alert('로그인 정보가 확인되지 않습니다.'); return; }
+
+    const pwGroup = document.getElementById('withdraw-password-group');
+    if (pwGroup) {
+        const isPasswordUser = user.providerData.some(p => p.providerId === 'password');
+        pwGroup.style.display = isPasswordUser ? 'block' : 'none';
+    }
+    const pwInput = document.getElementById('withdraw-password');
+    if (pwInput) pwInput.value = '';
+    const chk = document.getElementById('withdraw-confirm-chk');
+    if (chk) chk.checked = false;
+    const errorMsg = document.getElementById('withdraw-error-msg');
+    if (errorMsg) errorMsg.style.display = 'none';
+    const btn = document.getElementById('withdraw-submit-btn');
+    if (btn) { btn.disabled = false; btn.innerText = '탈퇴하기'; }
+
+    document.getElementById('withdraw-modal').style.display = 'flex';
+};
+
+window.closeWithdrawModal = function() {
+    document.getElementById('withdraw-modal').style.display = 'none';
+};
+
+window.executeWithdraw = async function() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const confirmChk = document.getElementById('withdraw-confirm-chk');
+    const errorMsg = document.getElementById('withdraw-error-msg');
+    const btn = document.getElementById('withdraw-submit-btn');
+    errorMsg.style.display = 'none';
+
+    if (!confirmChk || !confirmChk.checked) {
+        errorMsg.innerText = '❌ 안내 내용을 확인하고 동의 체크를 해주세요.';
+        errorMsg.style.display = 'block';
+        return;
+    }
+
+    const isPasswordUser = user.providerData.some(p => p.providerId === 'password');
+    btn.disabled = true;
+    btn.innerText = '처리 중...';
+
+    try {
+        if (isPasswordUser) {
+            const pw = document.getElementById('withdraw-password').value;
+            if (!pw) {
+                errorMsg.innerText = '❌ 본인 확인을 위해 비밀번호를 입력해주세요.';
+                errorMsg.style.display = 'block';
+                btn.disabled = false; btn.innerText = '탈퇴하기';
+                return;
+            }
+            const credential = EmailAuthProvider.credential(user.email, pw);
+            await reauthenticateWithCredential(user, credential);
+        }
+
+        // Firestore 개인 데이터 삭제 → Auth 계정 삭제 순서로 처리
+        await deleteDoc(doc(db, "users_portal", user.email));
+        await deleteUser(user);
+
+        alert('회원 탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.');
+        localStorage.removeItem('gaonSavedEmail');
+        location.reload();
+    } catch (e) {
+        console.error('회원 탈퇴 실패:', e);
+        if (e.code === 'auth/wrong-password') {
+            errorMsg.innerText = '❌ 비밀번호가 일치하지 않습니다.';
+        } else if (e.code === 'auth/requires-recent-login') {
+            errorMsg.innerText = '❌ 보안을 위해 재로그인이 필요합니다. 로그아웃 후 다시 로그인하신 뒤 탈퇴를 시도해주세요.';
+        } else {
+            errorMsg.innerText = '❌ 탈퇴 처리 중 오류가 발생했습니다: ' + e.message;
+        }
+        errorMsg.style.display = 'block';
+        btn.disabled = false;
+        btn.innerText = '탈퇴하기';
+    }
+};
+
+
+        // Firestore 개인 데이터 삭제 → Auth 계정 삭제 순서로 처리
+        await deleteDoc(doc(db, "users_portal", user.email));
+        await deleteUser(user);
+
+        alert('회원 탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.');
+        localStorage.removeItem('gaonSavedEmail');
+        location.reload();
+    } catch (e) {
+        console.error('회원 탈퇴 실패:', e);
+        if (e.code === 'auth/wrong-password') {
+            errorMsg.innerText = '❌ 비밀번호가 일치하지 않습니다.';
+        } else if (e.code === 'auth/requires-recent-login') {
+            errorMsg.innerText = '❌ 보안을 위해 재로그인이 필요합니다. 로그아웃 후 다시 로그인하신 뒤 탈퇴를 시도해주세요.';
+        } else {
+            errorMsg.innerText = '❌ 탈퇴 처리 중 오류가 발생했습니다: ' + e.message;
+        }
+        errorMsg.style.display = 'block';
+        btn.disabled = false;
+        btn.innerText = '탈퇴하기';
+    }
 };
 
 
