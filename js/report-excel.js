@@ -1180,6 +1180,12 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
         continue;
       }
 
+      var catVal = String(row[catCol]||'').trim();
+      var subVal = String(row[subCol]||'').trim();
+
+      // ✅ 표 중간에 헤더행이 반복되는 경우(보험사 수 많을 때) 먼저 스킵
+      if (catVal === '대분류' && subVal === '소분류') continue;
+
       if (companies.length > 0 && premiumAmounts.length === 0 && rowHasPremiumKeyword(row)) {
         for (var pc2 = coStart; pc2 < coStart + companies.length; pc2++) {
           var pv = String(row[pc2]||'').replace(/,/g,'').trim();
@@ -1188,11 +1194,6 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
         }
         continue;
       }
-
-      var catVal = String(row[catCol]||'').trim();
-      var subVal = String(row[subCol]||'').trim();
-
-      if (catVal === '대분류' && subVal === '소분류') continue;
 
       var b = catVal;
       var lbl = subVal;
