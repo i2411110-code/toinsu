@@ -1010,25 +1010,43 @@ window.switchOfficeSubTab = function(target) {
     window.switchPrivateDataTab(target);
 };
 
+// 숫자 길이 기준으로 자동 포맷팅
+function formatPhoneNumber(raw) {
+    const d = raw.replace(/\D/g, '');
+    if (d.length === 11) return d.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+    if (d.length === 10) {
+        if (d.startsWith('02')) return d.replace(/(\d{2})(\d{4})(\d{4})/, '$1-$2-$3');
+        return d.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+    }
+    if (d.length === 9) return d.replace(/(\d{2})(\d{3})(\d{4})/, '$1-$2-$3');
+    return raw;
+}
+
+function formatIdNumber(raw) {
+    const d = raw.replace(/\D/g, '');
+    if (d.length === 13) return d.replace(/(\d{6})(\d{7})/, '$1-$2');
+    return raw;
+}
+
 window.runAiTextParser = function() {
     const rawText = document.getElementById('ai-raw-textarea').value;
     if(!rawText.trim()) { alert("분석할 텍스트 스크립트가 공백 상태입니다."); return; }
 
     const nameMatch    = rawText.match(/(?:성명|성함|이름)\s*[:：]?\s*([가-힣]{2,5})/);
-    const idnumMatch   = rawText.match(/(?:주민번호|주민등록번호)\s*[:：]?\s*(\d{6}\s*-\s*\d{7})/);
-    const phoneMatch   = rawText.match(/(?:휴대폰번호|전화번호|핸드폰|연락처)\s*[:：]?\s*(\d{3}-\d{3,4}-\d{4})/);
+    const idnumMatch   = rawText.match(/(?:주민번호|주민등록번호)\s*[:：]?\s*([0-9][0-9\s-]{10,15}[0-9])/);
+    const phoneMatch   = rawText.match(/(?:휴대폰번호|전화번호|핸드폰|연락처)\s*[:：]?\s*([0-9][0-9\s-]{7,13}[0-9])/);
     const addressMatch = rawText.match(/(?:주소)\s*[:：]?\s*([^\n]+)/);
     const jobMatch     = rawText.match(/(?:직업\(회사명\)|직업)\s*[:：]?\s*([^\n]+)/);
-    const driveMatch   = rawText.match(/(?:운전여부)\s*[:：]?\s*([^\n]+)/);
+    const driveMatch   = rawText.match(/(?:운전\s*여부)\s*[:：]?\s*([^\n]+)/);
 
     let medicalContent = "";
-    const medicalRegex = /(?:5년간의\s*병원치료내용|병력사항|치료내용|병력고지)\s*([\s\S]*?)(?=\n\s*\d+\.|\n\s*운전여부|$)/i;
+    const medicalRegex = /(?:5년간의\s*병원치료내용|병력사항|치료내용|병력고지)\s*([\s\S]*?)(?=\n\s*\d+\.|\n\s*운전\s*여부|$)/i;
     const medicalMatch = rawText.match(medicalRegex);
     if(medicalMatch) medicalContent = medicalMatch[1].replace(/^[:：\s-]+/, '').trim();
 
     if(nameMatch)    document.getElementById('c_name').value    = nameMatch[1].trim();
-    if(idnumMatch)   document.getElementById('c_idnum').value   = idnumMatch[1].trim();
-    if(phoneMatch)   document.getElementById('c_phone').value   = phoneMatch[1].trim();
+    if(idnumMatch)   document.getElementById('c_idnum').value   = formatIdNumber(idnumMatch[1]);
+    if(phoneMatch)   document.getElementById('c_phone').value   = formatPhoneNumber(phoneMatch[1]);
     if(addressMatch) document.getElementById('c_address').value = addressMatch[1].trim();
     if(jobMatch)     document.getElementById('c_job').value     = jobMatch[1].trim();
     if(driveMatch)   document.getElementById('c_drive').value   = driveMatch[1].trim();
