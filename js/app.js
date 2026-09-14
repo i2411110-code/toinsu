@@ -1033,10 +1033,10 @@ window.runAiTextParser = function() {
     if(!rawText.trim()) { alert("분석할 텍스트 스크립트가 공백 상태입니다."); return; }
 
     const nameMatch    = rawText.match(/(?:성명|성함|이름)\s*[:：]?\s*([가-힣]{2,5})/);
-    const idnumMatch   = rawText.match(/(?:주민번호|주민등록번호)\s*[:：]?\s*([0-9][0-9\s-]{10,15}[0-9])/);
-    const phoneMatch   = rawText.match(/(?:휴대폰번호|전화번호|핸드폰|연락처)\s*[:：]?\s*([0-9][0-9\s-]{7,13}[0-9])/);
+    const idnumMatch   = rawText.match(/(?:주민\s*(?:등록)?\s*번호)\s*[:：]?\s*([0-9][0-9\s-]{10,15}[0-9])/);
+    const phoneMatch   = rawText.match(/(?:휴대폰\s*번호|전화\s*번호|핸드폰|연락처)\s*[:：]?\s*([0-9][0-9\s-]{7,13}[0-9])/);
     const addressMatch = rawText.match(/(?:주소)\s*[:：]?\s*([^\n]+)/);
-    const jobMatch     = rawText.match(/(?:직업\(회사명\)|직업)\s*[:：]?\s*([^\n]+)/);
+    const jobMatch     = rawText.match(/직업\s*(?:\(\s*회사명\s*\))?\s*[:：]?\s*([^\n]+)/);
     const driveMatch   = rawText.match(/(?:운전\s*여부)\s*[:：]?\s*([^\n]+)/);
 
     let medicalContent = "";
