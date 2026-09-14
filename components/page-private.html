@@ -21,14 +21,6 @@
                 <i class="bi bi-house-door-fill"></i> 메인
             </button>
         </div>
-        <!-- 양식 도움말: 모바일 슬림 -->
-        <button class="help-form-btn"
-            onclick="document.getElementById('help-modal').style.display='flex'"
-            style="background:var(--main-blue); color:white; border:none; padding:6px 12px; border-radius:16px;
-                   font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center;
-                   gap:4px; white-space:nowrap; flex-shrink:0;">
-            <i class="bi bi-question-circle-fill"></i> 양식 도움말
-        </button>
     </div>
 
     <!-- ══════════════════════════════════════════
@@ -49,7 +41,16 @@
 
         <!-- AI 정렬 박스 -->
         <div class="office-box" style="background:#EFF6FF; border:1px dashed #2563EB; margin-bottom:25px; padding:20px;">
-            <h4 style="color:#2563EB;"><i class="bi bi-magic"></i> 고객 정보 자동 분류 봇</h4>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
+                <h4 style="color:#2563EB; margin:0;"><i class="bi bi-magic"></i> 고객 정보 자동 분류 봇</h4>
+                <button class="help-form-btn"
+                    onclick="document.getElementById('help-modal').style.display='flex'"
+                    style="background:var(--main-blue); color:white; border:none; padding:6px 12px; border-radius:16px;
+                           font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center;
+                           gap:4px; white-space:nowrap; flex-shrink:0;">
+                    <i class="bi bi-question-circle-fill"></i> 양식 도움말
+                </button>
+            </div>
             <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">
                 상담이나 카톡방에서 전달받은 고객 정보를 그대로 입력하세요.
             </p>
