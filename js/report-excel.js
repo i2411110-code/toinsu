@@ -477,82 +477,73 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
     return lines.join('\n');
   }
 
-  // STEP 5. 상담 안내 & 질문 멘트 — 3가지 버전 중 선택
-  var QUESTION_MSG_VARIANTS = [
-    {
-      label: '멘트 1',
-      build: function() {
-        var lines = [];
-        lines.push('분석 결과는 1~3일 내로 안내해 드릴 예정이에요.');
-        lines.push('분석 결과를 준비하기 전에 질문을 하나 드릴게요.');
-        lines.push('지금 내 보험에 대해 어떤 생각이 가장 먼저 드시나요?');
-        lines.push('');
-        lines.push('1️⃣ 매달 나가는 보험료가 너무 부담돼요.');
-        lines.push('2️⃣ 나중에 아플 때 제대로 보장받을 수 있을지 불안해요.');
-        lines.push('3️⃣ 사실 내가 무슨 보험에 들었는지 잘 모르겠어요.');
-        lines.push('');
-        lines.push('해당되는 번호를 보내주시면 그 고민을 중심으로 집중 분석해 드릴게요.');
-        lines.push('');
-        lines.push('📞 통화가 편하신 시간을 미리 남겨주시면 전문가의 도움을 받으실 수 있습니다.');
-        lines.push('');
-        lines.push('상담 가능 시간');
-        lines.push('* 평일 오전 10시 ~ 오후 8시');
-        lines.push('* 일요일, 공휴일은 전화상담 불가(카톡 가능)');
-        return lines.join('\n');
-      }
+    // STEP 5. 상담 안내 & 질문 멘트 — 상담 카테고리별 맞춤 + 회신 편의 안내
+  var CATEGORY_QUESTION_META = {
+    '실비부족': {
+      hook: '실비 보장을 짚어드리기 전에, 질문 하나만 드릴게요!\n실비 관련해서 지금 가장 걸리는 부분이 뭔가요?',
+      options: [
+        '실비 한도가 부족한 건 아닌지 걱정돼요',
+        '병원비를 실제로 얼마나 돌려받을 수 있는지 궁금해요',
+        '지금 실비가 있는지 없는지도 잘 모르겠어요',
+      ],
     },
-    {
-      label: '멘트 2',
-      build: function() {
-        var lines = [];
-        lines.push('꼼꼼히 살펴보고 1~3일 내로 결과 안내해 드릴게요 😊');
-        lines.push('그 전에 딱 하나만 여쭤볼게요!');
-        lines.push('');
-        lines.push('요즘 보험 생각하면 어떤 게 제일 걸리세요?');
-        lines.push('');
-        lines.push('1️⃣ 보험료가 부담스러워요');
-        lines.push('2️⃣ 막상 아프면 보장이 될지 걱정돼요');
-        lines.push('3️⃣ 뭘 가입했는지도 잘 몰라요');
-        lines.push('');
-        lines.push('번호만 알려주시면 그 부분 위주로 꼼꼼하게 봐드릴게요!');
-        lines.push('');
-        lines.push('📞 통화 편하신 시간대 남겨주시면 전문가가 직접 안내드려요.');
-        lines.push('');
-        lines.push('상담 가능 시간');
-        lines.push('* 평일 오전 10시 ~ 오후 8시');
-        lines.push('* 일요일·공휴일은 전화상담 어려워요(카톡 상담은 가능해요)');
-        return lines.join('\n');
-      }
+    '보장부족': {
+      hook: '보장 공백을 짚어드리기 전에, 질문 하나만 드릴게요!\n지금 보험에서 가장 걱정되는 부분이 뭔가요?',
+      options: [
+        '암·뇌·심장 같은 큰 병 진단비가 부족한 건 아닌지 걱정돼요',
+        '수술비·입원비처럼 목돈 드는 항목이 빠진 건 아닌지 궁금해요',
+        '어떤 보장이 부족한지 정확히 모르겠어요',
+      ],
     },
-    {
-      label: '멘트 3',
-      build: function() {
-        var lines = [];
-        lines.push('말씀해 주신 내용을 바탕으로 1~3일 내 정밀 분석 결과를 안내드리겠습니다.');
-        lines.push('분석에 앞서, 고객님의 니즈를 정확히 반영하기 위해 한 가지 여쭙습니다.');
-        lines.push('');
-        lines.push('현재 가입하신 보험과 관련하여 가장 우려되는 부분은 무엇인가요?');
-        lines.push('');
-        lines.push('1️⃣ 매월 납입하는 보험료 부담');
-        lines.push('2️⃣ 실제 질병·사고 발생 시 보장 가능 여부');
-        lines.push('3️⃣ 현재 가입 내역 자체에 대한 이해 부족');
-        lines.push('');
-        lines.push('해당 번호를 회신해 주시면, 말씀하신 부분을 중심으로 분석을 진행하겠습니다.');
-        lines.push('');
-        lines.push('📞 편하신 통화 가능 시간을 남겨주시면 전문 상담사가 안내드립니다.');
-        lines.push('');
-        lines.push('상담 가능 시간');
-        lines.push('* 평일 오전 10시 ~ 오후 8시');
-        lines.push('* 일요일, 공휴일은 전화상담 불가(카톡 상담 가능)');
-        return lines.join('\n');
-      }
-    }
-  ];
+    '보장과잉': {
+      hook: '보험료 절감 포인트를 짚어드리기 전에, 질문 하나만 드릴게요!\n지금 보험료에 대해 어떤 생각이 가장 먼저 드시나요?',
+      options: [
+        '보험료를 너무 많이 내고 있는 건 아닌지 걱정돼요',
+        '같은 보장을 여러 번 중복 가입한 건 아닌지 궁금해요',
+        '어떤 특약을 줄여야 할지 모르겠어요',
+      ],
+    },
+    '또래월보험비교': {
+      hook: '또래 비교 결과를 안내해 드리기 전에, 질문 하나만 드릴게요!\n또래 대비 내 보험, 뭐가 제일 궁금하세요?',
+      options: [
+        '또래들보다 보험료를 더 내고 있는 건 아닌지 궁금해요',
+        '또래들은 어떤 보장을 채워놨는지 궁금해요',
+        '제 보험료 수준이 적정한지 전혀 감이 안 와요',
+      ],
+    },
+    '종합분석': {
+      hook: '분석 결과를 준비하기 전에 질문을 하나 드릴게요.\n지금 내 보험에 대해 어떤 생각이 가장 먼저 드시나요?',
+      options: [
+        '매달 나가는 보험료가 너무 부담돼요',
+        '나중에 아플 때 제대로 보장받을 수 있을지 불안해요',
+        '사실 내가 무슨 보험에 들었는지 잘 모르겠어요',
+      ],
+    },
+  };
 
-  function buildQuestionMsg(variantIdx) {
-    var idx = (variantIdx == null) ? 0 : variantIdx;
-    var v = QUESTION_MSG_VARIANTS[idx] || QUESTION_MSG_VARIANTS[0];
-    return v.build();
+  function buildQuestionMsg(category) {
+    var meta = CATEGORY_QUESTION_META[category] || CATEGORY_QUESTION_META['종합분석'];
+    var lines = [];
+    lines.push('분석 결과는 1~3일 내로 안내해 드릴 예정이에요.');
+    meta.hook.split('\n').forEach(function(l){ lines.push(l); });
+    lines.push('');
+    lines.push('1️⃣ ' + meta.options[0]);
+    lines.push('2️⃣ ' + meta.options[1]);
+    lines.push('3️⃣ ' + meta.options[2]);
+    lines.push('');
+    lines.push('번호만 편하게 답장해주셔도 충분해요! (예: 2)');
+    lines.push('');
+    lines.push('상담 방식도 편하신 걸로 골라주세요 👇');
+    lines.push('A. 카카오톡 상담');
+    lines.push('B. 전화 상담');
+    lines.push('C. 대면 상담');
+    lines.push('');
+    lines.push('고민 번호 + 상담 방식만 함께 보내주시면 바로 준비해서 안내드릴게요! (예: "2, B")');
+    lines.push('');
+    lines.push('상담 가능 시간');
+    lines.push('* 평일 오전 10시 ~ 오후 8시');
+    lines.push('* 일요일, 공휴일은 전화상담 불가(카톡 가능)');
+    return lines.join('\n');
   }
 
   // STEP 6. AI 니즈환기 멘트 (앞 단계에서 인사·상담안내를 이미 보냈으므로
@@ -610,13 +601,8 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
     var timeEl = document.getElementById('rptex-flow-time');
     if (timeEl) timeEl.value = buildTimeCheckMsg(gState);
 
-    var qIdx = gState.questionVariant || 0;
     var qEl = document.getElementById('rptex-flow-q');
-    if (qEl) qEl.value = buildQuestionMsg(qIdx);
-    var qTabs = document.querySelectorAll('#rptex-qvariant-tabs .rptex-qvariant-tab');
-    qTabs.forEach(function(btn) {
-      btn.classList.toggle('active', Number(btn.dataset.variant) === qIdx);
-    });
+    if (qEl) qEl.value = buildQuestionMsg(gState.category);
 
     refreshMsg();
   }
@@ -1030,11 +1016,7 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
 
       + '<div class="rptex-flow-step">'
       + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">5</span>상담 안내 &amp; 질문 멘트</div>'
-      + '<div class="rptex-qvariant-tabs" id="rptex-qvariant-tabs">'
-      +   QUESTION_MSG_VARIANTS.map(function(v, vi) {
-            return '<button type="button" class="rptex-qvariant-tab' + (vi === 0 ? ' active' : '') + '" data-variant="' + vi + '" onclick="window.rptExSelectQuestionVariant(' + vi + ')">' + esc(v.label) + '</button>';
-          }).join('')
-      + '</div>'
+      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 상단의 "상담 카테고리" 선택값에 맞춰 멘트가 자동으로 바뀝니다.</div>'
       + '<textarea id="rptex-flow-q" class="rptex-flow-ta" readonly></textarea>'
       + '<div class="rptex-flow-actions"><button class="btn-action" style="width:auto;padding:8px 18px;" onclick="window.rptExCopyFlow(\'rptex-flow-q\')"><i class="bi bi-clipboard-check"></i> 복사</button></div>'
       + '</div>'
@@ -1145,10 +1127,7 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
       '.rptex-flow-ta{width:100%;min-height:110px;border:1.5px solid #E2E8F0;border-radius:10px;padding:12px 14px;font-size:13px;font-family:"Noto Sans KR",sans-serif;color:#334155;resize:vertical;box-sizing:border-box;line-height:1.7;background:#F8FAFC;}',
       '.rptex-flow-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;}',
       '.rptex-flow-note{font-size:12px;color:#64748B;}',
-      '.rptex-qvariant-tabs{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}',
-      '.rptex-qvariant-tab{border:1.5px solid #E2E8F0;background:#fff;color:#64748B;font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:20px;cursor:pointer;font-family:"Noto Sans KR",sans-serif;transition:all .15s;}',
-      '.rptex-qvariant-tab:hover{border-color:#BAD7FB;color:#3182F6;}',
-      '.rptex-qvariant-tab.active{background:#3182F6;border-color:#3182F6;color:#fff;}',
+      
       /* ── 연령대별 적정 보험료 가이드 (하단 + 토글) ── */
       '.rptex-ageguide-wrap{margin-top:4px;margin-bottom:16px;display:flex;flex-direction:column;align-items:flex-start;}',
       '.rptex-ageguide-toggle{display:inline-flex;align-items:center;gap:8px;background:#F8FBFF;border:1.5px dashed #BAD7FB;border-radius:10px;padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;color:#3182F6;font-family:"Noto Sans KR",sans-serif;transition:all .15s;}',
@@ -1329,7 +1308,6 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
       customerName: customerName || '고객',
       age: Number((ageEl0 && ageEl0.value) || 40) || 40,
       category: (catEl0 && catEl0.value) || '또래월보험비교',
-      questionVariant: 0,
       premiums: companies.map(function(name, i){
         return { name: name, amount: premiumAmounts[i] || 0 };
       }),
@@ -1577,16 +1555,7 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
       .catch(function(){ el.select(); document.execCommand('copy'); alert('✅ 복사 완료'); });
   };
 
-  window.rptExSelectQuestionVariant = function(idx) {
-    if (!gState) return;
-    gState.questionVariant = idx;
-    var qEl = document.getElementById('rptex-flow-q');
-    if (qEl) qEl.value = buildQuestionMsg(idx);
-    var tabs = document.querySelectorAll('#rptex-qvariant-tabs .rptex-qvariant-tab');
-    tabs.forEach(function(btn) {
-      btn.classList.toggle('active', Number(btn.dataset.variant) === idx);
-    });
-  };
+  
 
   window.rptExCopyMsg = function() {
     window.rptExCopyFlow('rptex-msg-output');
