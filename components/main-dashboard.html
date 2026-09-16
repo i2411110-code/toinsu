@@ -90,7 +90,7 @@
         try {
             const doc = await firebase.firestore()
                 .collection('admin_settings')
-                .doc('gaon_office_access')
+                .doc('office_access')
                 .get();
             if (!doc.exists) return;
             const allowedEmails = doc.data().allowedEmails || [];
