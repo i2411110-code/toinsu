@@ -72,7 +72,7 @@
 </div>
 
 <!-- 가온 오피스 -->
-<div onclick="window.navigateTo('page-가온 오피스')" style="background:white; border-radius:20px; padding:20px; border:1px solid #F2F4F6; margin-bottom:16px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition:all 0.15s;" onmouseover="this.style.borderColor='#3182F6'" onmouseout="this.style.borderColor='#F2F4F6'">
+<div id="gaon-office-card" onclick="window.navigateTo('page-가온 오피스')" style="background:white; border-radius:20px; padding:20px; border:1px solid #F2F4F6; margin-bottom:16px; cursor:pointer; display:none; align-items:center; justify-content:space-between; transition:all 0.15s;" onmouseover="this.style.borderColor='#3182F6'" onmouseout="this.style.borderColor='#F2F4F6'">
     <div style="display:flex; align-items:center; gap:14px;">
         <div style="width:48px; height:48px; background:#EFF6FF; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px;">🔒</div>
         <div>
@@ -82,6 +82,28 @@
     </div>
     <i class="bi bi-chevron-right" style="color:#B0B8C1; font-size:18px;"></i>
 </div>
+
+<script>
+(function checkGaonOfficeAccess() {
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (!user || !user.email) return;
+        try {
+            const doc = await firebase.firestore()
+                .collection('admin_settings')
+                .doc('gaon_office_access')
+                .get();
+            if (!doc.exists) return;
+            const allowedEmails = doc.data().allowedEmails || [];
+            if (allowedEmails.includes(user.email)) {
+                const card = document.getElementById('gaon-office-card');
+                if (card) card.style.display = 'flex';
+            }
+        } catch (err) {
+            console.error('가온 오피스 권한 확인 실패:', err);
+        }
+    });
+})();
+</script>
 
 <!-- 서비스 카드 -->
 <div style="background:white; border-radius:20px; padding:22px 20px; border:1px solid #F2F4F6; margin-bottom:16px;">
