@@ -931,6 +931,7 @@ if (!allowedUsers.includes(currentUserEmail) && !allowedUsers.includes(currentUs
                 const el = document.getElementById('main-user-name');
                 if(el) el.innerText = (window.currentUserDisplayName || '') + '님';
             });
+            window.checkGaonOfficeAccess();
         }
 
         // 청구의 모든것 이름 표시
@@ -1402,6 +1403,29 @@ window.closeNotice = function() {
 // ==========================================
 // [가온 오피스 전용 로직 - 파이어베이스 권한 검증]
 // ==========================================
+
+window.checkGaonOfficeAccess = async function() {
+    const card = document.getElementById('gaon-office-card');
+    if (!card) return;
+
+    const email = window.__currentUserEmail;
+    const uid = window.__currentUserUid;
+    if (!email && !uid) return;
+
+    try {
+        const accessRef = doc(db, "admin_settings", "office_access");
+        const accessSnap = await getDoc(accessRef);
+        if (!accessSnap.exists()) return;
+
+        const allowedUsers = accessSnap.data().allowedUsers || [];
+        if (allowedUsers.includes(email) || allowedUsers.includes(uid)) {
+            card.style.display = 'flex';
+        }
+    } catch (error) {
+        console.error("가온 오피스 권한 확인 실패:", error);
+    }
+};
+
 
 window.unlockPrivate = async function() {
     const currentUserEmail = window.__currentUserEmail;

@@ -83,28 +83,6 @@
     <i class="bi bi-chevron-right" style="color:#B0B8C1; font-size:18px;"></i>
 </div>
 
-<script>
-(function checkGaonOfficeAccess() {
-    firebase.auth().onAuthStateChanged(async (user) => {
-        if (!user || !user.email) return;
-        try {
-            const doc = await firebase.firestore()
-                .collection('admin_settings')
-                .doc('office_access')
-                .get();
-            if (!doc.exists) return;
-            const allowedEmails = doc.data().allowedEmails || [];
-            if (allowedEmails.includes(user.email)) {
-                const card = document.getElementById('gaon-office-card');
-                if (card) card.style.display = 'flex';
-            }
-        } catch (err) {
-            console.error('가온 오피스 권한 확인 실패:', err);
-        }
-    });
-})();
-</script>
-
 <!-- 서비스 카드 -->
 <div style="background:white; border-radius:20px; padding:22px 20px; border:1px solid #F2F4F6; margin-bottom:16px;">
     <div style="font-size:17px; font-weight:800; color:#191F28; margin-bottom:16px;">서비스</div>
