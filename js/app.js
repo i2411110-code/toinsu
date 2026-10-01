@@ -1113,26 +1113,56 @@ window.renderCombinedCrmList = function() {
         if (searchKeyword  && !name.includes(searchKeyword)
             && !(d.phone && d.phone.includes(searchKeyword)))           return;
 
-        const docBadgeClass = d.document === '출력만'  ? 'badge-blue'
-                            : d.document === '출력 X' ? 'badge-gray'
-                            : 'badge-yellow';
+        const selStyle = (bg, fg) =>
+            `padding:3px 6px;border-radius:6px;border:1px solid ${fg}55;background:${bg};color:${fg};font-size:12px;font-weight:700;cursor:pointer;`;
+        const contractStyle = d.contract === '완료'
+            ? selStyle('#DCFCE7', '#16A34A') : selStyle('#FFEDD5', '#EA580C');
+        const docStyle = d.document === '출력만' ? selStyle('#DBEAFE', '#2563EB')
+                       : d.document === '출력 X' ? selStyle('#F1F5F9', '#64748B')
+                       : selStyle('#FEF9C3', '#CA8A04');
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="font-weight:700; color:#0F172A;">${name}</td>
-            <td><span class="badge ${d.contract === '완료' ? 'badge-green' : 'badge-orange'}">${d.contract}</span></td>
-            <td><span class="badge ${docBadgeClass}">${d.document}</span></td>
+            <td onclick="event.stopPropagation()">
+                <select style="${contractStyle}" onchange="window.quickUpdateCrm('${name}','contract',this.value)">
+                    <option value="완료" ${d.contract === '완료' ? 'selected' : ''}>완료</option>
+                    <option value="진행중" ${d.contract === '진행중' ? 'selected' : ''}>진행중</option>
+                </select>
+            </td>
+            <td onclick="event.stopPropagation()">
+                <select style="${docStyle}" onchange="window.quickUpdateCrm('${name}','document',this.value)">
+                    <option value="출력만" ${d.document === '출력만' ? 'selected' : ''}>출력만</option>
+                    <option value="전달 완료" ${d.document === '전달 완료' ? 'selected' : ''}>전달 완료</option>
+                    <option value="출력 X" ${d.document === '출력 X' ? 'selected' : ''}>출력 X</option>
+                </select>
+            </td>
             <td>${d.phone || '-'}</td>
             <td style="text-align:left; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${d.progress || '-'}</td>
             <td><button onclick="window.triggerGodeungView(event,'${name}')"
                         style="padding:4px 8px;border-radius:6px;border:1px solid #CBD5E1;background:white;font-size:12px;cursor:pointer;">고등</button></td>
-            <td><button onclick="window.triggerDirectEdit('${name}')"
+            <td><button onclick="event.stopPropagation(); window.triggerDirectEdit('${name}')"
                         style="padding:4px 8px;border-radius:6px;border:1px solid #CBD5E1;background:white;font-size:12px;cursor:pointer;">수정</button></td>
         `;
         tr.onclick = () => { window.triggerPopupDetailView(name); };
         tbody.appendChild(tr);
     });
 }
+
+window.quickUpdateCrm = async function(name, field, value) {
+    const d = window.globalClientRegistry[name];
+    if (!d) return;
+    const prev = d[field];
+    d[field] = value;
+    try {
+        await syncRegistryToDatabase();
+    } catch (e) {
+        console.error('빠른 수정 저장 실패:', e);
+        d[field] = prev;
+        alert('변경 저장에 실패했습니다. 다시 시도해주세요.');
+    }
+    window.renderCombinedCrmList();
+};
 
 window.sortCombinedCrm = function(criteria) {
     const entries = Object.entries(window.globalClientRegistry || {});
@@ -1204,7 +1234,7 @@ window.triggerDirectEdit = function(name) {
     document.getElementById('c_contract').value = d.contract || '완료';
     document.getElementById('c_document').value = d.document || '출력만';
     document.getElementById('c_phone').value    = d.phone || '';
-    document.getElementById('c_idnum').value    = '';
+    document.getElementById('c_idnum').value    = d.idnum || '';
     document.getElementById('c_address').value  = d.address || '';
     document.getElementById('c_job').value      = d.job || '';
     document.getElementById('c_drive').value    = d.drive || '';
