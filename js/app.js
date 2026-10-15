@@ -299,7 +299,7 @@ async function syncRegistryToDatabase() {
         clientRegistry: window.globalClientRegistry,
         schedules: window.currentUserSchedules,
         memo: memoVal
-    }, { merge: true });
+    }, { mergeFields: ['clientRegistry', 'schedules', 'memo'] });
 }
 
 async function updateVisitCounter(email) {
@@ -1103,9 +1103,14 @@ window.renderCombinedCrmList = function() {
     const filterDoc      = document.getElementById('f_doc')?.value      || 'all';
     const searchKeyword  = (document.getElementById('f_search')?.value || '').trim();
 
-    // ✅ 기본 정렬: savedAt 내림차순(최신순)
-    const entries = Object.entries(window.globalClientRegistry || {})
-        .sort((a, b) => (b[1].savedAt || 0) - (a[1].savedAt || 0));
+    // ✅ 현재 선택된 정렬 기준 적용 (기본: 최신순)
+    const sortMode = window.currentCrmSort || 'date';
+    const entries = Object.entries(window.globalClientRegistry || {});
+    if (sortMode === 'name') {
+        entries.sort((a, b) => a[0].localeCompare(b[0], 'ko'));
+    } else {
+        entries.sort((a, b) => (b[1].savedAt || 0) - (a[1].savedAt || 0));
+    }
 
     entries.forEach(([name, d]) => {
         if (filterContract !== 'all' && d.contract !== filterContract) return;
@@ -1165,16 +1170,7 @@ window.quickUpdateCrm = async function(name, field, value) {
 };
 
 window.sortCombinedCrm = function(criteria) {
-    const entries = Object.entries(window.globalClientRegistry || {});
-    if (criteria === 'name') {
-        entries.sort((a, b) => a[0].localeCompare(b[0], 'ko'));
-    } else {
-        // 'date' 또는 기타 → 최신순
-        entries.sort((a, b) => (b[1].savedAt || 0) - (a[1].savedAt || 0));
-    }
-    const sorted = {};
-    entries.forEach(([k, v]) => { sorted[k] = v; });
-    window.globalClientRegistry = sorted;
+    window.currentCrmSort = (criteria === 'name') ? 'name' : 'date';
     window.renderCombinedCrmList();
 }
 
@@ -1244,15 +1240,20 @@ window.triggerDirectEdit = function(name) {
     document.getElementById('c_progress').value = d.progress || '';
 }
 
-window.removeCustomerRecord = function() {
+window.removeCustomerRecord = async function() {
     if(!confirm("기록을 삭제하시겠습니까?")) return;
-    delete window.globalClientRegistry[currentModalTargetName];
-    if(window.executeRegistrySync) {
-        window.executeRegistrySync().then(() => {
-            window.closePortalModal();
-            window.renderCombinedCrmList();
-            alert("삭제되었습니다.");
-        });
+    const targetName = currentModalTargetName;
+    const backup = window.globalClientRegistry[targetName];
+    delete window.globalClientRegistry[targetName];
+    try {
+        await syncRegistryToDatabase();
+        window.closePortalModal();
+        window.renderCombinedCrmList();
+        alert("삭제되었습니다.");
+    } catch (e) {
+        console.error("삭제 저장 실패:", e);
+        window.globalClientRegistry[targetName] = backup; // 실패 시 복구
+        alert("삭제 저장에 실패했습니다. 다시 시도해주세요.");
     }
 }
 
