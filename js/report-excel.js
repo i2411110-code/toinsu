@@ -24,6 +24,7 @@
     '상해80%이상후유장해': 10000, '상해80%미만후유장해': 10000,
     '골절진단': 100, '화상진단': 100,
     '가족생활배상책임담보': 10000, '일상생활배상책임담보': 10000,
+        '(가족)일상생활배상책임': 10000,
     '교통사고처리지원금': 20000, '벌금(대물)': 500, '벌금(대인)': 2000,
     '변호사선임비용': 5000, '자동차부상치료비': 30,
     '화재벌금': 2000, '보존치료': 100, '보철치료': 100,
@@ -934,6 +935,18 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
       + '</div>'
 
       + '<div id="rptex-result" style="display:none;">'
+            /* ── 토스 CRM 붙여넣기 ── */
+      + '<div class="rpt-card" id="rptex-crm-card">'
+      + '<div class="rpt-step-label">STEP 1 · 또는</div>'
+      + '<h3 class="rpt-step-title">토스 CRM 화면 붙여넣기</h3>'
+      + '<p class="rpt-step-desc">토스 CRM 보장분석 화면 전체 선택(Ctrl+A) → 복사(Ctrl+C) → 아래에 붙여넣기(Ctrl+V)하면 엑셀 업로드와 똑같이 채워져요.<br>'
+      + '<span style="color:#64748B;font-size:12px;">📌 숨긴 행은 복사되지 않아요. CRM에서 숨김을 모두 푼 뒤 복사하세요. 분석이 끝나면 붙여넣은 내용은 자동으로 지워져요.</span></p>'
+      + '<textarea id="rptex-crm-text" class="rptex-flow-ta" style="min-height:90px;" placeholder="여기에 붙여넣기 (Ctrl+V)" onpaste="setTimeout(window.rptExHandleCrmPaste,60)"></textarea>'
+      + '<div class="rptex-flow-actions">'
+      + '<button class="btn-action" style="width:auto;padding:8px 18px;background:#3182F6;" onclick="window.rptExHandleCrmPaste()"><i class="bi bi-clipboard-data"></i> 붙여넣기 분석</button>'
+      + '<span id="rptex-crm-status" class="rptex-flow-note"></span></div>'
+      + '<div id="rptex-crm-warn" style="display:none;"></div>'
+      + '</div>'
       + '<div class="rpt-card">'
       + '<div class="rpt-step-label">STEP 2</div>'
       + '<h3 class="rpt-step-title">보장 분석 결과</h3>'
@@ -1280,6 +1293,317 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
     if (!s || s === '-') return 0;
     var n = parseFloat(s); return isNaN(n) ? 0 : n;
   }
+
+  // ================================================================
+  // ✅ 토스 CRM 화면 붙여넣기 (Ctrl+A → Ctrl+C → Ctrl+V)
+  //    붙여넣은 텍스트를 읽어 exState 를 직접 채운 뒤 render() 를 호출합니다.
+  //    → 이후 분석표·필수보장·멘트·이미지 복사는 엑셀 업로드와 100% 동일하게 동작.
+  // ================================================================
+
+  // ── 1) 토스 CRM 텍스트 파서 (독립 모듈: 이 블록 안에서만 쓰이는 이름들) ──
+  var TossCrm = (function () {
+    'use strict';
+  var VAL_RE  = /^(-|[\d,]+(?:\.\d+)?\s*만원)$/;   // 카테고리 표의 값 한 칸
+  var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  var PREM_RE = /^[\d,]+\s*원\s*\|\s*\S+/;          // "60,270 원 | 월납"
+  var COL_LABELS = ['보험명', '보험사명', '상품 종류', '계약일', '계약상태', '갱신 유무',
+    '계약자/피보험자', '증권번호', '납입 여부', '납입주기/납입기간', '보장만기/만기연령',
+    '납입종료일/종료연령', '월납보험료', '기납보험료', '잔여보험료', '총보험료'];
+
+  function won(s) {
+    var m = String(s == null ? '' : s).replace(/[,\s*]/g, '').match(/(\d+)원/);
+    return m ? Number(m[1]) : null;
+  }
+  function man(s) {
+    s = String(s == null ? '' : s).trim();
+    if (s === '-' || s === '') return 0;
+    var m = s.replace(/,/g, '').match(/([\d.]+)\s*만원/);
+    return m ? Number(m[1]) : null;
+  }
+  function num(s) { var m = String(s == null ? '' : s).match(/\d+/); return m ? Number(m[0]) : null; }
+  function split2(s) { var p = String(s == null ? '' : s).split('/'); return [p[0].trim(), p.slice(1).join('/').trim()]; }
+  function sum(a) { return a.reduce(function (x, y) { return x + (y || 0); }, 0); }
+  function idx(lines, text, from, to) {
+    for (var i = from || 0, e = to == null ? lines.length : to; i < e; i++) if (lines[i] === text) return i;
+    return -1;
+  }
+  function after(lines, label, from, to) { var i = idx(lines, label, from, to); return i < 0 ? null : lines[i + 1]; }
+  function col(cols, label, k) { var v = (cols[label] || [])[k]; return v === undefined ? null : v; }
+
+  function parse(text) {
+    var warnings = [];
+    var raw = String(text || '');
+    var lines = raw.replace(/\r/g, '').split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+
+    var iDetail = idx(lines, '가입보험 상세정보');
+    var iCat = idx(lines, '카테고리별 상세정보');
+    var iList = idx(lines, '상품별 보장목록');
+    if (iDetail < 0 || iCat < 0) {
+      return { ok: false, error: '토스 CRM 보장분석 화면 전체(Ctrl+A)를 복사했는지 확인해 주세요.', warnings: warnings };
+    }
+    if (iList < 0) {
+      iList = lines.length;
+      warnings.push('"상품별 보장목록" 구간이 없어 보장명 단위 데이터 없이 합계표만 읽었어요.');
+    }
+
+    // 1) 고객 기본정보
+    var bm = (after(lines, '생년월일', 0, iDetail) || '').match(/(\d{4}-\d{2}-\d{2})\s*\(보험나이\s*(\d+)세\)/);
+    var client = {
+      name: lines[0],
+      insuNo: (raw.match(/Insu No\.\s*(\S+)/) || [])[1] || null,
+      gender: after(lines, '성별', 0, iDetail),
+      birth: bm ? bm[1] : null,
+      insuranceAge: bm ? Number(bm[2]) : null,
+      sangryeongDate: after(lines, '상령일', 0, iDetail),
+      firstLinkedAt: after(lines, '최초 보험연결일', 0, iDetail)
+    };
+
+    // 2) 요약
+    var pm = raw.match(/페이지 노출 보험\s*(\d+)개\s*\/\s*전체 보험\s*(\d+)개/);
+    var summary = {
+      shown: pm ? Number(pm[1]) : null,
+      total: pm ? Number(pm[2]) : null,
+      count: num(after(lines, '보험 개수', iDetail, iCat)),
+      monthlyPremium: won(after(lines, '월납 보험료 합계', iDetail, iCat)),
+      paidPremium: won(after(lines, '기납 보험료 합계', iDetail, iCat)),
+      remainPremium: won(after(lines, '잔여 보험료 합계', iDetail, iCat)),
+      totalPremium: won(after(lines, '총 보험료 합계', iDetail, iCat))
+    };
+    if (pm && pm[1] !== pm[2]) {
+      warnings.push('화면에 보이는 보험은 ' + pm[1] + '개이고 전체는 ' + pm[2] +
+        '개예요. CRM에서 숨김을 모두 풀고 다시 복사해 주세요.');
+    }
+
+    // 3) 계약 표 (라벨 다음 줄부터 계약 수(n)만큼이 값)
+    var iName = idx(lines, '보험명', iDetail, iCat);
+    var iIns = iName < 0 ? -1 : idx(lines, '보험사명', iName + 1, iCat);
+    if (iName < 0 || iIns < 0) {
+      return { ok: false, error: '가입보험 상세정보 표를 찾지 못했어요. 화면 전체를 다시 복사해 주세요.', warnings: warnings };
+    }
+    var n = iIns - iName - 1;
+    var cols = {};
+    for (var i = iName; i < iCat; i++) {
+      var lab = lines[i];
+      if (lab === '매니저 의견') break;
+      if (COL_LABELS.indexOf(lab) >= 0) { cols[lab] = lines.slice(i + 1, i + 1 + n); i += n; }
+    }
+    var contracts = [];
+    for (var k = 0; k < n; k++) {
+      var cyc = split2(col(cols, '납입주기/납입기간', k));
+      var cov = split2(col(cols, '보장만기/만기연령', k));
+      var pay = split2(col(cols, '납입종료일/종료연령', k));
+      contracts.push({
+        index: k,
+        name: col(cols, '보험명', k),
+        insurer: col(cols, '보험사명', k),
+        productType: col(cols, '상품 종류', k),
+        contractDate: col(cols, '계약일', k),
+        status: col(cols, '계약상태', k),
+        renewal: col(cols, '갱신 유무', k),
+        holderInsured: col(cols, '계약자/피보험자', k),
+        policyNo: col(cols, '증권번호', k),
+        payStatus: col(cols, '납입 여부', k),
+        payCycle: cyc[0], payYears: num(cyc[1]),
+        coverageEnd: cov[0], coverageEndAge: num(cov[1]),
+        payEnd: pay[0], payEndAge: num(pay[1]),
+        monthlyPremium: won(col(cols, '월납보험료', k)),
+        paidPremium: won(col(cols, '기납보험료', k)),
+        remainPremium: won(col(cols, '잔여보험료', k)),
+        totalPremium: won(col(cols, '총보험료', k)),
+        coverages: []
+      });
+    }
+
+    // 4) 카테고리별 표: [대분류?] 소분류 합계 값×n  (대분류는 그룹 첫 행에만 나옴)
+    var matrix = [];
+    var iHead = idx(lines, '보험명', iCat, iList);
+    if (iHead >= 0) {
+      var pos = iHead + 1 + n, pending = [], major = null;
+      if (lines[pos] === '보장금액') pos++;
+      while (pos < iList) {
+        if (!VAL_RE.test(lines[pos])) { pending.push(lines[pos]); pos++; continue; }
+        var run = [];
+        while (pos < iList && VAL_RE.test(lines[pos])) run.push(lines[pos++]);
+        var labels = pending.splice(0), minor = null;
+        if (labels.length >= 2) { major = labels[labels.length - 2]; minor = labels[labels.length - 1]; }
+        else if (labels.length === 1) { minor = labels[0]; }
+        if (run.length !== n + 1) {
+          warnings.push('"' + (minor || '?') + '" 행의 칸 수가 ' + run.length + '개예요(예상 ' + (n + 1) + '개).');
+        }
+        matrix.push({ major: major, minor: minor, totalMan: man(run[0]), byContract: run.slice(1).map(man) });
+      }
+    } else {
+      warnings.push('카테고리별 보장 표를 찾지 못했어요.');
+    }
+
+    // 5) 상품별 보장목록: [보험사, 상품명, 상태, "보험료 | 납입주기"] + 헤더 8줄 + (8줄 × 행)
+    var premIdx = [];
+    for (var j = iList + 4; j < lines.length; j++) if (PREM_RE.test(lines[j])) premIdx.push(j);
+    premIdx.forEach(function (p, bi) {
+      var end = bi + 1 < premIdx.length ? premIdx[bi + 1] - 3 : lines.length;
+      var insurer = lines[p - 3], name = lines[p - 2];
+      var hdr = idx(lines, '보장종료일', p, end);
+      if (hdr < 0) { warnings.push('"' + name + '" 보장목록 헤더를 찾지 못했어요.'); return; }
+      var target = null;
+      for (var c = 0; c < contracts.length; c++) {
+        if (contracts[c].name === name && contracts[c].insurer === insurer && !contracts[c]._filled) { target = contracts[c]; break; }
+      }
+      if (!target) { warnings.push('보장목록의 "' + name + '" 계약을 상단 표에서 찾지 못했어요.'); return; }
+      target._filled = true;
+      if ((end - hdr - 1) % 8 !== 0) warnings.push('"' + name + '" 보장목록의 줄 수가 8의 배수가 아니에요.');
+      for (var q = hdr + 1; q + 8 <= end; q += 8) {
+        var r = lines.slice(q, q + 8);
+        if (!DATE_RE.test(r[6]) || !DATE_RE.test(r[7])) {
+          warnings.push('"' + name + '" 보장목록 형식이 달라 이후 행을 건너뛰었어요.');
+          break;
+        }
+        var hasSlash = r[3].indexOf('/') >= 0, sp = split2(r[3]);
+        target.coverages.push({
+          holderInsured: r[0], major: r[1], minor: r[2], rawName: r[3],
+          group: hasSlash ? sp[0] : null,        // 토스 분류명 (예: 암진단, 특정암진단)
+          title: hasSlash ? sp[1] : r[3],        // 실제 담보명
+          amountMan: man(r[4]), payYears: num(r[5]), start: r[6], end: r[7]
+        });
+      }
+    });
+    contracts.forEach(function (c) { delete c._filled; });
+
+    // 6) 검산
+    if (summary.count != null && summary.count !== n) {
+      warnings.push('보험 개수(' + summary.count + ')와 읽은 계약 수(' + n + ')가 달라요.');
+    }
+    var active = contracts.filter(function (c) { return c.status === '정상' && c.payStatus === '납입중'; });
+    var monthly = sum(active.map(function (c) { return c.monthlyPremium; }));
+    if (summary.monthlyPremium != null && monthly !== summary.monthlyPremium) {
+      warnings.push('월납 보험료 합계(' + summary.monthlyPremium + '원)와 계약별 합(' + monthly + '원)이 달라요.');
+    }
+    matrix.forEach(function (row) {
+      if (Math.abs(sum(row.byContract) - row.totalMan) > 0.001) {
+        warnings.push('"' + row.minor + '" 합계(' + row.totalMan + ')와 칸 합(' + sum(row.byContract) +
+          ')이 달라요. 토스가 겹치는 특약을 합산하지 않았을 수 있어요.');
+      }
+    });
+
+    return { ok: true, client: client, summary: summary, contracts: contracts, matrix: matrix, warnings: warnings };
+  }
+    return { parse: parse };
+  })();
+
+  // ── 2) 파서 결과 → 기존 parseToss() 와 같은 모양의 exState ──
+  function crmShortInsurer(s) { return String(s || '').replace(/해상보험$/, '').replace(/보험$/, '').trim(); }
+  function crmCleanName(s) { return String(s || '').replace(/^\(무\)\s*/, '').replace(/^무배당\s*/, '').trim(); }
+  function crmFit(arr, n) { var a = (arr || []).slice(0, n); while (a.length < n) a.push(0); return a; }
+
+  function crmToExState(parsed) {
+    var cs = parsed.contracts, n = cs.length, seen = {};
+    // 같은 보험사가 여러 건이어도 열 이름이 겹치지 않게 '보험사 + 상품명'으로 구성
+    var companies = cs.map(function (c) {
+      var base = (crmShortInsurer(c.insurer) + ' ' + crmCleanName(c.name)).trim();
+      seen[base] = (seen[base] || 0) + 1;
+      return seen[base] > 1 ? base + ' (' + seen[base] + ')' : base;
+    });
+    // 월납 보험료는 '정상 + 납입중' 계약만 반영 (토스 화면 합계와 같은 기준)
+    var prem = cs.map(function (c) {
+      return (c.status === '정상' && c.payStatus === '납입중') ? (c.monthlyPremium || 0) : 0;
+    });
+    var rows = parsed.matrix.map(function (m) {
+      var rec = RECOMMEND[m.minor];
+      return { cat: m.major || '', label: m.minor, customerSum: m.totalMan, recommend: rec,
+        status: computeRowStatus(m.totalMan, rec), perProduct: crmFit(m.byContract, n) };
+    });
+    return { customerName: parsed.client.name, companies: companies, rows: rows, premiumAmounts: prem };
+  }
+
+  // ── 3) 항암 치료비 카드: 보장명(상품별 보장목록) 키워드로 상세 담보 매핑 ──
+  // 같은 계약 안에서 겹치는 특약은 '가장 큰 금액 1개'만 인정(토스 표와 같은 방식), 계약끼리는 합산.
+  var CRM_ANTICANCER_RULES = {
+    '표적항암약물허가치료비': function (t) { return /표적항암/.test(t); },
+    '중입자치료비':           function (t) { return /중입자/.test(t); },
+    '세기조절방사선치료비':   function (t) { return /세기조절/.test(t); },
+    '양성자치료비':           function (t) { return /양성자/.test(t); },
+    // 토스는 '특정면역항암약물허가치료비'를 카티(CAR-T) 항에 넣어 보여줌 → 동일하게 맞춤
+    // (면역항암 약물과 CAR-T는 실제로는 다른 치료이므로, 분리하려면 '|면역항암' 을 지우세요)
+    'CAR-T항암치료비':        function (t) { return /카티|CAR-?T|면역항암/i.test(t); },
+    '로봇암 수술비':          function (t) { return /(로봇|다빈치).*암|암.*(로봇|다빈치)/.test(t); },
+    '항암방사선·약물치료비':  function (t) { return /항암방사선|항암약물치료/.test(t) && !/허가|표적|면역|카티|CAR/i.test(t); }
+  };
+
+  function crmCalcAnticancer(parsed) {
+    var out = {};
+    Object.keys(CRM_ANTICANCER_RULES).forEach(function (name) {
+      var total = 0;
+      parsed.contracts.forEach(function (c) {
+        if (c.status !== '정상') return;
+        var best = 0;
+        c.coverages.forEach(function (v) {
+          if (CRM_ANTICANCER_RULES[name](v.rawName) && (v.amountMan || 0) > best) best = v.amountMan;
+        });
+        total += best;
+      });
+      out[name] = total;
+    });
+    return out;
+  }
+
+  // 상태는 '가입 → 적정 / 미가입 → 미가입'만 자동 지정 (부족·과잉은 직접 클릭해서 전환)
+  function crmApplyAnticancer(parsed) {
+    var amounts = crmCalcAnticancer(parsed);
+    ESSENTIAL_GROUPS.forEach(function (g) {
+      if (g.key !== '항암') return;
+      g.items.forEach(function (it) {
+        if (!CRM_ANTICANCER_RULES[it.name]) return;     // '암 수술비' 등은 기존 dataKey 매핑 유지
+        var amt = amounts[it.name] || 0;
+        it.amount = amt ? amt.toLocaleString('ko-KR') + '만원' : '';
+        it.status = amt ? '적정' : '미가입';
+      });
+    });
+    renderEssentialGrid();
+  }
+
+  // ── 4) 화면 처리 ──
+  function crmStatus(msg) { var el = document.getElementById('rptex-crm-status'); if (el) el.textContent = msg || ''; }
+  function crmShowWarn(list, isError) {
+    var box = document.getElementById('rptex-crm-warn'); if (!box) return;
+    if (!list || !list.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    box.style.cssText = 'display:block;margin-top:12px;padding:12px 16px;border-radius:8px;font-size:12.5px;line-height:1.7;'
+      + (isError ? 'background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;' : 'background:#FFFBEB;border:1px solid #FDE68A;color:#B45309;');
+    box.innerHTML = list.map(function (w) { return (isError ? '⚠️ ' : '• ') + esc(w); }).join('<br>');
+  }
+  function crmPasteReset() {
+    var ta = document.getElementById('rptex-crm-text'); if (ta) ta.value = '';
+    crmShowWarn(null); crmStatus('');
+  }
+
+  window.rptExHandleCrmPaste = function () {
+    var ta = document.getElementById('rptex-crm-text');
+    if (!ta || !ta.value.trim()) return;
+    crmShowWarn(null); crmStatus('⏳ 분석 중...');
+    try {
+      var parsed = TossCrm.parse(ta.value);
+      if (!parsed.ok) { crmShowWarn([parsed.error], true); crmStatus(''); return; }
+      if (!parsed.matrix.length || !parsed.contracts.length) {
+        crmShowWarn(['카테고리별 보장 표를 읽지 못했어요. 화면 전체(Ctrl+A)를 다시 복사해 주세요.'], true);
+        crmStatus(''); return;
+      }
+      hideError();
+      var ageEl = document.getElementById('rptex-age');           // 보험나이 자동 입력 (render()가 이 값을 읽음)
+      if (parsed.client.insuranceAge && ageEl) ageEl.value = parsed.client.insuranceAge;
+      exState = crmToExState(parsed);
+      render();
+      crmApplyAnticancer(parsed);
+      var dropText = document.getElementById('rptex-drop-text');
+      if (dropText) dropText.textContent = '클릭하거나 파일을 끌어다 놓으세요 (.xlsx)';
+      ta.value = '';                                               // 고객 정보가 화면에 남지 않도록 비움
+      crmShowWarn(parsed.warnings, false);
+      crmStatus('✅ ' + parsed.client.name + '님 · 보험 ' + parsed.contracts.length + '건 · 분석 완료');
+    } catch (e) {
+      console.error(e);
+      crmShowWarn(['붙여넣기 분석 오류: ' + e.message], true); crmStatus('');
+    }
+  };
+  // ================================================================
+  // ✅ 토스 CRM 화면 붙여넣기 끝
+  // ================================================================
 
   function render() {
     var rows = exState.rows, companies = exState.companies, customerName = exState.customerName;
@@ -1747,6 +2071,7 @@ var ROW_STATUS_CYCLE = ['ok', 'low', 'unregistered', 'excess'];
     var ageGuideBtn  = document.getElementById('rptex-ageguide-toggle-btn');
     if (ageGuideBody) ageGuideBody.style.display = 'none';
     if (ageGuideBtn) ageGuideBtn.classList.remove('open');
+        crmPasteReset();
     hideError();
   };
 
