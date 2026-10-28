@@ -30,14 +30,19 @@
     '교통사고처리지원금': 20000, '벌금(대물)': 500, '벌금(대인)': 2000,
     '변호사선임비용': 5000, '자동차부상치료비': 30,
     '화재벌금': 2000, '보존치료': 100, '보철치료': 100,
-    '표적항암약물허가치료비': 10000,
-    '중입자치료비': 5000,
-    '세기조절방사선치료비': 2000,
-    '양성자치료비': 3000,
-    'CAR-T항암치료비': 5000,
-    '로봇암 수술비': 1000,
-    '암 수술비': 1000,
-    '항암방사선·약물치료비': 1000,
+
+    // ─── 항암 치료비 / n대·종 수술비 기준금액 (만원) ───
+    // 아래 줄 앞의 // 를 지우고 숫자를 넣으면 그 기준으로 적정/부족/과잉이 자동 판정됩니다.
+    // 비워두면(기준 없음) 가입 시 '적정', 미가입 시 '미가입'으로만 표시됩니다.
+    // '표적항암약물허가치료비': 3000,
+    // '중입자치료비': 3000,
+    // '세기조절방사선치료비': 1000,
+    // '양성자치료비': 3000,
+    // 'CAR-T항암치료비': 3000,
+    // '로봇암 수술비': 1000,
+    // '암 수술비': 1000,            // (토스 표에 '암수술' 행이 있으면 위쪽 '암수술' 값이 사용됩니다)
+    // '항암방사선·약물치료비': 1000,
+    // 'n대·종 수술비': 100,         // 항목명이 보장명 그대로(예: '1~5종수술비')면 그 이름으로 추가
   };
 
   // ─── 연령별 보험료 기준 (원) ───
@@ -1402,8 +1407,10 @@
   // 분석표에 쓰는 '권장기준 없는 수동 행' (가입하면 적정, 아니면 미가입 / 상태는 클릭으로 전환 가능)
   function crmManualRow(cat, label, per) {
     var total = per.reduce(function (s, v) { return s + (v || 0); }, 0);
-    return { cat: cat, label: label, customerSum: total, recommend: undefined, manual: true,
-      status: total > 0 ? 'ok' : 'unregistered', perProduct: per };
+    var rec = RECOMMEND[label];   // 상단 RECOMMEND에 기준금액을 넣으면 자동 판정
+    return { cat: cat, label: label, customerSum: total, recommend: rec, manual: true,
+      status: rec !== undefined ? computeRowStatus(total, rec) : (total > 0 ? 'ok' : 'unregistered'),
+      perProduct: per };
   }
 
   function crmBuildExtraRows(parsed, existingRows) {
