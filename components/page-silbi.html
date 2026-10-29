@@ -1,3 +1,9 @@
+<!--
+  실비계산기 (포탈용) — 기존 토스풍 UI는 그대로, 계산 로직만 보툴즈 실손 계산기 기준으로 교체.
+  적용: 기존 <section class="silson-wrap toss">…</section> 를 아래 section 으로 교체하고,
+        기존 실손 계산 JS(renderSilsonResult 등)는 지운 뒤 맨 아래 <script> 를 넣는다.
+        실손 사전(플로팅 버튼·모달)과 그 CSS는 건드리지 않는다.
+-->
 <section class="silson-wrap toss">
   <div class="silson-box">
 
@@ -54,6 +60,7 @@
             <input type="number" id="silson-nongubun" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
           </div>
         </div>
+        <div class="silson-hint" id="silson-out-hint"></div>
         <div class="silson-result-mini" id="silson-outpatient-result"></div>
       </div>
 
@@ -69,10 +76,21 @@
               <button class="silson-grade-btn" data-grade="general" onclick="window.selectSilsonGrade('general')">상급종합병원</button>
             </div>
           </div>
-          <div class="silson-group">
-            <label>급여 금액</label>
-            <input type="number" id="silson-g5-out-gubun" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
+          <div class="silson-row">
+            <div class="silson-group">
+              <label>급여 일부본인부담금</label>
+              <input type="number" id="silson-g5-out-gubun" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
+            </div>
+            <div class="silson-group">
+              <label>공단부담금</label>
+              <input type="number" id="silson-g5-out-public" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
+            </div>
           </div>
+          <div class="silson-group">
+            <label>급여 전액본인부담 (5세대 통원 보상 제외)</label>
+            <input type="number" id="silson-g5-out-full" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
+          </div>
+          <div class="silson-hint">공단부담금으로 건강보험 본인부담률을 계산해 공제에 반영해요. 비워 두면 본인부담률은 반영되지 않아요.</div>
           <div class="silson-result-mini" id="silson-g5-out-gubun-result"></div>
         </div>
         <div class="toss-card">
@@ -91,7 +109,7 @@
         </div>
       </div>
 
-      <!-- 약제비 (2세대, 3세대만) -->
+      <!-- 약제비 (처방조제) -->
       <div class="toss-card" id="silson-prescription-card" style="display:none;">
         <div class="toss-card-title" style="margin-bottom:16px;">통원 (약제)</div>
         <div class="silson-row">
@@ -104,6 +122,11 @@
             <input type="number" id="silson-presc-nongubun" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
           </div>
         </div>
+        <div class="silson-group" id="silson-presc-public-group" style="display:none;">
+          <label>공단부담금 (약국)</label>
+          <input type="number" id="silson-presc-public" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
+        </div>
+        <div class="silson-hint" id="silson-presc-hint"></div>
         <div class="silson-result-mini" id="silson-prescription-result"></div>
       </div>
 
@@ -163,6 +186,10 @@
       <!-- 1~4세대, 유병자 입원 -->
       <div class="toss-card" id="silson-inpatient-legacy-card">
         <div class="toss-card-title" style="margin-bottom:16px;">입원</div>
+        <div class="silson-group" id="silson-limit-in-group" style="display:none;">
+          <label>입원 한도 (증권 확인)</label>
+          <select id="silson-limit-in-select" class="silson-select" onchange="window.silsonState.limitInIdx=Number(this.value); window.renderSilsonResult()"></select>
+        </div>
         <div class="silson-row">
           <div class="silson-group"><label>급여</label><input type="number" id="silson-inp-gubun" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
           <div class="silson-group"><label>비급여</label><input type="number" id="silson-inp-nongubun" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
@@ -198,6 +225,10 @@
           <div class="silson-group">
             <label>급여 금액</label>
             <input type="number" id="silson-g5-inp-gubun" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()">
+          </div>
+          <div class="silson-row">
+            <div class="silson-group"><label>입원일수</label><input type="number" id="silson-g5-inp-days" class="silson-input" placeholder="1" value="1" oninput="window.renderSilsonResult()"></div>
+            <div class="silson-group"><label>상급병실료 차액 (1일)</label><input type="number" id="silson-g5-inp-room-diff" class="silson-input" placeholder="0" oninput="window.renderSilsonResult()"></div>
           </div>
           <div class="silson-result-mini" id="silson-g5-inp-gubun-result"></div>
         </div>
@@ -265,114 +296,445 @@
     <div class="silson-total" id="silson-total-card">
       <div class="silson-total-label" id="silson-total-label">통원 예상 보험금</div>
       <div class="silson-total-amount" id="silson-total-amount">0원</div>
-      <p class="silson-total-notice">보상 제외 질환 및 실손 약관에 따라 실제 보험금은 상이할 수 있습니다.</p>
+      <p class="silson-total-notice">보상 제외 질환 및 실손 약관에 따라 실제 보험금은 상이할 수 있습니다.<br>표준약관 기준 1회 청구 예상치이며, 연간 한도 누적은 반영하지 않아요.</p>
     </div>
 
   </div>
 </section>
 
-<!-- ===== 실손 사전 플로팅 버튼 ===== -->
-<button onclick="window.openSilsonDict()" style="
-  position:fixed; left:20px; bottom:100px; z-index:200;
-  width:52px; height:52px; border-radius:50%; border:none;
-  background:#191F28; color:white; font-size:20px;
-  display:flex; align-items:center; justify-content:center;
-  box-shadow:0 4px 16px rgba(0,0,0,0.18); cursor:pointer;">
-  <i class="bi bi-book"></i>
-</button>
-
-<!-- ===== 실손 사전 모달 ===== -->
-<div id="silson-dict-modal" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.45); align-items:flex-end; justify-content:center;">
-  <div style="background:white; width:100%; max-width:600px; border-radius:24px 24px 0 0; max-height:88vh; display:flex; flex-direction:column; overflow:hidden;">
-    <!-- 모달 헤더 -->
-    <div style="padding:20px 20px 0; flex-shrink:0;">
-      <div style="width:40px; height:4px; background:#E5E8EB; border-radius:2px; margin:0 auto 16px;"></div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <div>
-          <div style="font-size:18px; font-weight:800; color:#191F28;">📖 실손 사전</div>
-          <div style="font-size:12px; color:#8B95A1; margin-top:2px;" id="silson-dict-gen-label">세대를 선택하면 정보가 표시됩니다</div>
-        </div>
-        <button onclick="window.closeSilsonDict()" style="background:none; border:none; font-size:22px; color:#8B95A1; cursor:pointer;"><i class="bi bi-x"></i></button>
-      </div>
-      <!-- 세대 선택 -->
-      <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:12px; -webkit-overflow-scrolling:touch;">
-        <button class="dict-gen-btn active" onclick="window.switchDictGen('1세대')" style="white-space:nowrap;">1세대</button>
-        <button class="dict-gen-btn" onclick="window.switchDictGen('2세대 1차')" style="white-space:nowrap;">2세대 1차</button>
-        <button class="dict-gen-btn" onclick="window.switchDictGen('2세대 2차')" style="white-space:nowrap;">2세대 2차</button>
-        <button class="dict-gen-btn" onclick="window.switchDictGen('2세대 3차')" style="white-space:nowrap;">2세대 3차</button>
-        <button class="dict-gen-btn" onclick="window.switchDictGen('3세대')" style="white-space:nowrap;">3세대</button>
-        <button class="dict-gen-btn" onclick="window.switchDictGen('4세대')" style="white-space:nowrap;">4세대</button>
-        <button class="dict-gen-btn" onclick="window.switchDictGen('5세대')" style="white-space:nowrap;">5세대</button>
-        <button class="dict-gen-btn" onclick="window.switchDictGen('유병자')" style="white-space:nowrap;">유병자</button>
-      </div>
-      <!-- 탭 -->
-      <div style="display:flex; background:#F2F4F6; padding:4px; border-radius:12px; gap:4px; margin-bottom:0;">
-        <button class="dict-tab-btn active" id="dict-tab-info" onclick="window.switchDictTab('info')">실손정보</button>
-        <button class="dict-tab-btn" id="dict-tab-selfpay" onclick="window.switchDictTab('selfpay')">자기부담금</button>
-        <button class="dict-tab-btn" id="dict-tab-waiting" onclick="window.switchDictTab('waiting')">면책기간</button>
-        <button class="dict-tab-btn" id="dict-tab-exclude" onclick="window.switchDictTab('exclude')">면책사항</button>
-      </div>
-    </div>
-    <!-- 모달 바디 -->
-    <div id="silson-dict-body" style="padding:16px 20px 30px; overflow-y:auto; flex:1;"></div>
-  </div>
-</div>
-
+<!-- 기존 <style> 맨 아래에 추가 (안내 문구용 한 줄) -->
 <style>
-.silson-wrap.toss { padding: 0 0 30px; }
-.silson-wrap.toss .silson-box { max-width:680px; margin:0 auto; display:flex; flex-direction:column; gap:16px; }
-.silson-wrap.toss .toss-card { padding:22px 20px; }
-
-.silson-wrap.toss .silson-gen-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
-@media(min-width:500px){ .silson-wrap.toss .silson-gen-grid { grid-template-columns:repeat(4,1fr); } }
-.silson-wrap.toss .silson-gen-btn { background:#F9FAFB; border:1.5px solid #F2F4F6; border-radius:14px; padding:12px 8px; text-align:left; cursor:pointer; transition:all 0.15s; display:flex; flex-direction:column; gap:3px; }
-.silson-wrap.toss .silson-gen-btn:hover { border-color:#3182F6; }
-.silson-wrap.toss .silson-gen-btn.active { background:#EFF6FF; border-color:#3182F6; }
-.silson-wrap.toss .silson-gen-btn .gen-label { font-size:13px; font-weight:800; color:#191F28; }
-.silson-wrap.toss .silson-gen-btn.active .gen-label { color:#3182F6; }
-.silson-wrap.toss .silson-gen-btn .gen-period { font-size:10px; color:#8B95A1; font-weight:600; }
-.silson-wrap.toss .silson-gen-btn .gen-note { font-size:10px; color:#3182F6; font-weight:700; }
-
-.silson-wrap.toss .silson-type-toggle { display:grid; grid-template-columns:1fr 1fr; background:#F2F4F6; border-radius:14px; padding:4px; gap:4px; }
-.silson-wrap.toss .silson-type-btn { border:none; border-radius:11px; padding:13px; font-size:14px; font-weight:800; cursor:pointer; background:transparent; color:#8B95A1; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; }
-.silson-wrap.toss .silson-type-btn.active { background:white; color:#3182F6; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
-
-.silson-wrap.toss .silson-group { margin-bottom:14px; display:flex; flex-direction:column; gap:6px; }
-.silson-wrap.toss .silson-group:last-child { margin-bottom:0; }
-.silson-wrap.toss .silson-group label { font-size:12px; font-weight:800; color:#8B95A1; }
-.silson-wrap.toss .silson-select,
-.silson-wrap.toss .silson-input { width:100%; padding:13px 14px; border:1.5px solid #F2F4F6; border-radius:12px; font-size:15px; font-family:'Noto Sans KR',sans-serif; outline:none; background:#F9FAFB; color:#191F28; transition:border-color 0.15s,background 0.15s; }
-.silson-wrap.toss .silson-select:focus,
-.silson-wrap.toss .silson-input:focus { border-color:#3182F6; background:white; }
-.silson-wrap.toss .silson-readonly { background:#F2F4F6; color:#8B95A1; cursor:default; }
-.silson-wrap.toss .silson-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-
-.silson-wrap.toss .silson-grade-btns { display:flex; gap:8px; flex-wrap:wrap; }
-.silson-wrap.toss .silson-grade-btn { flex:1; min-width:70px; padding:11px 6px; border:1.5px solid #F2F4F6; border-radius:12px; background:#F9FAFB; font-size:13px; font-weight:800; color:#8B95A1; cursor:pointer; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; }
-.silson-wrap.toss .silson-grade-btn.active { background:#EFF6FF; border-color:#3182F6; color:#3182F6; }
-
-.silson-wrap.toss .silson-result-mini { margin-top:14px; background:#F9FAFB; border-radius:14px; border:1px solid #F2F4F6; overflow:hidden; }
-.silson-wrap.toss .silson-result-mini table { width:100%; border-collapse:collapse; font-size:13px; }
-.silson-wrap.toss .silson-result-mini td { padding:11px 14px; border-bottom:1px solid #F2F4F6; color:#4E5968; }
-.silson-wrap.toss .silson-result-mini td:last-child { text-align:right; font-weight:800; color:#191F28; }
-.silson-wrap.toss .silson-result-mini tr:last-child td { border-bottom:none; background:#EFF6FF; color:#3182F6; font-weight:900; font-size:14px; }
-.silson-wrap.toss .silson-result-mini tr:last-child td:first-child { color:#3182F6; }
-
-.silson-wrap.toss .silson-total { background:#3182F6; border-radius:20px; padding:28px 24px; color:white; text-align:center; }
-.silson-wrap.toss .silson-total-label { font-size:13px; opacity:0.85; margin-bottom:8px; font-weight:700; }
-.silson-wrap.toss .silson-total-amount { font-size:34px; font-weight:900; letter-spacing:-1px; margin-bottom:12px; }
-.silson-wrap.toss .silson-total-notice { font-size:11px; opacity:0.75; line-height:1.5; }
-
-/* 실손 사전 */
-.dict-gen-btn { padding:8px 14px; border:1.5px solid #E5E8EB; border-radius:20px; background:white; font-size:12px; font-weight:700; color:#4E5968; cursor:pointer; transition:all 0.15s; flex-shrink:0; }
-.dict-gen-btn.active { background:#191F28; border-color:#191F28; color:white; }
-.dict-tab-btn { flex:1; padding:11px 4px; border:none; border-radius:10px; background:transparent; font-size:12px; font-weight:800; color:#8B95A1; cursor:pointer; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; }
-.dict-tab-btn.active { background:white; color:#3182F6; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
-.dict-item { background:#F9FAFB; border-radius:14px; padding:14px 16px; margin-bottom:10px; }
-.dict-item-key { font-size:13px; font-weight:800; color:#191F28; margin-bottom:4px; }
-.dict-item-val { font-size:13px; color:#4E5968; line-height:1.6; }
-.dict-exclude-badge { display:inline-block; font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px; margin-right:6px; }
-.badge-exclude { background:#F2F4F6; color:#8B95A1; }
-.badge-possible { background:#EFF6FF; color:#3182F6; }
-.badge-limit { background:#FFF7E6; color:#D97706; }
+.silson-wrap.toss .silson-hint { margin-top:10px; font-size:12px; line-height:1.55; color:#8B95A1; }
+.silson-wrap.toss .silson-hint:empty { display:none; }
+.silson-wrap.toss .silson-result-mini .silson-note { padding:11px 14px; font-size:12px; color:#8B95A1; }
 </style>
+
+<script>
+/* ============================================================================
+   실손 계산 엔진 — 보툴즈 실손 계산기(botools.kr/tools/silson) 계산식 이식
+   · 표준약관 기준, 1회 청구 기준 (연간 한도 누적 미반영)
+   · 5세대는 주계약 + 특약1(중증)·특약2(비중증) 모두 가입한 것으로 계산
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var won = function (n) { return Math.round(n || 0).toLocaleString('ko-KR'); };
+  var num = function (id) { var e = $(id); return e ? Math.max(+e.value || 0, 0) : 0; };
+  var clamp = function (v, lo, hi) { return Math.max(lo, Math.min(v, hi)); };
+  var set = function (id, html) { var e = $(id); if (e) e.innerHTML = html; };
+  var show = function (id, on) { var e = $(id); if (e) e.style.display = on ? '' : 'none'; };
+
+  var GENS = [
+    { id: '1',  label: '1세대',          period: '~2009.07',          note: '구실손' },
+    { id: '2b', label: '2세대 선택형',    period: '2009.08~2015.08',   note: '정액공제' },
+    { id: '2a', label: '2세대 선택형Ⅱ',  period: '2015.09~2017.03',   note: '급10%·비20%' },
+    { id: '3b', label: '3세대',          period: '2017.04~2021.06',   note: '비급여 3종 특약' },
+    { id: '4',  label: '4세대',          period: '2021.07~2026.04',   note: '급여/비급여 분리' },
+    { id: '5',  label: '5세대',          period: '2026.05~',          note: '중증/비중증' },
+    { id: 'yb', label: '유병자(간편)',    period: '2018.04~',          note: '별도 상품' }
+  ];
+
+  /* 급자부/비자부: 통원 정률 공제율, inp: 입원 보장률, 조제공제: 처방조제 최저공제 */
+  var CFG = {
+    '1':  { 급자부: 0,  비자부: 0,  조제공제: 5000, inp: { 급: 1,   비: 1 } },
+    '2b': { 급자부: .1, 비자부: .1, 조제공제: 8000, inp: { 급: .9,  비: .9 } },
+    '2a': { 급자부: .1, 비자부: .2, 조제공제: 8000, inp: { 급: .9,  비: .8 } },
+    '3b': { 급자부: .1, 비자부: .2, 조제공제: 8000, inp: { 급: .9,  비: .8 } },
+    '4':  { 조제공제: 8000, inp: { 급: .8, 비: .7 } },
+    '5':  { 조제공제: 8000, inp: {} },
+    'yb': { 조제공제: 0,    inp: { 급: .7, 비: .7 } }
+  };
+  var NP_CAP = { '주사제': 2500000, '도수/체외': 3500000, 'MRI': 3000000 };
+  var NP_NAME = { '주사제': '비급여 주사제', '도수/체외': '도수·체외충격파', 'MRI': 'MRI·MRA' };
+  var OUT_ITEM_CAP = 200000;
+  var IN_CAP = 50000000;
+
+  var S = window.silsonState = {
+    gen: '4', type: 'outpatient', grade: 'clinic',
+    limitIdx: 0, limitInIdx: 1, g5out: 'severe', g5inp: 'severe'
+  };
+
+  /* ---------- 한도 · 등급 ---------- */
+  function caps(g) {
+    if (g === '1') {
+      var o = [100000, 300000][S.limitIdx] || 300000;
+      return { out: o, pharm: o, inCap: [30000000, 50000000, 100000000][S.limitInIdx] || 50000000 };
+    }
+    if (g === '2b' || g === '2a' || g === '3b') {
+      return S.limitIdx === 1 ? { out: 200000, pharm: 100000, inCap: IN_CAP } : { out: 250000, pharm: 50000, inCap: IN_CAP };
+    }
+    if (g === 'yb') return { out: 200000, pharm: 0, inCap: IN_CAP };
+    return { out: OUT_ITEM_CAP, pharm: 0, inCap: IN_CAP };
+  }
+  function gradeDed(g, gr) {
+    if (g === '4' || g === '5') return gr === 'clinic' ? 10000 : 20000;
+    return gr === 'clinic' ? 10000 : gr === 'hospital' ? 15000 : 20000;
+  }
+  /* 입원 5세대: 종합·상급종합 = '종합병원', 그 외 '병원' */
+  var inpGrade = function (gr) { return gr === 'clinic' ? '병원' : '종합병원'; };
+
+  /* ---------- 표 그리기 ---------- */
+  var R = function (l, n) { return [l, won(n) + '원']; };
+  var D = function (l, n) { return [l, '−' + won(n) + '원']; };
+  function tbl(rows, totalLabel, total) {
+    if (!rows.length) return '';
+    return '<table>' + rows.map(function (r) {
+      return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>';
+    }).join('') + '<tr><td>' + totalLabel + '</td><td>' + won(total) + '원</td></tr></table>';
+  }
+  var note = function (t) { return '<div class="silson-note">' + t + '</div>'; };
+
+  /* 보장대상금액 − 공제액 → (한도) → 산출보험금 */
+  function step(name, target, ded, desc, cap) {
+    var raw = Math.max(target - ded, 0);
+    var pay = cap == null ? raw : Math.min(raw, cap);
+    var rows = [R(name + ' 보장대상금액', target), D('공제액 (' + desc + ')', Math.min(ded, target))];
+    if (cap != null && raw > cap) rows.push(['한도 적용 (' + won(cap) + '원)', won(pay) + '원']);
+    return { pay: pay, rows: rows };
+  }
+
+  /* ---------- 통원 (1·2·3세대·유병자: 외래) ---------- */
+  function outLegacy(g, 급, 비, grade) {
+    var t = 급 + 비;
+    if (t <= 0) return { pay: 0, rows: [] };
+    var C = caps(g), cfg = CFG[g], gd = gradeDed(g, grade), ded, desc;
+    if (g === '1') { ded = 5000; desc = '정액 5,000원'; }
+    else if (g === 'yb') {
+      var j = t * 0.3; ded = Math.max(j, 20000);
+      desc = '30% ' + won(j) + '원과 최저 20,000원 중 큰 금액';
+    } else if (g === '2b') {
+      ded = gd; desc = '병원등급 정액 ' + won(gd) + '원 (정률 공제 없음)';
+    } else {
+      var jj = 급 * cfg.급자부 + 비 * cfg.비자부; ded = Math.max(jj, gd);
+      desc = '급여 ' + Math.round(cfg.급자부 * 100) + '% + 비급여 ' + Math.round(cfg.비자부 * 100) + '% = ' + won(jj) + '원과 등급 정액 ' + won(gd) + '원 중 큰 금액';
+    }
+    return step('병원비(급여+비급여)', t, ded, desc, C.out);
+  }
+
+  /* ---------- 통원 처방조제 (1·2·3세대) ---------- */
+  function pharm(g, 급, 비) {
+    var t = 급 + 비;
+    if (t <= 0) return { pay: 0, rows: [] };
+    var C = caps(g), cfg = CFG[g], ded, desc;
+    if (g === '1') { ded = 5000; desc = '정액 5,000원'; }
+    else if (g === '2b') { ded = 8000; desc = '처방전 1건당 정액 8,000원'; }
+    else {
+      var j = 급 * cfg.급자부 + 비 * cfg.비자부; ded = Math.max(j, cfg.조제공제);
+      desc = '급여 ' + Math.round(cfg.급자부 * 100) + '% + 비급여 ' + Math.round(cfg.비자부 * 100) + '% = ' + won(j) + '원과 최저 8,000원 중 큰 금액';
+    }
+    return step('처방조제비', t, ded, desc, C.pharm);
+  }
+
+  /* ---------- 통원 4세대: 외래+약국 합산 ---------- */
+  function out4() {
+    var 급 = num('silson-gubun') + num('silson-presc-gubun');
+    var 비 = num('silson-nongubun') + num('silson-presc-nongubun');
+    var rows = [], pay = 0;
+    if (급 > 0) {
+      var gd = gradeDed('4', S.grade), j = 급 * 0.2;
+      var r = step('급여', 급, Math.max(j, gd), '급여 20% ' + won(j) + '원과 등급 최저 ' + won(gd) + '원 중 큰 금액', OUT_ITEM_CAP);
+      pay += r.pay; rows = rows.concat(r.rows);
+    }
+    if (비 > 0) {
+      var j2 = 비 * 0.3;
+      var r2 = step('비급여', 비, Math.max(j2, 30000), '비급여 30% ' + won(j2) + '원과 최저 30,000원 중 큰 금액', OUT_ITEM_CAP);
+      pay += r2.pay; rows = rows.concat(r2.rows);
+    }
+    return { pay: pay, rows: rows };
+  }
+
+  /* ---------- 비급여 3종 ---------- */
+  function calcNp(g, item, amt, severe) {
+    if (amt <= 0) return { pay: 0, ded: 0, rows: [] };
+    var ded, cap;
+    if (g === '5') {
+      if (severe) { ded = Math.max(amt * 0.3, 30000); cap = NP_CAP[item]; }
+      else if (item === 'MRI') { ded = Math.max(amt * 0.5, 50000); cap = 2000000; }
+      else return { pay: 0, ded: amt, rows: [[NP_NAME[item] + ' · 비중증 (' + won(amt) + '원)', '보장 제외']] };
+    } else {
+      ded = Math.max(amt * 0.3, g === '4' ? 30000 : 20000); cap = NP_CAP[item];
+    }
+    var raw = Math.max(amt - ded, 0), pay = Math.min(raw, cap);
+    var tag = g === '5' ? (severe ? ' · 중증' : ' · 비중증') : '';
+    return {
+      pay: pay, ded: ded,
+      rows: [[NP_NAME[item] + tag + ' (' + won(amt) + '원 − 공제 ' + won(ded) + '원)',
+              won(pay) + '원' + (raw > cap ? ' · 연 한도 ' + won(cap) + '원 적용' : '')]]
+    };
+  }
+  function setDed(id, amt, r) { var e = $(id); if (e) e.value = amt > 0 ? won(r.ded) + '원' : ''; }
+  var ITEMS = [['주사제', 'injection'], ['도수/체외', 'manual'], ['MRI', 'mri']];
+
+  function np34(g, prefix) {
+    var pay = 0, rows = [];
+    ITEMS.forEach(function (it) {
+      var amt = num(prefix + it[1]), r = calcNp(g, it[0], amt, false);
+      setDed(prefix + it[1] + '-deduct', amt, r);
+      pay += r.pay; rows = rows.concat(r.rows);
+    });
+    return { pay: pay, rows: rows };
+  }
+  function np5(kind) {
+    var p = 'silson-g5-' + kind + '-', pay = 0, rows = [];
+    ITEMS.forEach(function (it) {
+      var amt = num(p + it[1]), r = calcNp('5', it[0], amt, true);
+      setDed(p + it[1] + '-deduct', amt, r);
+      pay += r.pay; rows = rows.concat(r.rows);
+    });
+    var am = num(p + 'mri-mild'), rm = calcNp('5', 'MRI', am, false);
+    setDed(p + 'mri-mild-deduct', am, rm);
+    pay += rm.pay; rows = rows.concat(rm.rows);
+    return { pay: pay, rows: rows };
+  }
+
+  /* ---------- 통원 5세대 ---------- */
+  function out5() {
+    var 급 = num('silson-g5-out-gubun') + num('silson-presc-gubun');
+    var 공 = num('silson-g5-out-public') + num('silson-presc-public');
+    var 전 = num('silson-g5-out-full');
+    var sev = num('silson-g5-out-severe');
+    var mild = num('silson-g5-out-mild') + num('silson-presc-nongubun');
+    var payG = 0, rowsG = [], payN = 0, rowsN = [];
+
+    if (급 > 0) {
+      var gd = gradeDed('5', S.grade), j = 급 * 0.2;
+      var rate = 공 > 0 ? 급 / (급 + 공) : 0;
+      var ded = Math.max(j, 급 * rate, gd), desc;
+      if (공 > 0) desc = '급여 20% ' + won(j) + '원 · 건보 본인부담률 ' + (rate * 100).toFixed(1) + '% = ' + won(급 * rate) + '원 · 등급 최저 ' + won(gd) + '원 중 가장 큰 금액';
+      else desc = '급여 20% ' + won(j) + '원과 등급 최저 ' + won(gd) + '원 중 큰 금액 · 공단부담금 미입력으로 건보 본인부담률 미반영';
+      var r = step('급여', 급, ded, desc, OUT_ITEM_CAP);
+      payG = r.pay; rowsG = r.rows;
+    }
+    if (전 > 0) rowsG.push(['급여 전액본인부담 ' + won(전) + '원', '보상 제외']);
+    if (sev > 0) {
+      var rs = step('중증 비급여', sev, Math.max(sev * 0.3, 30000), '30% ' + won(sev * 0.3) + '원과 최저 30,000원 중 큰 금액', OUT_ITEM_CAP);
+      payN += rs.pay; rowsN = rowsN.concat(rs.rows);
+    }
+    if (mild > 0) {
+      var rm = step('비중증 비급여', mild, Math.max(mild * 0.5, 50000), '50% ' + won(mild * 0.5) + '원과 최저 50,000원 중 큰 금액', OUT_ITEM_CAP);
+      payN += rm.pay; rowsN = rowsN.concat(rm.rows);
+    }
+    set('silson-g5-out-gubun-result', tbl(rowsG, '급여 지급액', payG));
+    set('silson-g5-out-nongubun-result', tbl(rowsN, '비급여 지급액', payN));
+    var t3 = np5('out');
+    set('silson-g5-type3-out-result', tbl(t3.rows, '비급여 3종 지급액', t3.pay));
+    return payG + payN + t3.pay;
+  }
+
+  /* ---------- 입원 ---------- */
+  /* parts: g 급여 · n 비급여 · r 상급병실 · x 자기부담 상한 초과 환급 */
+  function calcIn(g, r) {
+    var 급 = r.급 || 0, 비 = r.비 || 0, 상차 = r.상차 || 0, 일수 = Math.max(r.일수 || 1, 1);
+    var cfg = CFG[g], out = { pay: 0, rows: [], parts: { g: 0, n: 0, r: 0, x: 0 } };
+    if (급 + 비 + 상차 <= 0) return out;
+    var P = function (grp, label, pay) { out.rows.push([label, won(pay) + '원', grp]); out.parts[grp] += pay; };
+    var 상급지 = Math.min(상차 * 0.5, 100000 * 일수);
+
+    if (g === '5') {
+      if (급 > 0) {
+        var over = 급 * 0.2 > 2000000;
+        P('g', '급여 (자기부담 20%' + (over ? ' → 연 200만 상한 적용' : '') + ')', over ? 급 - 2000000 : 급 * 0.8);
+      }
+      if (비 > 0) {
+        if (r.중증) {
+          var cap5 = 비 * 0.3 > 5000000 && r.grade === '종합병원';
+          P('n', '중증 비급여 (자기부담 30%' + (cap5 ? ' → 종합병원 연 500만 상한 적용' : '') + ')', cap5 ? 비 - 5000000 : 비 * 0.7);
+        } else {
+          var half = 비 * 0.5, capped = r.grade !== '종합병원' && half > 3000000;
+          P('n', '비중증 비급여 (자기부담 50%' + (capped ? ' → 병·의원급 회당 300만 한도 적용' : '') + ')', capped ? 3000000 : half);
+        }
+      }
+    } else if (g === 'yb') {
+      var t = 급 + 비, raw = Math.max(t * 0.3, Math.min(t, 100000)), ded = Math.min(raw, 2000000);
+      P('g', '급여+비급여 (자기부담 30%·최저 10만' + (raw > 2000000 ? ' → 연 200만 상한 적용' : '') + ')', Math.max(t - ded, 0));
+    } else {
+      var inp = cfg.inp;
+      if (급 > 0) P('g', '급여 ' + Math.round(inp.급 * 100) + '% 보장', 급 * inp.급);
+      if (비 > 0) P('n', '비급여 ' + Math.round(inp.비 * 100) + '% 보장', 비 * inp.비);
+      if (g === '2a' || g === '2b' || g === '3b') {
+        var 자부 = 급 * (1 - inp.급) + 비 * (1 - inp.비);
+        if (자부 > 2000000) P('x', '자기부담 연 200만 초과분 환급', 자부 - 2000000);
+      }
+      if (g === '4' && 급 * 0.2 > 2000000) P('x', '급여 자기부담 연 200만 초과분 환급', 급 * 0.2 - 2000000);
+    }
+    if (상차 > 0) P('r', '상급병실 차액 50% (1일 10만원 한도)', 상급지);
+    var sum = out.parts.g + out.parts.n + out.parts.r + out.parts.x;
+    out.pay = Math.min(sum, caps(g).inCap);
+    return out;
+  }
+
+  function renderInp(g) {
+    var total = 0;
+    if (g === '5') {
+      var 급 = num('silson-g5-inp-gubun'), sev = num('silson-g5-inp-severe'), mild = num('silson-g5-inp-mild');
+      var 일수 = Math.max(num('silson-g5-inp-days'), 1), 상차 = num('silson-g5-inp-room-diff') * 일수;
+      var gr = inpGrade(S.grade);
+      /* 상급병실 차액은 비중증 입원(특약2) 기준, 비중증 비급여가 없고 중증만 있으면 중증(특약1) 기준 */
+      var roomSev = mild <= 0 && sev > 0;
+      var a = calcIn('5', { 급: 급, 비: mild, 상차: roomSev ? 0 : 상차, 일수: 일수, grade: gr, 중증: false });
+      var b = calcIn('5', { 급: 0, 비: sev, 상차: roomSev ? 상차 : 0, 일수: 일수, grade: gr, 중증: true });
+      var rows = a.rows.concat(b.rows);
+      var rowsG = rows.filter(function (x) { return x[2] === 'g' || x[2] === 'r'; });
+      var rowsN = rows.filter(function (x) { return x[2] === 'n'; });
+      var pg = a.parts.g + b.parts.g + a.parts.r + b.parts.r, pn = a.parts.n + b.parts.n;
+      set('silson-g5-inp-gubun-result', tbl(rowsG, '급여·상급병실 지급액', pg));
+      set('silson-g5-inp-nongubun-result', tbl(rowsN, '비급여 지급액', pn));
+      total += Math.min(pg + pn, IN_CAP);
+      var t3 = np5('inp');
+      set('silson-g5-type3-inp-result', tbl(t3.rows, '비급여 3종 지급액', t3.pay));
+      total += t3.pay;
+    } else {
+      var d = Math.max(num('silson-days'), 1);
+      var prem = $('silson-room') && $('silson-room').value === 'premium';
+      show('silson-room-extra', prem);
+      var res = calcIn(g, { 급: num('silson-inp-gubun'), 비: num('silson-inp-nongubun'), 상차: prem ? num('silson-room-diff') * d : 0, 일수: d, grade: '병원', 중증: false });
+      set('silson-inpatient-result', tbl(res.rows, '입원 지급액', res.pay));
+      total += res.pay;
+      if (g === '3b' || g === '4') {
+        var n = np34(g, 'silson-inp-');
+        set('silson-inp-type3-result', tbl(n.rows, '비급여 3종 지급액', n.pay));
+        total += n.pay;
+      }
+    }
+    return total;
+  }
+
+  function renderOut(g) {
+    var total = 0;
+    if (g === '5') {
+      set('silson-prescription-result', note('약국 급여·비급여는 외래와 합산해 한 번만 공제되며 위 통원 결과에 반영돼요.'));
+      return out5();
+    }
+    if (g === '4') {
+      var r4 = out4();
+      set('silson-outpatient-result', tbl(r4.rows, '외래+약제 합산 지급액', r4.pay));
+      set('silson-prescription-result', note('약국 금액은 외래와 합산해 한 번만 공제되며 위 통원 결과에 반영돼요.'));
+      total += r4.pay;
+    } else {
+      var r = outLegacy(g, num('silson-gubun'), num('silson-nongubun'), S.grade);
+      set('silson-outpatient-result', tbl(r.rows, '외래 지급액', r.pay));
+      total += r.pay;
+      if (g === 'yb') {
+        set('silson-prescription-result', '');
+      } else {
+        var p = pharm(g, num('silson-presc-gubun'), num('silson-presc-nongubun'));
+        set('silson-prescription-result', tbl(p.rows, '처방조제 지급액', p.pay));
+        total += p.pay;
+      }
+    }
+    if (g === '3b' || g === '4') {
+      var n = np34(g, 'silson-');
+      set('silson-type3-result', tbl(n.rows, '비급여 3종 지급액', n.pay));
+      total += n.pay;
+    }
+    return total;
+  }
+
+  /* ---------- 화면 ---------- */
+  function renderResult() {
+    if (!$('silson-total-amount')) return;
+    var g = S.gen, out = S.type === 'outpatient';
+    var total = out ? renderOut(g) : renderInp(g);
+    $('silson-total-label').textContent = (out ? '통원' : '입원') + ' 예상 보험금';
+    $('silson-total-amount').textContent = won(total) + '원';
+  }
+
+  function refreshLimit() {
+    var g = S.gen, sel = $('silson-limit-select'), grp = $('silson-limit-group'), lab = grp && grp.querySelector('label');
+    var opts = null;
+    if (g === '1') { opts = ['통원 10만원', '통원 30만원']; lab.textContent = '통원비 한도 (증권 확인)'; }
+    else if (g === '2b' || g === '2a' || g === '3b') { opts = ['손보형 · 외래 25만 / 조제 5만', '생보형 · 외래 20만 / 조제 10만']; lab.textContent = '통원 한도 구성'; }
+    show('silson-limit-group', !!opts);
+    if (opts) {
+      sel.innerHTML = opts.map(function (t, i) { return '<option value="' + i + '">' + t + '</option>'; }).join('');
+      sel.value = S.limitIdx;
+    }
+    var si = $('silson-limit-in-select');
+    if (si) {
+      si.innerHTML = ['입원 3천만원', '입원 5천만원', '입원 1억원'].map(function (t, i) { return '<option value="' + i + '">' + t + '</option>'; }).join('');
+      si.value = S.limitInIdx;
+    }
+  }
+
+  function applyUI() {
+    var g = S.gen, is5 = g === '5', t3 = g === '3b' || g === '4', outT = S.type === 'outpatient';
+    document.querySelectorAll('.silson-gen-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.gen === g); });
+    $('btn-outpatient').classList.toggle('active', outT);
+    $('btn-inpatient').classList.toggle('active', !outT);
+    show('silson-outpatient-area', outT);
+    show('silson-inpatient-area', !outT);
+
+    show('silson-outpatient-legacy-card', !is5);
+    show('silson-gen5-outpatient-area', is5);
+    show('silson-prescription-card', g !== 'yb');
+    show('silson-presc-public-group', is5);
+    show('silson-type3-card', t3);
+    show('silson-g5-type3-out-card', is5);
+    show('silson-inpatient-legacy-card', !is5);
+    show('silson-gen5-inpatient-area', is5);
+    show('silson-inp-type3-card', t3);
+    show('silson-g5-type3-inp-card', is5);
+    show('silson-limit-in-group', g === '1');
+
+    var gg = document.querySelector('#silson-outpatient-legacy-card .silson-grade-btns');
+    if (gg) gg.parentElement.style.display = (g === '1' || g === 'yb') ? 'none' : '';
+
+    var L = (g === '4' || g === '5')
+      ? { clinic: '병·의원', hospital: '종합병원', general: '상급종합병원' }
+      : { clinic: '의원', hospital: '병원', general: '상급종합·종합병원' };
+    document.querySelectorAll('.silson-grade-btn[data-grade]').forEach(function (b) {
+      b.textContent = L[b.dataset.grade];
+      b.classList.toggle('active', b.dataset.grade === S.grade);
+    });
+
+    var hint = '';
+    if (g === '1' || g === '2b' || g === '2a' || g === '3b') hint = '급여란에는 본인부담금과 전액본인부담을 합산해 입력하세요. 공단부담금은 입력하지 않아요.';
+    if (g === '1' || g === '2b' || g === '2a') hint += ' 도수·주사·MRI도 비급여란에 합산해 입력하세요(3대 비급여 구분 없음).';
+    if (g === '3b') hint += ' 도수·주사·MRI는 아래 비급여 3종에 따로 입력하세요.';
+    if (g === '4') hint = '급여는 본인부담금(전액본인부담 포함)을 입력하세요. 도수·주사·MRI는 아래 비급여 3종에 따로, 약국 금액은 약제란에 입력하면 외래와 합산 공제돼요.';
+    if (g === 'yb') hint = '유병자 실손은 처방조제와 도수·체외충격파·비급여 주사·MRI 비급여를 보상하지 않아요. 해당 금액은 빼고 입력하세요.';
+    $('silson-out-hint').textContent = hint;
+    $('silson-presc-hint').textContent = (g === '4' || g === '5') ? '' : '외래와 별도로 처방전당 공제돼요.';
+
+    refreshLimit();
+  }
+
+  function buildGrid() {
+    var grid = $('silson-gen-grid');
+    if (!grid || grid.children.length) return;
+    grid.innerHTML = GENS.map(function (x) {
+      return '<button type="button" class="silson-gen-btn" data-gen="' + x.id + '" onclick="window.selectSilsonGen(\'' + x.id + '\')">'
+        + '<span class="gen-label">' + x.label + '</span>'
+        + '<span class="gen-period">' + x.period + '</span>'
+        + '<span class="gen-note">' + x.note + '</span></button>';
+    }).join('');
+  }
+
+  /* ---------- 마크업이 부르는 전역 함수 ---------- */
+  window.selectSilsonGen = function (id) {
+    S.gen = id; S.grade = 'clinic';
+    S.limitIdx = id === '1' ? 1 : 0; S.limitInIdx = 1;
+    applyUI(); renderResult();
+  };
+  window.switchSilsonType = function (t) { S.type = t; applyUI(); renderResult(); };
+  window.selectSilsonGrade = function (gr) { S.grade = gr; applyUI(); renderResult(); };
+  window.switchG5Type3 = function (kind, sev) {
+    ['severe', 'mild'].forEach(function (k) {
+      var b = $('g5-type3-' + kind + '-' + k + '-btn'); if (b) b.classList.toggle('active', k === sev);
+      show('g5-type3-' + kind + '-' + k + '-area', k === sev);
+    });
+    S['g5' + kind] = sev;
+    renderResult();
+  };
+  window.renderSilsonResult = renderResult;
+
+  function init() {
+    if (!$('silson-gen-grid')) return;
+    buildGrid(); applyUI(); renderResult();
+  }
+  window.initSilsonCalc = init;
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
