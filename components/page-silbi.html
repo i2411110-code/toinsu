@@ -1,8 +1,7 @@
 <!--
-  실비계산기 (포탈용) — 기존 토스풍 UI는 그대로, 계산 로직만 보툴즈 실손 계산기 기준으로 교체.
-  적용: 기존 <section class="silson-wrap toss">…</section> 를 아래 section 으로 교체하고,
-        기존 실손 계산 JS(renderSilsonResult 등)는 지운 뒤 맨 아래 <script> 를 넣는다.
-        실손 사전(플로팅 버튼·모달)과 그 CSS는 건드리지 않는다.
+  실비계산기 (포탈용) — 기존 토스풍 UI 전체(section + style + 실손 사전 버튼/모달)를 이 파일 내용으로 통째로 교체하고,
+  기존 실손 계산 JS(renderSilsonResult 등)는 지운 뒤 맨 아래 <script> 를 넣는다.
+  실손 사전 JS(openSilsonDict·switchDictGen·switchDictTab·closeSilsonDict)는 기존 것을 그대로 둔다.
 -->
 <section class="silson-wrap toss">
   <div class="silson-box">
@@ -302,8 +301,112 @@
   </div>
 </section>
 
-<!-- 기존 <style> 맨 아래에 추가 (안내 문구용 한 줄) -->
+<!-- ===== 실손 사전 플로팅 버튼 ===== -->
+<button onclick="window.openSilsonDict()" style="
+  position:fixed; left:20px; bottom:100px; z-index:200;
+  width:52px; height:52px; border-radius:50%; border:none;
+  background:#191F28; color:white; font-size:20px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 16px rgba(0,0,0,0.18); cursor:pointer;">
+  <i class="bi bi-book"></i>
+</button>
+
+<!-- ===== 실손 사전 모달 ===== -->
+<div id="silson-dict-modal" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.45); align-items:flex-end; justify-content:center;">
+  <div style="background:white; width:100%; max-width:600px; border-radius:24px 24px 0 0; max-height:88vh; display:flex; flex-direction:column; overflow:hidden;">
+    <!-- 모달 헤더 -->
+    <div style="padding:20px 20px 0; flex-shrink:0;">
+      <div style="width:40px; height:4px; background:#E5E8EB; border-radius:2px; margin:0 auto 16px;"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div>
+          <div style="font-size:18px; font-weight:800; color:#191F28;">📖 실손 사전</div>
+          <div style="font-size:12px; color:#8B95A1; margin-top:2px;" id="silson-dict-gen-label">세대를 선택하면 정보가 표시됩니다</div>
+        </div>
+        <button onclick="window.closeSilsonDict()" style="background:none; border:none; font-size:22px; color:#8B95A1; cursor:pointer;"><i class="bi bi-x"></i></button>
+      </div>
+      <!-- 세대 선택 -->
+      <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:12px; -webkit-overflow-scrolling:touch;">
+        <button class="dict-gen-btn active" onclick="window.switchDictGen('1세대')" style="white-space:nowrap;">1세대</button>
+        <button class="dict-gen-btn" onclick="window.switchDictGen('2세대 1차')" style="white-space:nowrap;">2세대 1차</button>
+        <button class="dict-gen-btn" onclick="window.switchDictGen('2세대 2차')" style="white-space:nowrap;">2세대 2차</button>
+        <button class="dict-gen-btn" onclick="window.switchDictGen('2세대 3차')" style="white-space:nowrap;">2세대 3차</button>
+        <button class="dict-gen-btn" onclick="window.switchDictGen('3세대')" style="white-space:nowrap;">3세대</button>
+        <button class="dict-gen-btn" onclick="window.switchDictGen('4세대')" style="white-space:nowrap;">4세대</button>
+        <button class="dict-gen-btn" onclick="window.switchDictGen('5세대')" style="white-space:nowrap;">5세대</button>
+        <button class="dict-gen-btn" onclick="window.switchDictGen('유병자')" style="white-space:nowrap;">유병자</button>
+      </div>
+      <!-- 탭 -->
+      <div style="display:flex; background:#F2F4F6; padding:4px; border-radius:12px; gap:4px; margin-bottom:0;">
+        <button class="dict-tab-btn active" id="dict-tab-info" onclick="window.switchDictTab('info')">실손정보</button>
+        <button class="dict-tab-btn" id="dict-tab-selfpay" onclick="window.switchDictTab('selfpay')">자기부담금</button>
+        <button class="dict-tab-btn" id="dict-tab-waiting" onclick="window.switchDictTab('waiting')">면책기간</button>
+        <button class="dict-tab-btn" id="dict-tab-exclude" onclick="window.switchDictTab('exclude')">면책사항</button>
+      </div>
+    </div>
+    <!-- 모달 바디 -->
+    <div id="silson-dict-body" style="padding:16px 20px 30px; overflow-y:auto; flex:1;"></div>
+  </div>
+</div>
+
 <style>
+.silson-wrap.toss { padding: 0 0 30px; }
+.silson-wrap.toss .silson-box { max-width:680px; margin:0 auto; display:flex; flex-direction:column; gap:16px; }
+.silson-wrap.toss .toss-card { padding:22px 20px; }
+
+.silson-wrap.toss .silson-gen-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+@media(min-width:500px){ .silson-wrap.toss .silson-gen-grid { grid-template-columns:repeat(4,1fr); } }
+.silson-wrap.toss .silson-gen-btn { background:#F9FAFB; border:1.5px solid #F2F4F6; border-radius:14px; padding:12px 8px; text-align:left; cursor:pointer; transition:all 0.15s; display:flex; flex-direction:column; gap:3px; }
+.silson-wrap.toss .silson-gen-btn:hover { border-color:#3182F6; }
+.silson-wrap.toss .silson-gen-btn.active { background:#EFF6FF; border-color:#3182F6; }
+.silson-wrap.toss .silson-gen-btn .gen-label { font-size:13px; font-weight:800; color:#191F28; }
+.silson-wrap.toss .silson-gen-btn.active .gen-label { color:#3182F6; }
+.silson-wrap.toss .silson-gen-btn .gen-period { font-size:10px; color:#8B95A1; font-weight:600; }
+.silson-wrap.toss .silson-gen-btn .gen-note { font-size:10px; color:#3182F6; font-weight:700; }
+
+.silson-wrap.toss .silson-type-toggle { display:grid; grid-template-columns:1fr 1fr; background:#F2F4F6; border-radius:14px; padding:4px; gap:4px; }
+.silson-wrap.toss .silson-type-btn { border:none; border-radius:11px; padding:13px; font-size:14px; font-weight:800; cursor:pointer; background:transparent; color:#8B95A1; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; }
+.silson-wrap.toss .silson-type-btn.active { background:white; color:#3182F6; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+
+.silson-wrap.toss .silson-group { margin-bottom:14px; display:flex; flex-direction:column; gap:6px; }
+.silson-wrap.toss .silson-group:last-child { margin-bottom:0; }
+.silson-wrap.toss .silson-group label { font-size:12px; font-weight:800; color:#8B95A1; }
+.silson-wrap.toss .silson-select,
+.silson-wrap.toss .silson-input { width:100%; padding:13px 14px; border:1.5px solid #F2F4F6; border-radius:12px; font-size:15px; font-family:'Noto Sans KR',sans-serif; outline:none; background:#F9FAFB; color:#191F28; transition:border-color 0.15s,background 0.15s; }
+.silson-wrap.toss .silson-select:focus,
+.silson-wrap.toss .silson-input:focus { border-color:#3182F6; background:white; }
+.silson-wrap.toss .silson-readonly { background:#F2F4F6; color:#8B95A1; cursor:default; }
+.silson-wrap.toss .silson-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+.silson-wrap.toss .silson-grade-btns { display:flex; gap:8px; flex-wrap:wrap; }
+.silson-wrap.toss .silson-grade-btn { flex:1; min-width:70px; padding:11px 6px; border:1.5px solid #F2F4F6; border-radius:12px; background:#F9FAFB; font-size:13px; font-weight:800; color:#8B95A1; cursor:pointer; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; }
+.silson-wrap.toss .silson-grade-btn.active { background:#EFF6FF; border-color:#3182F6; color:#3182F6; }
+
+.silson-wrap.toss .silson-result-mini { margin-top:14px; background:#F9FAFB; border-radius:14px; border:1px solid #F2F4F6; overflow:hidden; }
+.silson-wrap.toss .silson-result-mini table { width:100%; border-collapse:collapse; font-size:13px; }
+.silson-wrap.toss .silson-result-mini td { padding:11px 14px; border-bottom:1px solid #F2F4F6; color:#4E5968; }
+.silson-wrap.toss .silson-result-mini td:last-child { text-align:right; font-weight:800; color:#191F28; }
+.silson-wrap.toss .silson-result-mini tr:last-child td { border-bottom:none; background:#EFF6FF; color:#3182F6; font-weight:900; font-size:14px; }
+.silson-wrap.toss .silson-result-mini tr:last-child td:first-child { color:#3182F6; }
+
+.silson-wrap.toss .silson-total { background:#3182F6; border-radius:20px; padding:28px 24px; color:white; text-align:center; }
+.silson-wrap.toss .silson-total-label { font-size:13px; opacity:0.85; margin-bottom:8px; font-weight:700; }
+.silson-wrap.toss .silson-total-amount { font-size:34px; font-weight:900; letter-spacing:-1px; margin-bottom:12px; }
+.silson-wrap.toss .silson-total-notice { font-size:11px; opacity:0.75; line-height:1.5; }
+
+/* 실손 사전 */
+.dict-gen-btn { padding:8px 14px; border:1.5px solid #E5E8EB; border-radius:20px; background:white; font-size:12px; font-weight:700; color:#4E5968; cursor:pointer; transition:all 0.15s; flex-shrink:0; }
+.dict-gen-btn.active { background:#191F28; border-color:#191F28; color:white; }
+.dict-tab-btn { flex:1; padding:11px 4px; border:none; border-radius:10px; background:transparent; font-size:12px; font-weight:800; color:#8B95A1; cursor:pointer; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; }
+.dict-tab-btn.active { background:white; color:#3182F6; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+.dict-item { background:#F9FAFB; border-radius:14px; padding:14px 16px; margin-bottom:10px; }
+.dict-item-key { font-size:13px; font-weight:800; color:#191F28; margin-bottom:4px; }
+.dict-item-val { font-size:13px; color:#4E5968; line-height:1.6; }
+.dict-exclude-badge { display:inline-block; font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px; margin-right:6px; }
+.badge-exclude { background:#F2F4F6; color:#8B95A1; }
+.badge-possible { background:#EFF6FF; color:#3182F6; }
+.badge-limit { background:#FFF7E6; color:#D97706; }
+
+/* 안내 문구 (이식 시 추가) */
 .silson-wrap.toss .silson-hint { margin-top:10px; font-size:12px; line-height:1.55; color:#8B95A1; }
 .silson-wrap.toss .silson-hint:empty { display:none; }
 .silson-wrap.toss .silson-result-mini .silson-note { padding:11px 14px; font-size:12px; color:#8B95A1; }
@@ -326,13 +429,13 @@
   var show = function (id, on) { var e = $(id); if (e) e.style.display = on ? '' : 'none'; };
 
   var GENS = [
-    { id: '1',  label: '1세대',          period: '~2009.07',          note: '구실손' },
-    { id: '2b', label: '2세대 선택형',    period: '2009.08~2015.08',   note: '정액공제' },
-    { id: '2a', label: '2세대 선택형Ⅱ',  period: '2015.09~2017.03',   note: '급10%·비20%' },
-    { id: '3b', label: '3세대',          period: '2017.04~2021.06',   note: '비급여 3종 특약' },
-    { id: '4',  label: '4세대',          period: '2021.07~2026.04',   note: '급여/비급여 분리' },
-    { id: '5',  label: '5세대',          period: '2026.05~',          note: '중증/비중증' },
-    { id: 'yb', label: '유병자(간편)',    period: '2018.04~',          note: '별도 상품' }
+    { id: '1',  label: '1세대',          period: '~2009.07',          note: '입원 100% 보장' },
+    { id: '2b', label: '2세대 선택형',    period: '2009.08~2015.08',   note: '급여 90% · 비급여 90%' },
+    { id: '2a', label: '2세대 선택형Ⅱ',  period: '2015.09~2017.03',   note: '급여 90% · 비급여 80%' },
+    { id: '3b', label: '3세대',          period: '2017.04~2021.06',   note: '급여 90% · 비급여 80%' },
+    { id: '4',  label: '4세대',          period: '2021.07~2026.04',   note: '급여 80% · 비급여 70%' },
+    { id: '5',  label: '5세대',          period: '2026.05~',          note: '중증·비중증 비급여 분리' },
+    { id: 'yb', label: '유병자 실손',     period: '2018.04~',          note: '약제비·비급여3종 제외' }
   ];
 
   /* 급자부/비자부: 통원 정률 공제율, inp: 입원 보장률, 조제공제: 처방조제 최저공제 */
