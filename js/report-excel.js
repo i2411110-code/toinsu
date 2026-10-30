@@ -1,10 +1,11 @@
 // ================================================
 // 토스 CRM 화면 붙여넣기 → 니즈환기 리포트 생성기
+// v6.7: 분석표 '요약형' 이미지를 폰 카톡 기준(폭 440px, 1열)으로 변경 → 확대 없이 읽힘
 // v6.6: 엑셀 업로드/파싱 제거 → '토스 CRM 화면 붙여넣기' 전용
 //       — 첫 화면(STEP 1)에서 바로 붙여넣기, [초기화] 버튼 추가(다른 고객 입력용)
 //       — 보장 분석표(STEP 2)에 항암 치료비 8개 항목 + n대/종 수술비 행 자동 추가
 //         (표적항암·중입자·세기조절·양성자·CAR-T·로봇암수술·암수술·항암방사선/약물)
-//       — '분석표 이미지 복사'를 요약형(부족·미가입·과잉 중심, 가로 카드)으로 개선
+//       — '분석표 이미지 복사'를 요약형(부족·미가입·과잉 중심)으로 개선
 //         (기존 긴 전체표는 '전체 상세표' 옵션으로 유지)
 // v6.5: 하단에 '+ 연령대별 적정 보험료 가이드' 토글 카드 추가
 // v6.4: '분석표 이미지 복사' 버튼 색상 통일 + makeMsg() 따옴표 버그 수정
@@ -1011,7 +1012,7 @@
 
       + '<div class="rptex-flow-step">'
       + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">2</span>보장 분석 결과 첨부</div>'
-      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 분석표 이미지를 복사해서 전송하세요. (기본: 요약형 — 부족·미가입·과잉 항목 중심으로 한눈에 보이게)</div>'
+      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 분석표 이미지를 복사해서 전송하세요. (기본: 요약형 — 휴대폰 카톡에서 확대 없이 보이는 크기로 부족·미가입·과잉 항목 중심 정리)</div>'
       + '<div class="rptex-flow-actions" style="margin-top:0;">'
       + '<select id="rptex-img-mode" class="rptex-meta-input" style="width:230px;">'
       + '<option value="summary">요약형 (카톡용 · 추천)</option>'
@@ -1800,7 +1801,7 @@
 
   // ================================================================
   // ✅ 분석표 이미지 복사 (html2canvas, 카톡 전송용)
-  //   · 요약형(기본): 부족/미가입/과잉 항목을 큰 카드 2열로 → 짧고 확대 없이 읽힘
+  //   · 요약형(기본): 부족/미가입/과잉 항목을 폰 카톡 기준 1열 카드로 (폭 440px → 확대 없이 읽힘)
   //   · 전체 상세표: 기존처럼 모든 항목을 표로 (길어질 수 있음)
   // ================================================================
 
@@ -1847,6 +1848,9 @@
 
   var IMG_FONT = '\'Malgun Gothic\',\'Apple SD Gothic Neo\',\'Noto Sans KR\',sans-serif';
 
+  // 폰 카톡 기준: 폭을 줄이고 1열 배치 (필요하면 이 값만 조정: 400~480 권장)
+  var SUMMARY_IMG_WIDTH = 440;
+
   // 요약형 이미지 HTML
   function buildSummaryImageHTML() {
     var rows = exState.rows.filter(function(r){ return r.status !== 'none'; });
@@ -1858,29 +1862,30 @@
 
     function statBox(key, label) {
       var m = ROW_STATUS_META[key];
-      return '<div style="flex:1;background:#fff;border-radius:16px;padding:14px 6px;text-align:center;margin:0 4px;">'
-        + '<div style="font-size:30px;font-weight:800;color:' + m.color + ';line-height:1.1;">' + cnt[key] + '</div>'
-        + '<div style="font-size:13px;font-weight:700;color:#6B7684;margin-top:4px;">' + label + '</div>'
+      return '<div style="flex:1;background:#fff;border-radius:14px;padding:11px 0;text-align:center;margin:0 3px;">'
+        + '<div style="font-size:26px;font-weight:800;color:' + m.color + ';line-height:1.1;">' + cnt[key] + '</div>'
+        + '<div style="font-size:13px;font-weight:700;color:#6B7684;margin-top:3px;">' + label + '</div>'
         + '</div>';
     }
 
-    function itemCard(r) {
+    function itemRow(r) {
       var m = ROW_STATUS_META[r.status];
       var rec = r.recommend;
       var pct = rec ? Math.min(100, Math.round((r.customerSum || 0) / rec * 100)) : ((r.customerSum || 0) > 0 ? 100 : 0);
       var nowTxt = r.customerSum ? r.customerSum.toLocaleString() + '만원' : '미가입';
-      var recTxt = rec !== undefined ? ' / 권장 ' + rec.toLocaleString() + '만원' : '';
-      return '<div style="width:48.5%;box-sizing:border-box;background:#fff;border-radius:16px;padding:16px 16px 14px;margin-bottom:12px;">'
-        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
-          + '<div style="font-size:16px;font-weight:800;color:#191F28;line-height:1.35;padding-right:8px;">' + esc(r.label) + '</div>'
-          + '<div style="flex:none;background:' + m.bg + ';color:' + m.color + ';font-weight:800;font-size:12.5px;border-radius:12px;padding:4px 11px;">' + m.label + '</div>'
+      var recTxt = rec !== undefined ? '권장 ' + rec.toLocaleString() + '만원' : '';
+      return '<div style="background:#fff;border-radius:14px;padding:12px 14px 11px;margin-bottom:8px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+          + '<div style="font-size:16px;font-weight:800;color:#191F28;line-height:1.3;padding-right:8px;">' + esc(r.label) + '</div>'
+          + '<div style="flex:none;background:' + m.bg + ';color:' + m.color + ';font-weight:800;font-size:13px;border-radius:10px;padding:3px 10px;">' + m.label + '</div>'
         + '</div>'
-        + '<div style="font-size:11.5px;color:#8B95A1;margin-top:2px;">' + esc(r.cat || '') + '</div>'
-        + '<div style="height:8px;background:#EEF1F4;border-radius:4px;margin:12px 0 8px;overflow:hidden;">'
-          + '<div style="height:8px;width:' + pct + '%;background:' + m.color + ';border-radius:4px;"></div>'
+        + '<div style="height:6px;background:#EEF1F4;border-radius:3px;margin:9px 0 7px;overflow:hidden;">'
+          + '<div style="height:6px;width:' + pct + '%;background:' + m.color + ';border-radius:3px;"></div>'
         + '</div>'
-        + '<div style="font-size:13.5px;font-weight:700;color:#334155;">현재 ' + nowTxt
-          + '<span style="font-weight:500;color:#8B95A1;font-size:12.5px;">' + recTxt + '</span></div>'
+        + '<div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:700;color:#334155;">'
+          + '<span>현재 ' + nowTxt + '</span>'
+          + '<span style="font-weight:500;color:#8B95A1;">' + recTxt + '</span>'
+        + '</div>'
         + '</div>';
     }
 
@@ -1888,43 +1893,43 @@
       var list = rows.filter(function(r){ return r.status === key; });
       if (!list.length) return '';
       var m = ROW_STATUS_META[key];
-      return '<div style="margin-top:18px;">'
-        + '<div style="font-size:16px;font-weight:800;color:' + m.color + ';margin:0 2px 10px;">' + title + ' <span style="color:#8B95A1;font-weight:600;font-size:14px;">' + list.length + '개</span></div>'
-        + '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;">' + list.map(itemCard).join('') + '</div>'
+      return '<div style="margin-top:16px;">'
+        + '<div style="font-size:15px;font-weight:800;color:' + m.color + ';margin:0 2px 8px;">' + title
+        + ' <span style="color:#8B95A1;font-weight:600;font-size:13px;">' + list.length + '개</span></div>'
+        + list.map(itemRow).join('')
         + '</div>';
     }
 
     var problemHtml = section('low', '🔴 부족한 보장') + section('unregistered', '⚪ 미가입 보장') + section('excess', '🟠 과잉 보장');
     if (!problemHtml) {
-      problemHtml = '<div style="margin-top:18px;background:#fff;border-radius:16px;padding:22px;text-align:center;font-size:15px;font-weight:700;color:#3182F6;">모든 항목이 적정 수준이에요 👍</div>';
+      problemHtml = '<div style="margin-top:16px;background:#fff;border-radius:14px;padding:20px;text-align:center;font-size:15px;font-weight:700;color:#3182F6;">모든 항목이 적정 수준이에요 👍</div>';
     }
 
     var okList = rows.filter(function(r){ return r.status === 'ok'; });
     var okHtml = '';
     if (okList.length) {
-      okHtml = '<div style="margin-top:8px;background:#fff;border-radius:16px;padding:16px 16px 6px;">'
-        + '<div style="font-size:15px;font-weight:800;color:#3182F6;margin-bottom:10px;">✅ 적정한 보장 <span style="color:#8B95A1;font-weight:600;font-size:14px;">' + okList.length + '개</span></div>'
+      okHtml = '<div style="margin-top:8px;background:#fff;border-radius:14px;padding:14px 14px 4px;">'
+        + '<div style="font-size:15px;font-weight:800;color:#3182F6;margin-bottom:10px;">✅ 적정한 보장 <span style="color:#8B95A1;font-weight:600;font-size:13px;">' + okList.length + '개</span></div>'
         + '<div style="display:flex;flex-wrap:wrap;">'
         + okList.map(function(r){
-            return '<div style="background:#EFF6FF;color:#1D5FD0;font-size:13px;font-weight:700;border-radius:12px;padding:6px 12px;margin:0 8px 10px 0;">' + esc(r.label) + '</div>';
+            return '<div style="background:#EFF6FF;color:#1D5FD0;font-size:13px;font-weight:700;border-radius:10px;padding:5px 10px;margin:0 6px 8px 0;">' + esc(r.label) + '</div>';
           }).join('')
         + '</div></div>';
     }
 
-    return '<div style="width:720px;box-sizing:border-box;background:#F2F4F6;border-radius:24px;padding:24px;font-family:' + IMG_FONT + ';">'
-      + '<div style="background:linear-gradient(135deg,#001E42,#0B3A6F);color:#fff;border-radius:18px;padding:24px 26px;">'
-        + '<div style="font-size:22px;font-weight:800;letter-spacing:-0.3px;">' + esc(gState.customerName) + '님 보장 분석 리포트</div>'
-        + '<div style="display:flex;margin-top:12px;">'
-          + '<div style="font-size:15px;opacity:.92;margin-right:22px;">💰 월납 ' + total.toLocaleString() + '원</div>'
-          + '<div style="font-size:15px;opacity:.92;">' + level.emoji + ' 연령 대비 ' + level.label + '</div>'
+    return '<div style="width:' + SUMMARY_IMG_WIDTH + 'px;box-sizing:border-box;background:#F2F4F6;border-radius:20px;padding:18px;font-family:' + IMG_FONT + ';">'
+      + '<div style="background:linear-gradient(135deg,#001E42,#0B3A6F);color:#fff;border-radius:16px;padding:18px 18px;">'
+        + '<div style="font-size:20px;font-weight:800;letter-spacing:-0.3px;">' + esc(gState.customerName) + '님 보장 분석 리포트</div>'
+        + '<div style="margin-top:9px;font-size:14px;opacity:.92;line-height:1.6;">'
+          + '💰 월납 ' + total.toLocaleString() + '원<br>' + level.emoji + ' 연령 대비 ' + level.label
         + '</div>'
       + '</div>'
-      + '<div style="display:flex;margin:14px -4px 0;">'
+      + '<div style="display:flex;margin:12px -3px 0;">'
         + statBox('low', '부족') + statBox('unregistered', '미가입') + statBox('excess', '과잉') + statBox('ok', '적정')
       + '</div>'
       + problemHtml
       + okHtml
-      + '<div style="padding:12px 4px 0;font-size:11.5px;color:#94A3B8;line-height:1.6;">본 분석은 고객 제공 가입설계서 기준의 참고 자료이며, 실제 보장 내용은 약관을 기준으로 합니다.</div>'
+      + '<div style="padding:10px 2px 0;font-size:11.5px;color:#94A3B8;line-height:1.6;">본 분석은 고객 제공 가입설계서 기준의 참고 자료이며, 실제 보장 내용은 약관을 기준으로 합니다.</div>'
       + '</div>';
   }
 

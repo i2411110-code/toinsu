@@ -362,6 +362,48 @@
                 margin: 0 auto !important;
                 max-height: none !important;
             }
+
+            /* ================================================================
+            ✅ 상단 메뉴바 (BOTOOLS 스타일): 도구 / 보험사 전산 / 업데이트 소식 / 커뮤니티
+            ================================================================ */
+            .nav-left { display: flex; align-items: center; gap: 26px; }
+            .nav-menu { display: flex; align-items: center; gap: 2px; }
+            .nav-menu-item { position: relative; }
+            .nav-menu-btn {
+                background: none; border: none; font-family: inherit; font-size: 14.5px; font-weight: 500; color: #334155;
+                padding: 8px 12px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;
+            }
+            .nav-menu-btn:hover, .nav-menu-btn.open { color: #2563EB; background: #F1F5F9; }
+            .nav-menu-btn .bi-chevron-down { font-size: 11px; transition: transform .2s; }
+            .nav-menu-btn.open .bi-chevron-down { transform: rotate(180deg); }
+            .nav-dropdown {
+                display: none; position: absolute; top: calc(100% + 10px); left: 0; max-width: calc(100vw - 40px);
+                background: #fff; border: 1px solid #E2E8F0; border-radius: 16px; box-shadow: 0 12px 40px rgba(15,23,42,.14);
+                padding: 16px 18px 6px; z-index: 3000; box-sizing: border-box;
+            }
+            .nav-dropdown.show { display: block; }
+            .nav-dd-hint { font-size: 12px; color: #94A3B8; margin-bottom: 2px; }
+            .nav-dd-title { font-size: 11.5px; color: #94A3B8; font-weight: 600; margin: 12px 0 4px; }
+            .nav-dd-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px 8px; }
+            .insurer-link {
+                display: flex; align-items: center; gap: 6px; padding: 9px 8px; border-radius: 8px;
+                font-size: 13.5px; color: #334155; text-decoration: none; font-weight: 500;
+            }
+            .insurer-link:hover { background: #EFF6FF; color: #2563EB; }
+            .insurer-tag { font-size: 10px; background: #F1F5F9; color: #64748B; padding: 1px 6px; border-radius: 6px; font-weight: 600; }
+            .nav-dd-foot {
+                display: flex; justify-content: space-between; align-items: center; margin: 10px -18px 0; padding: 12px 18px;
+                border-top: 1px solid #F1F5F9; font-size: 12.5px; color: #64748B; cursor: pointer;
+            }
+            .nav-dd-foot:hover { color: #2563EB; }
+            .nav-tool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; padding-bottom: 10px; }
+            .nav-tool-item {
+                background: none; border: none; font-family: inherit; text-align: left; display: flex; align-items: center; gap: 10px;
+                padding: 11px 10px; border-radius: 10px; font-size: 13.5px; font-weight: 600; color: #334155; cursor: pointer;
+            }
+            .nav-tool-item:hover { background: #F1F5F9; color: #2563EB; }
+            .nav-tool-item i { font-size: 17px; color: #2563EB; }
+            @media (max-width: 768px) { .nav-dd-grid { grid-template-columns: repeat(2, 1fr); } }
         </style>
     </head>
     <body>
@@ -455,12 +497,51 @@
                 <p id="kakao-login-error" style="color:#EF4444; font-size:13px; margin-top:10px; display:none; font-weight:500;"></p>
             </div> </div> 
         <!-- ================================================================
-            PC 네비게이션
+            PC 네비게이션 (+ 상단 메뉴바)
         ================================================================ -->
         <div class="navbar navbar-pc">
-        <div class="nav-logo" style="cursor: pointer; display: flex; align-items: center; gap: 8px;" onclick="window.switchToMainView()">
-            <img src="./icons/my-logo.png" alt="로고" style="height: 24px;"> <b>보험<span>가온</span>포탈</b>
-        </div>
+            <div class="nav-left">
+                <div class="nav-logo" style="cursor: pointer; display: flex; align-items: center; gap: 8px;" onclick="window.switchToMainView()">
+                    <img src="./icons/my-logo.png" alt="로고" style="height: 24px;"> <b>보험<span>가온</span>포탈</b>
+                </div>
+
+                <nav class="nav-menu">
+                    <!-- 도구 (전체 카테고리) -->
+                    <div class="nav-menu-item">
+                        <button class="nav-menu-btn" onclick="window.toggleNavDropdown('nav-dd-tools', this, event)">도구 <i class="bi bi-chevron-down"></i></button>
+                        <div class="nav-dropdown" id="nav-dd-tools" style="width:360px;">
+                            <div class="nav-dd-hint">포털의 모든 도구를 한곳에서 열어요.</div>
+                            <div class="nav-tool-grid" style="margin-top:10px;">
+                                <button class="nav-tool-item" onclick="window.switchToMainView()"><i class="bi bi-house-fill"></i> 메인 화면</button>
+                                <button class="nav-tool-item" onclick="window.switchToNewsView()"><i class="bi bi-newspaper"></i> 오늘의 뉴스</button>
+                                <button class="nav-tool-item" onclick="window.switchToClaimView()"><i class="bi bi-file-earmark-medical"></i> 청구 서류 안내</button>
+                                <button class="nav-tool-item" onclick="window.openIcdModal()"><i class="bi bi-search"></i> 상병코드 검색</button>
+                                <button class="nav-tool-item" onclick="window.openHospitalModal()"><i class="bi bi-hospital"></i> 전국 병원 정보</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 보험사 전산 바로가기 -->
+                    <div class="nav-menu-item">
+                        <button class="nav-menu-btn" onclick="window.toggleNavDropdown('nav-dd-insurer', this, event)">보험사 전산 바로가기 <i class="bi bi-chevron-down"></i></button>
+                        <div class="nav-dropdown" id="nav-dd-insurer" style="width:680px;">
+                            <div class="nav-dd-hint">회사 이름을 누르면 그 보험사 전산이 새 창으로 열려요.</div>
+                            <div id="nav-insurer-grid"></div>
+                            <div class="nav-dd-foot" onclick="window.switchToClaimView()">
+                                <span>고객센터 · 약관 · 보험금 청구 구비서류는 청구 서류 안내에서 볼 수 있어요</span>
+                                <i class="bi bi-chevron-right"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 업데이트 소식 -->
+                    <button class="nav-menu-btn" onclick="document.getElementById('notice-modal').style.display='flex'">업데이트 소식</button>
+
+                    <!-- 커뮤니티 (카톡 오픈채팅) -->
+                    <a class="nav-menu-btn" href="https://open.kakao.com/o/sZoxSRGh" target="_blank" rel="noopener">커뮤니티</a>
+                </nav>
+            </div>
+
             <div class="nav-right">
                 <div class="user-badge user-pill"><i class="bi bi-person-badge-fill"></i> <span id="user-display-email">인증 확인 중...</span></div>
                 <button class="logout-btn mypage-btn-blue" onclick="window.openMypageModal()"><i class="bi bi-person-circle"></i> 마이페이지</button>
@@ -490,7 +571,10 @@
                         <span class="pwa-slider"></span>
                     </label>
                 </div>
-                                <button onclick="window.openMypageModal()" style="padding:5px 9px; font-size:11px; background:#EFF6FF; color:#2563EB; border:none; border-radius:8px;">
+                <button onclick="window.openInsurerModal()" style="padding:5px 9px; font-size:11px; background:#EFF6FF; color:#2563EB; border:none; border-radius:8px;" title="보험사 전산">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                </button>
+                <button onclick="window.openMypageModal()" style="padding:5px 9px; font-size:11px; background:#EFF6FF; color:#2563EB; border:none; border-radius:8px;">
                     <i class="bi bi-person-circle"></i>
                 </button>
                 <button class="logout-btn" style="padding:5px 10px; font-size:11px;" onclick="window.handleLogout()">
@@ -997,6 +1081,20 @@
             </div>
         </div>
 
+        <!-- 보험사 전산 바로가기 모달 (모바일용) -->
+        <div id="insurer-modal" class="portal-modal" style="z-index: 4100; display: none;" onclick="window.closeInsurerModal()">
+            <div class="modal-body" style="max-width: 480px; width: 92%; padding: 0; background:white; border-radius:16px; overflow:hidden;" onclick="event.stopPropagation()">
+                <div style="background:#1E293B; color:white; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size:16px; font-weight:700;"><i class="bi bi-grid-3x3-gap-fill"></i> 보험사 전산 바로가기</div>
+                    <button onclick="window.closeInsurerModal()" style="background:none; border:none; color:white; font-size:22px; cursor:pointer;">&times;</button>
+                </div>
+                <div style="padding:6px 18px 18px; max-height:70vh; overflow-y:auto;">
+                    <div class="nav-dd-hint" style="margin-top:10px;">회사 이름을 누르면 그 보험사 전산이 새 창으로 열려요.</div>
+                    <div id="insurer-modal-grid"></div>
+                </div>
+            </div>
+        </div>
+
         <style>
             .mypage-field { display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
             .mypage-field label { font-size:12px; color:#8B95A1; font-weight:600; }
@@ -1400,7 +1498,6 @@
             window.calCurrentEditId = null; // 수정 모드 구분을 위한 변수
 
             // 상세보기 모달 열기 (수정 버튼 활성화 추가)
-            // 상세보기 모달 열기 (수정 버튼 활성화 추가)
             function openDetailModal(event) {
                 const ep = event.extendedProps || {};
                 const start = event.start;
@@ -1758,6 +1855,64 @@
         })();
 
         
+        </script>
+
+        <!-- ================================================================
+            ✅ 상단 메뉴바 로직: 보험사 전산 바로가기 목록 + 드롭다운 토글
+        ================================================================ -->
+        <script>
+        (function () {
+            // ▼ u:'' 자리에 각 보험사 설계사 전산 URL을 넣으세요. (비워두면 "○○ 설계사 전산" 검색 결과가 열립니다)
+            var INSURERS = {
+                '손해보험': [
+                    {n:'삼성화재',u:''}, {n:'DB손해보험',u:''}, {n:'현대해상화재',u:''}, {n:'KB손해보험',u:''},
+                    {n:'메리츠화재',u:''}, {n:'한화손해보험',u:''}, {n:'흥국화재',u:''}, {n:'롯데손해보험',u:''},
+                    {n:'NH농협손해보험',u:''}, {n:'하나손해보험',u:''}, {n:'AIG손해보험',u:''}, {n:'신한EZ손해보험',u:''},
+                    {n:'라이나손해보험',u:''}, {n:'예별손해보험',u:''}
+                ],
+                '생명보험': [
+                    {n:'삼성생명',u:'',tag:'Edge'}, {n:'교보생명',u:''}, {n:'한화생명',u:''}, {n:'신한라이프',u:''},
+                    {n:'NH농협생명',u:''}, {n:'미래에셋생명',u:''}, {n:'동양생명',u:''}, {n:'KB라이프생명',u:''},
+                    {n:'푸본현대생명',u:''}, {n:'하나생명',u:''}, {n:'흥국생명',u:''}, {n:'ABL생명',u:''},
+                    {n:'DB생명',u:''}, {n:'KDB생명',u:''}, {n:'iM라이프생명',u:''}, {n:'라이나생명',u:''},
+                    {n:'메트라이프생명',u:''}, {n:'처브라이프',u:''}, {n:'카디프생명',u:''}, {n:'AIA생명',u:''},
+                    {n:'IBK연금보험',u:''}
+                ]
+            };
+
+            function hrefOf(i) {
+                return i.u || ('https://www.google.com/search?q=' + encodeURIComponent(i.n + ' 설계사 전산'));
+            }
+            function gridHtml() {
+                return Object.keys(INSURERS).map(function (group) {
+                    return '<div class="nav-dd-title">' + group + '</div><div class="nav-dd-grid">'
+                        + INSURERS[group].map(function (i) {
+                            return '<a class="insurer-link" href="' + hrefOf(i) + '" target="_blank" rel="noopener">'
+                                + i.n + (i.tag ? '<span class="insurer-tag">' + i.tag + '</span>' : '') + '</a>';
+                        }).join('') + '</div>';
+                }).join('');
+            }
+            ['nav-insurer-grid', 'insurer-modal-grid'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.innerHTML = gridHtml();
+            });
+
+            function closeAllNavDropdowns() {
+                document.querySelectorAll('.nav-dropdown.show').forEach(function (d) { d.classList.remove('show'); });
+                document.querySelectorAll('.nav-menu-btn.open').forEach(function (b) { b.classList.remove('open'); });
+            }
+            window.toggleNavDropdown = function (id, btn, ev) {
+                if (ev) ev.stopPropagation();
+                var dd = document.getElementById(id);
+                var wasOpen = dd.classList.contains('show');
+                closeAllNavDropdowns();
+                if (!wasOpen) { dd.classList.add('show'); btn.classList.add('open'); }
+            };
+            document.addEventListener('click', closeAllNavDropdowns);
+
+            window.openInsurerModal  = function () { document.getElementById('insurer-modal').style.display = 'flex'; };
+            window.closeInsurerModal = function () { document.getElementById('insurer-modal').style.display = 'none'; };
+        })();
         </script>
 
         <!-- ✅ 수정: </html> 밖에 있던 스크립트를 </body> 안으로 이동 -->
