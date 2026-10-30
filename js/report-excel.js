@@ -1,11 +1,10 @@
 // ================================================
 // 토스 CRM 화면 붙여넣기 → 니즈환기 리포트 생성기
-// v6.7: 분석표 '요약형' 이미지를 폰 카톡 기준(폭 440px, 1열)으로 변경 → 확대 없이 읽힘
 // v6.6: 엑셀 업로드/파싱 제거 → '토스 CRM 화면 붙여넣기' 전용
 //       — 첫 화면(STEP 1)에서 바로 붙여넣기, [초기화] 버튼 추가(다른 고객 입력용)
 //       — 보장 분석표(STEP 2)에 항암 치료비 8개 항목 + n대/종 수술비 행 자동 추가
 //         (표적항암·중입자·세기조절·양성자·CAR-T·로봇암수술·암수술·항암방사선/약물)
-//       — '분석표 이미지 복사'를 요약형(부족·미가입·과잉 중심)으로 개선
+//       — '분석표 이미지 복사'를 요약형(부족·미가입·과잉 중심, 가로 카드)으로 개선
 //         (기존 긴 전체표는 '전체 상세표' 옵션으로 유지)
 // v6.5: 하단에 '+ 연령대별 적정 보험료 가이드' 토글 카드 추가
 // v6.4: '분석표 이미지 복사' 버튼 색상 통일 + makeMsg() 따옴표 버그 수정
@@ -1012,7 +1011,7 @@
 
       + '<div class="rptex-flow-step">'
       + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">2</span>보장 분석 결과 첨부</div>'
-      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 분석표 이미지를 복사해서 전송하세요. (기본: 요약형 — 휴대폰 카톡에서 확대 없이 보이는 크기로 부족·미가입·과잉 항목 중심 정리)</div>'
+      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 분석표 이미지를 복사해서 전송하세요. (기본: 요약형 — 부족·미가입·과잉 항목 중심으로 한눈에 보이게)</div>'
       + '<div class="rptex-flow-actions" style="margin-top:0;">'
       + '<select id="rptex-img-mode" class="rptex-meta-input" style="width:230px;">'
       + '<option value="summary">요약형 (카톡용 · 추천)</option>'
@@ -1801,7 +1800,7 @@
 
   // ================================================================
   // ✅ 분석표 이미지 복사 (html2canvas, 카톡 전송용)
-  //   · 요약형(기본): 부족/미가입/과잉 항목을 폰 카톡 기준 1열 카드로 (폭 440px → 확대 없이 읽힘)
+  //   · 요약형(기본): 부족/미가입/과잉 항목을 큰 카드 2열로 → 짧고 확대 없이 읽힘
   //   · 전체 상세표: 기존처럼 모든 항목을 표로 (길어질 수 있음)
   // ================================================================
 
@@ -1848,10 +1847,10 @@
 
   var IMG_FONT = '\'Malgun Gothic\',\'Apple SD Gothic Neo\',\'Noto Sans KR\',sans-serif';
 
-  // 폰 카톡 기준: 폭을 줄이고 1열 배치 (필요하면 이 값만 조정: 400~480 권장)
+  // 요약형 이미지 HTML
+    // 폰 카톡 기준: 폭을 줄이고 1열 배치 (필요하면 이 값만 조정: 400~480 권장)
   var SUMMARY_IMG_WIDTH = 440;
 
-  // 요약형 이미지 HTML
   function buildSummaryImageHTML() {
     var rows = exState.rows.filter(function(r){ return r.status !== 'none'; });
     var total = gState.premiums.reduce(function(s,p){ return s+(p.amount||0); }, 0);
