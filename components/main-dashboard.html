@@ -77,7 +77,7 @@
 </style>
 
 <script>
-const WorkMenu = (() => {
+window.WorkMenu = (() => {
 
     const MENU_REGISTRY = [
         // ── 청구 ──
@@ -123,7 +123,7 @@ const WorkMenu = (() => {
         else window.navigateTo(m.target, m.arg);
     };
 
-        const render = () => {
+    const render = () => {
         const { hidden } = load();
         const items = ordered().filter(m => !hidden.includes(m.id));
         const empty = '<div class="wm-empty">표시할 메뉴가 없어요. [메뉴 편집]에서 추가해 보세요.</div>';
@@ -187,8 +187,17 @@ const WorkMenu = (() => {
         render(); renderEditor();
     };
 
-    const openEditor  = () => { renderEditor(); document.getElementById('wm-modal').classList.add('open'); };
-    const closeEditor = () => document.getElementById('wm-modal').classList.remove('open');
+    const openEditor = () => {
+        document.querySelectorAll('body > #wm-modal').forEach(el => el.remove());
+        const modal = document.getElementById('wm-modal');
+        if (modal.parentElement !== document.body) document.body.appendChild(modal);
+        renderEditor();
+        modal.classList.add('open');
+    };
+    const closeEditor = () => {
+        const modal = document.getElementById('wm-modal');
+        if (modal) modal.classList.remove('open');
+    };
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
     else render();
@@ -196,8 +205,7 @@ const WorkMenu = (() => {
     return { render, go, toggle, move, reset, openEditor, closeEditor, registry: MENU_REGISTRY };
 })();
 
-window.WorkMenu = WorkMenu;
-window.renderWorkMenu = WorkMenu.render;
+window.renderWorkMenu = window.WorkMenu.render;
 </script>
 
 <!-- ===== 모바일 전용 업무 메뉴 (사용자 커스텀) ===== -->
@@ -208,7 +216,7 @@ window.renderWorkMenu = WorkMenu.render;
     </div>
     <div id="mobile-menu-grid" class="mobile-quickmenu-grid"></div>
 </div>
-<script>WorkMenu.render();</script>
+<script>window.WorkMenu && window.WorkMenu.render();</script>
 
 <!-- 가온 오피스 -->
 <div id="gaon-office-card" onclick="window.navigateTo('page-가온 오피스')" style="background:white; border-radius:20px; padding:20px; border:1px solid #F2F4F6; margin-bottom:16px; cursor:pointer; display:none; align-items:center; justify-content:space-between; transition:all 0.15s;" onmouseover="this.style.borderColor='#3182F6'" onmouseout="this.style.borderColor='#F2F4F6'">
