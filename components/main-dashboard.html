@@ -26,58 +26,6 @@
     <div id="work-menu-grid" class="wm-grid"></div>
 </div>
 
-<!-- 메뉴 편집 모달 -->
-<div id="wm-modal" class="wm-modal" onclick="if(event.target===this)WorkMenu.closeEditor()">
-    <div class="wm-modal-box">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <div style="font-size:18px; font-weight:800; color:#191F28;">업무 메뉴 편집</div>
-            <button class="wm-close" onclick="WorkMenu.closeEditor()"><i class="bi bi-x-lg"></i></button>
-        </div>
-        <div style="font-size:12px; color:#8B95A1; margin-bottom:14px;">체크한 메뉴만 표시되고, 화살표로 순서를 바꿀 수 있어요.</div>
-        <div id="wm-editor-list" class="wm-editor-list"></div>
-        <div style="display:flex; gap:8px; margin-top:16px;">
-            <button class="wm-btn-sub" onclick="WorkMenu.reset()">전체 메뉴로 초기화</button>
-            <button class="wm-btn-main" onclick="WorkMenu.closeEditor()">완료</button>
-        </div>
-    </div>
-</div>
-
-<style>
-.wm-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; }
-.wm-empty { grid-column:1/-1; text-align:center; color:#8B95A1; font-size:13px; padding:24px 0; }
-.wm-edit-btn {
-    border:1px solid #E5E8EB; background:#F9FAFB; color:#4E5968; border-radius:10px;
-    padding:6px 12px; font-size:12px; font-weight:700; cursor:pointer; transition:all .15s;
-}
-.wm-edit-btn:hover { background:#EFF6FF; color:#3182F6; border-color:#BFDBFE; }
-.wm-modal {
-    position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9999;
-    display:none; align-items:center; justify-content:center; padding:20px;
-}
-.wm-modal.open { display:flex; }
-.wm-modal-box {
-    background:white; border-radius:20px; padding:22px; width:100%; max-width:460px;
-    max-height:85vh; display:flex; flex-direction:column;
-}
-.wm-close { border:none; background:none; font-size:18px; color:#8B95A1; cursor:pointer; }
-.wm-editor-list { overflow-y:auto; flex:1; }
-.wm-group-label { font-size:11px; font-weight:800; color:#8B95A1; margin:14px 0 6px; }
-.wm-row {
-    display:flex; align-items:center; gap:10px; padding:8px 10px;
-    border:1px solid #F2F4F6; border-radius:12px; margin-bottom:6px;
-}
-.wm-row input[type=checkbox] { width:18px; height:18px; accent-color:#3182F6; cursor:pointer; }
-.wm-row .wm-ico { width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14px; }
-.wm-row .wm-name { flex:1; font-size:13px; font-weight:700; color:#191F28; }
-.wm-row .wm-arrow { border:none; background:#F2F4F6; border-radius:8px; width:28px; height:28px; cursor:pointer; color:#4E5968; }
-.wm-row .wm-arrow:hover { background:#E5E8EB; }
-.wm-btn-main, .wm-btn-sub { flex:1; border:none; border-radius:12px; padding:12px; font-size:14px; font-weight:800; cursor:pointer; }
-.wm-btn-main { background:#3182F6; color:white; }
-.wm-btn-sub  { background:#F2F4F6; color:#4E5968; }
-</style>
-
-
-
 <!-- ===== 모바일 전용 업무 메뉴 (사용자 커스텀) ===== -->
 <div class="mobile-only mobile-quickmenu">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
@@ -86,7 +34,6 @@
     </div>
     <div id="mobile-menu-grid" class="mobile-quickmenu-grid"></div>
 </div>
-<script>window.WorkMenu && window.WorkMenu.render();</script>
 
 <!-- 가온 오피스 -->
 <div id="gaon-office-card" onclick="window.navigateTo('page-가온 오피스')" style="background:white; border-radius:20px; padding:20px; border:1px solid #F2F4F6; margin-bottom:16px; cursor:pointer; display:none; align-items:center; justify-content:space-between; transition:all 0.15s;" onmouseover="this.style.borderColor='#3182F6'" onmouseout="this.style.borderColor='#F2F4F6'">

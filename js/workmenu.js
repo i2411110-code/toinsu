@@ -17,13 +17,13 @@
         { id:'calculator',   group:'계산·조회', label:'재무 계산기', icon:'bi-calculator-fill', bg:'#E0F2FE', color:'#0284C7', type:'page', target:'page-calculator' },
     ];
 
-    // 사용자 구분 키 (로그인 정보가 늦게 들어와도 되도록 호출 시점에 계산)
+    // 사용자 구분 키 (호출 시점에 계산)
     const userKey = () => {
         let id = 'guest';
         try {
-            id = window.currentUser?.uid || window.currentUser?.email
+            id = window._currentUser?.uid || window._currentUser?.email
+              || window.currentUser?.uid || window.currentUser?.email
               || window.auth?.currentUser?.uid
-              || (window.firebase?.auth && window.firebase.auth().currentUser?.uid)
               || window.currentUserId || 'guest';
         } catch (e) {}
         return 'workmenu:' + id;
@@ -52,7 +52,63 @@
         else window.navigateTo(m.target, m.arg);
     };
 
+    // ── 스타일 + 편집 모달을 body에 직접 생성 ──
+    const ensureUI = () => {
+        if (!document.getElementById('wm-style')) {
+            const st = document.createElement('style');
+            st.id = 'wm-style';
+            st.textContent = `
+.wm-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; }
+.wm-empty { grid-column:1/-1; text-align:center; color:#8B95A1; font-size:13px; padding:24px 0; }
+.wm-edit-btn { border:1px solid #E5E8EB; background:#F9FAFB; color:#4E5968; border-radius:10px; padding:6px 12px; font-size:12px; font-weight:700; cursor:pointer; transition:all .15s; }
+.wm-edit-btn:hover { background:#EFF6FF; color:#3182F6; border-color:#BFDBFE; }
+.wm-modal { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9999; display:none; align-items:center; justify-content:center; padding:20px; }
+.wm-modal.open { display:flex; }
+.wm-modal-box { background:white; border-radius:20px; padding:22px; width:100%; max-width:460px; max-height:85vh; display:flex; flex-direction:column; }
+.wm-close { border:none; background:none; font-size:18px; color:#8B95A1; cursor:pointer; }
+.wm-editor-list { overflow-y:auto; flex:1; }
+.wm-group-label { font-size:11px; font-weight:800; color:#8B95A1; margin:14px 0 6px; }
+.wm-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid #F2F4F6; border-radius:12px; margin-bottom:6px; }
+.wm-row input[type=checkbox] { width:18px; height:18px; accent-color:#3182F6; cursor:pointer; }
+.wm-row .wm-ico { width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14px; }
+.wm-row .wm-name { flex:1; font-size:13px; font-weight:700; color:#191F28; }
+.wm-row .wm-arrow { border:none; background:#F2F4F6; border-radius:8px; width:28px; height:28px; cursor:pointer; color:#4E5968; }
+.wm-row .wm-arrow:hover { background:#E5E8EB; }
+.wm-btn-main, .wm-btn-sub { flex:1; border:none; border-radius:12px; padding:12px; font-size:14px; font-weight:800; cursor:pointer; }
+.wm-btn-main { background:#3182F6; color:white; }
+.wm-btn-sub { background:#F2F4F6; color:#4E5968; }`;
+            document.head.appendChild(st);
+        }
+
+        // 대시보드 HTML 안에 남아 있는 옛 모달은 제거
+        document.querySelectorAll('#wm-modal').forEach(el => {
+            if (el.parentElement !== document.body) el.remove();
+        });
+
+        if (!document.getElementById('wm-modal')) {
+            const m = document.createElement('div');
+            m.id = 'wm-modal';
+            m.className = 'wm-modal';
+            m.innerHTML = `
+<div class="wm-modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <div style="font-size:18px; font-weight:800; color:#191F28;">업무 메뉴 편집</div>
+        <button class="wm-close" onclick="WorkMenu.closeEditor()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div style="font-size:12px; color:#8B95A1; margin-bottom:14px;">체크한 메뉴만 표시되고, 화살표로 순서를 바꿀 수 있어요.</div>
+    <div id="wm-editor-list" class="wm-editor-list"></div>
+    <div style="display:flex; gap:8px; margin-top:16px;">
+        <button class="wm-btn-sub" onclick="WorkMenu.reset()">전체 메뉴로 초기화</button>
+        <button class="wm-btn-main" onclick="WorkMenu.closeEditor()">완료</button>
+    </div>
+</div>`;
+            m.addEventListener('click', (e) => { if (e.target === m) closeEditor(); });
+            document.body.appendChild(m);
+        }
+    };
+
     const render = () => {
+        ensureUI();
         const { hidden } = load();
         const items = ordered().filter(m => !hidden.includes(m.id));
         const empty = '<div class="wm-empty">표시할 메뉴가 없어요. [메뉴 편집]에서 추가해 보세요.</div>';
@@ -117,12 +173,9 @@
     };
 
     const openEditor = () => {
-        document.querySelectorAll('body > #wm-modal').forEach(el => el.remove());
-        const modal = document.getElementById('wm-modal');
-        if (!modal) return;
-        if (modal.parentElement !== document.body) document.body.appendChild(modal);
+        ensureUI();
         renderEditor();
-        modal.classList.add('open');
+        document.getElementById('wm-modal').classList.add('open');
     };
     const closeEditor = () => {
         const modal = document.getElementById('wm-modal');
@@ -139,10 +192,16 @@
         const pc = document.getElementById('work-menu-grid');
         const mo = document.getElementById('mobile-menu-grid');
         if ((pc && !pc.childElementCount) || (mo && !mo.childElementCount)) render();
+        // 대시보드 안에 옛 모달이 다시 생기면 제거
+        document.querySelectorAll('#wm-modal').forEach(el => {
+            if (el.parentElement !== document.body) el.remove();
+        });
     };
     new MutationObserver(() => {
         if (!queued) { queued = true; requestAnimationFrame(check); }
     }).observe(document.documentElement, { childList: true, subtree: true });
 
-    check();
+    const start = () => { ensureUI(); check(); };
+    if (document.body) start();
+    else document.addEventListener('DOMContentLoaded', start);
 })();
