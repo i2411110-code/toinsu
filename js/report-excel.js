@@ -1,11 +1,13 @@
 // ================================================
 // 토스 CRM 화면 붙여넣기 → 니즈환기 리포트 생성기
+// v6.8: ① 발송 2단계 이미지를 '상태 기반 맞춤형'으로 개편
+//          — 암: 상단 요약(일반암·유사암·고액암 금액+상태) → 부족한 항목(유사암=갑상선암 스토리) 중심 / 적정·충분 항목은 '잘 준비되어 있어요'
+//          — 뇌·심장: 생활비 비교 대신 통계 + 보장 범위(뇌출혈⊂뇌졸중⊂뇌혈관질환 등) + 진단비를 준비해야 하는 이유
+//          — 실비·화재·운전자 이미지 신규: 미가입자용 비교 예시표 / 법 개정 타임라인과 가입 시점 비교
+//       ② 월 생활비를 연령대별 평균으로 자동 매핑 (LIVING_BY_AGE 표에서 수정)
+//       ③ 성별 선택 추가 (CRM 성별 자동 인식) — 갑상선암 통계 문구에 사용
 // v6.7: ① '고객 기본정보' 화면 붙여넣기 지원 — 상담 목적(카테고리)·신청 일시·보험나이 자동 입력
-//          (보장분석 화면과 붙여넣는 순서 상관없음 / 한 번에 같이 붙여넣어도 OK)
-//       ② 발송 2단계 '보장 분석 결과 첨부'를 카테고리별 이미지로 분리 (카톡에서 잘리지 않게)
-//          — 암 / 뇌 / 심장: 통계 + 월 생활비(고정지출) 환산 비교형 '경각심' 이미지
-//          — 그 외 대분류: 항목 6개 단위로 나눈 짧은 점검 이미지
-//          — 기존 한 장짜리 요약/전체표는 '전체 한 장 이미지' 접이식 메뉴로 유지
+//       ② 발송 2단계 '보장 분석 결과 첨부'를 카테고리별 이미지로 분리
 // v6.6: 엑셀 업로드/파싱 제거 → '토스 CRM 화면 붙여넣기' 전용
 // v6.5: 하단에 '+ 연령대별 적정 보험료 가이드' 토글 카드 추가
 // v6.4: '분석표 이미지 복사' 버튼 색상 통일 + makeMsg() 따옴표 버그 수정
@@ -108,23 +110,77 @@
   }
 
   // ================================================================
-  // ✅ 경각심 이미지용 통계 · 생활비 기준 (v6.7)
+  // ✅ 경각심·니즈환기 이미지용 통계 · 기준 (v6.8)
   //    ※ 고객에게 나가는 자료이므로 매년 최신 통계로 교체하고, 사내 심의/컴플라이언스 기준에 맞는지 확인하세요.
   //    ※ 숫자·출처 문구는 아래에서만 고치면 이미지에 그대로 반영됩니다.
   // ================================================================
+
+  // ── 월 생활비(만원) ──
   var LIVING_COST_MAN = 294;   // 가구당 월평균 소비지출(만원) — 통계청(국가데이터처) 가계동향조사 2025 연간(1인 이상 가구)
-  var LIVING_DETAIL = [        // 같은 통계의 비목별 월평균(만원). 나머지는 '그 외'로 자동 계산
+  var LIVING_DETAIL = [        // 같은 통계의 비목별 월평균(만원). 나머지는 '그 외'로 자동 계산 (전체 평균일 때만 표시)
     { label: '식료품·비주류음료', man: 44.9 },
     { label: '주거·수도·광열',   man: 36.1 },
   ];
   var LIVING_SRC = '통계청(국가데이터처) 2025년 가계동향조사 · 1인 이상 가구 월평균 소비지출';
+  var LIVING_SRC_AGE = '통계청(국가데이터처) 가계동향조사 · 가구주 연령대별 월평균 소비지출';
+
+  // ★ 연령대별 월평균 생활비(만원) — 고객 보험나이에 맞춰 자동 선택됩니다.
+  //   아래 man 값은 지금 전체 평균(294)으로 채워져 있습니다.
+  //   국가데이터처(KOSIS) '가계동향조사 > 가구주 연령별 가구당 월평균 가계수지' 표의 소비지출(만원)을
+  //   연령대별로 확인해서 man 숫자만 바꿔 넣으세요. (숫자를 바꾸면 이미지 출처 문구도 '가구주 연령대별'로 자동 변경)
+  var LIVING_BY_AGE = [
+    { maxAge: 29,  label: '20대 이하', man: 294 },
+    { maxAge: 39,  label: '30대',      man: 294 },
+    { maxAge: 49,  label: '40대',      man: 294 },
+    { maxAge: 59,  label: '50대',      man: 294 },
+    { maxAge: 999, label: '60대 이상', man: 294 },
+  ];
+  function livingEntryForAge(age) {
+    var a = Number(age) || 40;
+    for (var i = 0; i < LIVING_BY_AGE.length; i++) if (a <= LIVING_BY_AGE[i].maxAge) return LIVING_BY_AGE[i];
+    return LIVING_BY_AGE[LIVING_BY_AGE.length - 1];
+  }
+  function livingIsAgeSpecific(entry) { return !!entry && entry.man !== LIVING_COST_MAN; }
+  function livingSrcFor(man) {
+    return man === LIVING_COST_MAN ? LIVING_SRC : LIVING_SRC_AGE;
+  }
+
+  // ── 암 / 뇌 / 심장 이미지 설정 ──
+  //    rows: [CRM 소분류명, 짧은 이름, '적정·충분일 때 보여줄 한 줄']
+  var THYROID_SRC = '보건복지부·국립암센터 「2023년 국가암등록통계」(갑상선암 발생 순위, 여성 암 발생 건수) · 「2022년 국가암등록통계」(갑상선암 5년 상대생존율 100.1%, 2018~2022년 진단)';
+  var RARE_SRC = '보건복지부·국립암센터 「2022년 국가암등록통계」(2018~2022년 진단, 5년 상대생존율: 췌장암 16.5%, 간암 39.4%, 폐암 40.6%)';
+
+  // 유사암(소액암) 설명 — 갑상선암 스토리용
+  var SIMILAR_NOTE = '갑상선암·기타피부암·제자리암·경계성종양은 약관상 ‘유사암(소액암)’으로 분류되는 경우가 많아요. 이 경우 일반암 진단비가 아니라 유사암 진단비 기준(보통 일반암의 10~20% 수준)으로 지급돼요. 상품 약관에 따라 달라요.';
+
+  // 갑상선암 통계 타일 (여성 / 그 외)
+  var THYROID_TILES_F = [
+    { big: '2.6만명', title: '여성 갑상선암 발생', desc: '2023년 한 해 여성 26,114명이 진단받았어요. 여성 암 발생 2위예요.', src: '국가암등록통계 2023' },
+    { big: '1위', title: '남녀 전체 발생 1위 암', desc: '2023년 가장 많이 발생한 암이 갑상선암이에요.', src: '국가암등록통계 2023' },
+    { big: '100.1%', title: '5년 상대생존율', desc: '치료 뒤에도 오래 살아가기 때문에 치료 이후 관리·재발 대비 기간이 길어요.', src: '국가암등록통계 2022' },
+  ];
+  var THYROID_TILES_ALL = [
+    { big: '1위', title: '남녀 전체 발생 1위 암', desc: '2023년 가장 많이 발생한 암이 갑상선암이에요.', src: '국가암등록통계 2023' },
+    { big: '10~30대', title: '가장 흔한 암', desc: '10대·20대·30대에서 가장 많이 발생한 암이 갑상선암이에요.', src: '국가암등록통계 2023' },
+    { big: '100.1%', title: '5년 상대생존율', desc: '치료 뒤에도 오래 살아가기 때문에 치료 이후 관리·재발 대비 기간이 길어요.', src: '국가암등록통계 2022' },
+  ];
+  // 고액암 통계 타일
+  var RARE_TILES = [
+    { big: '16.5%', title: '췌장암 5년 상대생존율', desc: '10명 중 2명도 안 되는 수준이에요.', src: '국가암등록통계 2022' },
+    { big: '39.4%', title: '간암 5년 상대생존율', desc: '전체 암 평균(72.9%)의 절반 남짓이에요.', src: '국가암등록통계 2022' },
+    { big: '40.6%', title: '폐암 5년 상대생존율', desc: '치료 기간이 길고 치료비 부담이 큰 암일수록 추가 대비가 필요해요.', src: '국가암등록통계 2022' },
+  ];
 
   var RISK_CFG = {
     cancer: {
       icon: '🎗️',
-      title: '암 진단비, 생활비로 환산하면?',
-      jobTitle: '암 진단비 — 소득 상실·고정지출 비교',
-      rows: [['일반암진단', '일반암'], ['소액암(유사암)진단', '유사암'], ['고액암진단', '고액암']],
+      title: '암 진단비 점검',
+      jobTitle: '암 진단비 — 상태별 맞춤 (유사암·갑상선암 포함)',
+      rows: [
+        ['일반암진단',         '일반암', '진단 직후 치료비와 소득 공백을 함께 대비할 수 있는 핵심 담보예요.'],
+        ['소액암(유사암)진단', '유사암', '갑상선암처럼 발생 빈도가 높은 암까지 대비되어 있어요.'],
+        ['고액암진단',         '고액암', '치료비 부담이 큰 암에 대한 추가 대비가 되어 있어요.'],
+      ],
       targetMonths: 60, targetLabel: '5년(60개월) 경과관찰 기간',
       scenario: '가정: 암 진단 후 치료로 일을 이어가기 어려워 소득이 끊기는 경우',
       statTitle: '진단받고 나면, 소득이 먼저 흔들립니다',
@@ -133,7 +189,6 @@
         { big: '1.42배', title: '진단 후 실직 위험', desc: '19~50세 근로자를 6년 추적하니 26.5%가 일자리를 잃었어요. (일반인 23.2%)', src: 'Supportive Care in Cancer 2023' },
         { big: '50.5%', title: '실직 후 복직 비율', desc: '일반인(57.4%)보다 낮아 소득 공백이 더 길어질 수 있어요.', src: 'Supportive Care in Cancer 2023' },
       ],
-      note: '',
       sources: [
         '보건복지부·국립암센터 「2023년 국가암등록통계」(2019~2023년 진단, 5년 상대생존율 73.7%)',
         'Supportive Care in Cancer (2023), 국내 암 진단 근로자 6년 추적 코호트(19~50세, 건강보험 행정자료)',
@@ -141,31 +196,53 @@
     },
     brain: {
       icon: '🧠',
-      title: '뇌혈관질환, 쓰러진 뒤가 더 깁니다',
-      jobTitle: '뇌혈관질환 — 후유장애·재활기간 비교',
-      rows: [['뇌혈관질환진단', '뇌혈관질환'], ['뇌졸중질환진단', '뇌졸중'], ['뇌출혈질환진단', '뇌출혈']],
-      targetMonths: 24, targetLabel: '재활·회복 2년(24개월)',
-      scenario: '가정: 뇌졸중 후 재활로 소득이 끊기는 경우',
-      statTitle: '살아남아도, 일상 복귀는 다른 문제입니다',
+      title: '뇌혈관질환 진단비 점검',
+      jobTitle: '뇌혈관질환 — 통계 · 보장범위 비교',
+      rows: [
+        ['뇌혈관질환진단', '뇌혈관질환', '뇌졸중은 물론 그 밖의 뇌혈관 질환까지 넓게 대비되어 있어요.'],
+        ['뇌졸중질환진단', '뇌졸중',     '뇌출혈과 뇌경색(막힘)을 모두 대비할 수 있어요.'],
+        ['뇌출혈질환진단', '뇌출혈',     '뇌출혈 진단 시 목돈을 받을 수 있도록 준비되어 있어요.'],
+      ],
+      statTitle: '뇌졸중, 한 번으로 끝나지 않습니다',
       tiles: [
         { big: '11.3만건', title: '연간 뇌졸중 발생', desc: '2023년 한 해 113,098건이 발생했어요.', src: '질병관리청 2023' },
-        { big: '4명 중 1명', title: '혼자 거동 어려운 채 퇴원', desc: '뇌경색 환자 4명 중 1명은 혼자 거동하기 어려운 후유장애를 안고 퇴원해요.', src: '대한뇌졸중학회' },
+        { big: '25.3%', title: '다시 발생한 비중', desc: '뇌졸중 4건 중 1건은 재발생이에요.', src: '질병관리청 2023' },
         { big: '19.8%', title: '발병 1년 내 사망', desc: '65세 이상은 31.2%로 더 높아요.', src: '질병관리청 2023' },
       ],
-      note: '재활의 골든타임은 발병 후 약 6개월이고, 기능 회복은 2년에 걸쳐 이어진다고 알려져 있어요. 가정 복귀에 실패한 뇌졸중 환자 1명의 10년 의료비는 약 4억 원으로 추산됩니다(대한재활병원협회).',
+      note: '',
+      // 질환별 진료 환자 수·1인당 진료비 (건강보험심사평가원 2022). costMan 은 알고 있는 값만 넣으세요(없으면 null).
+      patientsTitle: '질환별 환자 수와 치료비',
+      patientsSub: '뇌졸중 환자 10명 중 8명 이상은 뇌경색, 뇌출혈은 약 6분의 1이에요.',
+      patients: [
+        { name: '뇌졸중',   n: 634177, costMan: 385.6 },
+        { name: '뇌경색',   n: 520895, costMan: null },
+        { name: '뇌출혈',   n: 102127, costMan: null },
+      ],
+      patientsBase: 634177,
+      patientsNote: '진료비는 건강보험 급여 기준 1인당 평균이에요. 비급여·재활·소득 공백은 포함되지 않아 실제 부담은 더 커질 수 있어요.',
+      whyTitle: '왜 ‘뇌혈관질환’ 진단비를 준비해야 할까요?',
+      whySub: '같은 뇌 질환이라도 담보 이름에 따라 보장받는 범위가 달라져요.',
+      ladder: [
+        { label: '뇌혈관질환진단', range: '가장 넓음', w: 100, desc: '뇌출혈·뇌경색뿐 아니라 그 밖의 뇌혈관 질환까지 포함돼요.' },
+        { label: '뇌졸중질환진단', range: '중간',     w: 68,  desc: '뇌출혈과 뇌경색이 대상이에요.' },
+        { label: '뇌출혈질환진단', range: '가장 좁음', w: 38,  desc: '터지는 뇌출혈만 대상이에요. 환자가 훨씬 많은 뇌경색은 해당되지 않아요.' },
+      ],
+      closingNeed: '범위가 넓은 담보부터 확인하면 같은 비용으로 더 넓게 대비할 수 있어요.',
+      closingGood: '진단비는 치료비뿐 아니라 재활·회복 기간의 소득 공백을 메우는 목적이에요. 지금 구성이 그 역할을 하고 있어요.',
       sources: [
-        '질병관리청 「2023 심뇌혈관질환 발생통계」(뇌졸중 113,098건, 1년 치명률 19.8%, 65세 이상 31.2%)',
-        '대한뇌졸중학회 한국뇌졸중등록사업 보고서(뇌경색 환자 4명 중 1명 후유장애 퇴원)',
-        '대한재활병원협회 추산(가정 복귀 실패 환자 1명 10년 의료비 약 4억 원)',
+        '질병관리청 「2023 심뇌혈관질환 발생통계」(뇌졸중 113,098건, 재발생 비중 25.3%, 1년 치명률 19.8%, 65세 이상 31.2%)',
+        '건강보험심사평가원 「2022년 진료 현황」(뇌졸중 환자 634,177명 · 뇌경색 520,895명 · 뇌출혈 102,127명, 1인당 진료비 뇌졸중 385.6만원)',
       ],
     },
     heart: {
       icon: '❤️',
-      title: '심장질환, 첫 1년이 가장 위험합니다',
-      jobTitle: '심장질환 — 치명률·재발 비교',
-      rows: [['허혈성심장질환진단', '허혈성심장질환'], ['급성심근경색진단', '급성심근경색'], ['허혈성심장질환수술', '심장질환 수술비']],
-      targetMonths: 12, targetLabel: '재발 위험이 큰 1년(12개월)',
-      scenario: '가정: 심근경색 후 치료·회복으로 소득이 끊기는 경우',
+      title: '심장질환 진단비 점검',
+      jobTitle: '심장질환 — 통계 · 보장범위 비교',
+      rows: [
+        ['허혈성심장질환진단', '허혈성심장질환', '협심증까지 포함해 넓은 범위의 심장 질환에 대비되어 있어요.'],
+        ['급성심근경색진단',   '급성심근경색',   '급성심근경색 진단 시 목돈을 받을 수 있도록 준비되어 있어요.'],
+        ['허혈성심장질환수술', '심장질환 수술비', '혈관 치료·수술이 필요할 때의 비용까지 대비되어 있어요.'],
+      ],
       statTitle: '한 번 막히면, 그 뒤 1년이 승부입니다',
       tiles: [
         { big: '3.5만건', title: '연간 심근경색 발생', desc: '2023년 34,768건, 이 중 약 75%가 남성이에요.', src: '질병관리청 2023' },
@@ -173,11 +250,85 @@
         { big: '16.1%', title: '발병 1년 내 사망', desc: '남성 13.5% · 여성 23.6%. 환자 중 9.6%는 재발 사례예요.', src: '질병관리청 2023' },
       ],
       note: '',
+      whyTitle: '왜 ‘허혈성심장질환’ 진단비를 준비해야 할까요?',
+      whySub: '같은 심장 질환이라도 담보 이름에 따라 보장받는 범위가 달라져요.',
+      ladder: [
+        { label: '허혈성심장질환진단', range: '넓음',   w: 100, desc: '협심증·심근경색 등 심장 혈관이 좁아지거나 막히는 질환이 폭넓게 포함돼요.' },
+        { label: '급성심근경색진단',   range: '좁음',   w: 55,  desc: '혈관이 갑자기 완전히 막히는 급성심근경색만 대상이에요. 협심증은 해당되지 않는 경우가 많아요.' },
+        { label: '허혈성심장질환수술', range: '치료 단계', w: null, desc: '혈관 치료·수술이 필요할 때 지급되는 담보예요. 진단비와 별도로 확인이 필요해요.' },
+      ],
+      closingNeed: '범위가 넓은 진단비부터 확인하면 같은 비용으로 더 넓게 대비할 수 있어요.',
+      closingGood: '진단비는 치료비뿐 아니라 회복 기간의 소득 공백을 메우는 목적이에요. 지금 구성이 그 역할을 하고 있어요.',
       sources: [
         '질병관리청 「2023 심뇌혈관질환 발생통계」(심근경색증 34,768건, 30일 치명률 8.9%, 1년 치명률 16.1%, 재발 비중 9.6%)',
+        '담보별 보장 범위는 한국표준질병사인분류(KCD)와 상품 약관의 정의에 따라 다를 수 있습니다',
       ],
     },
   };
+
+  // ── 실손의료비 이미지 설정 ──
+  var MED_CFG = {
+    icon: '🏥',
+    title: '실손의료비 점검',
+    jobTitle: '실손의료비 — 가입/미가입 비교 예시표',
+    rows: [
+      ['질병입원의료비', '질병 입원', '질병으로 입원해도 병원비 걱정 없이 치료받을 수 있어요.'],
+      ['질병외래의료비', '질병 통원', '통원 치료비 본인부담도 돌려받을 수 있어요.'],
+      ['질병처방조제료', '질병 처방', '약값 본인부담도 대비되어 있어요.'],
+      ['상해입원의료비', '상해 입원', '다쳐서 입원해도 병원비를 돌려받을 수 있어요.'],
+      ['상해외래의료비', '상해 통원', '사고로 인한 통원 치료비도 대비되어 있어요.'],
+      ['상해처방조제료', '상해 처방', '사고 후 약값도 대비되어 있어요.'],
+    ],
+    // 예시표 가정값(만원): 맹장염 수술 · 입원 5일
+    example: { title: '맹장염 수술 · 입원 5일', pay: 200, nonpay: 100, payRate: 0.8, nonpayRate: 0.7 },
+    sources: [
+      '금융위원회 「4세대 실손의료보험 출시」 보도자료(자기부담 급여 20%·비급여 30%, 통원 최소 공제 1~2만원, 비급여 특약 분리)',
+    ],
+  };
+
+  // ── 화재 이미지 설정 ──
+  var FIRE_CFG = {
+    icon: '🔥',
+    title: '화재·배상책임 점검',
+    jobTitle: '화재(실화) 배상책임 — 법 개정 · 비교 예시표',
+    liabLabels: ['일상생활배상책임담보', '가족생활배상책임담보', '(가족)일상생활배상책임'],
+    fineLabel: '화재벌금',
+    damageMan: 5000,   // 예시표 가정: 이웃집 피해액(만원)
+    events: [
+      { date: '2007.08.30', title: '헌법재판소 ‘경과실 실화 면책’ 헌법불합치', desc: '가벼운 실수로 낸 불은 이웃에 배상하지 않아도 되던 기존 규정이 위헌 결정을 받았어요.' },
+      { date: '2009.05.08', title: '실화책임법 전부 개정', desc: '이제는 가벼운 실수로 낸 불이어도 이웃 피해에 배상책임이 생겨요. (중대한 과실이 없으면 법원에 배상액 경감 청구 가능)' },
+    ],
+    goodLine: '이웃에게 번질 수 있는 실화 배상책임까지 대비되어 있어요.',
+    sources: [
+      '헌법재판소 2007. 8. 30. 선고 2004헌가25 결정(실화책임에 관한 법률 헌법불합치)',
+      '「실화책임에 관한 법률」 전부개정(법률 제9648호, 2009. 5. 8. 시행)',
+      '예시표의 피해액·보상 내용은 이해를 돕기 위한 가정이며, 실제 보상은 약관과 과실 정도에 따라 달라집니다',
+    ],
+  };
+
+  // ── 운전자보험 이미지 설정 ──
+  var DRIVER_CFG = {
+    icon: '🚗',
+    title: '운전자보험 점검',
+    jobTitle: '운전자보험 — 법 개정 타임라인 · 가입 시점 비교',
+    rows: [
+      ['교통사고처리지원금', '교통사고처리지원금', '형사합의금 부담을 대비할 수 있어요.'],
+      ['벌금(대인)',         '벌금(대인)',         '사람을 다치게 한 사고의 벌금을 대비할 수 있어요.'],
+      ['벌금(대물)',         '벌금(대물)',         '물건 피해 사고의 벌금을 대비할 수 있어요.'],
+      ['변호사선임비용',     '변호사선임비용',     '형사 절차에서 변호사 비용을 대비할 수 있어요.'],
+    ],
+    finePeakMan: 3000,   // 어린이보호구역 어린이 상해 시 벌금 상한(만원)
+    events: [
+      { date: '2009-02-26', show: '2009.02.26', title: '교통사고처리특례법 일부 위헌 결정', desc: '보험에 가입했어도 중상해 사고는 형사처벌 대상이 될 수 있게 되어, 교통사고처리지원금(형사합의금) 대비가 중요해졌어요.' },
+      { date: '2020-03-25', show: '2020.03.25', title: '민식이법 시행', desc: '어린이보호구역 어린이 상해: 징역 1~15년 또는 벌금 500만~3,000만원 / 사망: 무기 또는 3년 이상 징역. 이후 운전자 벌금 담보 한도도 3,000만원까지 확대됐어요.' },
+    ],
+    sources: [
+      '헌법재판소 2009. 2. 26. 결정(교통사고처리특례법 제4조 제1항 위헌)',
+      '「특정범죄 가중처벌 등에 관한 법률」 제5조의13(2020. 3. 25. 시행, 어린이보호구역 어린이 사상 사고 가중처벌)',
+      '보험연구원·손해보험업계 자료(자동차보험은 벌금·변호사선임비용·교통사고처리지원금 미보장, 실손 담보는 중복 보상 불가)',
+    ],
+  };
+
   var CAT_IMG_MAX = 6;   // 일반 카테고리 이미지 한 장당 최대 항목 수 (넘으면 자동 분할)
   var CAT_IMG_SKIP = ['항암 치료비'];  // 필수 보장 분석(4단계) 이미지와 중복되는 대분류
 
@@ -195,7 +346,7 @@
     return y + '-' + pad2(m) + '-' + pad2(day) + ' (' + dow + ') ' + ampm + ' ' + h12 + '시 ' + min + '분';
   }
 
-  // ─── 규칙 기반 폴백 로직 (AI 호출 실패 시 사용) ───
+// ─── 규칙 기반 폴백 로직 (AI 호출 실패 시 사용) ───
   function buildItemsFallback(lowItems, age, total, level, category, excessItems) {
     var out = [];
     excessItems = excessItems || [];
@@ -696,9 +847,10 @@
   }
 
   // ─── 내부 상태 ───
-  var exState = { customerName: '', companies: [], rows: [], premiumAmounts: [] };
+  var exState = { customerName: '', companies: [], rows: [], premiumAmounts: [], gender: '', driverStarts: [] };
   var gState  = null;
   var custInfo = null;   // '고객 기본정보' 화면에서 읽은 값 (상담 목적·신청 일시·보험나이)
+  var livingManual = false;   // 월 생활비를 사용자가 직접 고쳤는지 (true면 나이 변경 시 자동 매핑 안 함)
 
   function loadScript(src) {
     return new Promise(function(res, rej) {
@@ -999,7 +1151,7 @@
   // ✅ 연령대별 적정 보험료 가이드 섹션 끝
   // ================================================================
 
-  window.initRptExcelModule = function () {
+window.initRptExcelModule = function () {
     var panel = document.getElementById('rpt-mode-excel-panel');
     if (!panel || panel.dataset.inited) return;
     panel.dataset.inited = '1';
@@ -1033,6 +1185,10 @@
       + '<div class="rptex-meta-row">'
       + '<div class="rptex-meta-item"><label class="rptex-meta-label">고객 나이</label>'
       + '<input type="number" id="rptex-age" class="rptex-meta-input" value="40" min="1" max="99" style="width:70px;"></div>'
+      + '<div class="rptex-meta-item"><label class="rptex-meta-label" title="CRM 성별을 자동 인식해요. 갑상선암 통계 문구에 사용돼요.">성별</label>'
+      + '<select id="rptex-gender" class="rptex-meta-input" style="width:90px;">'
+      + '<option value="">미확인</option><option value="F">여성</option><option value="M">남성</option>'
+      + '</select></div>'
       + '<div class="rptex-meta-item"><label class="rptex-meta-label">상담 카테고리</label>'
       + '<select id="rptex-category" class="rptex-meta-input" style="width:160px;">'
       + '<option value="또래월보험비교">또래월보험비교</option>'
@@ -1043,7 +1199,7 @@
       + '</select></div>'
       + '<div class="rptex-meta-item"><label class="rptex-meta-label">신청 일시</label>'
       + '<input type="text" id="rptex-apply-dt" class="rptex-meta-input" style="width:230px;" placeholder="예) 2026-07-01 (수) 오후 4시 24분"></div>'
-      + '<div class="rptex-meta-item"><label class="rptex-meta-label" title="경각심 이미지의 ‘생활비 환산’ 기준 (기본: 통계청 가구 월평균 소비지출)">월 생활비(만원)</label>'
+      + '<div class="rptex-meta-item"><label class="rptex-meta-label" id="rptex-living-label" title="경각심 이미지의 ‘생활비 환산’ 기준 (고객 나이에 맞는 연령대 평균이 자동 입력돼요. 직접 고치면 그 값을 사용해요)">월 생활비(만원)</label>'
       + '<input type="number" id="rptex-living" class="rptex-meta-input" value="' + LIVING_COST_MAN + '" min="50" max="2000" style="width:80px;"></div>'
       + '</div>'
 
@@ -1052,7 +1208,7 @@
       + '📊 보장 분석표 '
       + '<span style="font-weight:400;color:#94A3B8;font-size:11px;">— 상태 클릭: 상태 전환 · 합산금액 클릭: 직접 수정 · 보험료: 클릭하여 수정</span></p>'
       + '<div style="overflow-x:auto;border-radius:10px;border:1px solid #E2E8F0;margin-bottom:4px;"><div id="rptex-table"></div></div>'
-      + '<p style="font-size:11px;color:#94A3B8;margin-bottom:16px;">💡 이미지는 아래 발송 순서 2·4단계에서 카테고리별로 복사해 카카오톡에 붙여넣기 하세요.</p>'
+      + '<p style="font-size:11px;color:#94A3B8;margin-bottom:16px;">💡 이미지는 아래 발송 순서 2·4단계에서 카테고리별로 복사해 카카오톡에 붙여넣기 하세요. 이미지는 분석표의 상태(부족/적정/충분)에 맞춰 내용이 달라져요.</p>'
 
       /* ── 보험료 수동 추가 ── */
       + '<div style="border:1.5px solid #E2E8F0;border-radius:12px;overflow:hidden;margin-bottom:16px;">'
@@ -1090,7 +1246,7 @@
 
       + '<div class="rptex-flow-step">'
       + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">2</span>보장 분석 결과 첨부 <span class="rptex-flow-sub">— 카테고리별로 한 장씩 전송</span></div>'
-      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 카톡에서 잘리지 않도록 카테고리별 이미지로 나눴어요. 필요한 항목만 골라 복사 → 붙여넣기 하세요. 암·뇌·심장은 통계 + 월 생활비 환산 비교형이에요.</div>'
+      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 카톡에서 잘리지 않도록 카테고리별 이미지로 나눴어요. 필요한 항목만 골라 복사 → 붙여넣기 하세요. 부족/미가입 항목은 크게, 적정/충분 항목은 ‘잘 준비되어 있어요’로 자동 정리돼요.</div>'
       + '<div id="rptex-img-jobs"></div>'
       + '<details class="rptex-legacy"><summary>전체 한 장 이미지 (길어서 카톡에서 잘릴 수 있어요)</summary>'
       + '<div class="rptex-flow-actions">'
@@ -1619,6 +1775,28 @@
     return extra;
   }
 
+  // 운전자 담보(교통사고처리지원금·벌금·변호사선임비용)의 보장 시작일을 계약별로 수집 → 운전자보험 이미지의 '가입 시점 vs 법 개정' 비교에 사용
+  var CRM_DRIVER_RE = /교통사고처리지원금|(대인|대물).*벌금|벌금.*(대인|대물)|스쿨존.*벌금|운전자.*벌금|변호사.*선임|선임.*비용/;
+  function crmDriverStarts(parsed) {
+    var out = [];
+    parsed.contracts.forEach(function (c) {
+      if (c.status !== '정상') return;
+      var isDriverProduct = /운전자/.test(String(c.name || ''));
+      var starts = [];
+      c.coverages.forEach(function (v) {
+        var t = String(v.rawName || '');
+        if (/화재/.test(t)) return;
+        if ((isDriverProduct || CRM_DRIVER_RE.test(t)) && v.start) starts.push(v.start);
+      });
+      if (starts.length) {
+        starts.sort();
+        out.push({ name: (crmShortInsurer(c.insurer) + ' ' + crmCleanName(c.name)).trim(), start: starts[0] });
+      }
+    });
+    out.sort(function (a, b) { return a.start < b.start ? -1 : a.start > b.start ? 1 : 0; });
+    return out;
+  }
+
   function crmToExState(parsed) {
     var cs = parsed.contracts, n = cs.length, seen = {};
     // 같은 보험사가 여러 건이어도 열 이름이 겹치지 않게 '보험사 + 상품명'으로 구성
@@ -1637,7 +1815,27 @@
         status: computeRowStatus(m.totalMan, rec), perProduct: crmFit(m.byContract, n) };
     });
     rows = rows.concat(crmBuildExtraRows(parsed, rows));
-    return { customerName: parsed.client.name, companies: companies, rows: rows, premiumAmounts: prem };
+    return {
+      customerName: parsed.client.name, companies: companies, rows: rows, premiumAmounts: prem,
+      gender: parsed.client.gender || '', driverStarts: crmDriverStarts(parsed)
+    };
+  }
+
+  function genderCode(s) {
+    s = String(s || '');
+    if (/여/.test(s)) return 'F';
+    if (/남/.test(s)) return 'M';
+    return '';
+  }
+
+  // 고객 나이에 맞는 연령대 평균 생활비를 입력칸에 자동 반영 (사용자가 직접 고친 뒤에는 건드리지 않음)
+  function syncLivingToAge(force) {
+    var livEl = document.getElementById('rptex-living');
+    var lblEl = document.getElementById('rptex-living-label');
+    var entry = livingEntryForAge(gState ? gState.age : 40);
+    if (force) livingManual = false;
+    if (livEl && !livingManual) livEl.value = entry.man;
+    if (lblEl) lblEl.textContent = '월 생활비(만원) · ' + (livingIsAgeSpecific(entry) ? entry.label + ' 평균' : '전체 평균');
   }
 
   // ── 4) 화면 처리 ──
@@ -1664,6 +1862,7 @@
     if (custInfo.category) { gState.category = custInfo.category; if (catEl) catEl.value = custInfo.category; }
     gState.purposeLabel = custInfo.purpose || '';
     if (custInfo.applyDateTime) { gState.applyDateTime = custInfo.applyDateTime; if (dtEl) dtEl.value = custInfo.applyDateTime; }
+    syncLivingToAge(false);
     refreshPremiumSummary();
     refreshAnalysisPremiumRow();
     var body = document.getElementById('rptex-ageguide-body');
@@ -1719,6 +1918,7 @@
         render();                                                    // custInfo 가 있으면 render() 안에서 함께 반영
         statusParts.push(parsed.client.name + '님 · 보험 ' + parsed.contracts.length + '건 · 보장분석 완료');
         if (!custInfo) warns.push('고객 기본정보 화면도 붙여넣으면 상담 카테고리·신청 일시가 자동으로 입력돼요.');
+        if (!exState.gender) warns.push('CRM에서 성별을 읽지 못했어요. 상단 ‘성별’에서 직접 선택하면 갑상선암 통계 문구가 맞춰져요.');
       } else if (gState) {
         applyCustInfoLive();                                         // 보장분석이 먼저 들어와 있던 경우
       }
@@ -1756,6 +1956,7 @@
 
     var ageEl0 = document.getElementById('rptex-age');
     var catEl0 = document.getElementById('rptex-category');
+    var genEl0 = document.getElementById('rptex-gender');
 
     // 고객 기본정보 화면에서 읽은 값이 같은 고객이면 나이·상담 카테고리·신청 일시를 자동 적용
     var ci = (custInfo && custInfo.name === customerName) ? custInfo : null;
@@ -1763,6 +1964,7 @@
       if (ci.age && ageEl0) ageEl0.value = ci.age;
       if (ci.category && catEl0) catEl0.value = ci.category;
     }
+    if (genEl0) genEl0.value = genderCode(exState.gender);
 
     // 새 고객 데이터가 로드될 때마다 필수 보장 카드는 템플릿에서 새로 복제
     // (이전 고객의 수동 수정값이 남지 않도록)
@@ -1772,6 +1974,7 @@
     gState = {
       customerName: customerName || '고객',
       age: Number((ageEl0 && ageEl0.value) || 40) || 40,
+      gender: genEl0 ? genEl0.value : '',
       category: (catEl0 && catEl0.value) || '또래월보험비교',
       purposeLabel: ci ? (ci.purpose || '') : '',
       premiums: companies.map(function(name, i){
@@ -1783,6 +1986,8 @@
       essentialGroups: ESSENTIAL_GROUPS,
       applyDateTime: (ci && ci.applyDateTime) || formatKoreanDateTime(new Date()),
     };
+
+    syncLivingToAge(true);   // 고객 나이에 맞는 연령대 평균 생활비로 초기화
 
     renderAnalysisTable();
     renderPremiumTable();
@@ -1800,21 +2005,24 @@
     // on* 속성 방식으로 등록 → 고객을 여러 번 분석해도 리스너가 중복 쌓이지 않음
     var ageEl = document.getElementById('rptex-age');
     var catEl = document.getElementById('rptex-category');
+    var genEl = document.getElementById('rptex-gender');
     var dtEl  = document.getElementById('rptex-apply-dt');
     var livEl = document.getElementById('rptex-living');
     if (ageEl) ageEl.oninput = function() {
       gState.age = Number(this.value) || 40;
+      syncLivingToAge(false);
       refreshPremiumSummary(); refreshAnalysisPremiumRow(); refreshMsg();
       var body = document.getElementById('rptex-ageguide-body');
       if (body && body.style.display !== 'none') renderAgeGuideTable();
     };
+    if (genEl) genEl.onchange = function() { gState.gender = this.value; renderImageJobs(); };
     if (catEl) catEl.onchange = function() { gState.category = this.value; gState.purposeLabel = ''; refreshFlowMessages(); };
     if (dtEl) dtEl.oninput = function() {
       gState.applyDateTime = this.value;
       var timeEl = document.getElementById('rptex-flow-time');
       if (timeEl) timeEl.value = buildTimeCheckMsg(gState);
     };
-    if (livEl) livEl.oninput = function() { renderImageJobs(); };
+    if (livEl) livEl.oninput = function() { livingManual = true; renderImageJobs(); };
   }
 
   // ─── 분석표 렌더 (보험료 행 포함, 편집용 인터랙티브 테이블) ───
@@ -2089,8 +2297,11 @@
   var IMG_FONT = '\'Malgun Gothic\',\'Apple SD Gothic Neo\',\'Noto Sans KR\',sans-serif';
   var IMG_DISCLAIMER = '본 분석은 고객 제공 가입설계서 기준의 참고 자료이며, 실제 보장 내용은 약관을 기준으로 합니다.';
 
-  // ================================================================
-  // ✅ 발송 2단계: 카테고리별 이미지 (암·뇌·심장 경각심형 + 대분류별 점검형)
+// ================================================================
+  // ✅ 발송 2단계: 상태 기반 맞춤 이미지 (v6.8)
+  //    암 · 뇌 · 심장 · 실비 · 화재 · 운전자 + 그 외 대분류 점검 이미지
+  //    · 부족/미가입 → 크게 강조하고 '왜 필요한지'를 보여줌
+  //    · 적정/과잉(충분) → '잘 준비되어 있어요'로 짧게 정리
   // ================================================================
 
   function findRowByLabel(label) {
@@ -2114,118 +2325,429 @@
     return v > 0 ? v : LIVING_COST_MAN;
   }
 
-  // 암/뇌/심장별 '내 진단비 → 생활비 몇 개월분' 계산
-  function riskSummary(kind) {
-    var cfg = RISK_CFG[kind], living = getLivingCost();
-    var items = cfg.rows.map(function (d) {
-      var r = findRowByLabel(d[0]);
-      var sum = r ? (r.customerSum || 0) : 0;
-      var st = (!r || sum <= 0) ? 'unregistered' : r.status;
-      if (st === 'none') st = 'ok';
-      return { name: d[1], sum: sum, status: st };
-    });
-    var main = items[0];
-    var months = living > 0 ? main.sum / living : 0;
-    return { cfg: cfg, items: items, main: main, living: living, months: months, need: cfg.targetMonths * living };
+  // 한 항목의 현재 상태 (행이 없거나 0원이면 미가입, 기준없음은 가입 시 적정)
+  function rowState(label) {
+    var r = findRowByLabel(label);
+    var sum = r ? (r.customerSum || 0) : 0;
+    var st = (!r || sum <= 0) ? 'unregistered' : r.status;
+    if (st === 'none') st = 'ok';
+    return { row: r, exists: !!r, sum: sum, status: st, rec: r ? r.recommend : undefined };
   }
+  function isNeed(st) { return st === 'low' || st === 'unregistered'; }
+  function statusMeta(st) { return ROW_STATUS_META[st] || ROW_STATUS_META.none; }
 
-  function riskVerdict(s) {
-    var ratio = s.cfg.targetMonths > 0 ? s.months / s.cfg.targetMonths : 0;
-    if (s.main.sum <= 0) return { text: '미가입 — 진단 즉시 생활비 공백이 시작돼요', color: '#DC2626', bg: '#FEF2F2' };
-    if (ratio < 0.34) return { text: '생활비 ' + monthsLabel(s.months) + '분 — 금방 바닥나요', color: '#DC2626', bg: '#FEF2F2' };
-    if (ratio < 1) return { text: s.cfg.targetLabel + '의 ' + Math.round(ratio * 100) + '%만 버틸 수 있어요', color: '#D97706', bg: '#FFF7E8' };
-    return { text: s.cfg.targetLabel + '을 버틸 수 있는 수준이에요', color: '#3182F6', bg: '#E8F3FF' };
+  // ── 이미지 공통 조각 ──
+  function imgWrap(inner, width) {
+    return '<div style="width:' + (width || 640) + 'px;box-sizing:border-box;background:#F2F4F6;border-radius:24px;padding:24px;font-family:' + IMG_FONT + ';">' + inner + '</div>';
   }
-
-  function buildRiskImageHTML(kind) {
-    var s = riskSummary(kind), cfg = s.cfg, name = gState.customerName;
-    var verdict = riskVerdict(s);
-    var pct = cfg.targetMonths > 0 ? Math.max(0, Math.min(100, Math.round(s.months / cfg.targetMonths * 100))) : 0;
-    var gap = Math.max(0, s.need - s.main.sum);
-
-    // 1) 헤더
-    var header = '<div style="background:linear-gradient(135deg,#001E42,#0B3A6F);color:#fff;border-radius:18px;padding:22px 24px;">'
-      + '<div style="font-size:21px;font-weight:800;letter-spacing:-0.3px;line-height:1.35;">' + cfg.icon + ' ' + esc(cfg.title) + '</div>'
-      + '<div style="font-size:14px;opacity:.9;margin-top:8px;">' + esc(name) + '님 · ' + esc(s.items[0].name) + ' 진단비 '
-      + (s.main.sum > 0 ? '<b>' + fmtMan(s.main.sum) + '</b>' : '<b>미가입</b>') + '</div>'
+  function imgHeader(icon, title, sub) {
+    return '<div style="background:linear-gradient(135deg,#001E42,#0B3A6F);color:#fff;border-radius:18px;padding:22px 24px;">'
+      + '<div style="font-size:21px;font-weight:800;letter-spacing:-0.3px;line-height:1.35;">' + icon + ' ' + esc(title) + '</div>'
+      + (sub ? '<div style="font-size:13.5px;opacity:.88;margin-top:7px;line-height:1.5;">' + sub + '</div>' : '')
       + '</div>';
-
-    // 2) 통계 타일
-    var tiles = cfg.tiles.map(function (t) {
-      return '<div style="width:31.5%;box-sizing:border-box;background:#fff;border-radius:16px;padding:16px 12px 12px;text-align:center;">'
-        + '<div style="font-size:24px;font-weight:800;color:#F04452;letter-spacing:-0.5px;line-height:1.2;">' + esc(t.big) + '</div>'
-        + '<div style="font-size:13px;font-weight:800;color:#191F28;margin-top:6px;">' + esc(t.title) + '</div>'
+  }
+  function card(inner, extra) {
+    return '<div style="margin-top:14px;background:#fff;border-radius:16px;padding:18px 18px 16px;' + (extra || '') + '">' + inner + '</div>';
+  }
+  function cardTitle(t, sub) {
+    return '<div style="font-size:15.5px;font-weight:800;color:#191F28;line-height:1.4;">' + t + '</div>'
+      + (sub ? '<div style="font-size:12.5px;color:#6B7684;margin-top:4px;line-height:1.55;">' + sub + '</div>' : '');
+  }
+  function pill(st, labelOverride) {
+    var m = statusMeta(st);
+    return '<span style="display:inline-block;background:' + m.bg + ';color:' + m.color + ';font-weight:800;font-size:12.5px;border-radius:12px;padding:5px 12px;white-space:nowrap;">' + (labelOverride || m.label) + '</span>';
+  }
+  // 상단 요약: 항목명 + 금액 + 상태(예: 일반암 17,000만원 (과잉))
+  function summaryCard(title, items, cols) {
+    cols = cols || items.length;
+    var cells = items.map(function (it) {
+      return '<div style="width:' + (100 / cols).toFixed(2) + '%;box-sizing:border-box;padding:6px 6px;text-align:center;">'
+        + '<div style="font-size:13px;font-weight:700;color:#4E5968;">' + esc(it.name) + '</div>'
+        + '<div style="font-size:17px;font-weight:800;color:#191F28;margin:5px 0 8px;letter-spacing:-0.3px;">' + (it.sum > 0 ? fmtMan(it.sum) : '미가입') + '</div>'
+        + pill(it.status)
+        + '</div>';
+    }).join('');
+    return card((title ? '<div style="font-size:13px;font-weight:800;color:#6B7684;margin:0 4px 8px;">' + esc(title) + '</div>' : '')
+      + '<div style="display:flex;flex-wrap:wrap;">' + cells + '</div>');
+  }
+  function statTiles(tiles) {
+    return '<div style="display:flex;justify-content:space-between;margin-top:12px;">' + tiles.map(function (t) {
+      return '<div style="width:31.5%;box-sizing:border-box;background:#F8FAFC;border-radius:14px;padding:14px 10px 11px;text-align:center;">'
+        + '<div style="font-size:22px;font-weight:800;color:#F04452;letter-spacing:-0.5px;line-height:1.2;">' + esc(t.big) + '</div>'
+        + '<div style="font-size:12.5px;font-weight:800;color:#191F28;margin-top:6px;">' + esc(t.title) + '</div>'
         + '<div style="font-size:11.5px;color:#6B7684;line-height:1.55;margin-top:6px;">' + esc(t.desc) + '</div>'
-        + '<div style="font-size:10px;color:#A0AAB5;margin-top:8px;">' + esc(t.src) + '</div>'
+        + '<div style="font-size:10px;color:#A0AAB5;margin-top:7px;">' + esc(t.src) + '</div>'
+        + '</div>';
+    }).join('') + '</div>';
+  }
+  // '잘 준비되어 있어요' 카드: items = [{name, sum, status, good}]
+  function goodCard(items, title) {
+    if (!items.length) return '';
+    var rows = items.map(function (it) {
+      return '<div style="display:flex;align-items:flex-start;padding:9px 0;border-top:1px solid #EDF0F3;">'
+        + '<div style="flex:none;width:22px;font-size:16px;">✅</div>'
+        + '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:800;color:#191F28;">' + esc(it.name) + ' <span style="font-weight:600;color:#6B7684;font-size:12.5px;">' + (it.sum > 0 ? fmtMan(it.sum) : '') + '</span></div>'
+        + (it.good ? '<div style="font-size:12.5px;color:#4E5968;line-height:1.55;margin-top:2px;">' + esc(it.good) + '</div>' : '') + '</div>'
         + '</div>';
     }).join('');
-    var statCard = '<div style="margin-top:14px;">'
-      + '<div style="font-size:15px;font-weight:800;color:#191F28;margin:0 2px 10px;">📊 ' + esc(cfg.statTitle) + '</div>'
-      + '<div style="display:flex;justify-content:space-between;">' + tiles + '</div>'
-      + (cfg.note ? '<div style="font-size:12px;color:#475569;line-height:1.6;background:#fff;border-radius:14px;padding:12px 14px;margin-top:10px;">' + esc(cfg.note) + '</div>' : '')
+    return card('<div style="font-size:15.5px;font-weight:800;color:#3182F6;margin-bottom:4px;">' + (title || '잘 준비되어 있으세요! 👏') + '</div>' + rows, 'background:#F5F9FF;');
+  }
+  function bannerAllGood(text) {
+    return '<div style="margin-top:14px;background:#E8F3FF;border-radius:16px;padding:18px 18px;text-align:center;font-size:16px;font-weight:800;color:#1D5FD0;line-height:1.5;">' + esc(text) + '</div>';
+  }
+  function footerSources(list, extraNote) {
+    return '<div style="padding:12px 4px 0;font-size:10.5px;color:#94A3B8;line-height:1.65;">'
+      + (list || []).map(function (t) { return '· 출처: ' + esc(t); }).join('<br>')
+      + '<br>※ ' + (extraNote ? esc(extraNote) + ' ' : '') + esc(IMG_DISCLAIMER)
       + '</div>';
+  }
+  // 요약 한 줄 (작업 목록 설명용): 일반암 과잉 · 유사암 부족 · 고액암 과잉
+  function statusLine(items) {
+    return items.map(function (it) { return it.name + ' ' + statusMeta(it.status).label; }).join(' · ');
+  }
 
-    // 3) 줄일 수 없는 생활비
-    var detailHtml = '';
-    if (s.living === LIVING_COST_MAN) {
-      var known = 0;
-      var parts = LIVING_DETAIL.map(function (d) { known += d.man; return d; });
-      parts.push({ label: '그 외 (교통·통신·교육·의료 등)', man: Math.max(0, s.living - known) });
-      var colors = ['#3182F6', '#6AA9F9', '#B8D4FB'];
-      detailHtml = '<div style="display:flex;height:14px;border-radius:7px;overflow:hidden;margin:12px 0 10px;">'
-        + parts.map(function (d, i) { return '<div style="width:' + (d.man / s.living * 100).toFixed(1) + '%;background:' + colors[i % colors.length] + ';"></div>'; }).join('')
-        + '</div>'
-        + '<div style="font-size:12px;color:#475569;line-height:1.8;">'
-        + parts.map(function (d, i) {
-            return '<span style="display:inline-block;margin-right:12px;"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + colors[i % colors.length] + ';margin-right:5px;"></span>' + esc(d.label) + ' <b>' + fmtMan(d.man) + '</b></span>';
-          }).join('')
-        + '</div>';
-    }
-    var livingCard = '<div style="margin-top:14px;background:#fff;border-radius:16px;padding:18px 18px 16px;">'
-      + '<div style="font-size:15px;font-weight:800;color:#191F28;">🏠 아파서 일을 못 해도, 생활비는 그대로 나갑니다</div>'
-      + '<div style="font-size:12.5px;color:#6B7684;margin-top:4px;">소득이 줄어도 식비·주거비·통신비 같은 고정지출은 쉽게 줄일 수 없어요.</div>'
-      + '<div style="margin-top:12px;font-size:13px;color:#334155;">한 달 생활비 <span style="font-size:24px;font-weight:800;color:#001E42;">' + fmtMan(s.living) + '</span></div>'
-      + detailHtml
-      + '</div>';
-
-    // 4) 내 진단비를 생활비로 환산
-    var chips = s.items.map(function (it) {
-      var m = ROW_STATUS_META[it.status] || ROW_STATUS_META.none;
-      return '<div style="flex:1;text-align:center;min-width:0;">'
-        + '<div style="font-size:13px;font-weight:700;color:#191F28;">' + esc(it.name) + '</div>'
-        + '<div style="font-size:12.5px;color:#8B95A1;margin:4px 0 8px;">' + (it.sum > 0 ? fmtMan(it.sum) : '미가입') + '</div>'
-        + '<div style="display:inline-block;background:' + m.bg + ';color:' + m.color + ';font-weight:800;font-size:12.5px;border-radius:12px;padding:6px 14px;">' + m.label + '</div>'
-        + '</div>';
-    }).join('');
-
-    var calcCard = '<div style="margin-top:14px;background:#fff;border-radius:16px;padding:18px 18px 18px;">'
-      + '<div style="font-size:15px;font-weight:800;color:#191F28;">🧮 ' + esc(name) + '님 진단비를 생활비로 환산하면</div>'
-      + '<div style="font-size:11.5px;color:#8B95A1;margin-top:3px;">' + esc(cfg.scenario) + '</div>'
-      + '<div style="text-align:center;margin:16px 0 4px;">'
-        + '<div style="font-size:12.5px;color:#6B7684;">현재 진단비로 버틸 수 있는 기간</div>'
-        + '<div style="font-size:36px;font-weight:800;color:' + verdict.color + ';letter-spacing:-1px;margin-top:2px;">' + (s.main.sum > 0 ? '약 ' + monthsLabel(s.months) : '0개월') + '</div>'
-      + '</div>'
-      + '<div style="height:14px;background:#EEF1F4;border-radius:7px;overflow:hidden;margin:10px 0 6px;"><div style="height:14px;width:' + pct + '%;background:' + verdict.color + ';border-radius:7px;"></div></div>'
+  // 생활비 환산 카드 (암 '일반암'이 부족/미가입일 때만 사용)
+  function livingCalcCard(sum, mainName, cfg) {
+    var living = getLivingCost();
+    var months = living > 0 ? sum / living : 0;
+    var need = cfg.targetMonths * living;
+    var ratio = cfg.targetMonths > 0 ? months / cfg.targetMonths : 0;
+    var pct = Math.max(0, Math.min(100, Math.round(ratio * 100)));
+    var color = sum <= 0 ? '#DC2626' : ratio < 0.34 ? '#DC2626' : ratio < 1 ? '#D97706' : '#3182F6';
+    var verdict = sum <= 0 ? '미가입 — 진단 즉시 생활비 공백이 시작돼요'
+      : ratio < 0.34 ? '생활비 ' + monthsLabel(months) + '분 — 금방 바닥나요'
+      : ratio < 1 ? cfg.targetLabel + '의 ' + Math.round(ratio * 100) + '%만 버틸 수 있어요'
+      : cfg.targetLabel + '을 버틸 수 있는 수준이에요';
+    var gap = Math.max(0, need - sum);
+    var entry = livingEntryForAge(gState.age);
+    var who = (living === entry.man && livingIsAgeSpecific(entry)) ? entry.label + ' 가구 평균' : '월 생활비';
+    return card(cardTitle('🧮 ' + esc(gState.customerName) + '님 ' + esc(mainName) + ' 진단비를 생활비로 환산하면', esc(cfg.scenario))
+      + '<div style="text-align:center;margin:14px 0 4px;"><div style="font-size:12.5px;color:#6B7684;">현재 진단비로 버틸 수 있는 기간</div>'
+      + '<div style="font-size:34px;font-weight:800;color:' + color + ';letter-spacing:-1px;margin-top:2px;">' + (sum > 0 ? '약 ' + monthsLabel(months) : '0개월') + '</div></div>'
+      + '<div style="height:12px;background:#EEF1F4;border-radius:6px;overflow:hidden;margin:10px 0 6px;"><div style="height:12px;width:' + pct + '%;background:' + color + ';border-radius:6px;"></div></div>'
       + '<div style="display:flex;justify-content:space-between;font-size:11.5px;color:#8B95A1;"><span>0개월</span><span>' + esc(cfg.targetLabel) + '</span></div>'
       + '<div style="font-size:12.5px;color:#334155;line-height:1.75;margin-top:12px;background:#F8FAFC;border-radius:12px;padding:12px 14px;">'
-        + fmtMan(s.main.sum) + ' ÷ 월 생활비 ' + fmtMan(s.living) + ' = <b>약 ' + monthsLabel(s.months) + '</b><br>'
-        + esc(cfg.targetLabel) + ' 생활비 <b>' + fmtMan(s.need) + '</b>'
-        + (gap > 0 ? ' 중 <b style="color:#DC2626;">' + fmtMan(gap) + ' 부족</b>' : ' → <b style="color:#3182F6;">충당 가능</b>')
-      + '</div>'
-      + '<div style="text-align:center;margin-top:12px;"><span style="display:inline-block;background:' + verdict.bg + ';color:' + verdict.color + ';font-weight:800;font-size:14px;border-radius:14px;padding:9px 18px;">' + esc(verdict.text) + '</span></div>'
-      + '<div style="display:flex;margin-top:16px;padding-top:14px;border-top:1px solid #EDF0F3;">' + chips + '</div>'
-      + '</div>';
-
-    var srcLines = cfg.sources.concat([LIVING_SRC]);
-    var footer = '<div style="padding:12px 4px 0;font-size:10.5px;color:#94A3B8;line-height:1.65;">'
-      + srcLines.map(function (t) { return '· 출처: ' + esc(t); }).join('<br>')
-      + '<br>※ 통계는 일반 인구 기준 참고 자료이며 개인별 결과와 다를 수 있습니다. 생활비 환산은 소득이 전혀 없다고 가정한 단순 계산입니다. ' + esc(IMG_DISCLAIMER)
-      + '</div>';
-
-    return '<div style="width:640px;box-sizing:border-box;background:#F2F4F6;border-radius:24px;padding:24px;font-family:' + IMG_FONT + ';">'
-      + header + statCard + livingCard + calcCard + footer + '</div>';
+      + fmtMan(sum) + ' ÷ ' + esc(who) + ' ' + fmtMan(living) + ' = <b>약 ' + monthsLabel(months) + '</b><br>'
+      + esc(cfg.targetLabel) + ' 생활비 <b>' + fmtMan(need) + '</b>'
+      + (gap > 0 ? ' 중 <b style="color:#DC2626;">' + fmtMan(gap) + ' 부족</b>' : ' → <b style="color:#3182F6;">충당 가능</b>') + '</div>'
+      + '<div style="text-align:center;margin-top:12px;"><span style="display:inline-block;background:#F8FAFC;color:' + color + ';font-weight:800;font-size:14px;border-radius:14px;padding:9px 18px;">' + esc(verdict) + '</span></div>'
+      + '<div style="font-size:10.5px;color:#A0AAB5;margin-top:10px;">출처: ' + esc(livingSrcFor(living)) + '</div>');
   }
 
+  // ───────────────────────── 암 ─────────────────────────
+  function buildCancerImageHTML() {
+    var cfg = RISK_CFG.cancer, name = gState.customerName;
+    var items = cfg.rows.map(function (d) {
+      var s = rowState(d[0]);
+      return { name: d[1], good: d[2], sum: s.sum, status: s.status, rec: s.rec };
+    });
+    var g = items[0], s = items[1], h = items[2];
+    var body = '';
+
+    // 1) 유사암(갑상선암) — 사용자가 가장 강조하길 원한 부분
+    if (isNeed(s.status)) {
+      var female = gState.gender === 'F';
+      var maxV = Math.max(g.sum, s.sum, 1);
+      var bars = '';
+      if (g.sum > 0) {
+        bars = '<div style="margin-top:14px;">'
+          + '<div style="display:flex;justify-content:space-between;font-size:12.5px;color:#4E5968;font-weight:700;"><span>일반암 진단비</span><span>' + fmtMan(g.sum) + '</span></div>'
+          + '<div style="height:14px;background:#EEF1F4;border-radius:7px;overflow:hidden;margin:5px 0 12px;"><div style="height:14px;width:' + Math.round(g.sum / maxV * 100) + '%;background:#3182F6;border-radius:7px;"></div></div>'
+          + '<div style="display:flex;justify-content:space-between;font-size:12.5px;color:#4E5968;font-weight:700;"><span>유사암 진단비 (갑상선암 등)</span><span style="color:#DC2626;">' + (s.sum > 0 ? fmtMan(s.sum) : '미가입') + '</span></div>'
+          + '<div style="height:14px;background:#EEF1F4;border-radius:7px;overflow:hidden;margin:5px 0 4px;"><div style="height:14px;width:' + (s.sum > 0 ? Math.max(2, Math.round(s.sum / maxV * 100)) : 0) + '%;background:#F04452;border-radius:7px;"></div></div>'
+          + '</div>';
+      }
+      var punch = g.sum > 0
+        ? '일반암 진단비가 ' + fmtMan(g.sum) + '이어도, 갑상선암으로 진단받으면 받을 수 있는 금액은 <b style="color:#DC2626;">' + (s.sum > 0 ? fmtMan(s.sum) : '0원') + '</b>일 수 있어요.'
+        : '갑상선암으로 진단받으면 받을 수 있는 금액은 <b style="color:#DC2626;">' + (s.sum > 0 ? fmtMan(s.sum) : '0원') + '</b>일 수 있어요.';
+      var gapTxt = (s.rec !== undefined && s.sum < s.rec)
+        ? '<div style="margin-top:10px;font-size:12.5px;color:#4E5968;">유사암 권장 <b>' + fmtMan(s.rec) + '</b> 대비 <b style="color:#DC2626;">' + fmtMan(s.rec - s.sum) + ' 부족</b></div>' : '';
+      body += card(cardTitle('🦋 ' + (female ? '여성에게 특히 가까운 암, 갑상선암' : '가장 흔한 암, 갑상선암'),
+          female ? '여성 암 발생 2위, 그런데 일반암 진단비로는 보장되지 않는 경우가 많아요.' : '발생이 가장 많은 암인데, 일반암 진단비로는 보장되지 않는 경우가 많아요.')
+        + '<div style="font-size:13.5px;color:#191F28;line-height:1.7;margin-top:12px;background:#FFF5F5;border-radius:12px;padding:12px 14px;">' + punch + '</div>'
+        + bars + gapTxt
+        + statTiles(female ? THYROID_TILES_F : THYROID_TILES_ALL)
+        + '<div style="font-size:11.5px;color:#6B7684;line-height:1.65;margin-top:12px;">' + esc(SIMILAR_NOTE) + '</div>');
+    }
+
+    // 2) 일반암이 부족/미가입 → 통계 + 생활비 환산 (이때만 생활비 사용)
+    if (isNeed(g.status)) {
+      body += card(cardTitle('📊 ' + esc(cfg.statTitle)) + statTiles(cfg.tiles));
+      body += livingCalcCard(g.sum, g.name, cfg);
+    }
+
+    // 3) 고액암이 부족/미가입 → 생존율 통계로 접근
+    if (isNeed(h.status)) {
+      body += card(cardTitle('💊 치료비 부담이 큰 암, 고액암', '치료 기간이 길고 비용이 큰 암일수록 일반암 진단비 외에 추가 대비가 필요해요.')
+        + '<div style="font-size:13px;color:#191F28;line-height:1.7;margin-top:10px;">현재 고액암 진단비 <b style="color:#DC2626;">' + (h.sum > 0 ? fmtMan(h.sum) : '미가입') + '</b>'
+        + (h.rec !== undefined ? ' / 권장 ' + fmtMan(h.rec) : '') + '</div>'
+        + statTiles(RARE_TILES));
+    }
+
+    // 4) 적정·충분(과잉 포함) 항목 → 짧게
+    var goods = items.filter(function (it) { return !isNeed(it.status); });
+    var needs = items.filter(function (it) { return isNeed(it.status); });
+    if (!needs.length) body += bannerAllGood('암 진단비, 정말 잘 준비되어 있으세요! 👏');
+    body += goodCard(goods, needs.length ? '이 부분은 잘 준비되어 있어요 ✅' : '항목별로 이렇게 대비되어 있어요');
+
+    var sources = cfg.sources.slice();
+    if (isNeed(s.status)) sources.push(THYROID_SRC);
+    if (isNeed(h.status)) sources.push(RARE_SRC);
+    return imgWrap(imgHeader(cfg.icon, name + '님 암 진단비', '일반암 · 유사암 · 고액암 현황을 한눈에 확인해요')
+      + summaryCard('', items, 3) + body + footerSources(sources, '유사암·고액암의 분류와 지급 범위는 상품 약관에 따라 다릅니다.'));
+  }
+
+  // ───────────────────── 뇌혈관 · 심장 ─────────────────────
+  function buildDiseaseImageHTML(kind) {
+    var cfg = RISK_CFG[kind], name = gState.customerName;
+    var items = cfg.rows.map(function (d) {
+      var s = rowState(d[0]);
+      return { name: d[1], label: d[0], good: d[2], sum: s.sum, status: s.status, rec: s.rec };
+    });
+    var needs = items.filter(function (it) { return isNeed(it.status); });
+    var goods = items.filter(function (it) { return !isNeed(it.status); });
+    var body = '';
+
+    // 1) 통계
+    body += card(cardTitle('📊 ' + esc(cfg.statTitle)) + statTiles(cfg.tiles)
+      + (cfg.note ? '<div style="font-size:12px;color:#475569;line-height:1.6;background:#F8FAFC;border-radius:12px;padding:11px 13px;margin-top:10px;">' + esc(cfg.note) + '</div>' : ''));
+
+    // 2) 질환별 환자 비율 + 치료비 (뇌혈관)
+    if (cfg.patients && needs.length) {
+      var base = cfg.patientsBase || cfg.patients[0].n;
+      var prow = cfg.patients.map(function (p, i) {
+        var pct = Math.round(p.n / base * 1000) / 10;
+        var colors = ['#3182F6', '#6AA9F9', '#F04452'];
+        var c = colors[i % colors.length];
+        return '<div style="margin-top:12px;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:800;color:#191F28;"><span>' + esc(p.name) + '</span>'
+          + '<span style="font-size:12.5px;color:#6B7684;font-weight:600;">' + p.n.toLocaleString('ko-KR') + '명' + (i > 0 ? ' · 뇌졸중 환자의 ' + pct + '%' : '') + '</span></div>'
+          + '<div style="height:12px;background:#EEF1F4;border-radius:6px;overflow:hidden;margin-top:5px;"><div style="height:12px;width:' + Math.max(2, Math.min(100, pct)) + '%;background:' + c + ';border-radius:6px;"></div></div>'
+          + (p.costMan ? '<div style="font-size:12px;color:#4E5968;margin-top:4px;">1인당 진료비 <b>' + fmtMan(p.costMan) + '</b></div>' : '')
+          + '</div>';
+      }).join('');
+      body += card(cardTitle('🧑‍⚕️ ' + esc(cfg.patientsTitle), esc(cfg.patientsSub)) + prow
+        + '<div style="font-size:11px;color:#8B95A1;line-height:1.6;margin-top:12px;">' + esc(cfg.patientsNote) + '</div>');
+    }
+
+    // 3) 왜 이 진단비를 준비해야 하나 — 보장 범위 사다리 (부족·미가입이 있을 때만 자세히)
+    if (needs.length) {
+      var lad = cfg.ladder.map(function (L) {
+        var st = rowState(L.label);
+        var m = statusMeta(st.status);
+        var barColor = isNeed(st.status) ? '#F04452' : '#3182F6';
+        return '<div style="margin-top:14px;padding-top:12px;border-top:1px solid #EDF0F3;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+          +   '<div style="font-size:14px;font-weight:800;color:#191F28;">' + esc(L.label.replace(/진단$/, ' 진단비').replace(/수술$/, ' 수술비')) + ' <span style="font-size:11px;font-weight:700;color:#6B7684;background:#F2F4F6;border-radius:8px;padding:2px 8px;margin-left:4px;">' + esc(L.range) + '</span></div>'
+          +   '<div style="text-align:right;font-size:12px;color:#4E5968;font-weight:700;">' + (st.sum > 0 ? fmtMan(st.sum) : '미가입') + ' ' + pill(st.status) + '</div>'
+          + '</div>'
+          + (L.w ? '<div style="height:10px;background:#EEF1F4;border-radius:5px;overflow:hidden;margin:9px 0 7px;"><div style="height:10px;width:' + L.w + '%;background:' + barColor + ';border-radius:5px;opacity:.9;"></div></div>' : '<div style="height:6px;"></div>')
+          + '<div style="font-size:12.5px;color:#4E5968;line-height:1.6;">' + esc(L.desc) + '</div>'
+          + '</div>';
+      }).join('');
+      body += card(cardTitle('🔎 ' + esc(cfg.whyTitle), esc(cfg.whySub)) + lad
+        + '<div style="margin-top:14px;font-size:13px;font-weight:700;color:#1D5FD0;background:#EFF6FF;border-radius:12px;padding:12px 14px;line-height:1.6;">' + esc(cfg.closingNeed) + '</div>');
+    }
+
+    // 4) 잘 준비된 항목
+    if (!needs.length) body += bannerAllGood(cfg.title.replace(' 점검', '') + ', 잘 준비되어 있으세요! 👏');
+    body += goodCard(goods, needs.length ? '이 부분은 잘 준비되어 있어요 ✅' : '항목별로 이렇게 대비되어 있어요');
+    if (!needs.length) body += card('<div style="font-size:13px;color:#334155;line-height:1.7;">' + esc(cfg.closingGood) + '</div>');
+
+    return imgWrap(imgHeader(cfg.icon, name + '님 ' + cfg.title.replace(' 점검', ''), '담보별 현황과 보장 범위를 확인해요')
+      + summaryCard('', items, 3) + body + footerSources(cfg.sources));
+  }
+
+  // ───────────────────────── 실비 ─────────────────────────
+  function buildMedImageHTML() {
+    var cfg = MED_CFG, name = gState.customerName;
+    var items = cfg.rows.map(function (d) {
+      var s = rowState(d[0]);
+      return { name: d[1], good: d[2], sum: s.sum, status: s.status, rec: s.rec, exists: s.exists, label: d[0] };
+    });
+    // 처방조제료 행은 CRM에 없으면 미가입으로 단정하지 않음 (입원·통원은 항상 점검)
+    var needs = items.filter(function (it) { return isNeed(it.status) && (it.exists || /입원|통원/.test(it.name)); });
+    var goods = items.filter(function (it) { return !isNeed(it.status); });
+    var body = '';
+
+    if (needs.length) {
+      var ex = cfg.example;
+      var total = ex.pay + ex.nonpay;
+      var refund = Math.round(ex.pay * ex.payRate + ex.nonpay * ex.nonpayRate);
+      var mine = total - refund;
+      var inpat = items[0];   // 질병 입원
+      var noPolicy = inpat.status === 'unregistered';
+      var colA = 'background:' + (noPolicy ? '#FFF0F0;border:2px solid #F04452;' : '#F8FAFC;border:2px solid transparent;');
+      var colB = 'background:' + (noPolicy ? '#F8FAFC;border:2px solid transparent;' : '#EFF6FF;border:2px solid #3182F6;');
+      body += card(cardTitle('🧾 예를 들어, ' + esc(ex.title), '병원비 ' + fmtMan(total) + ' (급여 ' + fmtMan(ex.pay) + ' + 비급여 ' + fmtMan(ex.nonpay) + ') 가 나왔다면?')
+        + '<div style="display:flex;justify-content:space-between;margin-top:14px;">'
+        + '<div style="width:48.5%;box-sizing:border-box;border-radius:14px;padding:16px 10px;text-align:center;' + colA + '">'
+        +   '<div style="font-size:13px;font-weight:800;color:#4E5968;">실비 미가입</div>'
+        +   '<div style="font-size:12px;color:#8B95A1;margin-top:8px;">내 주머니에서</div>'
+        +   '<div style="font-size:26px;font-weight:800;color:#F04452;letter-spacing:-0.5px;margin-top:2px;">' + fmtMan(total) + '</div>'
+        +   (noPolicy ? '<div style="margin-top:8px;">' + pill('unregistered', '지금 내 상태') + '</div>' : '')
+        + '</div>'
+        + '<div style="width:48.5%;box-sizing:border-box;border-radius:14px;padding:16px 10px;text-align:center;' + colB + '">'
+        +   '<div style="font-size:13px;font-weight:800;color:#4E5968;">실비 가입 (4세대 기준 가정)</div>'
+        +   '<div style="font-size:12px;color:#8B95A1;margin-top:8px;">보험금으로 돌려받아요</div>'
+        +   '<div style="font-size:26px;font-weight:800;color:#3182F6;letter-spacing:-0.5px;margin-top:2px;">' + fmtMan(refund) + '</div>'
+        +   '<div style="font-size:12px;color:#4E5968;margin-top:6px;">내 부담 ' + fmtMan(mine) + '</div>'
+        + '</div></div>'
+        + '<div style="font-size:11px;color:#8B95A1;line-height:1.6;margin-top:10px;">가정: 급여 ' + Math.round(ex.payRate * 100) + '%·비급여 ' + Math.round(ex.nonpayRate * 100) + '% 보장(자기부담 급여 20%·비급여 30%). 실제 금액은 가입 세대·특약·치료 내용에 따라 달라요.</div>');
+
+      var list = needs.map(function (it) {
+        var m = statusMeta(it.status);
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #EDF0F3;">'
+          + '<div style="font-size:14px;font-weight:800;color:#191F28;">' + esc(it.name) + '</div>'
+          + '<div style="text-align:right;font-size:12.5px;color:#4E5968;font-weight:700;">현재 ' + (it.sum > 0 ? fmtMan(it.sum) : '미가입')
+          + (it.rec !== undefined ? ' / 권장 ' + fmtMan(it.rec) : '') + ' ' + pill(it.status) + '</div></div>';
+      }).join('');
+      body += card(cardTitle('🔍 먼저 확인이 필요한 항목') + '<div style="margin-top:8px;">' + list + '</div>');
+    } else {
+      body += bannerAllGood('실손의료비, 잘 준비되어 있으시네요! 👏');
+    }
+    body += goodCard(goods, needs.length ? '이 부분은 잘 준비되어 있어요 ✅' : '항목별로 이렇게 대비되어 있어요');
+
+    return imgWrap(imgHeader(cfg.icon, name + '님 ' + cfg.title.replace(' 점검', ''), '병원비를 돌려받는 기본 보장 현황이에요')
+      + summaryCard('', items, 3) + body + footerSources(cfg.sources, '예시 금액은 이해를 돕기 위한 가정입니다.'));
+  }
+
+  // ───────────────────────── 화재 ─────────────────────────
+  function buildFireImageHTML() {
+    var cfg = FIRE_CFG, name = gState.customerName;
+    // 배상책임 담보: 후보 중 가장 큰 금액 / 없으면 미가입
+    var best = null;
+    cfg.liabLabels.forEach(function (lb) {
+      var s = rowState(lb);
+      if (s.exists && (!best || s.sum > best.sum)) best = s;
+    });
+    if (!best) best = { sum: 0, status: 'unregistered', rec: undefined, exists: false };
+    var fine = rowState(cfg.fineLabel);
+    var items = [
+      { name: '일상생활배상책임', good: cfg.goodLine, sum: best.sum, status: best.status, rec: best.rec },
+      { name: '화재벌금', good: '실화로 형사 벌금이 나온 경우의 부담을 대비할 수 있어요.', sum: fine.sum, status: fine.exists || fine.sum > 0 ? fine.status : 'unregistered', rec: fine.rec },
+    ];
+    var needs = items.filter(function (it) { return isNeed(it.status); });
+    var goods = items.filter(function (it) { return !isNeed(it.status); });
+    var body = '';
+
+    // 법 개정 타임라인 (왜 이웃 피해를 내가 배상해야 하는지)
+    var tl = cfg.events.map(function (e, i) {
+      return '<div style="display:flex;margin-top:' + (i ? 12 : 14) + 'px;">'
+        + '<div style="flex:none;width:14px;display:flex;flex-direction:column;align-items:center;"><div style="width:12px;height:12px;border-radius:50%;background:#F04452;margin-top:3px;"></div>' + (i < cfg.events.length - 1 ? '<div style="flex:1;width:2px;background:#E5E8EB;margin-top:3px;"></div>' : '') + '</div>'
+        + '<div style="flex:1;margin-left:12px;"><div style="font-size:12px;font-weight:800;color:#F04452;">' + esc(e.date) + '</div>'
+        + '<div style="font-size:13.5px;font-weight:800;color:#191F28;margin-top:2px;">' + esc(e.title) + '</div>'
+        + '<div style="font-size:12.5px;color:#4E5968;line-height:1.6;margin-top:3px;">' + esc(e.desc) + '</div></div></div>';
+    }).join('');
+    body += card(cardTitle('⚖️ 실수로 낸 불도, 이웃 피해는 배상해야 해요', '법이 바뀌면서 달라진 점이에요.') + tl);
+
+    if (needs.length) {
+      var dmg = cfg.damageMan;
+      var covered = best.status !== 'unregistered' && best.sum > 0;
+      var cover = covered ? Math.min(dmg, best.sum) : 0;
+      var colA = 'background:' + (!covered ? '#FFF0F0;border:2px solid #F04452;' : '#F8FAFC;border:2px solid transparent;');
+      var colB = 'background:' + (!covered ? '#F8FAFC;border:2px solid transparent;' : '#EFF6FF;border:2px solid #3182F6;');
+      body += card(cardTitle('🧾 예를 들어, 우리 집 불이 이웃집으로 번져 ' + fmtMan(dmg) + ' 피해가 났다면?', '미가입자가 가장 많이 놓치는 부분이에요.')
+        + '<div style="display:flex;justify-content:space-between;margin-top:14px;">'
+        + '<div style="width:48.5%;box-sizing:border-box;border-radius:14px;padding:16px 10px;text-align:center;' + colA + '">'
+        +   '<div style="font-size:13px;font-weight:800;color:#4E5968;">배상책임 미가입</div>'
+        +   '<div style="font-size:12px;color:#8B95A1;margin-top:8px;">내가 직접 배상</div>'
+        +   '<div style="font-size:26px;font-weight:800;color:#F04452;letter-spacing:-0.5px;margin-top:2px;">' + fmtMan(dmg) + '</div>'
+        +   (!covered ? '<div style="margin-top:8px;">' + pill('unregistered', '지금 내 상태') + '</div>' : '') + '</div>'
+        + '<div style="width:48.5%;box-sizing:border-box;border-radius:14px;padding:16px 10px;text-align:center;' + colB + '">'
+        +   '<div style="font-size:13px;font-weight:800;color:#4E5968;">배상책임 가입</div>'
+        +   '<div style="font-size:12px;color:#8B95A1;margin-top:8px;">보험으로 처리 (한도 내)</div>'
+        +   '<div style="font-size:26px;font-weight:800;color:#3182F6;letter-spacing:-0.5px;margin-top:2px;">' + fmtMan(dmg) + '</div>'
+        +   '<div style="font-size:12px;color:#4E5968;margin-top:6px;">내 부담 0원 (자기부담금 제외)</div></div></div>'
+        + '<div style="font-size:11px;color:#8B95A1;line-height:1.6;margin-top:10px;">가정: 피해액 ' + fmtMan(dmg) + ' · 보상한도 이내. 실제 보상은 약관, 과실 정도, 담보 한도에 따라 달라요.</div>');
+
+      var list = needs.map(function (it) {
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #EDF0F3;">'
+          + '<div style="font-size:14px;font-weight:800;color:#191F28;">' + esc(it.name) + '</div>'
+          + '<div style="text-align:right;font-size:12.5px;color:#4E5968;font-weight:700;">현재 ' + (it.sum > 0 ? fmtMan(it.sum) : '미가입')
+          + (it.rec !== undefined ? ' / 권장 ' + fmtMan(it.rec) : '') + ' ' + pill(it.status) + '</div></div>';
+      }).join('');
+      body += card(cardTitle('🔍 먼저 확인이 필요한 항목') + '<div style="margin-top:8px;">' + list + '</div>');
+    } else {
+      body += bannerAllGood('화재·배상책임, 잘 준비되어 있으시네요! 👏');
+    }
+    body += goodCard(goods, needs.length ? '이 부분은 잘 준비되어 있어요 ✅' : '항목별로 이렇게 대비되어 있어요');
+
+    return imgWrap(imgHeader(cfg.icon, name + '님 ' + cfg.title.replace(' 점검', ''), '내 집 불이 이웃에게 번졌을 때의 책임을 점검해요')
+      + summaryCard('', items, 2) + body + footerSources(cfg.sources));
+  }
+
+  // ───────────────────────── 운전자 ─────────────────────────
+  function driverEra(start) {
+    if (start < '2009-02-26') return { text: '교통사고처리특례법 위헌 결정(2009) 이전 가입 — 형사합의금(교통사고처리지원금) 구조를 꼭 확인해야 해요', color: '#DC2626' };
+    if (start < '2020-03-25') return { text: '민식이법(2020) 시행 이전 가입 — 벌금 한도(최대 ' + fmtMan(DRIVER_CFG.finePeakMan) + ')·변호사비용 한도를 확인해야 해요', color: '#D97706' };
+    return { text: '민식이법 시행 이후 가입 — 현재 제도에 맞춰 설계됐는지 한도와 갱신 조건을 확인해 보세요', color: '#3182F6' };
+  }
+  function buildDriverImageHTML() {
+    var cfg = DRIVER_CFG, name = gState.customerName;
+    var items = cfg.rows.map(function (d) {
+      var s = rowState(d[0]);
+      return { name: d[1], good: d[2], sum: s.sum, status: s.status, rec: s.rec };
+    });
+    var needs = items.filter(function (it) { return isNeed(it.status); });
+    var goods = items.filter(function (it) { return !isNeed(it.status); });
+    var starts = exState.driverStarts || [];
+    var body = '';
+
+    // 타임라인: 법 개정 + 내 가입 시점을 날짜순으로
+    var nodes = cfg.events.map(function (e) { return { type: 'law', date: e.date, show: e.show || e.date, title: e.title, desc: e.desc }; });
+    starts.forEach(function (s) { nodes.push({ type: 'mine', date: s.start, show: s.start.replace(/-/g, '.'), title: '내 운전자 담보 가입 · ' + s.name, era: driverEra(s.start) }); });
+    nodes.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : (a.type === 'law' ? -1 : 1); });
+    var tl = nodes.map(function (n, i) {
+      var isMine = n.type === 'mine';
+      var dot = isMine ? '#3182F6' : '#F04452';
+      var inner = isMine
+        ? '<div style="font-size:12px;font-weight:800;color:' + dot + ';">' + esc(n.show) + ' · 내 가입 시점</div>'
+          + '<div style="font-size:13.5px;font-weight:800;color:#191F28;margin-top:2px;">' + esc(n.title) + '</div>'
+          + '<div style="font-size:12.5px;line-height:1.6;margin-top:4px;color:' + n.era.color + ';font-weight:700;background:#F8FAFC;border-radius:10px;padding:8px 10px;">' + esc(n.era.text) + '</div>'
+        : '<div style="font-size:12px;font-weight:800;color:' + dot + ';">' + esc(n.show) + '</div>'
+          + '<div style="font-size:13.5px;font-weight:800;color:#191F28;margin-top:2px;">' + esc(n.title) + '</div>'
+          + '<div style="font-size:12.5px;color:#4E5968;line-height:1.6;margin-top:3px;">' + esc(n.desc) + '</div>';
+      return '<div style="display:flex;margin-top:' + (i ? 12 : 14) + 'px;">'
+        + '<div style="flex:none;width:14px;display:flex;flex-direction:column;align-items:center;"><div style="width:12px;height:12px;border-radius:50%;background:' + dot + ';margin-top:3px;"></div>' + (i < nodes.length - 1 ? '<div style="flex:1;width:2px;background:#E5E8EB;margin-top:3px;"></div>' : '') + '</div>'
+        + '<div style="flex:1;margin-left:12px;">' + inner + '</div></div>';
+    }).join('');
+    var tlSub = starts.length ? '법이 바뀐 시점과 내 가입 시점을 비교해 봤어요.' : '운전자 담보 가입 이력이 확인되지 않아 법 개정 흐름만 정리했어요.';
+    body += card(cardTitle('🛣️ 법이 바뀔 때마다, 필요한 보장도 바뀌어 왔어요', tlSub) + tl);
+
+    // 벌금(대인) 한도 vs 민식이법 이후 최대 벌금
+    var fineIn = rowState('벌금(대인)');
+    if (fineIn.sum > 0 || starts.length) {
+      var peak = cfg.finePeakMan;
+      var short = fineIn.sum < peak;
+      body += card(cardTitle('⚖️ 내 벌금 한도, 지금 법에 맞을까요?', '어린이보호구역 어린이 상해 사고의 벌금은 최대 ' + fmtMan(peak) + '까지 나올 수 있어요.')
+        + '<div style="display:flex;margin-top:12px;"><div style="flex:1;text-align:center;"><div style="font-size:12px;color:#6B7684;">내 벌금(대인) 한도</div>'
+        + '<div style="font-size:22px;font-weight:800;color:' + (short ? '#DC2626' : '#3182F6') + ';margin-top:3px;">' + (fineIn.sum > 0 ? fmtMan(fineIn.sum) : '미가입') + '</div></div>'
+        + '<div style="flex:none;width:1px;background:#EDF0F3;"></div>'
+        + '<div style="flex:1;text-align:center;"><div style="font-size:12px;color:#6B7684;">법정 최고 벌금</div><div style="font-size:22px;font-weight:800;color:#191F28;margin-top:3px;">' + fmtMan(peak) + '</div></div></div>'
+        + '<div style="text-align:center;margin-top:12px;font-size:13px;font-weight:800;color:' + (short ? '#DC2626' : '#3182F6') + ';">'
+        + (short ? (fineIn.sum > 0 ? fmtMan(peak - fineIn.sum) + ' 차이가 날 수 있어요' : '벌금 전액을 직접 부담할 수 있어요') : '최고 벌금까지 대비되어 있어요') + '</div>');
+    }
+
+    if (needs.length) {
+      var list = needs.map(function (it) {
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #EDF0F3;">'
+          + '<div style="font-size:14px;font-weight:800;color:#191F28;">' + esc(it.name) + '</div>'
+          + '<div style="text-align:right;font-size:12.5px;color:#4E5968;font-weight:700;">현재 ' + (it.sum > 0 ? fmtMan(it.sum) : '미가입')
+          + (it.rec !== undefined ? ' / 권장 ' + fmtMan(it.rec) : '') + ' ' + pill(it.status) + '</div></div>';
+      }).join('');
+      body += card(cardTitle('🔍 먼저 확인이 필요한 항목', '자동차보험은 벌금·변호사비용·형사합의금을 보장하지 않아요.') + '<div style="margin-top:8px;">' + list + '</div>');
+    } else {
+      body += bannerAllGood('운전자보험, 잘 준비되어 있으시네요! 👏');
+    }
+    body += goodCard(goods, needs.length ? '이 부분은 잘 준비되어 있어요 ✅' : '항목별로 이렇게 대비되어 있어요');
+    body += card('<div style="font-size:13px;font-weight:700;color:#1D5FD0;line-height:1.7;">운전자보험은 법과 제도에 맞춰 만들어진 보험이에요. 법이 바뀌면 필요한 보장과 한도도 달라지기 때문에, 가입 시점 이후 한 번도 점검하지 않았다면 지금 기준으로 다시 확인해 보시는 게 좋아요.</div>', 'background:#EFF6FF;');
+
+    return imgWrap(imgHeader(cfg.icon, name + '님 ' + cfg.title.replace(' 점검', ''), '법 개정 시점과 가입 시점을 비교해 점검해요')
+      + summaryCard('', items, 4) + body + footerSources(cfg.sources));
+  }
+
+  // ─────────────── 일반 카테고리(대분류) 점검 이미지 ───────────────
   // 일반 카테고리(대분류) 점검 이미지 — 항목 6개 단위로 분할
   function buildCategoryImageHTML(catName, list, part, parts) {
     var cnt = { low: 0, unregistered: 0, excess: 0, ok: 0 };
@@ -2268,24 +2790,43 @@
       + '</div>';
   }
 
+  // ─────────────── 2단계 이미지 목록 ───────────────
   var IMG_JOBS = [];
   function buildImageJobs() {
     IMG_JOBS = [];
     if (!gState || !exState.rows.length) return;
 
-    // ① 암·뇌·심장 경각심 이미지
-    ['cancer', 'brain', 'heart'].forEach(function (kind) {
-      var s = riskSummary(kind);
-      var desc = s.main.sum > 0
-        ? s.items[0].name + ' 진단비 ' + fmtMan(s.main.sum) + ' → 생활비 약 ' + monthsLabel(s.months) + '분'
-        : s.items[0].name + ' 진단비 미가입';
-      IMG_JOBS.push({ risk: true, icon: s.cfg.icon, title: s.cfg.jobTitle, desc: desc, file: kind + '.png',
-        build: function () { return buildRiskImageHTML(kind); } });
-    });
+    function items(cfgRows) {
+      return cfgRows.map(function (d) { var s = rowState(d[0]); return { name: d[1], status: s.status }; });
+    }
 
-    // ② 대분류별 점검 이미지 (6개 단위 분할)
+    // ① 상태 맞춤 이미지 (암·뇌·심장·실비·화재·운전자)
+    var cc = RISK_CFG.cancer;
+    IMG_JOBS.push({ risk: true, tag: '상태별 맞춤', icon: cc.icon, title: cc.jobTitle, desc: statusLine(items(cc.rows)), file: 'cancer.png', build: buildCancerImageHTML });
+    ['brain', 'heart'].forEach(function (kind) {
+      var c = RISK_CFG[kind];
+      IMG_JOBS.push({ risk: true, tag: '통계 + 보장범위', icon: c.icon, title: c.jobTitle, desc: statusLine(items(c.rows)), file: kind + '.png',
+        build: function () { return buildDiseaseImageHTML(kind); } });
+    });
+    IMG_JOBS.push({ risk: true, tag: '예시표', icon: MED_CFG.icon, title: MED_CFG.jobTitle,
+      desc: statusLine(items(MED_CFG.rows.slice(0, 4))), file: 'medical.png', build: buildMedImageHTML });
+    IMG_JOBS.push({ risk: true, tag: '법 개정 + 예시표', icon: FIRE_CFG.icon, title: FIRE_CFG.jobTitle,
+      desc: '일상생활배상책임 ' + statusMeta(rowState(FIRE_CFG.liabLabels[0]).status).label + ' · 화재벌금 ' + statusMeta(rowState(FIRE_CFG.fineLabel).status).label,
+      file: 'fire.png', build: buildFireImageHTML });
+    IMG_JOBS.push({ risk: true, tag: '법 개정 타임라인', icon: DRIVER_CFG.icon, title: DRIVER_CFG.jobTitle,
+      desc: (exState.driverStarts && exState.driverStarts.length ? '운전자 담보 가입 ' + exState.driverStarts[0].start + ' · ' : '운전자 담보 가입 이력 없음 · ') + statusLine(items(DRIVER_CFG.rows).slice(0, 2)),
+      file: 'driver.png', build: buildDriverImageHTML });
+
+    // ② 위 이미지에 이미 담긴 항목은 일반 점검 이미지에서 제외
+    var covered = {};
+    [RISK_CFG.cancer.rows, RISK_CFG.brain.rows, RISK_CFG.heart.rows, MED_CFG.rows, DRIVER_CFG.rows].forEach(function (rs) {
+      rs.forEach(function (d) { covered[d[0]] = true; });
+    });
+    FIRE_CFG.liabLabels.concat([FIRE_CFG.fineLabel]).forEach(function (l) { covered[l] = true; });
+
     var order = [], byCat = {};
     exState.rows.forEach(function (r) {
+      if (covered[r.label]) return;
       var c = r.cat || '기타';
       if (!byCat[c]) { byCat[c] = []; order.push(c); }
       byCat[c].push(r);
@@ -2319,7 +2860,7 @@
     wrap.innerHTML = IMG_JOBS.map(function (j, i) {
       return '<div class="rptex-job' + (j.risk ? ' rptex-job-risk' : '') + '">'
         + '<div class="rptex-job-ico">' + j.icon + '</div>'
-        + '<div class="rptex-job-main"><div class="rptex-job-title">' + esc(j.title) + (j.risk ? '<span class="rptex-job-tag">통계 + 생활비 비교</span>' : '') + '</div>'
+        + '<div class="rptex-job-main"><div class="rptex-job-title">' + esc(j.title) + (j.risk ? '<span class="rptex-job-tag">' + esc(j.tag || '상태별 맞춤') + '</span>' : '') + '</div>'
         + '<div class="rptex-job-desc">' + esc(j.desc) + '</div></div>'
         + '<button class="btn-action" style="width:auto;padding:8px 16px;flex:none;background:#3182F6;" id="rptex-job-btn-' + i + '" onclick="window.rptExCopyImageJob(' + i + ')"><i class="bi bi-image"></i> 이미지 복사</button>'
         + '</div>';
@@ -2345,7 +2886,7 @@
     if (btn) { btn.innerHTML = '<i class="bi bi-image"></i> 이미지 복사'; btn.disabled = false; }
   };
 
-  // ================================================================
+// ================================================================
   // ✅ (보관용) 전체 한 장 이미지 — 요약형 / 전체 상세표
   //   · 요약형: 부족/미가입/과잉 항목을 큰 카드 2열로
   //   · 전체 상세표: 모든 항목을 표로 (길어서 카톡에서 잘릴 수 있음)
@@ -2585,9 +3126,10 @@
 
   // ─── 초기화: 다른 고객을 입력하기 위해 모든 화면/상태를 처음 상태로 ───
   window.rptExReset = function() {
-    exState = { customerName:'', companies:[], rows:[], premiumAmounts:[] };
+    exState = { customerName:'', companies:[], rows:[], premiumAmounts:[], gender:'', driverStarts:[] };
     gState  = null;
     custInfo = null;
+    livingManual = false;
     IMG_JOBS = [];
     ESSENTIAL_GROUPS = cloneEssentialTemplate();
 
@@ -2595,7 +3137,9 @@
     var dt = document.getElementById('rptex-apply-dt'); if (dt) dt.value = '';
     var ageEl = document.getElementById('rptex-age'); if (ageEl) ageEl.value = 40;
     var catEl = document.getElementById('rptex-category'); if (catEl) catEl.selectedIndex = 0;
+    var genEl = document.getElementById('rptex-gender'); if (genEl) genEl.value = '';
     var livEl = document.getElementById('rptex-living'); if (livEl) livEl.value = LIVING_COST_MAN;
+    var livLbl = document.getElementById('rptex-living-label'); if (livLbl) livLbl.textContent = '월 생활비(만원)';
     var modeEl = document.getElementById('rptex-img-mode'); if (modeEl) modeEl.selectedIndex = 0;
 
     // 이전 고객의 멘트/표가 남지 않도록 비우기
