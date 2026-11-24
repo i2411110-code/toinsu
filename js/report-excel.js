@@ -251,6 +251,15 @@
       ],
       note: '',
       whyTitle: '왜 ‘허혈성심장질환’ 진단비를 준비해야 할까요?',
+            matrixTitle: '같은 심장 질환, 담보에 따라 지급이 갈려요',
+      matrixSub: '협심증과 급성심근경색을 예로 비교해 봤어요.',
+      matrixCols: ['허혈성심장질환진단', '급성심근경색진단'],
+      matrixColNames: ['허혈성심장질환 진단비', '급성심근경색 진단비'],
+      matrix: [
+        { name: '협심증',       desc: '혈관이 좁아져 가슴 통증이 생기는 상태', pay: [true, false] },
+        { name: '급성심근경색', desc: '혈관이 갑자기 완전히 막히는 응급 상태', pay: [true, true]  },
+      ],
+      matrixNote: '지급 여부는 상품 약관의 질병 분류 기준에 따라 달라질 수 있어요.',
       whySub: '같은 심장 질환이라도 담보 이름에 따라 보장받는 범위가 달라져요.',
       ladder: [
         { label: '허혈성심장질환진단', range: '넓음',   w: 100, desc: '협심증·심근경색 등 심장 혈관이 좁아지거나 막히는 질환이 폭넓게 포함돼요.' },
@@ -318,14 +327,26 @@
       ['변호사선임비용',     '변호사선임비용',     '형사 절차에서 변호사 비용을 대비할 수 있어요.'],
     ],
     finePeakMan: 3000,   // 어린이보호구역 어린이 상해 시 벌금 상한(만원)
-    events: [
-      { date: '2009-02-26', show: '2009.02.26', title: '교통사고처리특례법 일부 위헌 결정', desc: '보험에 가입했어도 중상해 사고는 형사처벌 대상이 될 수 있게 되어, 교통사고처리지원금(형사합의금) 대비가 중요해졌어요.' },
-      { date: '2020-03-25', show: '2020.03.25', title: '민식이법 시행', desc: '어린이보호구역 어린이 상해: 징역 1~15년 또는 벌금 500만~3,000만원 / 사망: 무기 또는 3년 이상 징역. 이후 운전자 벌금 담보 한도도 3,000만원까지 확대됐어요.' },
+        events: [
+      { date: '2009-02-26', show: '2009.02.26', title: '교통사고처리특례법 일부 위헌 결정',
+        desc: '보험에 가입했어도 중상해 사고는 형사처벌 대상이 될 수 있게 되어, 교통사고처리지원금(형사합의금) 대비가 중요해졌어요.',
+        short: '형사합의금 대비 필요', miss: '교통사고처리지원금(형사합의금) 담보가 없거나 부족할 수 있어요.' },
+      { date: '2020-03-25', show: '2020.03.25', title: '민식이법 시행',
+        desc: '어린이보호구역 어린이 상해: 징역 1~15년 또는 벌금 500만~3,000만원 / 사망: 무기 또는 3년 이상 징역. 이후 운전자 벌금 담보 한도도 3,000만원까지 확대됐어요.',
+        short: '민식이법', miss: '벌금(대인) 한도가 최대 3,000만원에 못 미칠 수 있어요.' },
+      { date: '2022-07-12', show: '2022.07.12', title: '보행자 보호 의무 강화 (우회전·횡단보도 일시정지)',
+        desc: '횡단보도를 건너려는 보행자가 있을 때도 일시정지해야 하고, 보행자우선도로·아파트단지 등으로 보호 의무가 넓어졌어요. 어기고 사고가 나면 12대 중과실로 형사처벌 대상이 될 수 있어요.',
+        short: '보행자 보호 의무 강화', miss: '형사합의금·벌금·변호사비용 한도가 지금 기준에 충분한지 확인이 필요해요.' },
+      { date: '2025-12-01', show: '2025.12~', kind: 'terms', title: '변호사선임비용 담보 약관 개정 (금융당국 권고)',
+        desc: '재판 단계(1·2·3심)별 한도로 나뉘고 자기부담 50%가 붙는 상품이 판매되고 있어요. (보험사별 시행 시점 상이)',
+        short: '변호사선임비용 약관 개정', miss: '이 계약은 이전 약관이 유지돼요. 다만 새 상품으로 바꾸면 새 조건(자기부담 50%)이 적용될 수 있어요.' },
     ],
     sources: [
       '헌법재판소 2009. 2. 26. 결정(교통사고처리특례법 제4조 제1항 위헌)',
       '「특정범죄 가중처벌 등에 관한 법률」 제5조의13(2020. 3. 25. 시행, 어린이보호구역 어린이 사상 사고 가중처벌)',
       '보험연구원·손해보험업계 자료(자동차보험은 벌금·변호사선임비용·교통사고처리지원금 미보장, 실손 담보는 중복 보상 불가)',
+            '「도로교통법」 개정(2022. 7. 12. 시행, 보행자 보호 의무 강화)',
+      '금융당국 운전자보험 변호사선임비용 담보 개정 권고(2025.11, 언론 보도 기준) 및 보험사별 개정 약관',
     ],
   };
 
@@ -2531,17 +2552,54 @@ window.initRptExcelModule = function () {
     }
 
     // 3) 왜 이 진단비를 준비해야 하나 — 보장 범위 사다리 (부족·미가입이 있을 때만 자세히)
+        // 2-b) 질환 예시표 (협심증 · 급성심근경색) — cfg.matrix 가 있는 질환에서만 표시
+    if (cfg.matrix && needs.length) {
+      var mcols = cfg.matrixCols.map(function (lb) { return rowState(lb); });
+      var mhead = '<div style="display:flex;align-items:flex-end;margin-top:14px;">'
+        + '<div style="width:34%;"></div>'
+        + cfg.matrixColNames.map(function (nm, ci) {
+            return '<div style="width:33%;text-align:center;padding:0 4px;box-sizing:border-box;">'
+              + '<div style="font-size:12.5px;font-weight:800;color:#191F28;line-height:1.4;">' + esc(nm) + '</div>'
+              + '<div style="font-size:11.5px;color:#6B7684;margin:3px 0 5px;">' + (mcols[ci].sum > 0 ? fmtMan(mcols[ci].sum) : '미가입') + '</div>'
+              + pill(mcols[ci].status) + '</div>';
+          }).join('')
+        + '</div>';
+      var mrows = cfg.matrix.map(function (r) {
+        var anyPay = false;
+        var cells = r.pay.map(function (covers, ci) {
+          var has = mcols[ci].sum > 0, bg, fg, txt;
+          if (!covers)  { bg = '#F2F4F6'; fg = '#8B95A1'; txt = '대상 아님'; }
+          else if (has) { bg = '#EFF6FF'; fg = '#1D5FD0'; txt = '✅ ' + fmtMan(mcols[ci].sum); anyPay = true; }
+          else          { bg = '#FFF0F0'; fg = '#F04452'; txt = '미가입'; }
+          return '<div style="width:33%;padding:0 4px;box-sizing:border-box;"><div style="background:' + bg + ';color:' + fg + ';font-weight:800;font-size:12.5px;border-radius:12px;padding:10px 0;text-align:center;">' + txt + '</div></div>';
+        }).join('');
+        return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #EDF0F3;">'
+          + '<div style="display:flex;align-items:center;">'
+          +   '<div style="width:34%;padding-right:6px;box-sizing:border-box;"><div style="font-size:14px;font-weight:800;color:#191F28;">' + esc(r.name) + '</div>'
+          +   '<div style="font-size:11px;color:#6B7684;line-height:1.5;margin-top:2px;">' + esc(r.desc) + '</div></div>'
+          +   cells + '</div>'
+          + (anyPay ? '' : '<div style="margin-top:8px;font-size:12.5px;font-weight:800;color:#DC2626;background:#FFF5F5;border-radius:10px;padding:8px 10px;line-height:1.55;">' + esc(name) + '님이 ' + esc(r.name) + '(으)로 진단받으면, 지금 보장으로는 받을 수 있는 진단비가 없을 수 있어요.</div>')
+          + '</div>';
+      }).join('');
+      body += card(cardTitle('🫀 ' + esc(cfg.matrixTitle), esc(cfg.matrixSub)) + mhead + mrows
+        + '<div style="font-size:11px;color:#8B95A1;line-height:1.6;margin-top:12px;">' + esc(cfg.matrixNote) + '</div>');
+    }
     if (needs.length) {
       var lad = cfg.ladder.map(function (L) {
         var st = rowState(L.label);
         var m = statusMeta(st.status);
-        var barColor = isNeed(st.status) ? '#F04452' : '#3182F6';
+                var pct = st.rec ? Math.min(100, Math.round(st.sum / st.rec * 100)) : (st.sum > 0 ? 100 : 0);
+        var barColor = isNeed(st.status) ? '#F04452' : m.color;
+        var gaugeTxt = st.rec ? '권장 ' + fmtMan(st.rec) + ' 대비 ' + pct + '%' : (st.sum > 0 ? '가입됨' : '미가입');
         return '<div style="margin-top:14px;padding-top:12px;border-top:1px solid #EDF0F3;">'
           + '<div style="display:flex;justify-content:space-between;align-items:center;">'
           +   '<div style="font-size:14px;font-weight:800;color:#191F28;">' + esc(L.label.replace(/진단$/, ' 진단비').replace(/수술$/, ' 수술비')) + ' <span style="font-size:11px;font-weight:700;color:#6B7684;background:#F2F4F6;border-radius:8px;padding:2px 8px;margin-left:4px;">' + esc(L.range) + '</span></div>'
           +   '<div style="text-align:right;font-size:12px;color:#4E5968;font-weight:700;">' + (st.sum > 0 ? fmtMan(st.sum) : '미가입') + ' ' + pill(st.status) + '</div>'
           + '</div>'
-          + (L.w ? '<div style="height:10px;background:#EEF1F4;border-radius:5px;overflow:hidden;margin:9px 0 7px;"><div style="height:10px;width:' + L.w + '%;background:' + barColor + ';border-radius:5px;opacity:.9;"></div></div>' : '<div style="height:6px;"></div>')
+                    + (L.w ? '<div style="font-size:11px;font-weight:700;color:#8B95A1;margin-top:10px;">보장 범위</div>'
+              + '<div style="height:8px;background:#EEF1F4;border-radius:4px;overflow:hidden;margin-top:4px;"><div style="height:8px;width:' + L.w + '%;background:#BFD3F2;border-radius:4px;"></div></div>' : '')
+          + '<div style="font-size:11px;font-weight:700;color:#8B95A1;margin-top:10px;">내 진단비 · ' + gaugeTxt + '</div>'
+          + '<div style="height:8px;background:#EEF1F4;border-radius:4px;overflow:hidden;margin:4px 0 8px;"><div style="height:8px;width:' + (st.sum > 0 ? Math.max(3, pct) : 0) + '%;background:' + barColor + ';border-radius:4px;"></div></div>'
           + '<div style="font-size:12.5px;color:#4E5968;line-height:1.6;">' + esc(L.desc) + '</div>'
           + '</div>';
       }).join('');
@@ -2678,10 +2736,22 @@ window.initRptExcelModule = function () {
   }
 
   // ───────────────────────── 운전자 ─────────────────────────
-  function driverEra(start) {
-    if (start < '2009-02-26') return { text: '교통사고처리특례법 위헌 결정(2009) 이전 가입 — 형사합의금(교통사고처리지원금) 구조를 꼭 확인해야 해요', color: '#DC2626' };
-    if (start < '2020-03-25') return { text: '민식이법(2020) 시행 이전 가입 — 벌금 한도(최대 ' + fmtMan(DRIVER_CFG.finePeakMan) + ')·변호사비용 한도를 확인해야 해요', color: '#D97706' };
-    return { text: '민식이법 시행 이후 가입 — 현재 제도에 맞춰 설계됐는지 한도와 갱신 조건을 확인해 보세요', color: '#3182F6' };
+    function driverGapHTML(start) {
+    var after = DRIVER_CFG.events.filter(function (e) { return e.date > start; });
+    if (!after.length) {
+      return '<div style="font-size:12.5px;line-height:1.6;margin-top:4px;color:#3182F6;font-weight:700;background:#F8FAFC;border-radius:10px;padding:8px 10px;">가입 이후 바뀐 법·제도가 없어요. 한도와 갱신 조건만 확인해 보세요.</div>';
+    }
+    var laws = after.filter(function (e) { return e.kind !== 'terms'; });
+    var head = laws.length
+      ? '가입 이후 바뀐 법·제도 ' + after.length + '건 — 내 계약에는 반영되지 않았을 수 있어요'
+      : '가입 이후 약관이 바뀌었어요 — 내 계약 조건을 확인해 보세요';
+    var items = after.map(function (e) {
+      var isTerms = e.kind === 'terms';
+      return '<div style="margin-top:6px;"><span style="color:' + (isTerms ? '#D97706' : '#DC2626') + ';font-weight:800;">' + (isTerms ? '△ ' : '✕ ') + esc(e.show) + ' ' + esc(e.short) + '</span><br>'
+        + '<span style="color:#4E5968;">' + esc(e.miss) + '</span></div>';
+    }).join('');
+    return '<div style="font-size:12.5px;line-height:1.6;margin-top:4px;background:#F8FAFC;border-radius:10px;padding:9px 11px;">'
+      + '<div style="font-weight:800;color:' + (laws.length ? '#DC2626' : '#D97706') + ';">' + head + '</div>' + items + '</div>';
   }
   function buildDriverImageHTML() {
     var cfg = DRIVER_CFG, name = gState.customerName;
@@ -2694,26 +2764,29 @@ window.initRptExcelModule = function () {
     var starts = exState.driverStarts || [];
     var body = '';
 
-    // 타임라인: 법 개정 + 내 가입 시점을 날짜순으로
-    var nodes = cfg.events.map(function (e) { return { type: 'law', date: e.date, show: e.show || e.date, title: e.title, desc: e.desc }; });
-    starts.forEach(function (s) { nodes.push({ type: 'mine', date: s.start, show: s.start.replace(/-/g, '.'), title: '내 운전자 담보 가입 · ' + s.name, era: driverEra(s.start) }); });
+        // 타임라인: 법·제도 변경 + 내 가입 시점을 날짜순으로
+    var nodes = cfg.events.map(function (e) { return { type: 'law', date: e.date, show: e.show || e.date, title: e.title, desc: e.desc, kind: e.kind }; });
+    starts.forEach(function (s) { nodes.push({ type: 'mine', date: s.start, show: s.start.replace(/-/g, '.'), title: '내 운전자 담보 가입 · ' + s.name }); });
     nodes.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : (a.type === 'law' ? -1 : 1); });
+    var firstStart = starts.length ? starts[0].start : null;
     var tl = nodes.map(function (n, i) {
       var isMine = n.type === 'mine';
-      var dot = isMine ? '#3182F6' : '#F04452';
+      var missed = !isMine && firstStart && n.date > firstStart;
+      var dot = isMine ? '#3182F6' : (n.kind === 'terms' ? '#D97706' : '#F04452');
+      var chip = missed ? '<span style="display:inline-block;font-size:10.5px;font-weight:800;color:#DC2626;background:#FEF2F2;border-radius:8px;padding:1px 7px;margin-left:6px;">내 가입 이후 변경</span>' : '';
       var inner = isMine
         ? '<div style="font-size:12px;font-weight:800;color:' + dot + ';">' + esc(n.show) + ' · 내 가입 시점</div>'
           + '<div style="font-size:13.5px;font-weight:800;color:#191F28;margin-top:2px;">' + esc(n.title) + '</div>'
-          + '<div style="font-size:12.5px;line-height:1.6;margin-top:4px;color:' + n.era.color + ';font-weight:700;background:#F8FAFC;border-radius:10px;padding:8px 10px;">' + esc(n.era.text) + '</div>'
-        : '<div style="font-size:12px;font-weight:800;color:' + dot + ';">' + esc(n.show) + '</div>'
+          + driverGapHTML(n.date)
+        : '<div style="font-size:12px;font-weight:800;color:' + dot + ';">' + esc(n.show) + chip + '</div>'
           + '<div style="font-size:13.5px;font-weight:800;color:#191F28;margin-top:2px;">' + esc(n.title) + '</div>'
           + '<div style="font-size:12.5px;color:#4E5968;line-height:1.6;margin-top:3px;">' + esc(n.desc) + '</div>';
       return '<div style="display:flex;margin-top:' + (i ? 12 : 14) + 'px;">'
         + '<div style="flex:none;width:14px;display:flex;flex-direction:column;align-items:center;"><div style="width:12px;height:12px;border-radius:50%;background:' + dot + ';margin-top:3px;"></div>' + (i < nodes.length - 1 ? '<div style="flex:1;width:2px;background:#E5E8EB;margin-top:3px;"></div>' : '') + '</div>'
         + '<div style="flex:1;margin-left:12px;">' + inner + '</div></div>';
     }).join('');
-    var tlSub = starts.length ? '법이 바뀐 시점과 내 가입 시점을 비교해 봤어요.' : '운전자 담보 가입 이력이 확인되지 않아 법 개정 흐름만 정리했어요.';
-    body += card(cardTitle('🛣️ 법이 바뀔 때마다, 필요한 보장도 바뀌어 왔어요', tlSub) + tl);
+    var tlSub = starts.length ? '법·제도가 바뀐 시점과 내 가입 시점을 비교해 봤어요.' : '운전자 담보 가입 이력이 확인되지 않아 법·제도 변화 흐름만 정리했어요.';
+    body += card(cardTitle('🛣️ 법·제도가 바뀔 때마다, 필요한 보장도 바뀌어 왔어요', tlSub) + tl);
 
     // 벌금(대인) 한도 vs 민식이법 이후 최대 벌금
     var fineIn = rowState('벌금(대인)');
