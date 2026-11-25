@@ -525,6 +525,7 @@
         <button class="nav-tool-item" onclick="window.openHospitalModal()"><i class="bi bi-hospital"></i> 전국 병원 정보</button>
         <button class="nav-tool-item" onclick="window.switchToNewsView()"><i class="bi bi-newspaper"></i> 오늘의 뉴스</button>
         <button class="nav-tool-item" onclick="window.open('https://naver.me/xNpxyjvi','_blank')"><i class="bi bi-folder-fill"></i> 자료폴더</button>
+        <button class="nav-tool-item" onclick="window.navTool('page-calendar')"><i class="bi bi-calendar3"></i> 캘린더</button>
         <button class="nav-tool-item" onclick="window.navTool('page-가온 오피스')"><i class="bi bi-lock-fill"></i> 가온 오피스 (전용)</button>
     </div>
 </div>
@@ -1469,6 +1470,11 @@
                 if (adminBanner) adminBanner.style.display = isAdmin ? '' : 'none';
                 const globalWrap = document.getElementById('calAddGlobalWrap');
                 if (globalWrap) globalWrap.style.display = isAdmin ? '' : 'none';
+                // 페이지를 떠났다가 다시 들어오면 #calendarRoot 가 새로 그려지므로, 옛 인스턴스는 버리고 다시 만든다
+                if (_fc && !document.body.contains(_fc.el)) {
+                    try { _fc.destroy(); } catch (e) {}
+                    _fc = null; _fcInitialized = false;
+                }
                 if (_fcInitialized && _fc) { _fc.updateSize(); _updateLabel(); await subscribeCalendarEvents(); return; }
                 _fc = new FullCalendar.Calendar(mountEl, {
                     locale: 'ko', firstDay: 0, initialView: 'dayGridMonth', headerToolbar: false,

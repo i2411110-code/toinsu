@@ -860,10 +860,17 @@ if (!allowedUsers.includes(currentUserEmail) && !allowedUsers.includes(currentUs
         root.innerHTML = html;
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        // 💡 2. 가온 오피스에 정상 입장했다면, 중간 화면 없이 곧바로 캘린더를 실행해줍니다.
+        // 💡 2. 가온 오피스에 정상 입장했다면 곧바로 보장분석 리포트를 띄웁니다.
         if (pageId === 'page-가온 오피스') {
-            window.switchPrivateTab('cal');
-            if (typeof window.initGaonCalendar === 'function') window.initGaonCalendar();
+            window.switchPrivateTab('rpt');
+        }
+
+        // 캘린더 (전체 회원 이용 가능)
+        if (pageId === 'page-calendar') {
+            requestAnimationFrame(() => {
+                if (typeof window.initGaonCalendar === 'function') window.initGaonCalendar();
+                if (typeof window._renderTodoList === 'function') window._renderTodoList();
+            });
         }
 
         // 페이지별 데이터 다시 불러오기
@@ -1435,27 +1442,10 @@ window.closeNotice = function() {
 // [가온 오피스 전용 로직 - 파이어베이스 권한 검증]
 // ==========================================
 
-window.checkGaonOfficeAccess = async function() {
-    const card = document.getElementById('gaon-office-card');
-    if (!card) return;
-
-    const email = window.__currentUserEmail;
-    const uid = window.__currentUserUid;
-    if (!email && !uid) return;
-
-    try {
-        const accessRef = doc(db, "admin_settings", "office_access");
-        const accessSnap = await getDoc(accessRef);
-        if (!accessSnap.exists()) return;
-
-        const allowedUsers = accessSnap.data().allowedUsers || [];
-        if (allowedUsers.includes(email) || allowedUsers.includes(uid)) {
-            card.style.display = 'flex';
-        }
-    } catch (error) {
-        console.error("가온 오피스 권한 확인 실패:", error);
-    }
-};
+// 가온 오피스 카드는 이제 모든 사용자에게 항상 보입니다.
+// 실제 입장 권한(admin_settings/office_access 의 allowedUsers)은
+// loadComponent('page-가온 오피스') 에서 클릭 시점에 서버로 검증합니다.
+window.checkGaonOfficeAccess = function() {};
 
 
 window.unlockPrivate = async function() {
@@ -1491,8 +1481,7 @@ if (allowedUsers.includes(currentUserEmail) || allowedUsers.includes(currentUser
                 document.getElementById('privateMainContent').style.display = 'block';
                 
                 // [수정 완료] 캘린더 자동 실행
-                window.switchPrivateTab('cal');
-                if (typeof window.initGaonCalendar === 'function') window.initGaonCalendar();
+                window.switchPrivateTab('rpt');
                 
             } else {
                 // 명단에 없음: 입장 거부

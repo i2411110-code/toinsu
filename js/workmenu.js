@@ -9,6 +9,8 @@
         { id:'folder',       group:'업무', label:'자료폴더',      icon:'bi-folder-fill',     bg:'#FEF3C7', color:'#D97706', type:'url',  target:'https://naver.me/xNpxyjvi' },
         { id:'recruit',      group:'업무', label:'이직 컨설팅',   icon:'bi-briefcase-fill',  bg:'#F0FDF4', color:'#16A34A', type:'page', target:'page-recruit' },
         { id:'private',      group:'업무', label:'고객 데이터',   icon:'bi-people-fill',     bg:'#EFF6FF', color:'#2563EB', type:'page', target:'page-private' },
+        { id:'gaon-office',  group:'업무', label:'가온 오피스',   icon:'bi-lock-fill',       bg:'#F5F3FF', color:'#7C3AED', type:'page', target:'page-가온 오피스' },
+        { id:'calendar',     group:'업무', label:'캘린더',        icon:'bi-calendar3',       bg:'#FFF7ED', color:'#EA580C', type:'page', target:'page-calendar' },
 
         // ── 계산·조회 ──
         { id:'terms',        group:'계산·조회', label:'약관조회',    icon:'bi-search-heart',    bg:'#EFF6FF', color:'#2563EB', type:'page', target:'page-terms' },
