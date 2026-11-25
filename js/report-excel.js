@@ -794,16 +794,10 @@
     lines.push('');
     lines.push('번호만 편하게 답장해주셔도 충분해요! (예: 2)');
     lines.push('');
-    lines.push('상담 방식도 편하신 걸로 골라주세요 👇');
-    lines.push('A. 카카오톡 상담');
-    lines.push('B. 전화 상담');
-    lines.push('C. 대면 상담');
+    lines.push('답장 주신 내용에 맞춰 핵심만 짧게 정리해서 안내드릴게요.');
+    lines.push('카톡이 불편하시면 편하신 시간만 남겨주세요. 짧게 전화드리겠습니다 📞');
     lines.push('');
-    lines.push('고민 번호 + 상담 방식만 함께 보내주시면 바로 준비해서 안내드릴게요! (예: "2, B")');
-    lines.push('');
-    lines.push('상담 가능 시간');
-    lines.push('* 평일 오전 10시 ~ 오후 8시');
-    lines.push('* 일요일, 공휴일은 전화상담 불가(카톡 가능)');
+    lines.push('상담 가능 시간: 평일 오전 10시 ~ 오후 8시');
     return lines.join('\n');
   }
 
@@ -1167,6 +1161,21 @@
       if (btn) { btn.innerHTML = '<i class="bi bi-image"></i> 가이드 이미지 복사'; btn.disabled = false; }
     }
   };
+
+    // ─── 카톡 발송 순서 탭 전환 ───
+  window.rptExSwitchTab = function (n, noScroll) {
+    for (var i = 1; i <= 4; i++) {
+      var p = document.getElementById('rptex-tabpanel-' + i);
+      if (p) p.style.display = (i === n) ? 'block' : 'none';
+    }
+    var tabs = document.querySelectorAll('#rptex-tabbar .rptex-tab');
+    for (var j = 0; j < tabs.length; j++) {
+      tabs[j].classList.toggle('active', Number(tabs[j].getAttribute('data-tab')) === n);
+    }
+    var bar = document.getElementById('rptex-tabbar');
+    if (!noScroll && bar && bar.scrollIntoView) bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   // ================================================================
   // ✅ 연령대별 적정 보험료 가이드 섹션 끝
   // ================================================================
@@ -1228,7 +1237,7 @@ window.initRptExcelModule = function () {
       + '📊 보장 분석표 '
       + '<span style="font-weight:400;color:#94A3B8;font-size:11px;">— 상태 클릭: 상태 전환 · 합산금액 클릭: 직접 수정 · 보험료: 클릭하여 수정</span></p>'
       + '<div style="overflow-x:auto;border-radius:10px;border:1px solid #E2E8F0;margin-bottom:4px;"><div id="rptex-table"></div></div>'
-      + '<p style="font-size:11px;color:#94A3B8;margin-bottom:16px;">💡 이미지는 아래 발송 순서 2·4단계에서 카테고리별로 복사해 카카오톡에 붙여넣기 하세요. 이미지는 분석표의 상태(부족/적정/충분)에 맞춰 내용이 달라져요.</p>'
+      + '<p style="font-size:11px;color:#94A3B8;margin-bottom:16px;">💡 이미지는 아래 발송 순서의 ‘② 분석 이미지’ 탭에서 카테고리별로 복사해 카카오톡에 붙여넣기 하세요. 이미지는 분석표의 상태(부족/적정/충분)에 맞춰 내용이 달라져요.</p>'
 
       /* ── 보험료 수동 추가 ── */
       + '<div style="border:1.5px solid #E2E8F0;border-radius:12px;overflow:hidden;margin-bottom:16px;">'
@@ -1252,10 +1261,18 @@ window.initRptExcelModule = function () {
       /* ── ✅ 필수 보장 분석 카드 섹션 ── */
       + getEssentialHTML()
 
-      /* ── ✅ 카톡 발송 순서 (6단계) ── */
+            /* ── ✅ 카톡 발송 순서 (탭 방식) ── */
       + '<div class="rptex-flow-wrap">'
-      + '<div class="rptex-flow-title">📤 카톡 발송 순서 <span class="rptex-flow-sub">— 순서대로 복사해서 카카오톡으로 보내주세요</span></div>'
+      + '<div class="rptex-flow-title">📤 카톡 발송 순서 <span class="rptex-flow-sub">— 탭을 눌러 단계별로 복사해서 보내주세요</span></div>'
+      + '<div class="rptex-tabbar" id="rptex-tabbar">'
+      + '<button type="button" class="rptex-tab active" data-tab="1" onclick="window.rptExSwitchTab(1)">① 인사·신청내역</button>'
+      + '<button type="button" class="rptex-tab" data-tab="2" onclick="window.rptExSwitchTab(2)">② 분석 이미지</button>'
+      + '<button type="button" class="rptex-tab" data-tab="3" onclick="window.rptExSwitchTab(3)">③ 상담 질문</button>'
+      + '<button type="button" class="rptex-tab" data-tab="4" onclick="window.rptExSwitchTab(4)">④ 추가 자료</button>'
+      + '</div>'
 
+      /* 탭 1: 인사 + 신청 내역 체크 */
+      + '<div class="rptex-tabpanel" id="rptex-tabpanel-1">'
       + '<div class="rptex-flow-step">'
       + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">1</span>인사 멘트</div>'
       + '<textarea id="rptex-flow-greet" class="rptex-flow-ta" readonly></textarea>'
@@ -1263,10 +1280,20 @@ window.initRptExcelModule = function () {
       + '<button class="btn-action" style="width:auto;padding:8px 18px;" onclick="window.rptExCopyFlow(\'rptex-flow-greet\')"><i class="bi bi-clipboard-check"></i> 복사</button>'
       + '<span class="rptex-flow-note">📎 이 메시지와 함께 어드바이저 명함을 첨부해주세요.</span>'
       + '</div></div>'
-
       + '<div class="rptex-flow-step">'
-      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">2</span>보장 분석 결과 첨부 <span class="rptex-flow-sub">— 카테고리별로 한 장씩 전송</span></div>'
-      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 카톡에서 잘리지 않도록 카테고리별 이미지로 나눴어요. 필요한 항목만 골라 복사 → 붙여넣기 하세요. 부족/미가입 항목은 크게, 적정/충분 항목은 ‘잘 준비되어 있어요’로 자동 정리돼요.</div>'
+      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">2</span>신청 내역 체크 멘트</div>'
+      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 상단의 "신청 일시" 값을 기준으로 멘트가 생성됩니다.</div>'
+      + '<textarea id="rptex-flow-time" class="rptex-flow-ta" readonly></textarea>'
+      + '<div class="rptex-flow-actions"><button class="btn-action" style="width:auto;padding:8px 18px;" onclick="window.rptExCopyFlow(\'rptex-flow-time\')"><i class="bi bi-clipboard-check"></i> 복사</button></div>'
+      + '</div>'
+      + '<div class="rptex-flow-actions"><button type="button" class="rptex-tab-next" onclick="window.rptExSwitchTab(2)">다음: 분석 이미지 →</button></div>'
+      + '</div>'
+
+      /* 탭 2: 분석 이미지 (니즈환기 카드 / 필수 보장) */
+      + '<div class="rptex-tabpanel" id="rptex-tabpanel-2" style="display:none;">'
+      + '<div class="rptex-flow-step">'
+      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">3</span>니즈환기 카드 첨부 <span class="rptex-flow-sub">— 고객 상태에 맞는 카드 한 장부터</span></div>'
+      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 카테고리별로 나눠 둔 이미지예요. 한 번에 여러 장보다 가장 부족한 항목 한 장을 먼저 복사 → 붙여넣기 하세요. 부족/미가입 항목은 크게, 적정/충분 항목은 ‘잘 준비되어 있어요’로 자동 정리돼요.</div>'
       + '<div id="rptex-img-jobs"></div>'
       + '<details class="rptex-legacy"><summary>전체 한 장 이미지 (길어서 카톡에서 잘릴 수 있어요)</summary>'
       + '<div class="rptex-flow-actions">'
@@ -1276,35 +1303,35 @@ window.initRptExcelModule = function () {
       + '</select>'
       + '<button class="btn-action" style="width:auto;padding:8px 18px;background:#64748B;" id="rptex-img-copy-btn" onclick="window.rptExCopyTableImage()"><i class="bi bi-image"></i> 분석표 이미지 복사</button>'
       + '</div></details></div>'
-
       + '<div class="rptex-flow-step">'
-      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">3</span>신청 내역 체크 멘트</div>'
-      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 상단의 "신청 일시" 값을 기준으로 멘트가 생성됩니다.</div>'
-      + '<textarea id="rptex-flow-time" class="rptex-flow-ta" readonly></textarea>'
-      + '<div class="rptex-flow-actions"><button class="btn-action" style="width:auto;padding:8px 18px;" onclick="window.rptExCopyFlow(\'rptex-flow-time\')"><i class="bi bi-clipboard-check"></i> 복사</button></div>'
-      + '</div>'
-
-      + '<div class="rptex-flow-step">'
-      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">4</span>필수 보장 분석 첨부</div>'
+      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">4</span>필수 보장 분석 첨부 <span class="rptex-flow-sub">— 니즈환기 카드 대신 보내도 돼요</span></div>'
       + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 필수보장 이미지를 복사해서 전송하세요.</div>'
       + '<button class="btn-action" style="width:auto;padding:8px 18px;background:#3182F6;" id="rptex-ess-img-copy-btn" onclick="window.rptExCopyEssentialImage()"><i class="bi bi-image"></i> 필수보장 이미지 복사</button>'
       + '</div>'
+      + '<div class="rptex-flow-actions"><button type="button" class="rptex-tab-next" onclick="window.rptExSwitchTab(3)">다음: 상담 질문 →</button></div>'
+      + '</div>'
 
+      /* 탭 3: 상담 질문 멘트 */
+      + '<div class="rptex-tabpanel" id="rptex-tabpanel-3" style="display:none;">'
       + '<div class="rptex-flow-step">'
-      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">5</span>상담 안내 &amp; 질문 멘트</div>'
-      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 상단의 "상담 카테고리" 선택값에 맞춰 멘트가 자동으로 바뀝니다.</div>'
+      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">5</span>상담 질문 멘트</div>'
+      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 상단의 "상담 카테고리" 선택값에 맞춰 멘트가 자동으로 바뀝니다.<br>📞 답장이 없으면 2~3일 뒤 직접 전화로 이어가세요.</div>'
       + '<textarea id="rptex-flow-q" class="rptex-flow-ta" readonly></textarea>'
       + '<div class="rptex-flow-actions"><button class="btn-action" style="width:auto;padding:8px 18px;" onclick="window.rptExCopyFlow(\'rptex-flow-q\')"><i class="bi bi-clipboard-check"></i> 복사</button></div>'
       + '</div>'
+      + '</div>'
 
+      /* 탭 4: 추가 자료 (AI 니즈환기 멘트) */
+      + '<div class="rptex-tabpanel" id="rptex-tabpanel-4" style="display:none;">'
       + '<div class="rptex-flow-step">'
-      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">6</span>AI 니즈환기 멘트 <span class="rptex-flow-sub">— 고객 답변 확인 후 전송</span></div>'
+      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">6</span>AI 니즈환기 멘트 <span class="rptex-flow-sub">— 고객 반응 확인 후 필요할 때 전송</span></div>'
       + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">💬 고객이 선택한 항목이나 직접 짚어줄 부분을 확인한 뒤, AI 멘트를 생성해서 전송하세요.</div>'
       + '<textarea id="rptex-msg-output" class="rptex-flow-ta" style="height:280px;"></textarea>'
       + '<div class="rptex-flow-actions">'
       + '<button class="btn-action" style="width:auto;padding:8px 18px;background:#7C3AED;" id="rptex-ai-gen-btn" onclick="window.rptExGenerateAIMessage()"><i class="bi bi-stars"></i> AI 멘트 생성</button>'
       + '<button class="btn-action" style="width:auto;padding:8px 18px;" onclick="window.rptExCopyFlow(\'rptex-msg-output\')"><i class="bi bi-clipboard-check"></i> 복사</button>'
       + '</div></div>'
+      + '</div>'
 
       + '</div>'
 
@@ -1410,6 +1437,12 @@ window.initRptExcelModule = function () {
       '.rptex-job-tag{display:inline-block;font-size:10.5px;font-weight:700;color:#D97706;background:#FFF7E8;border-radius:8px;padding:1px 7px;margin-left:6px;vertical-align:middle;}',
       '.rptex-legacy{margin-top:10px;font-size:12px;color:#64748B;}',
       '.rptex-legacy summary{cursor:pointer;font-weight:600;}',
+      '.rptex-tabbar{display:flex;gap:6px;overflow-x:auto;position:sticky;top:0;z-index:5;background:#F8FAFC;padding:8px;border:1px solid #E2E8F0;border-radius:12px;margin-bottom:14px;}',
+      '.rptex-tab{flex:1 0 auto;white-space:nowrap;border:none;background:transparent;padding:9px 14px;border-radius:9px;font-size:13px;font-weight:700;color:#64748B;cursor:pointer;font-family:"Noto Sans KR",sans-serif;}',
+      '.rptex-tab:hover{background:#EEF2F7;}',
+      '.rptex-tab.active{background:#3182F6;color:#fff;}',
+      '.rptex-tab-next{border:1.5px solid #BAD7FB;background:#F8FBFF;color:#3182F6;border-radius:8px;padding:8px 16px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:"Noto Sans KR",sans-serif;}',
+      '.rptex-tab-next:hover{background:#EFF6FF;}',
 
       /* ── 연령대별 적정 보험료 가이드 (하단 + 토글) ── */
       '.rptex-ageguide-wrap{margin-top:4px;margin-bottom:16px;display:flex;flex-direction:column;align-items:flex-start;}',
@@ -3524,6 +3557,7 @@ window.initRptExcelModule = function () {
     if (ageGuideBtn) ageGuideBtn.classList.remove('open');
 
     crmPasteReset();
+    window.rptExSwitchTab(1, true);
 
     // 붙여넣기 칸으로 이동 + 포커스
     var card = document.getElementById('rptex-crm-card');
