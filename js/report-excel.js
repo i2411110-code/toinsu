@@ -2920,7 +2920,10 @@ window.initRptExcelModule = function () {
       + '<div style="font-size:38px;font-weight:800;color:' + vColor + ';letter-spacing:-1px;">' + rate + '%</div></div>'
       + rows
       + '<div style="margin-top:14px;font-size:13px;font-weight:800;color:' + vColor + ';background:#F8FAFC;border-radius:12px;padding:12px 14px;line-height:1.6;">' + verdict + '</div>');
-
+      return imgWrap(imgHeader('⚖️', name + '님 보험료 vs 보장, 또래와 비교해 봤어요', age + '세 · 월납 합계 ' + fmtWon(total))
+      + body
+      + footerSources([], '또래 평균과 연령대별 예산 범위는 공식 통계나 보험사 요율이 아닌 상담용 참고 가이드이며, 특히 간편심사체 금액은 실제 상품별 산출 보험료로 확인이 필요합니다. 보험료 수준과 보장 충족도는 개인의 소득·가족력·건강 상태에 따라 적정선이 다를 수 있습니다.'));
+  }
   }
 
     // ───────────────────── 왜 건강할 때 준비해야 할까요? (별도 이미지) ─────────────────────
