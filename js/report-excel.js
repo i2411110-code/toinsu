@@ -129,11 +129,11 @@
   //   국가데이터처(KOSIS) '가계동향조사 > 가구주 연령별 가구당 월평균 가계수지' 표의 소비지출(만원)을
   //   연령대별로 확인해서 man 숫자만 바꿔 넣으세요. (숫자를 바꾸면 이미지 출처 문구도 '가구주 연령대별'로 자동 변경)
   var LIVING_BY_AGE = [
-    { maxAge: 29,  label: '20대 이하', man: 294 },
-    { maxAge: 39,  label: '30대',      man: 294 },
-    { maxAge: 49,  label: '40대',      man: 294 },
-    { maxAge: 59,  label: '50대',      man: 294 },
-    { maxAge: 999, label: '60대 이상', man: 294 },
+    { maxAge: 29,  label: '20대 이하', man: 150 },
+    { maxAge: 39,  label: '30대',      man: 170 },
+    { maxAge: 49,  label: '40대',      man: 195 },
+    { maxAge: 59,  label: '50대',      man: 185 },
+    { maxAge: 999, label: '60대 이상', man: 150 },
   ];
   function livingEntryForAge(age) {
     var a = Number(age) || 40;
@@ -2820,6 +2820,101 @@ window.initRptExcelModule = function () {
       + summaryCard('', items, 4) + body + footerSources(cfg.sources));
   }
 
+    // ───────────────────── 또래 비교: 담보 대비 보험료 ─────────────────────
+  var PEER_CORE = [
+    ['일반암진단', '일반암'], ['뇌혈관질환진단', '뇌혈관질환'], ['허혈성심장질환진단', '허혈성심장질환'],
+    ['질병입원의료비', '질병 입원 실비'], ['질병수술', '질병 수술비']
+  ];
+  var PEER_RATE_OK = 80;   // 핵심 보장 충족률이 이 % 이상이면 '잘 갖춤'으로 봄
+  function fmtWon(n) { return Math.round(n || 0).toLocaleString('ko-KR') + '원'; }
+
+  function buildPeerImageHTML() {
+    var name = gState.customerName, age = gState.age || 40;
+    var total = gState.premiums.reduce(function (s, p) { return s + (p.amount || 0); }, 0);
+    var level = evalLevel(age, total);
+    var std = PREMIUM_STD.find(function (r) { return age <= r.maxAge; }) || PREMIUM_STD[PREMIUM_STD.length - 1];
+    var avg = std.avg;
+    var lvColor = { '부족': '#DC2626', '적정': '#3182F6', '다소 높음': '#D97706', '과다': '#DC2626' }[level.label] || '#3182F6';
+    var body = '';
+
+    // 카드 1) 내 보험료 vs 또래 평균
+    var maxV = Math.max(total, avg, std.over, 1);
+    function bar(label, val, color) {
+      return '<div style="margin-top:12px;"><div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#4E5968;">'
+        + '<span>' + label + '</span><span style="color:#191F28;">' + fmtWon(val) + '</span></div>'
+        + '<div style="height:16px;background:#EEF1F4;border-radius:8px;overflow:hidden;margin-top:5px;">'
+        + '<div style="height:16px;width:' + Math.max(2, Math.round(val / maxV * 100)) + '%;background:' + color + ';border-radius:8px;"></div></div></div>';
+    }
+    var diff = total - avg;
+    var diffTxt = total <= 0 ? '월납 보험료가 입력되지 않았어요.'
+      : diff > 0 ? '또래 평균보다 매달 <b style="color:' + lvColor + ';">' + fmtWon(diff) + ' 더</b> 내고 계세요. (약 ' + Math.round(diff / avg * 100) + '%)'
+      : diff < 0 ? '또래 평균보다 매달 <b style="color:' + lvColor + ';">' + fmtWon(-diff) + ' 적게</b> 내고 계세요.'
+      : '또래 평균과 같은 수준이에요.';
+    body += card(cardTitle('💰 ' + age + '세 또래와 보험료를 비교하면', '매달 내는 보험료 합계 기준이에요.')
+      + bar('내 월 보험료', total, lvColor) + bar(age + '세 또래 평균 (참고)', avg, '#B0B8C1')
+      + '<div style="font-size:12px;color:#6B7684;margin-top:12px;">적정 범위 ' + fmtWon(std.low) + ' ~ ' + fmtWon(std.high) + '</div>'
+      + '<div style="font-size:13.5px;color:#191F28;line-height:1.7;margin-top:10px;background:#F8FAFC;border-radius:12px;padding:12px 14px;">' + diffTxt
+      + ' <span style="display:inline-block;margin-left:4px;color:' + lvColor + ';font-weight:800;">[' + level.label + ']</span></div>');
+
+    // 카드 2) 낸 보험료 대비 핵심 보장 충족률
+    var core = PEER_CORE.map(function (d) {
+      var s = rowState(d[0]);
+      var ratio = s.rec ? Math.min(1, s.sum / s.rec) : (s.sum > 0 ? 1 : 0);
+      return { name: d[1], sum: s.sum, rec: s.rec, ratio: ratio, status: s.status };
+    });
+    var rate = Math.round(core.reduce(function (s, c) { return s + c.ratio; }, 0) / core.length * 100);
+    var premHigh = total > std.high, rateLow = rate < PEER_RATE_OK;
+    var verdict, vColor;
+    if (premHigh && rateLow)      { verdict = '보험료는 또래보다 높은데, 핵심 보장은 채워지지 않았어요. 구성 점검이 필요해요.'; vColor = '#DC2626'; }
+    else if (!premHigh && rateLow){ verdict = '보험료는 부담 없는 수준이지만, 핵심 보장에 빈 곳이 있어요. 부족한 부분만 채우면 돼요.'; vColor = '#D97706'; }
+    else if (premHigh && !rateLow){ verdict = '핵심 보장은 잘 갖춰져 있어요. 다만 보험료가 높은 편이라 중복·불필요 특약을 점검해 볼 수 있어요.'; vColor = '#D97706'; }
+    else                          { verdict = '보험료도 적정하고 핵심 보장도 잘 갖춰져 있어요. 👏'; vColor = '#3182F6'; }
+    var rows = core.map(function (c) {
+      var m = statusMeta(c.status);
+      return '<div style="margin-top:12px;"><div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:800;color:#191F28;">'
+        + '<span>' + esc(c.name) + '</span><span>' + pill(c.status) + '</span></div>'
+        + '<div style="height:10px;background:#EEF1F4;border-radius:5px;overflow:hidden;margin:6px 0 4px;"><div style="height:10px;width:' + Math.round(c.ratio * 100) + '%;background:' + m.color + ';border-radius:5px;"></div></div>'
+        + '<div style="font-size:11.5px;color:#6B7684;">현재 ' + (c.sum > 0 ? fmtMan(c.sum) : '미가입') + (c.rec !== undefined ? ' / 권장 ' + fmtMan(c.rec) : '') + '</div></div>';
+    }).join('');
+    body += card(cardTitle('🎯 월 ' + fmtWon(total) + '으로 핵심 보장을 얼마나 채웠을까요?', '핵심 5개 담보의 권장 기준 대비 충족률이에요.')
+      + '<div style="text-align:center;margin:14px 0 2px;"><div style="font-size:12.5px;color:#6B7684;">핵심 보장 충족률</div>'
+      + '<div style="font-size:38px;font-weight:800;color:' + vColor + ';letter-spacing:-1px;">' + rate + '%</div></div>'
+      + rows
+      + '<div style="margin-top:14px;font-size:13px;font-weight:800;color:' + vColor + ';background:#F8FAFC;border-radius:12px;padding:12px 14px;line-height:1.6;">' + verdict + '</div>');
+
+    // 카드 3) 보험사·상품별 보험료 1만원당 3대 진단비 (상품 2건 이상일 때만)
+    var cos = exState.companies || [];
+    var byLabel = {}; (exState.rows || []).forEach(function (r) { byLabel[r.label] = r; });
+    var big3 = ['일반암진단', '뇌혈관질환진단', '허혈성심장질환진단'];
+    if (cos.length > 1 && gState.premiums.length === cos.length) {
+      var list = [];
+      gState.premiums.forEach(function (p, ci) {
+        if (!(p.amount > 0)) return;
+        var core3 = big3.reduce(function (s, lb) { var r = byLabel[lb]; return s + (r && r.perProduct ? (r.perProduct[ci] || 0) : 0); }, 0);
+        list.push({ name: p.name || cos[ci], prem: p.amount, core3: core3, per: core3 / (p.amount / 10000) });
+      });
+      if (list.length > 1) {
+        list.sort(function (a, b) { return b.prem - a.prem; });
+        var maxPer = Math.max.apply(null, list.map(function (x) { return x.per; }).concat([1]));
+        var lowest = list.reduce(function (m, x) { return x.per < m.per ? x : m; }, list[0]);
+        var items = list.map(function (x) {
+          var isLow = x === lowest && x.per < maxPer * 0.5;
+          return '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #EDF0F3;">'
+            + '<div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:800;color:#191F28;"><span>' + esc(x.name) + '</span><span>월 ' + fmtWon(x.prem) + ' (' + Math.round(x.prem / total * 100) + '%)</span></div>'
+            + '<div style="font-size:12px;color:#6B7684;margin-top:3px;">3대 진단비(암·뇌·심장) 합계 ' + (x.core3 > 0 ? fmtMan(x.core3) : '없음') + '</div>'
+            + '<div style="height:10px;background:#EEF1F4;border-radius:5px;overflow:hidden;margin:7px 0 4px;"><div style="height:10px;width:' + Math.max(2, Math.round(x.per / maxPer * 100)) + '%;background:' + (isLow ? '#F04452' : '#3182F6') + ';border-radius:5px;"></div></div>'
+            + '<div style="font-size:12.5px;font-weight:700;color:' + (isLow ? '#DC2626' : '#334155') + ';">보험료 1만원당 ' + fmtMan(x.per) + (isLow ? ' · 상대적으로 적어요, 구성 확인이 필요해요' : '') + '</div></div>';
+        }).join('');
+        body += card(cardTitle('🔎 계약별로 보면, 내는 돈 대비 보장은?', '보험료 1만원당 받을 수 있는 3대 진단비(합산)를 비교했어요.') + items
+          + '<div style="font-size:11px;color:#8B95A1;line-height:1.6;margin-top:12px;">상품별 비교는 3대 진단비만 기준으로 한 참고 수치예요. 수술비·입원비·사망보장 등은 포함되지 않아요.</div>');
+      }
+    }
+
+    return imgWrap(imgHeader('⚖️', name + '님 보험료 vs 보장, 또래와 비교해 봤어요', age + '세 · 월납 합계 ' + fmtWon(total))
+      + body
+      + footerSources([], '또래 기준은 연령대별 참고 보험료 가이드이며 공식 통계가 아닙니다. 보험료 수준과 보장 충족도는 개인의 소득·가족력·건강 상태에 따라 적정선이 다를 수 있습니다.'));
+  }
+
   // ─────────────── 일반 카테고리(대분류) 점검 이미지 ───────────────
   // 일반 카테고리(대분류) 점검 이미지 — 항목 6개 단위로 분할
   function buildCategoryImageHTML(catName, list, part, parts) {
@@ -2873,6 +2968,14 @@ window.initRptExcelModule = function () {
       return cfgRows.map(function (d) { var s = rowState(d[0]); return { name: d[1], status: s.status }; });
     }
 
+        // ⓪ 또래 비교 (상담 카테고리가 '또래월보험비교'이면 맨 위, 아니어도 선택해서 쓸 수 있게 맨 아래)
+    var peerTotal = gState.premiums.reduce(function (s, p) { return s + (p.amount || 0); }, 0);
+    var peerJob = { risk: true, tag: '또래 비교 · 담보 대비 보험료', icon: '⚖️', title: '또래 보험료 vs 보장 충족도',
+      desc: (gState.age || 40) + '세 또래 평균 ' + fmtWon(getPeerAvgPremium(gState.age || 40)) + ' · 내 보험료 ' + fmtWon(peerTotal),
+      file: 'peer.png', build: buildPeerImageHTML };
+    var peerFirst = gState.category === '또래월보험비교';
+    if (peerFirst) IMG_JOBS.push(peerJob);
+
     // ① 상태 맞춤 이미지 (암·뇌·심장·실비·화재·운전자)
     var cc = RISK_CFG.cancer;
     IMG_JOBS.push({ risk: true, tag: '상태별 맞춤', icon: cc.icon, title: cc.jobTitle, desc: statusLine(items(cc.rows)), file: 'cancer.png', build: buildCancerImageHTML });
@@ -2924,6 +3027,8 @@ window.initRptExcelModule = function () {
         })(p);
       }
     });
+
+    if (!peerFirst) IMG_JOBS.push(peerJob);
   }
 
   function renderImageJobs() {
