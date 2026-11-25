@@ -2519,7 +2519,7 @@ window.initRptExcelModule = function () {
   }
 
   // ───────────────────── 뇌혈관 · 심장 ─────────────────────
-  function buildDiseaseImageHTML(kind) {
+    function buildDiseaseImageHTML(kind) {
     var cfg = RISK_CFG[kind], name = gState.customerName;
     var items = cfg.rows.map(function (d) {
       var s = rowState(d[0]);
@@ -2533,7 +2533,29 @@ window.initRptExcelModule = function () {
     body += card(cardTitle('📊 ' + esc(cfg.statTitle)) + statTiles(cfg.tiles)
       + (cfg.note ? '<div style="font-size:12px;color:#475569;line-height:1.6;background:#F8FAFC;border-radius:12px;padding:11px 13px;margin-top:10px;">' + esc(cfg.note) + '</div>' : ''));
 
-    // 2) 질환별 환자 비율 + 치료비 (뇌혈관)
+    // 2) ○○님은 어떻게 준비가 되어 있을까요? — 담보별 현재 상태 (부족·미가입이 있을 때만)
+    if (needs.length) {
+      var lad = cfg.ladder.map(function (L) {
+        var st = rowState(L.label);
+        var m = statusMeta(st.status);
+        var pct = st.rec ? Math.min(100, Math.round(st.sum / st.rec * 100)) : (st.sum > 0 ? 100 : 0);
+        var barColor = isNeed(st.status) ? '#F04452' : m.color;
+        var gaugeTxt = st.rec ? '권장 ' + fmtMan(st.rec) + ' 대비 ' + pct + '%' : (st.sum > 0 ? '가입됨' : '미가입');
+        return '<div style="margin-top:14px;padding-top:12px;border-top:1px solid #EDF0F3;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+          +   '<div style="font-size:14px;font-weight:800;color:#191F28;">' + esc(L.label.replace(/진단$/, ' 진단비').replace(/수술$/, ' 수술비')) + ' <span style="font-size:11px;font-weight:700;color:#6B7684;background:#F2F4F6;border-radius:8px;padding:2px 8px;margin-left:4px;">' + esc(L.range) + '</span></div>'
+          +   '<div style="text-align:right;font-size:12px;color:#4E5968;font-weight:700;">' + (st.sum > 0 ? fmtMan(st.sum) : '미가입') + ' ' + pill(st.status) + '</div>'
+          + '</div>'
+          + '<div style="font-size:11px;font-weight:700;color:#8B95A1;margin-top:10px;">내 진단비 · ' + gaugeTxt + '</div>'
+          + '<div style="height:8px;background:#EEF1F4;border-radius:4px;overflow:hidden;margin:4px 0 8px;"><div style="height:8px;width:' + (st.sum > 0 ? Math.max(3, pct) : 0) + '%;background:' + barColor + ';border-radius:4px;"></div></div>'
+          + '<div style="font-size:12.5px;color:#4E5968;line-height:1.6;">' + esc(L.desc) + '</div>'
+          + '</div>';
+      }).join('');
+      body += card(cardTitle('🔎 ' + esc(name) + '님은 어떻게 준비가 되어 있을까요?', esc(cfg.whySub)) + lad
+        + '<div style="margin-top:14px;font-size:13px;font-weight:700;color:#1D5FD0;background:#EFF6FF;border-radius:12px;padding:12px 14px;line-height:1.6;">' + esc(cfg.closingNeed) + '</div>');
+    }
+
+    // 3) 질환별 환자 비율 + 치료비 (뇌혈관)
     if (cfg.patients && needs.length) {
       var base = cfg.patientsBase || cfg.patients[0].n;
       var prow = cfg.patients.map(function (p, i) {
@@ -2551,8 +2573,7 @@ window.initRptExcelModule = function () {
         + '<div style="font-size:11px;color:#8B95A1;line-height:1.6;margin-top:12px;">' + esc(cfg.patientsNote) + '</div>');
     }
 
-    // 3) 왜 이 진단비를 준비해야 하나 — 보장 범위 사다리 (부족·미가입이 있을 때만 자세히)
-        // 2-b) 질환 예시표 (협심증 · 급성심근경색) — cfg.matrix 가 있는 질환에서만 표시
+    // 3-b) 질환 예시표 (협심증 · 급성심근경색) — cfg.matrix 가 있는 질환(심장)에서만 표시
     if (cfg.matrix && needs.length) {
       var mcols = cfg.matrixCols.map(function (lb) { return rowState(lb); });
       var mhead = '<div style="display:flex;align-items:flex-end;margin-top:14px;">'
@@ -2583,28 +2604,6 @@ window.initRptExcelModule = function () {
       }).join('');
       body += card(cardTitle('🫀 ' + esc(cfg.matrixTitle), esc(cfg.matrixSub)) + mhead + mrows
         + '<div style="font-size:11px;color:#8B95A1;line-height:1.6;margin-top:12px;">' + esc(cfg.matrixNote) + '</div>');
-    }
-    if (needs.length) {
-      var lad = cfg.ladder.map(function (L) {
-        var st = rowState(L.label);
-        var m = statusMeta(st.status);
-                var pct = st.rec ? Math.min(100, Math.round(st.sum / st.rec * 100)) : (st.sum > 0 ? 100 : 0);
-        var barColor = isNeed(st.status) ? '#F04452' : m.color;
-        var gaugeTxt = st.rec ? '권장 ' + fmtMan(st.rec) + ' 대비 ' + pct + '%' : (st.sum > 0 ? '가입됨' : '미가입');
-        return '<div style="margin-top:14px;padding-top:12px;border-top:1px solid #EDF0F3;">'
-          + '<div style="display:flex;justify-content:space-between;align-items:center;">'
-          +   '<div style="font-size:14px;font-weight:800;color:#191F28;">' + esc(L.label.replace(/진단$/, ' 진단비').replace(/수술$/, ' 수술비')) + ' <span style="font-size:11px;font-weight:700;color:#6B7684;background:#F2F4F6;border-radius:8px;padding:2px 8px;margin-left:4px;">' + esc(L.range) + '</span></div>'
-          +   '<div style="text-align:right;font-size:12px;color:#4E5968;font-weight:700;">' + (st.sum > 0 ? fmtMan(st.sum) : '미가입') + ' ' + pill(st.status) + '</div>'
-          + '</div>'
-                    + (L.w ? '<div style="font-size:11px;font-weight:700;color:#8B95A1;margin-top:10px;">보장 범위</div>'
-              + '<div style="height:8px;background:#EEF1F4;border-radius:4px;overflow:hidden;margin-top:4px;"><div style="height:8px;width:' + L.w + '%;background:#BFD3F2;border-radius:4px;"></div></div>' : '')
-          + '<div style="font-size:11px;font-weight:700;color:#8B95A1;margin-top:10px;">내 진단비 · ' + gaugeTxt + '</div>'
-          + '<div style="height:8px;background:#EEF1F4;border-radius:4px;overflow:hidden;margin:4px 0 8px;"><div style="height:8px;width:' + (st.sum > 0 ? Math.max(3, pct) : 0) + '%;background:' + barColor + ';border-radius:4px;"></div></div>'
-          + '<div style="font-size:12.5px;color:#4E5968;line-height:1.6;">' + esc(L.desc) + '</div>'
-          + '</div>';
-      }).join('');
-      body += card(cardTitle('🔎 ' + esc(cfg.whyTitle), esc(cfg.whySub)) + lad
-        + '<div style="margin-top:14px;font-size:13px;font-weight:700;color:#1D5FD0;background:#EFF6FF;border-radius:12px;padding:12px 14px;line-height:1.6;">' + esc(cfg.closingNeed) + '</div>');
     }
 
     // 4) 잘 준비된 항목
