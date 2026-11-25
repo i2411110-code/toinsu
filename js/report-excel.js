@@ -1707,10 +1707,35 @@ window.initRptExcelModule = function () {
   // 갱신 유무 문구 → 'renewal'(갱신형) / 'non'(비갱신형) / 'unknown'
   function renewalType(s) {
     s = String(s || '').replace(/\s+/g, '');
-    if (!s) return 'unknown';
-    if (/비갱신|갱신없|무갱신|없음|^N$|아니/.test(s)) return 'non';
-    if (/갱신|있음|^Y$/.test(s)) return 'renewal';
+    if (!s || s === '-') return 'unknown';
+    if (/비갱신|갱신없|무갱신|갱신X|^N$|^아니/i.test(s)) return 'non';
+    if (/갱신|^Y$|^있/i.test(s)) return 'renewal';
     return 'unknown';
+  }
+
+  // 보장기간이 1년(최대 400일) 이내인 담보 = 매년 갱신되는 담보 (실비 등)
+  function isAnnualCoverage(v) {
+    if (!v || !v.start || !v.end) return false;
+    var d = (new Date(v.end) - new Date(v.start)) / 86400000;
+    return d > 0 && d <= 400;
+  }
+  // 자동차보험은 CRM이 '비갱신형'으로 적어도 매년 갱신되므로 집계에서 제외
+  var CRM_AUTO_RE = /자동차|Hicar|하이카|애니카|다이렉트\s*카|카\s*개인용/i;
+  function isAutoInsurance(c) {
+    return CRM_AUTO_RE.test(String(c.name || '') + ' ' + String(c.productType || ''));
+  }
+  // 계약 분류: 비갱신형인데 1년 갱신 담보가 일부 있으면 'mixed', 전부면 'renewal'
+  function classifyRenewal(c) {
+    var t = renewalType(c.renewal);
+    var cov = c.coverages || [];
+    var annual = cov.filter(isAnnualCoverage);
+    if (t === 'non' && annual.length) t = (annual.length === cov.length) ? 'renewal' : 'mixed';
+    var seen = {}, labels = [];
+    annual.forEach(function (v) {
+      var lb = (v.minor && v.minor !== '-') ? v.minor : (v.title || v.rawName);
+      if (lb && !seen[lb]) { seen[lb] = 1; labels.push(lb); }
+    });
+    return { type: t, annualLabels: labels };
   }
 
   // ── 2) 파서 결과 → exState ──
@@ -1845,13 +1870,24 @@ window.initRptExcelModule = function () {
     });
     rows = rows.concat(crmBuildExtraRows(parsed, rows));
 
-    // 갱신형 / 비갱신형 집계 (납입 중인 계약만)
-    var ren = { renewal: { count: 0, premium: 0 }, non: { count: 0, premium: 0 }, unknown: { count: 0, premium: 0 }, list: [] };
+    // 갱신형 / 비갱신형 / 혼합 집계
+    //  · 건수: 정상 계약 전체 (납입 끝난 계약 포함, 자동차보험·빈 계약 제외)
+    //  · 보험료: 현재 납입 중인 금액만
+    var ren = { renewal: { count: 0, premium: 0 }, non: { count: 0, premium: 0 },
+                mixed: { count: 0, premium: 0 }, unknown: { count: 0, premium: 0 },
+                list: [], excludedAuto: 0, hidden: 0 };
+    if (parsed.summary && parsed.summary.total != null && parsed.summary.shown != null
+        && parsed.summary.total > parsed.summary.shown) {
+      ren.hidden = parsed.summary.total - parsed.summary.shown;
+    }
     cs.forEach(function (c, i) {
-      if (!prem[i]) return;
-      var t = renewalType(c.renewal);
-      ren[t].count++; ren[t].premium += prem[i];
-      ren.list.push({ name: companies[i], type: t, premium: prem[i] });
+      if (c.status !== '정상') return;
+      if (isAutoInsurance(c)) { ren.excludedAuto++; return; }
+      if (!prem[i] && !(c.coverages || []).length) return;
+      var r = classifyRenewal(c);
+      ren[r.type].count++;
+      ren[r.type].premium += prem[i];
+      ren.list.push({ name: companies[i], type: r.type, premium: prem[i], annual: r.annualLabels });
     });
 
     return {
@@ -3117,9 +3153,13 @@ window.initRptExcelModule = function () {
     var healthyJob = { risk: true, tag: '또래 비교 · 표준체 vs 간편심사체', icon: '🩺', title: '왜 건강할 때 준비해야 할까요?',
       desc: healthyBud.label + ' 표준체 월 ' + rangeTxt(healthyBud.std[0], healthyBud.std[1]) + ' vs 간편심사체 월 ' + rangeTxt(healthyBud.simple[0], healthyBud.simple[1]),
       file: 'healthy.png', build: buildHealthyImageHTML };
-          var st0 = exState.renewalStats;
+    var st0 = exState.renewalStats;
+    var renCnt = st0 ? (st0.renewal.count + st0.non.count + (st0.mixed ? st0.mixed.count : 0)) : 0;
     var renJob = { risk: true, tag: '갱신형 · 비갱신형 비교', icon: '🔄', title: '갱신형 vs 비갱신형 비중',
-      desc: (st0 && (st0.renewal.count + st0.non.count) > 0) ? '갱신형 ' + st0.renewal.count + '건 · 비갱신형 ' + st0.non.count + '건' : '갱신 여부 확인 필요',
+      desc: renCnt
+        ? '갱신형 ' + st0.renewal.count + '건 · 비갱신형 ' + st0.non.count + '건'
+          + (st0.mixed && st0.mixed.count ? ' · 1년 갱신 담보 포함 ' + st0.mixed.count + '건' : '')
+        : '갱신 여부 확인 필요',
       file: 'renewal.png', build: buildRenewalImageHTML };
     var peerFirst = gState.category === '또래월보험비교';
     if (peerFirst) { IMG_JOBS.push(peerJob); IMG_JOBS.push(healthyJob); IMG_JOBS.push(renJob); }
