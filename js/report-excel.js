@@ -1826,7 +1826,7 @@ window.initRptExcelModule = function () {
     return out;
   }
 
-  function crmToExState(parsed) {
+    function crmToExState(parsed) {
     var cs = parsed.contracts, n = cs.length, seen = {};
     // 같은 보험사가 여러 건이어도 열 이름이 겹치지 않게 '보험사 + 상품명'으로 구성
     var companies = cs.map(function (c) {
@@ -1844,18 +1844,21 @@ window.initRptExcelModule = function () {
         status: computeRowStatus(m.totalMan, rec), perProduct: crmFit(m.byContract, n) };
     });
     rows = rows.concat(crmBuildExtraRows(parsed, rows));
+
+    // 갱신형 / 비갱신형 집계 (납입 중인 계약만)
+    var ren = { renewal: { count: 0, premium: 0 }, non: { count: 0, premium: 0 }, unknown: { count: 0, premium: 0 }, list: [] };
+    cs.forEach(function (c, i) {
+      if (!prem[i]) return;
+      var t = renewalType(c.renewal);
+      ren[t].count++; ren[t].premium += prem[i];
+      ren.list.push({ name: companies[i], type: t, premium: prem[i] });
+    });
+
     return {
       customerName: parsed.client.name, companies: companies, rows: rows, premiumAmounts: prem,
       gender: parsed.client.gender || '', driverStarts: crmDriverStarts(parsed),
       renewalStats: ren
     };
-        var ren = { renewal: { count: 0, premium: 0 }, non: { count: 0, premium: 0 }, unknown: { count: 0, premium: 0 }, list: [] };
-    cs.forEach(function (c, i) {
-      if (!prem[i]) return;                       // 납입 중인 계약만
-      var t = renewalType(c.renewal);
-      ren[t].count++; ren[t].premium += prem[i];
-      ren.list.push({ name: companies[i], type: t, premium: prem[i] });
-    });
   }
 
   function genderCode(s) {
