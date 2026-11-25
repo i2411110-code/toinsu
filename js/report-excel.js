@@ -49,13 +49,12 @@
   };
 
   // ─── 연령별 보험료 기준 (원) ───
-  const PREMIUM_STD = [
-    { maxAge: 20, low: 80000,  high: 150000, over: 220000, avg: 115000 },
-    { maxAge: 30, low: 80000,  high: 150000, over: 220000, avg: 115000 },
-    { maxAge: 40, low: 100000, high: 200000, over: 300000, avg: 150000 },
-    { maxAge: 50, low: 150000, high: 280000, over: 420000, avg: 215000 },
-    { maxAge: 60, low: 200000, high: 350000, over: 520000, avg: 275000 },
-    { maxAge: 99, low: 250000, high: 430000, over: 650000, avg: 340000 },
+   const PREMIUM_STD = [
+    { maxAge: 29,  low: 100000, high: 180000, over: 260000, avg: 140000 },
+    { maxAge: 39,  low: 150000, high: 250000, over: 350000, avg: 200000 },
+    { maxAge: 49,  low: 200000, high: 330000, over: 450000, avg: 270000 },
+    { maxAge: 59,  low: 250000, high: 450000, over: 620000, avg: 350000 },
+    { maxAge: 999, low: 280000, high: 480000, over: 680000, avg: 400000 },
   ];
 
   // ─── 보장 항목 상태(부족/적정/미가입/과잉) 판정 & 공통 메타 ───
@@ -1705,6 +1704,15 @@ window.initRptExcelModule = function () {
     return { parse: parse };
   })();
 
+  // 갱신 유무 문구 → 'renewal'(갱신형) / 'non'(비갱신형) / 'unknown'
+  function renewalType(s) {
+    s = String(s || '').replace(/\s+/g, '');
+    if (!s) return 'unknown';
+    if (/비갱신|갱신없|무갱신|없음|^N$|아니/.test(s)) return 'non';
+    if (/갱신|있음|^Y$/.test(s)) return 'renewal';
+    return 'unknown';
+  }
+
   // ── 2) 파서 결과 → exState ──
   function crmShortInsurer(s) { return String(s || '').replace(/해상보험$/, '').replace(/보험$/, '').trim(); }
   function crmCleanName(s) { return String(s || '').replace(/^\(무\)\s*/, '').replace(/^무배당\s*/, '').trim(); }
@@ -1838,8 +1846,16 @@ window.initRptExcelModule = function () {
     rows = rows.concat(crmBuildExtraRows(parsed, rows));
     return {
       customerName: parsed.client.name, companies: companies, rows: rows, premiumAmounts: prem,
-      gender: parsed.client.gender || '', driverStarts: crmDriverStarts(parsed)
+      gender: parsed.client.gender || '', driverStarts: crmDriverStarts(parsed),
+      renewalStats: ren
     };
+        var ren = { renewal: { count: 0, premium: 0 }, non: { count: 0, premium: 0 }, unknown: { count: 0, premium: 0 }, list: [] };
+    cs.forEach(function (c, i) {
+      if (!prem[i]) return;                       // 납입 중인 계약만
+      var t = renewalType(c.renewal);
+      ren[t].count++; ren[t].premium += prem[i];
+      ren.list.push({ name: companies[i], type: t, premium: prem[i] });
+    });
   }
 
   function genderCode(s) {
@@ -2869,7 +2885,7 @@ window.initRptExcelModule = function () {
     var diff = total - avg;
     var diffTxt = total <= 0 ? '월납 보험료가 입력되지 않았어요.'
       : diff > 0 ? '또래 평균보다 매달 <b style="color:' + lvColor + ';">' + fmtWon(diff) + ' 더</b> 내고 계세요. (약 ' + Math.round(diff / avg * 100) + '%)'
-      : diff < 0 ? '또래 평균보다 매달 <b style="color:' + lvColor + ';">' + fmtWon(-diff) + ' 적게</b> 내고 계세요.'
+      : diff < 0 ? '또래 평균보다 매달 <b style="color:' + lvColor + ';">' + fmtWon(-diff) + ' 적게</b> 내고 계세요.<br>그만큼 <b>빠진 보장은 없는지</b> 아래 충족률로 확인해 보세요.'
       : '또래 평균과 같은 수준이에요.';
     body += card(cardTitle('💰 ' + age + '세 또래와 보험료를 비교하면', '매달 내는 보험료 합계 기준이에요.')
       + bar('내 월 보험료', total, lvColor) + bar(age + '세 또래 평균 (참고)', avg, '#B0B8C1')
@@ -2905,7 +2921,12 @@ window.initRptExcelModule = function () {
     var premHigh = total > std.high, rateLow = rate < PEER_RATE_OK;
     var verdict, vColor;
     if (premHigh && rateLow)      { verdict = '보험료는 또래보다 높은데, 핵심 보장은 채워지지 않았어요. 구성 점검이 필요해요.'; vColor = '#DC2626'; }
-    else if (!premHigh && rateLow){ verdict = '보험료는 부담 없는 수준이지만, 핵심 보장에 빈 곳이 있어요. 부족한 부분만 채우면 돼요.'; vColor = '#D97706'; }
+    else if (!premHigh && rateLow){
+  verdict = age >= 50
+    ? '보험료는 또래 평균보다 낮지만, 그만큼 핵심 보장이 비어 있어요. 나이가 들수록 가입 조건과 보험료 부담이 커지니, 지금 부족한 부분을 확인해 두는 게 좋아요.'
+    : '보험료는 부담 없는 수준이지만, 핵심 보장에 빈 곳이 있어요. 부족한 부분만 채우면 돼요.';
+  vColor = '#D97706';
+}
     else if (premHigh && !rateLow){ verdict = '핵심 보장은 잘 갖춰져 있어요. 다만 보험료가 높은 편이라 중복·불필요 특약을 점검해 볼 수 있어요.'; vColor = '#D97706'; }
     else                          { verdict = '보험료도 적정하고 핵심 보장도 잘 갖춰져 있어요. 👏'; vColor = '#3182F6'; }
     var rows = core.map(function (c) {
@@ -2959,6 +2980,76 @@ window.initRptExcelModule = function () {
     return imgWrap(imgHeader('🩺', name + '님, 건강할 때 준비하면 달라지는 점', age + '세 · 월 보험료 예산 참고 범위(실손보험 제외)')
       + body
       + footerSources([], '연령대별 예산 범위는 공식 통계나 보험사 요율이 아닌 상담용 참고 가이드이며, 특히 간편심사체 금액은 실제 상품별 산출 보험료로 확인이 필요합니다. 가입 가능 여부와 보험료는 건강 상태와 상품에 따라 달라집니다.'));
+  }
+
+    // ───────────────────── 갱신형 vs 비갱신형 비교 ─────────────────────
+  function buildRenewalImageHTML() {
+    var name = gState.customerName, age = gState.age || 40;
+    var st = exState.renewalStats || { renewal: { count: 0, premium: 0 }, non: { count: 0, premium: 0 }, unknown: { count: 0, premium: 0 }, list: [] };
+    var cntTot = st.renewal.count + st.non.count, premTot = st.renewal.premium + st.non.premium;
+
+    if (!cntTot) {
+      return imgWrap(imgHeader('🔄', name + '님 갱신형 vs 비갱신형', '가입한 보험의 갱신 여부를 비교해요')
+        + card('<div style="font-size:13.5px;color:#334155;line-height:1.7;">계약별 갱신 여부를 확인하지 못했어요. 증권에서 갱신형·비갱신형 여부를 확인해 주세요.</div>')
+        + footerSources([], ''));
+    }
+
+    var rC = Math.round(st.renewal.count / cntTot * 100);
+    var rP = premTot > 0 ? Math.round(st.renewal.premium / premTot * 100) : rC;
+
+    function ratioBar(title, rp, rTxt, nTxt) {
+      return '<div style="margin-top:14px;"><div style="font-size:13px;font-weight:800;color:#191F28;">' + title + '</div>'
+        + '<div style="display:flex;height:22px;border-radius:11px;overflow:hidden;margin:8px 0 6px;background:#EEF1F4;">'
+        + '<div style="width:' + rp + '%;background:#F59E0B;"></div>'
+        + '<div style="width:' + (100 - rp) + '%;background:#3182F6;"></div></div>'
+        + '<div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:800;">'
+        + '<span style="color:#D97706;">갱신형 ' + rp + '%' + rTxt + '</span>'
+        + '<span style="color:#1D5FD0;">비갱신형 ' + (100 - rp) + '%' + nTxt + '</span></div></div>';
+    }
+
+    var verdict = rP >= 50
+      ? '월 보험료의 ' + rP + '%가 갱신형이에요. 갱신 때마다 보험료가 달라질 수 있으니, 갱신 시기와 인상 폭을 미리 확인해 두면 좋아요.'
+        + (age >= 50 ? ' 나이가 들수록 갱신 보험료 부담이 커질 수 있어요.' : '')
+      : '비갱신형이 ' + (100 - rP) + '%로 보험료가 고정되는 비중이 높아요. 다만 갱신형 계약이 있다면 갱신 시점은 확인해 보세요.';
+    var vColor = rP >= 50 ? '#D97706' : '#3182F6';
+
+    var body = card(cardTitle('🔄 ' + esc(name) + '님이 가입한 보험, 갱신형일까요 비갱신형일까요?', '계약 건수와 월 보험료 기준으로 비교했어요.')
+      + ratioBar('가입 건수 기준', rC, ' · ' + st.renewal.count + '건', ' · ' + st.non.count + '건')
+      + ratioBar('월 보험료 기준', rP, ' · ' + fmtWon(st.renewal.premium), ' · ' + fmtWon(st.non.premium))
+      + '<div style="margin-top:14px;font-size:13px;font-weight:800;color:' + vColor + ';background:#F8FAFC;border-radius:12px;padding:12px 14px;line-height:1.6;">' + verdict + '</div>');
+
+    var list = st.list.slice().sort(function (a, b) { return b.premium - a.premium; }).slice(0, 5).map(function (it) {
+      var lab = it.type === 'renewal' ? '갱신형' : it.type === 'non' ? '비갱신형' : '확인필요';
+      var bg  = it.type === 'renewal' ? '#FFF7E8' : it.type === 'non' ? '#EFF6FF' : '#F2F4F6';
+      var fg  = it.type === 'renewal' ? '#B45309' : it.type === 'non' ? '#1D5FD0' : '#8B95A1';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid #EDF0F3;">'
+        + '<div style="font-size:12.5px;font-weight:700;color:#191F28;padding-right:8px;">' + esc(it.name) + '</div>'
+        + '<div style="flex:none;font-size:12px;color:#4E5968;font-weight:700;">' + fmtWon(it.premium) + ' <span style="display:inline-block;background:' + bg + ';color:' + fg + ';font-weight:800;border-radius:10px;padding:3px 9px;margin-left:4px;">' + lab + '</span></div></div>';
+    }).join('');
+    body += card(cardTitle('📄 보험료가 큰 계약 순서') + '<div style="margin-top:6px;">' + list + '</div>');
+
+    var CMP = [
+      ['초기 보험료',  '상대적으로 낮은 편',                 '상대적으로 높은 편'],
+      ['시간이 지나면', '갱신 때마다 보험료가 달라질 수 있어요', '납입기간 동안 보험료가 고정돼요'],
+      ['납입이 끝나면', '보장을 유지하려면 계속 납입',         '납입 종료 후 추가 보험료 없음'],
+      ['잘 맞는 경우',  '초기 부담을 줄이고 싶을 때',          '오래 유지하며 보험료를 고정하고 싶을 때'],
+    ];
+    var cmp = CMP.map(function (r) {
+      return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #EDF0F3;">'
+        + '<div style="font-size:11.5px;font-weight:700;color:#8B95A1;">' + esc(r[0]) + '</div>'
+        + '<div style="display:flex;justify-content:space-between;margin-top:5px;">'
+        + '<div style="width:49%;box-sizing:border-box;background:#FFF7E8;border-radius:10px;padding:9px 10px;font-size:12.5px;font-weight:700;color:#B45309;line-height:1.5;">' + esc(r[1]) + '</div>'
+        + '<div style="width:49%;box-sizing:border-box;background:#EFF6FF;border-radius:10px;padding:9px 10px;font-size:12.5px;font-weight:700;color:#1D5FD0;line-height:1.5;">' + esc(r[2]) + '</div>'
+        + '</div></div>';
+    }).join('');
+    body += card(cardTitle('⚖️ 갱신형과 비갱신형, 무엇이 다를까요?')
+      + '<div style="display:flex;justify-content:space-between;margin-top:12px;font-size:13px;font-weight:800;">'
+      + '<div style="width:49%;text-align:center;color:#B45309;">갱신형</div><div style="width:49%;text-align:center;color:#1D5FD0;">비갱신형</div></div>'
+      + cmp);
+
+    var note = '갱신 여부는 계약 단위로 집계했어요. 한 계약 안에 갱신형·비갱신형 특약이 섞여 있을 수 있어요.'
+      + (st.unknown.count ? ' (갱신 여부를 확인하지 못한 ' + st.unknown.count + '건은 제외)' : '');
+    return imgWrap(imgHeader('🔄', name + '님 갱신형 vs 비갱신형', '가입한 보험의 갱신 비중을 비교해요') + body + footerSources([], note));
   }
 
   // ─────────────── 일반 카테고리(대분류) 점검 이미지 ───────────────
@@ -3023,8 +3114,12 @@ window.initRptExcelModule = function () {
     var healthyJob = { risk: true, tag: '또래 비교 · 표준체 vs 간편심사체', icon: '🩺', title: '왜 건강할 때 준비해야 할까요?',
       desc: healthyBud.label + ' 표준체 월 ' + rangeTxt(healthyBud.std[0], healthyBud.std[1]) + ' vs 간편심사체 월 ' + rangeTxt(healthyBud.simple[0], healthyBud.simple[1]),
       file: 'healthy.png', build: buildHealthyImageHTML };
+          var st0 = exState.renewalStats;
+    var renJob = { risk: true, tag: '갱신형 · 비갱신형 비교', icon: '🔄', title: '갱신형 vs 비갱신형 비중',
+      desc: (st0 && (st0.renewal.count + st0.non.count) > 0) ? '갱신형 ' + st0.renewal.count + '건 · 비갱신형 ' + st0.non.count + '건' : '갱신 여부 확인 필요',
+      file: 'renewal.png', build: buildRenewalImageHTML };
     var peerFirst = gState.category === '또래월보험비교';
-    if (peerFirst) { IMG_JOBS.push(peerJob); IMG_JOBS.push(healthyJob); }
+    if (peerFirst) { IMG_JOBS.push(peerJob); IMG_JOBS.push(healthyJob); IMG_JOBS.push(renJob); }
 
     // ① 상태 맞춤 이미지 (암·뇌·심장·실비·화재·운전자)
     var cc = RISK_CFG.cancer;
@@ -3078,7 +3173,7 @@ window.initRptExcelModule = function () {
       }
     });
 
-    if (!peerFirst) { IMG_JOBS.push(peerJob); IMG_JOBS.push(healthyJob); }
+    if (!peerFirst) { IMG_JOBS.push(peerJob); IMG_JOBS.push(healthyJob); IMG_JOBS.push(renJob); }
   }
 
   function renderImageJobs() {
