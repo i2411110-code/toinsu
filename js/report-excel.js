@@ -994,13 +994,8 @@
 
   function getEssentialHTML() {
     var groupsHtml = ESSENTIAL_GROUPS.map(function (g, gi) { return essentialGroupHTML(g, gi); }).join('');
-    return '<div class="rpt-card">'
-      + '<div class="rpt-step-label">STEP 3</div>'
-      + '<h3 class="rpt-step-title">필수 보장 분석</h3>'
-      + '<p class="rpt-step-desc">실비·3대진단비·항암치료비·운전자보험 핵심 항목을 한눈에 점검합니다.<br>'
-      + '<span style="color:#64748B;font-size:12px;">📌 CRM 데이터에서 자동으로 채워집니다 · 금액 직접 입력 · 상태버튼 클릭 시 적정 → 부족 → 미가입 → 과잉 순으로 전환됩니다.</span></p>'
-      + '<div id="rptex-essential-wrap">' + groupsHtml + '</div>'
-      + '</div>';
+    return '<p class="rptex-sec-note">📌 CRM 데이터에서 자동으로 채워집니다 · 금액 직접 입력 · 상태버튼 클릭 시 적정 → 부족 → 미가입 → 과잉 순으로 전환됩니다. (② 탭의 필수보장 이미지에 반영돼요)</p>'
+      + '<div id="rptex-essential-wrap">' + groupsHtml + '</div>';
   }
 
   window.rptExEssToggle = function (gi, ii) {
@@ -1144,7 +1139,7 @@
           await navigator.clipboard.write([
             new ClipboardItem({ 'image/png': blob })
           ]);
-          alert('✅ 연령대별 가이드 이미지가 복사되었습니다!\n카카오톡 채팅창에 바로 붙여넣기(Ctrl+V) 하세요.');
+          showToast('✅ 연령대별 가이드 이미지가 복사되었습니다!\n카카오톡 채팅창에 바로 붙여넣기(Ctrl+V) 하세요.');
         } catch (e) {
           var a = document.createElement('a');
           a.href = canvas.toDataURL('image/png');
@@ -1176,6 +1171,63 @@
     if (!noScroll && bar && bar.scrollIntoView) bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+    // ─── 복사 완료 토스트 (alert 대체) ───
+  var toastTimer = null;
+  function showToast(msg) {
+    var el = document.getElementById('rptex-toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'rptex-toast';
+      el.className = 'rptex-toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    void el.offsetWidth;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2600);
+  }
+
+  // ─── STEP 1 카드 접기/펼치기 ───
+  function setCrmCollapsed(on) {
+    var card = document.getElementById('rptex-crm-card');
+    if (card) card.style.display = on ? 'none' : '';
+  }
+  window.rptExShowPaste = function () {
+    setCrmCollapsed(false);
+    var card = document.getElementById('rptex-crm-card');
+    if (card && card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    var ta = document.getElementById('rptex-crm-text'); if (ta) ta.focus();
+  };
+
+  // ─── 상단 요약 바 + 접이식 섹션 뱃지 갱신 ───
+  function refreshSumBar() {
+    if (!gState) return;
+    var rows = exState.rows || [];
+    var cnt = { low: 0, unregistered: 0, excess: 0 };
+    rows.forEach(function (r) { if (cnt[r.status] !== undefined) cnt[r.status]++; });
+    var total = gState.premiums.reduce(function (s, p) { return s + (p.amount || 0); }, 0);
+    var level = evalLevel(gState.age || 40, total);
+    var hidden = (exState.renewalStats && exState.renewalStats.hidden) || 0;
+
+    var nameEl = document.getElementById('rptex-sum-name');
+    if (nameEl) nameEl.textContent = gState.customerName + '님';
+    var chips = document.getElementById('rptex-sum-chips');
+    if (chips) {
+      var h = '<span class="rptex-chip">' + (gState.age || 40) + '세</span>'
+        + '<span class="rptex-chip">보험 ' + (exState.companies || []).length + '건</span>'
+        + '<span class="rptex-chip' + (cnt.low ? ' rptex-chip-bad' : '') + '">부족 ' + cnt.low + '</span>'
+        + '<span class="rptex-chip">미가입 ' + cnt.unregistered + '</span>'
+        + '<span class="rptex-chip">월 ' + total.toLocaleString() + '원 · ' + level.label + '</span>';
+      if (hidden > 0) h += '<span class="rptex-chip rptex-chip-warn">⚠ CRM 숨김 ' + hidden + '건 미반영</span>';
+      chips.innerHTML = h;
+    }
+    var b1 = document.getElementById('rptex-sec-table-badge');
+    if (b1) b1.textContent = '부족 ' + cnt.low + ' · 미가입 ' + cnt.unregistered + ' · 과잉 ' + cnt.excess;
+    var b2 = document.getElementById('rptex-sec-prem-badge');
+    if (b2) b2.textContent = '월 ' + total.toLocaleString() + '원 · ' + level.label;
+  }
+  
   // ================================================================
   // ✅ 연령대별 적정 보험료 가이드 섹션 끝
   // ================================================================
@@ -1188,9 +1240,9 @@ window.initRptExcelModule = function () {
     injectStyles();
   };
 
-  function getHTML() {
+    function getHTML() {
     return ''
-      /* ── STEP 1 : 토스 CRM 화면 붙여넣기 (유일한 입력 방식) ── */
+      /* ── STEP 1 : 토스 CRM 화면 붙여넣기 (분석이 끝나면 자동으로 숨김) ── */
       + '<div class="rpt-card" id="rptex-crm-card">'
       + '<div class="rpt-step-label">STEP 1</div>'
       + '<h3 class="rpt-step-title">토스 CRM 화면 붙여넣기</h3>'
@@ -1201,17 +1253,26 @@ window.initRptExcelModule = function () {
       + '<div class="rptex-flow-actions">'
       + '<button class="btn-action" style="width:auto;padding:8px 18px;background:#3182F6;" onclick="window.rptExHandleCrmPaste()"><i class="bi bi-clipboard-data"></i> 붙여넣기 분석</button>'
       + '<button class="btn-action" style="width:auto;padding:8px 18px;background:#64748B;" onclick="window.rptExReset()"><i class="bi bi-arrow-counterclockwise"></i> 초기화 (다른 고객 입력)</button>'
-      + '<span id="rptex-crm-status" class="rptex-flow-note"></span></div>'
+      + '</div>'
+      + '</div>'
+      /* 상태/경고 메시지: 카드가 접혀도 항상 보이도록 카드 밖에 둠 */
+      + '<div id="rptex-crm-msgs" style="margin-bottom:12px;">'
+      + '<div id="rptex-crm-status" class="rptex-flow-note" style="display:block;margin:0 2px;"></div>'
       + '<div id="rptex-crm-warn" style="display:none;"></div>'
       + '</div>'
 
       + '<div id="rptex-result" style="display:none;">'
       + '<div class="rpt-card">'
-      + '<div class="rpt-step-label">STEP 2</div>'
-      + '<h3 class="rpt-step-title">보장 분석 결과</h3>'
-      + '<p class="rpt-step-desc" id="rptex-summary" style="color:#3182F6;font-weight:600;"></p>'
 
-      + '<div class="rptex-meta-row">'
+      /* ── 상단 요약 바 ── */
+      + '<div class="rptex-sumbar" id="rptex-sumbar">'
+      + '<div class="rptex-sumbar-main"><span class="rptex-sumbar-name" id="rptex-sum-name"></span><span class="rptex-sumbar-chips" id="rptex-sum-chips"></span></div>'
+      + '<button type="button" class="rptex-sumbar-btn" onclick="window.rptExShowPaste()">＋ 화면 추가·다시 붙여넣기</button>'
+      + '<button type="button" class="rptex-sumbar-btn" onclick="window.rptExReset()">↺ 초기화</button>'
+      + '</div>'
+
+      /* ── 멘트·이미지에 반영되는 값 ── */
+      + '<div class="rptex-meta-card"><div class="rptex-meta-row" style="margin-bottom:0;">'
       + '<div class="rptex-meta-item"><label class="rptex-meta-label">고객 나이</label>'
       + '<input type="number" id="rptex-age" class="rptex-meta-input" value="40" min="1" max="99" style="width:70px;"></div>'
       + '<div class="rptex-meta-item"><label class="rptex-meta-label" title="CRM 성별을 자동 인식해요. 갑상선암 통계 문구에 사용돼요.">성별</label>'
@@ -1230,38 +1291,9 @@ window.initRptExcelModule = function () {
       + '<input type="text" id="rptex-apply-dt" class="rptex-meta-input" style="width:230px;" placeholder="예) 2026-07-01 (수) 오후 4시 24분"></div>'
       + '<div class="rptex-meta-item"><label class="rptex-meta-label" id="rptex-living-label" title="경각심 이미지의 ‘생활비 환산’ 기준 (고객 나이에 맞는 연령대 평균이 자동 입력돼요. 직접 고치면 그 값을 사용해요)">월 생활비(만원)</label>'
       + '<input type="number" id="rptex-living" class="rptex-meta-input" value="' + LIVING_COST_MAN + '" min="50" max="2000" style="width:80px;"></div>'
-      + '</div>'
-
-      /* ── 통합 분석표 ── */
-      + '<p style="font-size:12px;font-weight:700;color:#334155;margin-bottom:6px;">'
-      + '📊 보장 분석표 '
-      + '<span style="font-weight:400;color:#94A3B8;font-size:11px;">— 상태 클릭: 상태 전환 · 합산금액 클릭: 직접 수정 · 보험료: 클릭하여 수정</span></p>'
-      + '<div style="overflow-x:auto;border-radius:10px;border:1px solid #E2E8F0;margin-bottom:4px;"><div id="rptex-table"></div></div>'
-      + '<p style="font-size:11px;color:#94A3B8;margin-bottom:16px;">💡 이미지는 아래 발송 순서의 ‘② 분석 이미지’ 탭에서 카테고리별로 복사해 카카오톡에 붙여넣기 하세요. 이미지는 분석표의 상태(부족/적정/충분)에 맞춰 내용이 달라져요.</p>'
-
-      /* ── 보험료 수동 추가 ── */
-      + '<div style="border:1.5px solid #E2E8F0;border-radius:12px;overflow:hidden;margin-bottom:16px;">'
-      + '<div style="background:#001E42;color:#fff;padding:10px 14px;font-size:13px;font-weight:700;">💰 보험사별 월납 보험료 <span style="font-size:11px;font-weight:400;opacity:.8;">(CRM 자동 파싱 · 직접 수정 가능)</span></div>'
-      + '<div style="padding:14px;">'
-      + '<table style="border-collapse:collapse;width:100%;font-size:13px;">'
-      + '<thead><tr>'
-      + '<th style="background:#F1F5F9;padding:8px 12px;text-align:left;border:1px solid #E2E8F0;font-weight:700;color:#334155;">보험사</th>'
-      + '<th style="background:#F1F5F9;padding:8px 12px;text-align:right;border:1px solid #E2E8F0;font-weight:700;color:#334155;">월납 보험료 (원)</th>'
-      + '</tr></thead>'
-      + '<tbody id="rptex-premium-tbody"></tbody>'
-      + '<tfoot>'
-      + '<tr><td style="background:#EFF6FF;padding:9px 12px;border:1px solid #E2E8F0;font-weight:700;color:#001E42;">합계</td>'
-      + '<td id="rptex-premium-total" style="background:#EFF6FF;padding:9px 12px;border:1px solid #E2E8F0;font-weight:700;color:#001E42;text-align:right;">0원</td></tr>'
-      + '<tr><td style="background:#F8FAFC;padding:9px 12px;border:1px solid #E2E8F0;font-weight:700;color:#334155;">연령 대비 수준</td>'
-      + '<td id="rptex-premium-level" style="background:#F8FAFC;padding:9px 12px;border:1px solid #E2E8F0;font-weight:800;text-align:center;"></td></tr>'
-      + '</tfoot></table>'
-      + '<button class="rptex-add-co-btn" onclick="window.rptExAddCompany()">+ 보험사 추가</button>'
       + '</div></div>'
 
-      /* ── ✅ 필수 보장 분석 카드 섹션 ── */
-      + getEssentialHTML()
-
-            /* ── ✅ 카톡 발송 순서 (탭 방식) ── */
+      /* ── ✅ 카톡 발송 순서 (탭 방식) ── */
       + '<div class="rptex-flow-wrap">'
       + '<div class="rptex-flow-title">📤 카톡 발송 순서 <span class="rptex-flow-sub">— 탭을 눌러 단계별로 복사해서 보내주세요</span></div>'
       + '<div class="rptex-tabbar" id="rptex-tabbar">'
@@ -1282,7 +1314,7 @@ window.initRptExcelModule = function () {
       + '</div></div>'
       + '<div class="rptex-flow-step">'
       + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">2</span>신청 내역 체크 멘트</div>'
-      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 상단의 "신청 일시" 값을 기준으로 멘트가 생성됩니다.</div>'
+      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 위의 "신청 일시" 값을 기준으로 멘트가 생성됩니다.</div>'
       + '<textarea id="rptex-flow-time" class="rptex-flow-ta" readonly></textarea>'
       + '<div class="rptex-flow-actions"><button class="btn-action" style="width:auto;padding:8px 18px;" onclick="window.rptExCopyFlow(\'rptex-flow-time\')"><i class="bi bi-clipboard-check"></i> 복사</button></div>'
       + '</div>'
@@ -1292,8 +1324,8 @@ window.initRptExcelModule = function () {
       /* 탭 2: 분석 이미지 (니즈환기 카드 / 필수 보장) */
       + '<div class="rptex-tabpanel" id="rptex-tabpanel-2" style="display:none;">'
       + '<div class="rptex-flow-step">'
-      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">3</span>니즈환기 카드 첨부 <span class="rptex-flow-sub">— 고객 상태에 맞는 카드 한 장부터</span></div>'
-      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 카테고리별로 나눠 둔 이미지예요. 한 번에 여러 장보다 가장 부족한 항목 한 장을 먼저 복사 → 붙여넣기 하세요. 부족/미가입 항목은 크게, 적정/충분 항목은 ‘잘 준비되어 있어요’로 자동 정리돼요.</div>'
+      + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">3</span>니즈환기 카드 첨부 <span class="rptex-flow-sub">— ⭐ 추천 카드 한 장부터</span></div>'
+      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 카테고리별로 나눠 둔 이미지예요. 한 번에 여러 장보다 가장 부족한 항목(⭐ 추천) 한 장을 먼저 복사 → 붙여넣기 하세요. 부족/미가입 항목은 크게, 적정/충분 항목은 ‘잘 준비되어 있어요’로 자동 정리돼요.</div>'
       + '<div id="rptex-img-jobs"></div>'
       + '<details class="rptex-legacy"><summary>전체 한 장 이미지 (길어서 카톡에서 잘릴 수 있어요)</summary>'
       + '<div class="rptex-flow-actions">'
@@ -1315,7 +1347,7 @@ window.initRptExcelModule = function () {
       + '<div class="rptex-tabpanel" id="rptex-tabpanel-3" style="display:none;">'
       + '<div class="rptex-flow-step">'
       + '<div class="rptex-flow-step-head"><span class="rptex-flow-num">5</span>상담 질문 멘트</div>'
-      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 상단의 "상담 카테고리" 선택값에 맞춰 멘트가 자동으로 바뀝니다.<br>📞 답장이 없으면 2~3일 뒤 직접 전화로 이어가세요.</div>'
+      + '<div class="rptex-flow-note" style="display:block;margin-bottom:10px;">📎 위의 "상담 카테고리" 선택값에 맞춰 멘트가 자동으로 바뀝니다.<br>📞 답장이 없으면 2~3일 뒤 직접 전화로 이어가세요.</div>'
       + '<textarea id="rptex-flow-q" class="rptex-flow-ta" readonly></textarea>'
       + '<div class="rptex-flow-actions"><button class="btn-action" style="width:auto;padding:8px 18px;" onclick="window.rptExCopyFlow(\'rptex-flow-q\')"><i class="bi bi-clipboard-check"></i> 복사</button></div>'
       + '</div>'
@@ -1335,6 +1367,42 @@ window.initRptExcelModule = function () {
 
       + '</div>'
 
+      /* ── 접이식 검수 ① 보장 분석표 ── */
+      + '<details class="rptex-sec">'
+      + '<summary>📊 보장 분석표 <span class="rptex-sec-badge" id="rptex-sec-table-badge"></span></summary>'
+      + '<div class="rptex-sec-body">'
+      + '<p id="rptex-summary" style="font-size:12.5px;color:#3182F6;font-weight:600;margin:0 0 8px;"></p>'
+      + '<p class="rptex-sec-note">상태 클릭: 상태 전환 · 합산금액 클릭: 직접 수정 · 보험료: 클릭하여 수정</p>'
+      + '<div style="overflow-x:auto;border-radius:10px;border:1px solid #E2E8F0;margin-bottom:4px;"><div id="rptex-table"></div></div>'
+      + '<p class="rptex-sec-note" style="margin-top:8px;">💡 이미지는 위 발송 순서의 ‘② 분석 이미지’ 탭에서 복사하세요. 이미지는 이 표의 상태(부족/적정/충분)에 맞춰 내용이 달라져요.</p>'
+      + '</div></details>'
+
+      /* ── 접이식 검수 ② 보험사별 월납 보험료 ── */
+      + '<details class="rptex-sec">'
+      + '<summary>💰 보험사별 월납 보험료 <span class="rptex-sec-badge" id="rptex-sec-prem-badge"></span></summary>'
+      + '<div class="rptex-sec-body">'
+      + '<p class="rptex-sec-note">CRM 자동 파싱 · 직접 수정 가능</p>'
+      + '<table style="border-collapse:collapse;width:100%;font-size:13px;">'
+      + '<thead><tr>'
+      + '<th style="background:#F1F5F9;padding:8px 12px;text-align:left;border:1px solid #E2E8F0;font-weight:700;color:#334155;">보험사</th>'
+      + '<th style="background:#F1F5F9;padding:8px 12px;text-align:right;border:1px solid #E2E8F0;font-weight:700;color:#334155;">월납 보험료 (원)</th>'
+      + '</tr></thead>'
+      + '<tbody id="rptex-premium-tbody"></tbody>'
+      + '<tfoot>'
+      + '<tr><td style="background:#EFF6FF;padding:9px 12px;border:1px solid #E2E8F0;font-weight:700;color:#001E42;">합계</td>'
+      + '<td id="rptex-premium-total" style="background:#EFF6FF;padding:9px 12px;border:1px solid #E2E8F0;font-weight:700;color:#001E42;text-align:right;">0원</td></tr>'
+      + '<tr><td style="background:#F8FAFC;padding:9px 12px;border:1px solid #E2E8F0;font-weight:700;color:#334155;">연령 대비 수준</td>'
+      + '<td id="rptex-premium-level" style="background:#F8FAFC;padding:9px 12px;border:1px solid #E2E8F0;font-weight:800;text-align:center;"></td></tr>'
+      + '</tfoot></table>'
+      + '<button class="rptex-add-co-btn" onclick="window.rptExAddCompany()">+ 보험사 추가</button>'
+      + '</div></details>'
+
+      /* ── 접이식 검수 ③ 필수 보장 분석 ── */
+      + '<details class="rptex-sec">'
+      + '<summary>✅ 필수 보장 분석 <span class="rptex-sec-badge">실비 · 3대진단 · 항암 · 운전자</span></summary>'
+      + '<div class="rptex-sec-body">' + getEssentialHTML() + '</div>'
+      + '</details>'
+
       /* ── ✅ 연령대별 적정 보험료 가이드 (하단 + 토글, 선택 첨부) ── */
       + '<div class="rptex-ageguide-wrap">'
       + '<button class="rptex-ageguide-toggle" id="rptex-ageguide-toggle-btn" onclick="window.rptExToggleAgeGuide()">'
@@ -1349,9 +1417,6 @@ window.initRptExcelModule = function () {
       + '</div>'
       + '</div>'
 
-      + '<div style="margin-top:16px;">'
-      + '<button style="background:none;border:1px solid #E2E8F0;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;color:#475569;font-family:\'Noto Sans KR\',sans-serif;" onclick="window.rptExReset()"><i class="bi bi-arrow-counterclockwise"></i> 초기화 (다른 고객 입력)</button>'
-      + '</div>'
       + '</div></div>';
   }
 
@@ -1443,6 +1508,30 @@ window.initRptExcelModule = function () {
       '.rptex-tab.active{background:#3182F6;color:#fff;}',
       '.rptex-tab-next{border:1.5px solid #BAD7FB;background:#F8FBFF;color:#3182F6;border-radius:8px;padding:8px 16px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:"Noto Sans KR",sans-serif;}',
       '.rptex-tab-next:hover{background:#EFF6FF;}',
+      /* ── 상단 요약 바 / 메타 카드 / 접이식 검수 ── */
+      '.rptex-sumbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#001E42;color:#fff;border-radius:14px;padding:12px 16px;margin-bottom:14px;}',
+      '.rptex-sumbar-main{flex:1;min-width:220px;}',
+      '.rptex-sumbar-name{font-size:15px;font-weight:800;margin-right:10px;}',
+      '.rptex-sumbar-chips{display:inline-flex;gap:6px;flex-wrap:wrap;vertical-align:middle;}',
+      '.rptex-chip{display:inline-block;background:rgba(255,255,255,.14);border-radius:10px;padding:3px 10px;font-size:11.5px;font-weight:700;}',
+      '.rptex-chip-bad{background:#F04452;color:#fff;}',
+      '.rptex-chip-warn{background:#FBBF24;color:#001E42;}',
+      '.rptex-sumbar-btn{border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;border-radius:9px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans KR",sans-serif;}',
+      '.rptex-sumbar-btn:hover{background:rgba(255,255,255,.12);}',
+      '.rptex-meta-card{background:#fff;border:1.5px solid #E2E8F0;border-radius:14px;padding:12px 16px;margin-bottom:14px;}',
+      '.rptex-sec{background:#fff;border:1.5px solid #E2E8F0;border-radius:14px;margin-bottom:10px;}',
+      '.rptex-sec>summary{list-style:none;cursor:pointer;padding:14px 16px;font-size:13.5px;font-weight:800;color:#191F28;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}',
+      '.rptex-sec>summary::-webkit-details-marker{display:none;}',
+      '.rptex-sec>summary::before{content:"▸";color:#94A3B8;transition:transform .15s;}',
+      '.rptex-sec[open]>summary::before{transform:rotate(90deg);}',
+      '.rptex-sec-badge{font-size:11.5px;font-weight:700;color:#64748B;background:#F1F5F9;border-radius:10px;padding:2px 10px;}',
+      '.rptex-sec-body{padding:0 16px 16px;}',
+      '.rptex-sec-note{font-size:12px;color:#64748B;margin:0 0 12px;}',
+      /* ── 추천 카드 / 토스트 ── */
+      '.rptex-job-rec{border-color:#3182F6;background:#F5F9FF;box-shadow:0 0 0 2px rgba(49,130,246,.12);}',
+      '.rptex-job-recbadge{display:inline-block;font-size:10.5px;font-weight:800;color:#fff;background:#3182F6;border-radius:8px;padding:1px 8px;margin-right:6px;vertical-align:middle;}',
+      '.rptex-toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:#191F28;color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;line-height:1.5;white-space:pre-line;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:99999;max-width:90vw;font-family:"Noto Sans KR",sans-serif;}',
+      '.rptex-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}',
 
       /* ── 연령대별 적정 보험료 가이드 (하단 + 토글) ── */
       '.rptex-ageguide-wrap{margin-top:4px;margin-bottom:16px;display:flex;flex-direction:column;align-items:flex-start;}',
@@ -2036,6 +2125,7 @@ window.initRptExcelModule = function () {
         if (!parsed && !gState) statusParts.push('이제 보장분석 화면을 붙여넣어 주세요');
       }
 
+      if (gState) setCrmCollapsed(true);                             // 분석 완료 → 붙여넣기 카드는 접고 요약 바만 표시
       ta.value = '';                                                 // 고객 정보가 화면에 남지 않도록 비움
       crmShowWarn(warns, false);
       crmStatus('✅ ' + statusParts.join(' · '));
@@ -2338,6 +2428,7 @@ window.initRptExcelModule = function () {
 
   // ─── 텍스트영역 갱신: AI 결과가 있을 때만 멘트를 표시. 없으면 빈칸 유지 ───
   function refreshMsg() {
+    refreshSumBar();
     renderImageJobs();   // 상태/금액이 바뀔 때마다 2단계 카테고리별 이미지 목록도 최신화
     var ta = document.getElementById('rptex-msg-output');
     if (!ta || !gState) return;
@@ -2348,10 +2439,10 @@ window.initRptExcelModule = function () {
   // ─── 발송 순서 단계별 텍스트 공통 복사 함수 ───
   window.rptExCopyFlow = function(id) {
     var el = document.getElementById(id);
-    if (!el || !el.value) return alert('복사할 내용이 없습니다.');
+    if (!el || !el.value) return showToast('복사할 내용이 없습니다.');
     navigator.clipboard.writeText(el.value)
-      .then(function(){ alert('✅ 복사되었습니다.'); })
-      .catch(function(){ el.select(); document.execCommand('copy'); alert('✅ 복사 완료'); });
+      .then(function(){ showToast('✅ 복사되었습니다. 카톡에 붙여넣기 하세요.'); })
+      .catch(function(){ el.select(); document.execCommand('copy'); showToast('✅ 복사 완료'); });
   };
 
   window.rptExCopyMsg = function() {
@@ -2386,7 +2477,7 @@ window.initRptExcelModule = function () {
             await navigator.clipboard.write([
               new ClipboardItem({ 'image/png': blob })
             ]);
-            alert(okMsg);
+            showToast(okMsg);
           } catch(e) {
             var a = document.createElement('a');
             a.href = canvas.toDataURL('image/png');
@@ -3054,57 +3145,115 @@ window.initRptExcelModule = function () {
       + footerSources([], '연령대별 예산 범위는 공식 통계나 보험사 요율이 아닌 상담용 참고 가이드이며, 특히 간편심사체 금액은 실제 상품별 산출 보험료로 확인이 필요합니다. 가입 가능 여부와 보험료는 건강 상태와 상품에 따라 달라집니다.'));
   }
 
-    // ───────────────────── 갱신형 vs 비갱신형 비교 ─────────────────────
+      // ───────────────────── 갱신형 vs 비갱신형 비교 ─────────────────────
   function buildRenewalImageHTML() {
     var name = gState.customerName, age = gState.age || 40;
-    var st = exState.renewalStats || { renewal: { count: 0, premium: 0 }, non: { count: 0, premium: 0 }, unknown: { count: 0, premium: 0 }, list: [] };
-    var cntTot = st.renewal.count + st.non.count, premTot = st.renewal.premium + st.non.premium;
+    var st = exState.renewalStats || {};
+    var R = st.renewal || { count: 0, premium: 0 };
+    var N = st.non     || { count: 0, premium: 0 };
+    var M = st.mixed   || { count: 0, premium: 0 };
+    var U = st.unknown || { count: 0, premium: 0 };
+    var list0 = st.list || [];
+    var cntTot = R.count + N.count + M.count;
+    var premTot = R.premium + N.premium + M.premium;
+
+    var note = '갱신 여부는 계약 단위로 집계하고, 보장기간이 1년 이내인 담보가 있으면 매년 갱신되는 담보로 봤어요.'
+      + (M.count ? ' 담보별 보험료는 CRM에 없어 혼합 계약의 보험료는 갱신/비갱신으로 나누지 않았어요.' : '')
+      + (st.excludedAuto ? ' 자동차보험은 제외했어요.' : '')
+      + (U.count ? ' 갱신 여부를 확인하지 못한 ' + U.count + '건도 제외했어요.' : '')
+      + (st.hidden ? ' CRM 화면에서 숨겨진 ' + st.hidden + '건은 집계에 포함되지 않았어요.' : '');
 
     if (!cntTot) {
       return imgWrap(imgHeader('🔄', name + '님 갱신형 vs 비갱신형', '가입한 보험의 갱신 여부를 비교해요')
         + card('<div style="font-size:13.5px;color:#334155;line-height:1.7;">계약별 갱신 여부를 확인하지 못했어요. 증권에서 갱신형·비갱신형 여부를 확인해 주세요.</div>')
-        + footerSources([], ''));
+        + footerSources([], note));
     }
 
-    var rC = Math.round(st.renewal.count / cntTot * 100);
-    var rP = premTot > 0 ? Math.round(st.renewal.premium / premTot * 100) : rC;
+    var COLOR = { renewal: '#F59E0B', non: '#3182F6', mixed: '#A78BFA' };
 
-    function ratioBar(title, rp, rTxt, nTxt) {
-      return '<div style="margin-top:14px;"><div style="font-size:13px;font-weight:800;color:#191F28;">' + title + '</div>'
-        + '<div style="display:flex;height:22px;border-radius:11px;overflow:hidden;margin:8px 0 6px;background:#EEF1F4;">'
-        + '<div style="width:' + rp + '%;background:#F59E0B;"></div>'
-        + '<div style="width:' + (100 - rp) + '%;background:#3182F6;"></div></div>'
+    // ── 카드 1) 건수 기준 막대 (3분할) ──
+    function seg(cnt, color) {
+      return cnt ? '<div style="width:' + (cnt / cntTot * 100).toFixed(2) + '%;background:' + color + ';"></div>' : '';
+    }
+    var cntBar = '<div style="margin-top:14px;"><div style="font-size:13px;font-weight:800;color:#191F28;">가입 건수 기준 · 총 ' + cntTot + '건</div>'
+      + '<div style="display:flex;height:22px;border-radius:11px;overflow:hidden;margin:8px 0 8px;background:#EEF1F4;">'
+      + seg(R.count, COLOR.renewal) + seg(N.count, COLOR.non) + seg(M.count, COLOR.mixed) + '</div>'
+      + '<div style="display:flex;flex-wrap:wrap;font-size:12.5px;font-weight:800;">'
+      + '<span style="color:#D97706;margin-right:14px;">● 갱신형 ' + R.count + '건</span>'
+      + '<span style="color:#1D5FD0;margin-right:14px;">● 비갱신형 ' + N.count + '건</span>'
+      + (M.count ? '<span style="color:#7C3AED;">● 비갱신 + 1년 갱신 담보 ' + M.count + '건</span>' : '')
+      + '</div></div>';
+
+    // ── 카드 1) 보험료 기준: 혼합이 없을 때만 %, 있으면 금액만 ──
+    var premBlock = '';
+    if (premTot > 0 && !M.count) {
+      var rP = Math.round(R.premium / premTot * 100);
+      premBlock = '<div style="margin-top:16px;"><div style="font-size:13px;font-weight:800;color:#191F28;">월 보험료 기준 · ' + fmtWon(premTot) + '</div>'
+        + '<div style="display:flex;height:22px;border-radius:11px;overflow:hidden;margin:8px 0 8px;background:#EEF1F4;">'
+        + '<div style="width:' + rP + '%;background:' + COLOR.renewal + ';"></div>'
+        + '<div style="width:' + (100 - rP) + '%;background:' + COLOR.non + ';"></div></div>'
         + '<div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:800;">'
-        + '<span style="color:#D97706;">갱신형 ' + rp + '%' + rTxt + '</span>'
-        + '<span style="color:#1D5FD0;">비갱신형 ' + (100 - rp) + '%' + nTxt + '</span></div></div>';
+        + '<span style="color:#D97706;">갱신형 ' + rP + '% · ' + fmtWon(R.premium) + '</span>'
+        + '<span style="color:#1D5FD0;">비갱신형 ' + (100 - rP) + '% · ' + fmtWon(N.premium) + '</span></div></div>';
+    } else if (premTot > 0) {
+      var amtRow = function (label, color, val, extra) {
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid #EDF0F3;">'
+          + '<div style="font-size:12.5px;font-weight:800;color:' + color + ';">● ' + label + '</div>'
+          + '<div style="font-size:12.5px;font-weight:800;color:#191F28;">' + fmtWon(val) + (extra ? ' <span style="font-weight:600;color:#8B95A1;">' + extra + '</span>' : '') + '</div></div>';
+      };
+      premBlock = '<div style="margin-top:16px;"><div style="font-size:13px;font-weight:800;color:#191F28;">월 보험료 · 합계 ' + fmtWon(premTot) + '</div>'
+        + '<div style="margin-top:6px;">'
+        + (R.count ? amtRow('갱신형', '#D97706', R.premium) : '')
+        + (N.count ? amtRow('비갱신형', '#1D5FD0', N.premium) : '')
+        + amtRow('비갱신 + 1년 갱신 담보 (혼합)', '#7C3AED', M.premium, '· 담보별로 나눌 수 없어요')
+        + '</div></div>';
     }
 
-    var verdict = rP >= 50
-      ? '월 보험료의 ' + rP + '%가 갱신형이에요. 갱신 때마다 보험료가 달라질 수 있으니, 갱신 시기와 인상 폭을 미리 확인해 두면 좋아요.'
-        + (age >= 50 ? ' 나이가 들수록 갱신 보험료 부담이 커질 수 있어요.' : '')
-      : '비갱신형이 ' + (100 - rP) + '%로 보험료가 고정되는 비중이 높아요. 다만 갱신형 계약이 있다면 갱신 시점은 확인해 보세요.';
-    var vColor = rP >= 50 ? '#D97706' : '#3182F6';
+    // ── 총평 ──
+    var verdict, vColor;
+    if (M.count) {
+      verdict = M.count + '건에 1년마다 갱신되는 담보(실비 등)가 들어 있어요. 계약은 비갱신형이어도 이 담보의 보험료는 갱신 때마다 달라질 수 있어요.'
+        + (age >= 50 ? ' 나이가 들수록 갱신 보험료 부담이 커질 수 있으니 미리 확인해 두면 좋아요.' : '');
+      vColor = '#7C3AED';
+    } else if (premTot > 0 && R.premium / premTot >= 0.5) {
+      verdict = '월 보험료의 ' + Math.round(R.premium / premTot * 100) + '%가 갱신형이에요. 갱신 때마다 보험료가 달라질 수 있으니, 갱신 시기와 인상 폭을 미리 확인해 두면 좋아요.'
+        + (age >= 50 ? ' 나이가 들수록 갱신 보험료 부담이 커질 수 있어요.' : '');
+      vColor = '#D97706';
+    } else if (R.count) {
+      verdict = '비갱신형 비중이 높지만 갱신형 계약도 ' + R.count + '건 있어요. 갱신 시점은 확인해 보세요.';
+      vColor = '#3182F6';
+    } else {
+      verdict = '확인된 계약은 모두 비갱신형이에요. 보험료가 고정되는 구조라 안정적이에요.';
+      vColor = '#3182F6';
+    }
 
     var body = card(cardTitle('🔄 ' + esc(name) + '님이 가입한 보험, 갱신형일까요 비갱신형일까요?', '계약 건수와 월 보험료 기준으로 비교했어요.')
-      + ratioBar('가입 건수 기준', rC, ' · ' + st.renewal.count + '건', ' · ' + st.non.count + '건')
-      + ratioBar('월 보험료 기준', rP, ' · ' + fmtWon(st.renewal.premium), ' · ' + fmtWon(st.non.premium))
-      + '<div style="margin-top:14px;font-size:13px;font-weight:800;color:' + vColor + ';background:#F8FAFC;border-radius:12px;padding:12px 14px;line-height:1.6;">' + verdict + '</div>');
+      + cntBar + premBlock
+      + '<div style="margin-top:14px;font-size:13px;font-weight:800;color:' + vColor + ';background:#F8FAFC;border-radius:12px;padding:12px 14px;line-height:1.6;">' + esc(verdict) + '</div>');
 
-    var list = st.list.slice().sort(function (a, b) { return b.premium - a.premium; }).slice(0, 5).map(function (it) {
-      var lab = it.type === 'renewal' ? '갱신형' : it.type === 'non' ? '비갱신형' : '확인필요';
-      var bg  = it.type === 'renewal' ? '#FFF7E8' : it.type === 'non' ? '#EFF6FF' : '#F2F4F6';
-      var fg  = it.type === 'renewal' ? '#B45309' : it.type === 'non' ? '#1D5FD0' : '#8B95A1';
+    // ── 카드 2) 계약별 목록 ──
+    var TYPE_LABEL = { renewal: '갱신형', non: '비갱신형', mixed: '비갱신 + 1년 갱신 담보', unknown: '확인필요' };
+    var TYPE_BG = { renewal: '#FFF7E8', non: '#EFF6FF', mixed: '#F3EEFF', unknown: '#F2F4F6' };
+    var TYPE_FG = { renewal: '#B45309', non: '#1D5FD0', mixed: '#7C3AED', unknown: '#8B95A1' };
+    var rows = list0.slice().sort(function (a, b) { return b.premium - a.premium; }).slice(0, 5).map(function (it) {
+      var sub = '';
+      if (it.type === 'mixed' && it.annual && it.annual.length) {
+        var shown = it.annual.slice(0, 2).join(', ') + (it.annual.length > 2 ? ' 외 ' + (it.annual.length - 2) + '개' : '');
+        sub = '<div style="font-size:11px;color:#7C3AED;margin-top:3px;">1년 갱신: ' + esc(shown) + '</div>';
+      }
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid #EDF0F3;">'
-        + '<div style="font-size:12.5px;font-weight:700;color:#191F28;padding-right:8px;">' + esc(it.name) + '</div>'
-        + '<div style="flex:none;font-size:12px;color:#4E5968;font-weight:700;">' + fmtWon(it.premium) + ' <span style="display:inline-block;background:' + bg + ';color:' + fg + ';font-weight:800;border-radius:10px;padding:3px 9px;margin-left:4px;">' + lab + '</span></div></div>';
+        + '<div style="padding-right:8px;"><div style="font-size:12.5px;font-weight:700;color:#191F28;">' + esc(it.name) + '</div>' + sub + '</div>'
+        + '<div style="flex:none;text-align:right;font-size:12px;color:#4E5968;font-weight:700;">' + (it.premium ? fmtWon(it.premium) : '납입 종료')
+        + ' <span style="display:inline-block;background:' + TYPE_BG[it.type] + ';color:' + TYPE_FG[it.type] + ';font-weight:800;border-radius:10px;padding:3px 9px;margin-left:4px;">' + TYPE_LABEL[it.type] + '</span></div></div>';
     }).join('');
-    body += card(cardTitle('📄 보험료가 큰 계약 순서') + '<div style="margin-top:6px;">' + list + '</div>');
+    body += card(cardTitle('📄 보험료가 큰 계약 순서') + '<div style="margin-top:6px;">' + rows + '</div>');
 
+    // ── 카드 3) 갱신형 vs 비갱신형 비교표 ──
     var CMP = [
-      ['초기 보험료',  '상대적으로 낮은 편',                 '상대적으로 높은 편'],
-      ['시간이 지나면', '갱신 때마다 보험료가 달라질 수 있어요', '납입기간 동안 보험료가 고정돼요'],
-      ['납입이 끝나면', '보장을 유지하려면 계속 납입',         '납입 종료 후 추가 보험료 없음'],
-      ['잘 맞는 경우',  '초기 부담을 줄이고 싶을 때',          '오래 유지하며 보험료를 고정하고 싶을 때'],
+      ['초기 보험료',  '상대적으로 낮은 편',                     '상대적으로 높은 편'],
+      ['시간이 지나면', '갱신 때마다 보험료가 달라질 수 있어요',   '납입기간 동안 보험료가 고정돼요'],
+      ['납입이 끝나면', '보장을 유지하려면 계속 납입',             '납입 종료 후 추가 보험료 없음'],
+      ['잘 맞는 경우',  '초기 부담을 줄이고 싶을 때',              '오래 유지하며 보험료를 고정하고 싶을 때'],
     ];
     var cmp = CMP.map(function (r) {
       return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #EDF0F3;">'
@@ -3117,10 +3266,9 @@ window.initRptExcelModule = function () {
     body += card(cardTitle('⚖️ 갱신형과 비갱신형, 무엇이 다를까요?')
       + '<div style="display:flex;justify-content:space-between;margin-top:12px;font-size:13px;font-weight:800;">'
       + '<div style="width:49%;text-align:center;color:#B45309;">갱신형</div><div style="width:49%;text-align:center;color:#1D5FD0;">비갱신형</div></div>'
-      + cmp);
+      + cmp
+      + (M.count ? '<div style="margin-top:14px;font-size:12.5px;color:#6D28D9;background:#F3EEFF;border-radius:12px;padding:11px 13px;line-height:1.6;">한 계약 안에도 실비처럼 매년 갱신되는 담보와, 보험료가 고정되는 담보가 함께 있을 수 있어요.</div>' : ''));
 
-    var note = '갱신 여부는 계약 단위로 집계했어요. 한 계약 안에 갱신형·비갱신형 특약이 섞여 있을 수 있어요.'
-      + (st.unknown.count ? ' (갱신 여부를 확인하지 못한 ' + st.unknown.count + '건은 제외)' : '');
     return imgWrap(imgHeader('🔄', name + '님 갱신형 vs 비갱신형', '가입한 보험의 갱신 비중을 비교해요') + body + footerSources([], note));
   }
 
@@ -3250,6 +3398,30 @@ window.initRptExcelModule = function () {
     });
 
     if (!peerFirst) { IMG_JOBS.push(peerJob); IMG_JOBS.push(healthyJob); IMG_JOBS.push(renJob); }
+
+    // ⭐ 추천: 암·뇌·심장·실비 중 부족/미가입이 가장 많은 카드 1장을 맨 위로
+    function needScore(labels) {
+      return labels.reduce(function (n, lb) {
+        var s = rowState(lb).status;
+        return n + (s === 'unregistered' ? 2 : s === 'low' ? 1 : 0);
+      }, 0);
+    }
+    var scoreByFile = {
+      'cancer.png':  needScore(RISK_CFG.cancer.rows.map(function (d) { return d[0]; })),
+      'brain.png':   needScore(RISK_CFG.brain.rows.map(function (d) { return d[0]; })),
+      'heart.png':   needScore(RISK_CFG.heart.rows.map(function (d) { return d[0]; })),
+      'medical.png': needScore(MED_CFG.rows.slice(0, 4).map(function (d) { return d[0]; })) + (gState.category === '실비부족' ? 3 : 0),
+    };
+    var bestIdx = -1, bestScore = 0;
+    IMG_JOBS.forEach(function (j, i) {
+      var sc = scoreByFile[j.file];
+      if (sc > bestScore) { bestScore = sc; bestIdx = i; }
+    });
+    if (bestIdx >= 0) {
+      var topJob = IMG_JOBS.splice(bestIdx, 1)[0];
+      topJob.recommended = true;
+      IMG_JOBS.unshift(topJob);
+    }
   }
 
   function renderImageJobs() {
@@ -3259,7 +3431,7 @@ window.initRptExcelModule = function () {
     wrap.innerHTML = IMG_JOBS.map(function (j, i) {
       return '<div class="rptex-job' + (j.risk ? ' rptex-job-risk' : '') + '">'
         + '<div class="rptex-job-ico">' + j.icon + '</div>'
-        + '<div class="rptex-job-main"><div class="rptex-job-title">' + esc(j.title) + (j.risk ? '<span class="rptex-job-tag">' + esc(j.tag || '상태별 맞춤') + '</span>' : '') + '</div>'
+        + '<div class="rptex-job-main"><div class="rptex-job-title">' + (j.recommended ? '<span class="rptex-job-recbadge">⭐ 추천</span>' : '') + esc(j.title) + (j.risk ? '<span class="rptex-job-tag">' + esc(j.tag || '상태별 맞춤') + '</span>' : '') + '</div>'
         + '<div class="rptex-job-desc">' + esc(j.desc) + '</div></div>'
         + '<button class="btn-action" style="width:auto;padding:8px 16px;flex:none;background:#3182F6;" id="rptex-job-btn-' + i + '" onclick="window.rptExCopyImageJob(' + i + ')"><i class="bi bi-image"></i> 이미지 복사</button>'
         + '</div>';
@@ -3505,7 +3677,7 @@ window.initRptExcelModule = function () {
           await navigator.clipboard.write([
             new ClipboardItem({ 'image/png': blob })
           ]);
-          alert('✅ 필수 보장 분석 이미지가 복사되었습니다!\n카카오톡 채팅창에 바로 붙여넣기(Ctrl+V) 하세요.');
+          showToast('✅ 필수 보장 분석 이미지가 복사되었습니다!\n카카오톡 채팅창에 바로 붙여넣기(Ctrl+V) 하세요.');
         } catch(e) {
           var a = document.createElement('a');
           a.href = canvas.toDataURL('image/png');
@@ -3558,6 +3730,7 @@ window.initRptExcelModule = function () {
 
     crmPasteReset();
     window.rptExSwitchTab(1, true);
+    setCrmCollapsed(false);
 
     // 붙여넣기 칸으로 이동 + 포커스
     var card = document.getElementById('rptex-crm-card');
