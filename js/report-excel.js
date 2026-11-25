@@ -2529,9 +2529,7 @@ window.initRptExcelModule = function () {
     var goods = items.filter(function (it) { return !isNeed(it.status); });
     var body = '';
 
-    // 1) 통계
-    body += card(cardTitle('📊 ' + esc(cfg.statTitle)) + statTiles(cfg.tiles)
-      + (cfg.note ? '<div style="font-size:12px;color:#475569;line-height:1.6;background:#F8FAFC;border-radius:12px;padding:11px 13px;margin-top:10px;">' + esc(cfg.note) + '</div>' : ''));
+    
 
     // 2) ○○님은 어떻게 준비가 되어 있을까요? — 담보별 현재 상태 (부족·미가입이 있을 때만)
     if (needs.length) {
@@ -2820,6 +2818,30 @@ window.initRptExcelModule = function () {
   }
 
     // ───────────────────── 또래 비교: 담보 대비 보험료 ─────────────────────
+      // ★ 연령대별 월 보험료 예산안 (만원 · 실손보험 제외 · 남녀 통합 · 상담용 참고 범위)
+  //   ※ 공식 통계/보험사 요율이 아니므로, 숫자는 여기서만 고치면 이미지에 그대로 반영됩니다.
+  var BUDGET_BY_AGE = [
+    { maxAge: 29,  label: '20대',      std: [10, 15], simple: [12, 18] },
+    { maxAge: 39,  label: '30대',      std: [15, 20], simple: [18, 25] },
+    { maxAge: 49,  label: '40대',      std: [20, 30], simple: [25, 38] },
+    { maxAge: 59,  label: '50대',      std: [25, 40], simple: [32, 50] },
+    { maxAge: 999, label: '60대 이상', std: [30, 50], simple: [40, 65] },
+  ];
+  function budgetRowForAge(age) {
+    var a = Number(age) || 40;
+    for (var i = 0; i < BUDGET_BY_AGE.length; i++) if (a <= BUDGET_BY_AGE[i].maxAge) return BUDGET_BY_AGE[i];
+    return BUDGET_BY_AGE[BUDGET_BY_AGE.length - 1];
+  }
+  function rangeTxt(a, b) { return a === b ? a + '만 원' : a + '~' + b + '만 원'; }
+
+  // 표준체 vs 간편심사체 차이 (라벨, 표준체, 간편심사체)
+  var UW_DIFF = [
+    ['가입 심사', '일반 건강고지',          '간소화된 건강고지'],
+    ['주요 대상', '일반심사 통과 가능 고객', '유병력자 등'],
+    ['보험료',    '상대적으로 저렴',        '상대적으로 높은 편'],
+    ['가입 조건', '건강 상태에 따라 제한',  '간소화된 심사 조건'],
+    ['추천 방향', '일반심사 우선 검토',     '일반심사 가입이 어려운 경우 검토'],
+  ];
   var PEER_CORE = [
     ['일반암진단', '일반암'], ['뇌혈관질환진단', '뇌혈관질환'], ['허혈성심장질환진단', '허혈성심장질환'],
     ['질병입원의료비', '질병 입원 실비'], ['질병수술', '질병 수술비']
@@ -2827,7 +2849,7 @@ window.initRptExcelModule = function () {
   var PEER_RATE_OK = 80;   // 핵심 보장 충족률이 이 % 이상이면 '잘 갖춤'으로 봄
   function fmtWon(n) { return Math.round(n || 0).toLocaleString('ko-KR') + '원'; }
 
-  function buildPeerImageHTML() {
+    function buildPeerImageHTML() {
     var name = gState.customerName, age = gState.age || 40;
     var total = gState.premiums.reduce(function (s, p) { return s + (p.amount || 0); }, 0);
     var level = evalLevel(age, total);
@@ -2855,7 +2877,25 @@ window.initRptExcelModule = function () {
       + '<div style="font-size:13.5px;color:#191F28;line-height:1.7;margin-top:10px;background:#F8FAFC;border-radius:12px;padding:12px 14px;">' + diffTxt
       + ' <span style="display:inline-block;margin-left:4px;color:' + lvColor + ';font-weight:800;">[' + level.label + ']</span></div>');
 
-    // 카드 2) 낸 보험료 대비 핵심 보장 충족률
+    // 카드 2) 연령대별 월 보험료 예산 — 표준체 vs 간편심사체
+    var bud = budgetRowForAge(age);
+    var budHead = '<div style="display:flex;align-items:center;margin-top:12px;padding:0 12px;font-size:12px;font-weight:800;color:#6B7684;">'
+      + '<div style="width:28%;">연령대</div>'
+      + '<div style="width:36%;text-align:center;color:#1D5FD0;">표준체</div>'
+      + '<div style="width:36%;text-align:center;color:#D97706;">간편심사체</div></div>';
+    var budRows = BUDGET_BY_AGE.map(function (b) {
+      var hl = (b === bud);
+      return '<div style="display:flex;align-items:center;padding:10px 12px;margin-top:6px;border-radius:12px;box-sizing:border-box;background:' + (hl ? '#EFF6FF' : '#F8FAFC') + ';border:2px solid ' + (hl ? '#3182F6' : 'transparent') + ';">'
+        + '<div style="width:28%;font-size:13.5px;font-weight:800;color:#191F28;">' + b.label + (hl ? '<div style="font-size:10.5px;color:#3182F6;font-weight:700;">내 연령대</div>' : '') + '</div>'
+        + '<div style="width:36%;text-align:center;font-size:13.5px;font-weight:800;color:#1D5FD0;">' + rangeTxt(b.std[0], b.std[1]) + '</div>'
+        + '<div style="width:36%;text-align:center;font-size:13.5px;font-weight:800;color:#D97706;">' + rangeTxt(b.simple[0], b.simple[1]) + '</div></div>';
+    }).join('');
+    body += card(cardTitle('📋 연령대별 월 보험료 예산, 표준체와 간편심사체는 얼마나 다를까요?', '월 보험료 예산 참고 범위 · 실손보험 제외 · 남녀 통합')
+      + budHead + budRows
+      + '<div style="font-size:11.5px;color:#6B7684;line-height:1.65;margin-top:12px;background:#F8FAFC;border-radius:12px;padding:10px 12px;">'
+      + '내 월 보험료 <b>' + fmtWon(total) + '</b> · 위 금액은 실손보험을 제외한 기준이에요. 내 보험료에서 실손보험료를 뺀 금액과 비교해 보세요.</div>');
+
+    // 카드 3) 낸 보험료 대비 핵심 보장 충족률
     var core = PEER_CORE.map(function (d) {
       var s = rowState(d[0]);
       var ratio = s.rec ? Math.min(1, s.sum / s.rec) : (s.sum > 0 ? 1 : 0);
@@ -2881,37 +2921,34 @@ window.initRptExcelModule = function () {
       + rows
       + '<div style="margin-top:14px;font-size:13px;font-weight:800;color:' + vColor + ';background:#F8FAFC;border-radius:12px;padding:12px 14px;line-height:1.6;">' + verdict + '</div>');
 
-    // 카드 3) 보험사·상품별 보험료 1만원당 3대 진단비 (상품 2건 이상일 때만)
-    var cos = exState.companies || [];
-    var byLabel = {}; (exState.rows || []).forEach(function (r) { byLabel[r.label] = r; });
-    var big3 = ['일반암진단', '뇌혈관질환진단', '허혈성심장질환진단'];
-    if (cos.length > 1 && gState.premiums.length === cos.length) {
-      var list = [];
-      gState.premiums.forEach(function (p, ci) {
-        if (!(p.amount > 0)) return;
-        var core3 = big3.reduce(function (s, lb) { var r = byLabel[lb]; return s + (r && r.perProduct ? (r.perProduct[ci] || 0) : 0); }, 0);
-        list.push({ name: p.name || cos[ci], prem: p.amount, core3: core3, per: core3 / (p.amount / 10000) });
-      });
-      if (list.length > 1) {
-        list.sort(function (a, b) { return b.prem - a.prem; });
-        var maxPer = Math.max.apply(null, list.map(function (x) { return x.per; }).concat([1]));
-        var lowest = list.reduce(function (m, x) { return x.per < m.per ? x : m; }, list[0]);
-        var items = list.map(function (x) {
-          var isLow = x === lowest && x.per < maxPer * 0.5;
-          return '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #EDF0F3;">'
-            + '<div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:800;color:#191F28;"><span>' + esc(x.name) + '</span><span>월 ' + fmtWon(x.prem) + ' (' + Math.round(x.prem / total * 100) + '%)</span></div>'
-            + '<div style="font-size:12px;color:#6B7684;margin-top:3px;">3대 진단비(암·뇌·심장) 합계 ' + (x.core3 > 0 ? fmtMan(x.core3) : '없음') + '</div>'
-            + '<div style="height:10px;background:#EEF1F4;border-radius:5px;overflow:hidden;margin:7px 0 4px;"><div style="height:10px;width:' + Math.max(2, Math.round(x.per / maxPer * 100)) + '%;background:' + (isLow ? '#F04452' : '#3182F6') + ';border-radius:5px;"></div></div>'
-            + '<div style="font-size:12.5px;font-weight:700;color:' + (isLow ? '#DC2626' : '#334155') + ';">보험료 1만원당 ' + fmtMan(x.per) + (isLow ? ' · 상대적으로 적어요, 구성 확인이 필요해요' : '') + '</div></div>';
-        }).join('');
-        body += card(cardTitle('🔎 계약별로 보면, 내는 돈 대비 보장은?', '보험료 1만원당 받을 수 있는 3대 진단비(합산)를 비교했어요.') + items
-          + '<div style="font-size:11px;color:#8B95A1;line-height:1.6;margin-top:12px;">상품별 비교는 3대 진단비만 기준으로 한 참고 수치예요. 수술비·입원비·사망보장 등은 포함되지 않아요.</div>');
-      }
-    }
+    // 카드 4) 왜 건강할 때 준비해야 할까요? — 표준체 vs 간편심사체 비교
+    var dLow = bud.simple[0] - bud.std[0], dHigh = bud.simple[1] - bud.std[1];
+    var uwRows = UW_DIFF.map(function (r) {
+      return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #EDF0F3;">'
+        + '<div style="font-size:11.5px;font-weight:700;color:#8B95A1;">' + esc(r[0]) + '</div>'
+        + '<div style="display:flex;justify-content:space-between;margin-top:5px;">'
+        + '<div style="width:49%;box-sizing:border-box;background:#EFF6FF;border-radius:10px;padding:9px 10px;font-size:12.5px;font-weight:700;color:#1D5FD0;line-height:1.5;">' + esc(r[1]) + '</div>'
+        + '<div style="width:49%;box-sizing:border-box;background:#FFF7E8;border-radius:10px;padding:9px 10px;font-size:12.5px;font-weight:700;color:#B45309;line-height:1.5;">' + esc(r[2]) + '</div>'
+        + '</div></div>';
+    }).join('');
+    body += card(cardTitle('🩺 왜 건강할 때 준비해야 할까요?', esc(bud.label) + ' 기준으로 두 가지 심사 유형을 비교해 봤어요.')
+      + '<div style="display:flex;justify-content:space-between;margin-top:14px;">'
+      + '<div style="width:49%;box-sizing:border-box;text-align:center;background:#EFF6FF;border-radius:12px;padding:12px 6px;">'
+      +   '<div style="font-size:12px;font-weight:800;color:#1D5FD0;">건강할 때 · 표준체</div>'
+      +   '<div style="font-size:16px;font-weight:800;color:#1D5FD0;margin-top:4px;">월 ' + rangeTxt(bud.std[0], bud.std[1]) + '</div></div>'
+      + '<div style="width:49%;box-sizing:border-box;text-align:center;background:#FFF7E8;border-radius:12px;padding:12px 6px;">'
+      +   '<div style="font-size:12px;font-weight:800;color:#B45309;">병력이 생긴 뒤 · 간편심사체</div>'
+      +   '<div style="font-size:16px;font-weight:800;color:#B45309;margin-top:4px;">월 ' + rangeTxt(bud.simple[0], bud.simple[1]) + '</div></div></div>'
+      + '<div style="font-size:13px;color:#191F28;line-height:1.7;margin-top:12px;background:#F8FAFC;border-radius:12px;padding:12px 14px;">'
+      +   '같은 보장을 준비한다고 가정하면, 간편심사체는 표준체보다 매달 <b style="color:#D97706;">' + rangeTxt(dLow, dHigh) + ' 더</b> 높은 범위예요. '
+      +   '1년이면 약 <b style="color:#D97706;">' + rangeTxt(dLow * 12, dHigh * 12) + '</b> 차이예요.</div>'
+      + uwRows
+      + '<div style="margin-top:14px;font-size:13px;font-weight:700;color:#1D5FD0;background:#EFF6FF;border-radius:12px;padding:12px 14px;line-height:1.6;">'
+      +   '건강할 때는 일반심사로 더 저렴하게 준비할 수 있어요. 건강 상태가 달라지면 일반심사 가입이 어려워질 수 있어요.</div>');
 
     return imgWrap(imgHeader('⚖️', name + '님 보험료 vs 보장, 또래와 비교해 봤어요', age + '세 · 월납 합계 ' + fmtWon(total))
       + body
-      + footerSources([], '또래 기준은 연령대별 참고 보험료 가이드이며 공식 통계가 아닙니다. 보험료 수준과 보장 충족도는 개인의 소득·가족력·건강 상태에 따라 적정선이 다를 수 있습니다.'));
+      + footerSources([], '또래 평균과 연령대별 예산 범위는 공식 통계나 보험사 요율이 아닌 상담용 참고 가이드이며, 특히 간편심사체 금액은 실제 상품별 산출 보험료로 확인이 필요합니다. 보험료 수준과 보장 충족도는 개인의 소득·가족력·건강 상태에 따라 적정선이 다를 수 있습니다.'));
   }
 
   // ─────────────── 일반 카테고리(대분류) 점검 이미지 ───────────────
