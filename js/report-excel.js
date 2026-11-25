@@ -2921,8 +2921,14 @@ window.initRptExcelModule = function () {
       + rows
       + '<div style="margin-top:14px;font-size:13px;font-weight:800;color:' + vColor + ';background:#F8FAFC;border-radius:12px;padding:12px 14px;line-height:1.6;">' + verdict + '</div>');
 
-    // 카드 4) 왜 건강할 때 준비해야 할까요? — 표준체 vs 간편심사체 비교
+  }
+
+    // ───────────────────── 왜 건강할 때 준비해야 할까요? (별도 이미지) ─────────────────────
+  function buildHealthyImageHTML() {
+    var name = gState.customerName, age = gState.age || 40;
+    var bud = budgetRowForAge(age);
     var dLow = bud.simple[0] - bud.std[0], dHigh = bud.simple[1] - bud.std[1];
+
     var uwRows = UW_DIFF.map(function (r) {
       return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #EDF0F3;">'
         + '<div style="font-size:11.5px;font-weight:700;color:#8B95A1;">' + esc(r[0]) + '</div>'
@@ -2931,7 +2937,8 @@ window.initRptExcelModule = function () {
         + '<div style="width:49%;box-sizing:border-box;background:#FFF7E8;border-radius:10px;padding:9px 10px;font-size:12.5px;font-weight:700;color:#B45309;line-height:1.5;">' + esc(r[2]) + '</div>'
         + '</div></div>';
     }).join('');
-    body += card(cardTitle('🩺 왜 건강할 때 준비해야 할까요?', esc(bud.label) + ' 기준으로 두 가지 심사 유형을 비교해 봤어요.')
+
+    var body = card(cardTitle('🩺 왜 건강할 때 준비해야 할까요?', esc(bud.label) + ' 기준으로 두 가지 심사 유형을 비교해 봤어요.')
       + '<div style="display:flex;justify-content:space-between;margin-top:14px;">'
       + '<div style="width:49%;box-sizing:border-box;text-align:center;background:#EFF6FF;border-radius:12px;padding:12px 6px;">'
       +   '<div style="font-size:12px;font-weight:800;color:#1D5FD0;">건강할 때 · 표준체</div>'
@@ -2946,9 +2953,9 @@ window.initRptExcelModule = function () {
       + '<div style="margin-top:14px;font-size:13px;font-weight:700;color:#1D5FD0;background:#EFF6FF;border-radius:12px;padding:12px 14px;line-height:1.6;">'
       +   '건강할 때는 일반심사로 더 저렴하게 준비할 수 있어요. 건강 상태가 달라지면 일반심사 가입이 어려워질 수 있어요.</div>');
 
-    return imgWrap(imgHeader('⚖️', name + '님 보험료 vs 보장, 또래와 비교해 봤어요', age + '세 · 월납 합계 ' + fmtWon(total))
+    return imgWrap(imgHeader('🩺', name + '님, 건강할 때 준비하면 달라지는 점', age + '세 · 월 보험료 예산 참고 범위(실손보험 제외)')
       + body
-      + footerSources([], '또래 평균과 연령대별 예산 범위는 공식 통계나 보험사 요율이 아닌 상담용 참고 가이드이며, 특히 간편심사체 금액은 실제 상품별 산출 보험료로 확인이 필요합니다. 보험료 수준과 보장 충족도는 개인의 소득·가족력·건강 상태에 따라 적정선이 다를 수 있습니다.'));
+      + footerSources([], '연령대별 예산 범위는 공식 통계나 보험사 요율이 아닌 상담용 참고 가이드이며, 특히 간편심사체 금액은 실제 상품별 산출 보험료로 확인이 필요합니다. 가입 가능 여부와 보험료는 건강 상태와 상품에 따라 달라집니다.'));
   }
 
   // ─────────────── 일반 카테고리(대분류) 점검 이미지 ───────────────
@@ -3009,8 +3016,12 @@ window.initRptExcelModule = function () {
     var peerJob = { risk: true, tag: '또래 비교 · 담보 대비 보험료', icon: '⚖️', title: '또래 보험료 vs 보장 충족도',
       desc: (gState.age || 40) + '세 또래 평균 ' + fmtWon(getPeerAvgPremium(gState.age || 40)) + ' · 내 보험료 ' + fmtWon(peerTotal),
       file: 'peer.png', build: buildPeerImageHTML };
+    var healthyBud = budgetRowForAge(gState.age || 40);
+    var healthyJob = { risk: true, tag: '또래 비교 · 표준체 vs 간편심사체', icon: '🩺', title: '왜 건강할 때 준비해야 할까요?',
+      desc: healthyBud.label + ' 표준체 월 ' + rangeTxt(healthyBud.std[0], healthyBud.std[1]) + ' vs 간편심사체 월 ' + rangeTxt(healthyBud.simple[0], healthyBud.simple[1]),
+      file: 'healthy.png', build: buildHealthyImageHTML };
     var peerFirst = gState.category === '또래월보험비교';
-    if (peerFirst) IMG_JOBS.push(peerJob);
+    if (peerFirst) { IMG_JOBS.push(peerJob); IMG_JOBS.push(healthyJob); }
 
     // ① 상태 맞춤 이미지 (암·뇌·심장·실비·화재·운전자)
     var cc = RISK_CFG.cancer;
@@ -3064,7 +3075,7 @@ window.initRptExcelModule = function () {
       }
     });
 
-    if (!peerFirst) IMG_JOBS.push(peerJob);
+    if (!peerFirst) { IMG_JOBS.push(peerJob); IMG_JOBS.push(healthyJob); }
   }
 
   function renderImageJobs() {
