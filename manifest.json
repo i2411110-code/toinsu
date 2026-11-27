@@ -1,7 +1,7 @@
 {
-  "name": "보험가온포탈",
-  "short_name": "가온포탈",
-  "description": "토스인슈어런스 가온사업단 전용 보험 업무 포탈",
+  "name": "가온 원",
+  "short_name": "가온 원",
+  "description": "보험 전문인 전용 포탈",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

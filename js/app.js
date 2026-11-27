@@ -854,7 +854,7 @@ if (!allowedUsers.includes(currentUserEmail) && !allowedUsers.includes(currentUs
     let url = `components/${pageId}.html`;
 
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, { cache: 'no-cache' });
         if (!response.ok) throw new Error('파일을 찾을 수 없습니다.');
         const html = await response.text();
         root.innerHTML = html;

@@ -1224,36 +1224,92 @@
             };
         </script>
 
-        <!-- PWA 설치 로직 -->
-        <script>
-        (function () {
-            const ua = navigator.userAgent;
-            const isStandalone = (window.navigator.standalone === true) || window.matchMedia('(display-mode: standalone)').matches;
-            if (isStandalone) return;
+        <!-- PWA 설치 로직 (안드로이드/PC 설치 + iOS 안내) -->
+<script>
+(function () {
+    var ua = navigator.userAgent;
+    var isStandalone = (window.navigator.standalone === true) || window.matchMedia('(display-mode: standalone)').matches;
+    if (isStandalone) return; // 이미 앱으로 실행 중이면 아무것도 안 보여줌
 
-            let deferredPrompt = null;
-            const toggleWrap = document.getElementById('pwa-toggle-wrap');
-            const floatWrap  = document.getElementById('pwa-float-wrap');
-            const floatBtn   = document.getElementById('pwa-float-btn');
+    var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var isKakaoInApp = /KAKAOTALK/i.test(ua); // 카톡 인앱 브라우저에서는 홈 화면 추가가 안 됨
+    var isMobileWidth = window.matchMedia('(max-width: 768px)').matches;
+    var DISMISS_DAYS = 7;
 
-            window.addEventListener('beforeinstallprompt', function (e) {
-                e.preventDefault();
-                deferredPrompt = e;
-                if (toggleWrap) toggleWrap.style.display = 'flex';
-                if (floatWrap)  floatWrap.style.display  = 'block';
-            });
+    var $ = function (id) { return document.getElementById(id); };
+    var toggleWrap = $('pwa-toggle-wrap'), toggleBtn = $('pwa-toggle-btn');
+    var floatWrap  = $('pwa-float-wrap'),  floatBtn  = $('pwa-float-btn');
+    var banner     = $('pwa-banner'),      installBtn = $('pwa-install-btn'), closeBtn = $('pwa-close-btn');
+    var iosBanner  = $('pwa-ios-banner'),  iosClose   = $('pwa-ios-close-btn');
 
-            if (floatBtn) {
-                floatBtn.addEventListener('click', function () {
-                    if (!deferredPrompt) return;
-                    deferredPrompt.prompt();
-                    deferredPrompt.userChoice.then(function (result) {
-                        if (result.outcome === 'accepted' && floatWrap) floatWrap.style.display = 'none';
-                    });
-                });
-            }
-        })();
-        </script>
+    var deferredPrompt = null;
+
+    function isDismissed(key) {
+        try { var t = parseInt(localStorage.getItem(key), 10); return !!t && Date.now() < t; }
+        catch (e) { return false; }
+    }
+    function dismiss(key) {
+        try { localStorage.setItem(key, String(Date.now() + DISMISS_DAYS * 86400000)); } catch (e) {}
+    }
+    function showButtons() {
+        if (toggleWrap) toggleWrap.style.display = 'flex';
+        if (floatWrap)  floatWrap.style.display  = 'block';
+    }
+    function hideAll() {
+        [toggleWrap, floatWrap].forEach(function (el) { if (el) el.style.display = 'none'; });
+        [banner, iosBanner].forEach(function (el) { if (el) el.classList.remove('show'); });
+    }
+
+    // 설치 시작: 안드로이드/PC는 설치창, 그 외에는 안내
+    function triggerInstall() {
+        if (!deferredPrompt) {
+            if (isIOS) { if (iosBanner) iosBanner.classList.add('show'); }
+            else alert("브라우저 메뉴(⋮)에서 '앱 설치' 또는 '홈 화면에 추가'를 선택해 주세요.");
+            return Promise.resolve();
+        }
+        var p = deferredPrompt;
+        deferredPrompt = null; // 설치창은 한 번만 쓸 수 있음
+        if (banner) banner.classList.remove('show');
+        p.prompt();
+        return p.userChoice.then(function (r) { if (r.outcome === 'accepted') hideAll(); });
+    }
+
+    // ── 안드로이드/PC (Chrome, Edge) ──
+    window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        showButtons();
+        if (banner && isMobileWidth && !isDismissed('gaonPwaBannerDismissed')) banner.classList.add('show');
+    });
+
+    // ── iOS: 설치창이 없으므로 안내 배너 ──
+    if (isIOS && !isKakaoInApp) {
+        showButtons();
+        if (iosBanner && !isDismissed('gaonIosBannerDismissed')) {
+            setTimeout(function () { iosBanner.classList.add('show'); }, 1500);
+        }
+    }
+
+    // ── 클릭 연결 ──
+    if (floatBtn)   floatBtn.addEventListener('click', triggerInstall);
+    if (installBtn) installBtn.addEventListener('click', triggerInstall);
+    if (toggleBtn) {
+        toggleBtn.addEventListener('change', function () {
+            if (!toggleBtn.checked) return;
+            var reset = function () { toggleBtn.checked = false; };
+            triggerInstall().then(reset, reset);
+        });
+    }
+    if (closeBtn) closeBtn.addEventListener('click', function () {
+        banner.classList.remove('show'); dismiss('gaonPwaBannerDismissed');
+    });
+    if (iosClose) iosClose.addEventListener('click', function () {
+        iosBanner.classList.remove('show'); dismiss('gaonIosBannerDismissed');
+    });
+
+    window.addEventListener('appinstalled', hideAll);
+})();
+</script>
 
         <!-- FullCalendar -->
         <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
@@ -1969,6 +2025,7 @@ window.navTool = function (page, arg) {
         <script src="./js/report.js"></script>
         <script src="./js/report-excel.js"></script>
         <script src="./js/workmenu.js"></script>
+        <script src="./js/update-check.js"></script>
         <script>
 /* 보장분석 리포트 AI: 패널이 나중에 그려지거나 초기화 타이밍이 어긋나도 자동으로 초기화 */
 (function () {
