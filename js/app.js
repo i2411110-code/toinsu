@@ -860,6 +860,14 @@ if (!allowedUsers.includes(currentUserEmail) && !allowedUsers.includes(currentUs
         root.innerHTML = html;
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
+        // 심평원 진료내역 분석 초기화
+if (pageId === 'page-medical-analysis') {
+    requestAnimationFrame(() => {
+        if (typeof window.initMedicalAnalysisPage === 'function') window.initMedicalAnalysisPage();
+        else console.error('심평원 분석 스크립트가 로드되지 않았습니다.');
+    });
+}
+
         // 💡 2. 가온 오피스에 정상 입장했다면 곧바로 보장분석 리포트를 띄웁니다.
         if (pageId === 'page-가온 오피스') {
             window.switchPrivateTab('rpt');

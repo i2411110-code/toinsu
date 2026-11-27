@@ -11,6 +11,7 @@
         { id:'private',      group:'업무', label:'고객 데이터',   icon:'bi-people-fill',     bg:'#EFF6FF', color:'#2563EB', type:'page', target:'page-private' },
         { id:'gaon-office',  group:'업무', label:'가온 오피스',   icon:'bi-lock-fill',       bg:'#F5F3FF', color:'#7C3AED', type:'page', target:'page-가온 오피스' },
         { id:'calendar',     group:'업무', label:'캘린더',        icon:'bi-calendar3',       bg:'#FFF7ED', color:'#EA580C', type:'page', target:'page-calendar' },
+        { id:'medical',      group:'업무', label:'심평원 분석',   icon:'bi-clipboard2-pulse', bg:'#ECFEFF', color:'#0891B2', type:'page', target:'page-medical-analysis' },
 
         // ── 계산·조회 ──
         { id:'terms',        group:'계산·조회', label:'약관조회',    icon:'bi-search-heart',    bg:'#EFF6FF', color:'#2563EB', type:'page', target:'page-terms' },
