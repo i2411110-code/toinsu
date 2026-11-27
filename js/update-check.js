@@ -5,7 +5,7 @@
 (function () {
     'use strict';
 
-    const APP_VERSION = '2026-11-27-1';
+    const APP_VERSION = '2026-11-27-2';
     const CHECK_INTERVAL = 5 * 60 * 1000; // 5분마다 확인
 
     // "업데이트" 버튼을 누르면 이 파일들을 새로 받아 캐시를 교체한 뒤 새로고침합니다.
