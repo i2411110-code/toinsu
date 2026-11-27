@@ -39,7 +39,7 @@ const MASTER_INVITE_CODE = "gaon2026";
 // ── 서비스 이용약관 (2026.05.13 시행) ──
 const TERMS_VERSION = "2026-05-13";
 const TERMS_TEXT = `제1조 (목적)
-본 약관은 심현진IA(이하 "운영자")가 운영하는 보험가온포탈 서비스
+본 약관은 심현진IA(이하 "운영자")가 운영하는 가온 원 서비스
 (이하 "서비스")의 이용과 관련하여 운영자와 회원 간의 권리, 의무 및 책임사항,
 기타 필요한 사항을 규정함을 목적으로 합니다.
 
@@ -413,7 +413,7 @@ window.toggleAuthTab = function(mode) {
 
     if(mode === 'login') {
         loginBtn.classList.add('active'); regBtn.classList.remove('active');
-        title.innerText = "보험가온포탈 로그인"; submitBtn.innerText = "포탈 접속하기";
+        title.innerText = "가온 원 로그인"; submitBtn.innerText = "포탈 접속하기";
 
         if(inviteGroup) inviteGroup.style.display = 'none';
         if(nameGroup) nameGroup.style.display = 'none';
