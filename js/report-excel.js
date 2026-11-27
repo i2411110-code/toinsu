@@ -1532,6 +1532,17 @@ window.initRptExcelModule = function () {
       '.rptex-job-recbadge{display:inline-block;font-size:10.5px;font-weight:800;color:#fff;background:#3182F6;border-radius:8px;padding:1px 8px;margin-right:6px;vertical-align:middle;}',
       '.rptex-toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:#191F28;color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;line-height:1.5;white-space:pre-line;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:99999;max-width:90vw;font-family:"Noto Sans KR",sans-serif;}',
       '.rptex-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}',
+            /* ── 니즈환기 카드 미리보기 모달 ── */
+      '.rptex-pv-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);display:none;align-items:center;justify-content:center;z-index:99998;padding:16px;}',
+      '.rptex-pv-box{background:#fff;border-radius:18px;width:min(720px,100%);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35);}',
+      '.rptex-pv-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #E2E8F0;}',
+      '.rptex-pv-title{font-size:14.5px;font-weight:800;color:#191F28;}',
+      '.rptex-pv-x{border:none;background:none;font-size:18px;color:#94A3B8;cursor:pointer;padding:4px 8px;}',
+      '.rptex-pv-x:hover{color:#DC2626;}',
+      '.rptex-pv-body{flex:1;overflow:auto;background:#E5E8EB;padding:12px;}',
+      '.rptex-pv-scale{margin:0 auto;}',
+      '.rptex-pv-foot{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px solid #E2E8F0;flex-wrap:wrap;}',
+      '.rptex-pv-count{font-size:12px;color:#64748B;font-weight:700;}',
 
       /* ── 연령대별 적정 보험료 가이드 (하단 + 토글) ── */
       '.rptex-ageguide-wrap{margin-top:4px;margin-bottom:16px;display:flex;flex-direction:column;align-items:flex-start;}',
@@ -3433,6 +3444,7 @@ window.initRptExcelModule = function () {
         + '<div class="rptex-job-ico">' + j.icon + '</div>'
         + '<div class="rptex-job-main"><div class="rptex-job-title">' + (j.recommended ? '<span class="rptex-job-recbadge">⭐ 추천</span>' : '') + esc(j.title) + (j.risk ? '<span class="rptex-job-tag">' + esc(j.tag || '상태별 맞춤') + '</span>' : '') + '</div>'
         + '<div class="rptex-job-desc">' + esc(j.desc) + '</div></div>'
+        + '<button class="btn-action" style="width:auto;padding:8px 14px;flex:none;background:#fff;color:#3182F6;border:1.5px solid #BAD7FB;" onclick="window.rptExPreviewImageJob(' + i + ')">👁 미리보기</button>'
         + '<button class="btn-action" style="width:auto;padding:8px 16px;flex:none;background:#3182F6;" id="rptex-job-btn-' + i + '" onclick="window.rptExCopyImageJob(' + i + ')"><i class="bi bi-image"></i> 이미지 복사</button>'
         + '</div>';
     }).join('');
@@ -3456,6 +3468,107 @@ window.initRptExcelModule = function () {
     btn = document.getElementById('rptex-job-btn-' + i);
     if (btn) { btn.innerHTML = '<i class="bi bi-image"></i> 이미지 복사'; btn.disabled = false; }
   };
+
+    // ─── 니즈환기 카드 미리보기 (모달) ───
+  var previewIdx = -1;
+
+  function ensurePreviewModal() {
+    var m = document.getElementById('rptex-preview-modal');
+    if (m) return m;
+    m = document.createElement('div');
+    m.id = 'rptex-preview-modal';
+    m.className = 'rptex-pv-overlay';
+    m.innerHTML =
+        '<div class="rptex-pv-box">'
+      +   '<div class="rptex-pv-head">'
+      +     '<div class="rptex-pv-title" id="rptex-pv-title"></div>'
+      +     '<button type="button" class="rptex-pv-x" onclick="window.rptExClosePreview()">✕</button>'
+      +   '</div>'
+      +   '<div class="rptex-pv-body" id="rptex-pv-body"><div class="rptex-pv-scale" id="rptex-pv-scale"></div></div>'
+      +   '<div class="rptex-pv-foot">'
+      +     '<button type="button" class="rptex-tab-next" onclick="window.rptExPreviewStep(-1)">← 이전</button>'
+      +     '<span class="rptex-pv-count" id="rptex-pv-count"></span>'
+      +     '<button type="button" class="rptex-tab-next" onclick="window.rptExPreviewStep(1)">다음 →</button>'
+      +     '<button type="button" class="btn-action" style="width:auto;padding:9px 20px;background:#3182F6;margin-left:auto;" id="rptex-pv-copy" onclick="window.rptExPreviewCopy()"><i class="bi bi-image"></i> 이미지 복사</button>'
+      +   '</div>'
+      + '</div>';
+    m.addEventListener('click', function (e) { if (e.target === m) window.rptExClosePreview(); });
+    document.body.appendChild(m);
+    return m;
+  }
+
+  function renderPreview() {
+    var job = IMG_JOBS[previewIdx];
+    if (!job || !gState) return;
+    document.getElementById('rptex-pv-title').textContent = job.icon + ' ' + job.title;
+    document.getElementById('rptex-pv-count').textContent = (previewIdx + 1) + ' / ' + IMG_JOBS.length;
+
+    var body = document.getElementById('rptex-pv-body');
+    var scaleBox = document.getElementById('rptex-pv-scale');
+    scaleBox.innerHTML = job.build();
+    var node = scaleBox.firstElementChild;
+    if (node) {
+      var avail = body.clientWidth - 24;
+      var w = node.offsetWidth || 640;
+      var s = Math.min(1, avail / w);
+      node.style.transformOrigin = 'top left';
+      node.style.transform = 'scale(' + s + ')';
+      scaleBox.style.width = Math.round(w * s) + 'px';
+      scaleBox.style.height = Math.round(node.offsetHeight * s) + 'px';
+    }
+    body.scrollTop = 0;
+  }
+
+  window.rptExPreviewImageJob = function (i) {
+    if (!gState || !IMG_JOBS[i]) return;
+    previewIdx = i;
+    var m = ensurePreviewModal();
+    m.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    renderPreview();
+  };
+
+  window.rptExPreviewStep = function (d) {
+    if (!IMG_JOBS.length) return;
+    previewIdx = (previewIdx + d + IMG_JOBS.length) % IMG_JOBS.length;
+    renderPreview();
+  };
+
+  window.rptExClosePreview = function () {
+    var m = document.getElementById('rptex-preview-modal');
+    if (m) m.style.display = 'none';
+    document.body.style.overflow = '';
+    var sc = document.getElementById('rptex-pv-scale');
+    if (sc) sc.innerHTML = '';
+  };
+
+  window.rptExPreviewCopy = async function () {
+    var job = IMG_JOBS[previewIdx];
+    if (!job) return;
+    var btn = document.getElementById('rptex-pv-copy');
+    if (btn) { btn.textContent = '⏳ 생성 중...'; btn.disabled = true; }
+    try {
+      if (!window.html2canvas) {
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+      }
+      await copyHtmlAsImage(job.build(), '#F2F4F6', job.file || '보장분석.png',
+        '✅ ' + job.title + ' 이미지가 복사되었습니다!\n카카오톡 채팅창에 바로 붙여넣기(Ctrl+V) 하세요.');
+    } catch (err) {
+      console.error(err);
+      alert('이미지 생성 실패: ' + err.message);
+    }
+    btn = document.getElementById('rptex-pv-copy');
+    if (btn) { btn.innerHTML = '<i class="bi bi-image"></i> 이미지 복사'; btn.disabled = false; }
+  };
+
+  // ESC로 닫기, 좌우 방향키로 이전/다음
+  document.addEventListener('keydown', function (e) {
+    var m = document.getElementById('rptex-preview-modal');
+    if (!m || m.style.display === 'none') return;
+    if (e.key === 'Escape') window.rptExClosePreview();
+    else if (e.key === 'ArrowRight') window.rptExPreviewStep(1);
+    else if (e.key === 'ArrowLeft') window.rptExPreviewStep(-1);
+  });
 
 // ================================================================
   // ✅ (보관용) 전체 한 장 이미지 — 요약형 / 전체 상세표
