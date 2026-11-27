@@ -163,12 +163,16 @@
     { big: '10~30대', title: '가장 흔한 암', desc: '10대·20대·30대에서 가장 많이 발생한 암이 갑상선암이에요.', src: '국가암등록통계 2023' },
     { big: '100.1%', title: '5년 상대생존율', desc: '치료 뒤에도 오래 살아가기 때문에 치료 이후 관리·재발 대비 기간이 길어요.', src: '국가암등록통계 2022' },
   ];
-  // 고액암 통계 타일
-  var RARE_TILES = [
-    { big: '16.5%', title: '췌장암 5년 상대생존율', desc: '10명 중 2명도 안 되는 수준이에요.', src: '국가암등록통계 2022' },
-    { big: '39.4%', title: '간암 5년 상대생존율', desc: '전체 암 평균(72.9%)의 절반 남짓이에요.', src: '국가암등록통계 2022' },
-    { big: '40.6%', title: '폐암 5년 상대생존율', desc: '치료 기간이 길고 치료비 부담이 큰 암일수록 추가 대비가 필요해요.', src: '국가암등록통계 2022' },
+    // 고액암 카드 문구 (생존율 대신 치료비·치료 선택지 중심)
+  var RARE_POINTS = [
+    { icon: '💊', title: '치료 방법을 비용 때문에 좁히지 않도록',
+      desc: '표적항암·면역항암 같은 신약 치료는 비용 부담이 커서 선택을 망설이는 경우가 있어요. 진단비가 있으면 치료 방법을 더 넓게 고려할 수 있어요.' },
+    { icon: '🧾', title: '건강보험 밖에서 드는 비용',
+      desc: '급여가 적용되지 않는 치료·검사·약제 비용은 본인이 부담해요. 항목에 따라 실손보험으로 보장받지 못하는 부분도 있어요.' },
+    { icon: '🏠', title: '치료 기간 동안의 생활',
+      desc: '치료가 길어질수록 소득 공백과 간병·교통비 같은 생활 지출이 함께 생겨요.' },
   ];
+  var RARE_NOTE = '고액암의 범위(어떤 암이 포함되는지)와 지급 조건은 상품 약관에 따라 달라요.';
 
   var RISK_CFG = {
     cancer: {
@@ -2656,8 +2660,8 @@ window.initRptExcelModule = function () {
     var body = '';
 
     // 1) 유사암(갑상선암) — 사용자가 가장 강조하길 원한 부분
-    if (isNeed(s.status)) {
-      var female = gState.gender === 'F';
+    if (gState.gender === 'F' && isNeed(s.status)) {
+      var female = true;
       var maxV = Math.max(g.sum, s.sum, 1);
       var bars = '';
       if (g.sum > 0) {
@@ -2688,11 +2692,27 @@ window.initRptExcelModule = function () {
     }
 
     // 3) 고액암이 부족/미가입 → 생존율 통계로 접근
+        // 3) 고액암이 부족/미가입 → 치료비·치료 선택지 중심
     if (isNeed(h.status)) {
-      body += card(cardTitle('💊 치료비 부담이 큰 암, 고액암', '치료 기간이 길고 비용이 큰 암일수록 일반암 진단비 외에 추가 대비가 필요해요.')
-        + '<div style="font-size:13px;color:#191F28;line-height:1.7;margin-top:10px;">현재 고액암 진단비 <b style="color:#DC2626;">' + (h.sum > 0 ? fmtMan(h.sum) : '미가입') + '</b>'
-        + (h.rec !== undefined ? ' / 권장 ' + fmtMan(h.rec) : '') + '</div>'
-        + statTiles(RARE_TILES));
+      var hRec = h.rec !== undefined ? h.rec : 0;
+      var hPct = hRec ? Math.min(100, Math.round(h.sum / hRec * 100)) : 0;
+      var hBar = hRec
+        ? '<div style="margin-top:14px;">'
+          + '<div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:#4E5968;"><span>내 고액암 진단비</span>'
+          + '<span>' + (h.sum > 0 ? fmtMan(h.sum) : '미가입') + ' / 권장 ' + fmtMan(hRec) + '</span></div>'
+          + '<div style="height:14px;background:#EEF1F4;border-radius:7px;overflow:hidden;margin-top:6px;"><div style="height:14px;width:' + (h.sum > 0 ? Math.max(3, hPct) : 0) + '%;background:#F04452;border-radius:7px;"></div></div>'
+          + '<div style="font-size:12.5px;color:#4E5968;margin-top:8px;">권장까지 <b style="color:#DC2626;">' + fmtMan(Math.max(0, hRec - h.sum)) + '</b> 차이가 있어요.</div>'
+          + '</div>'
+        : '';
+      var hPoints = RARE_POINTS.map(function (p) {
+        return '<div style="display:flex;align-items:flex-start;margin-top:12px;background:#F8FAFC;border-radius:14px;padding:12px 14px;">'
+          + '<div style="flex:none;width:30px;font-size:20px;">' + p.icon + '</div>'
+          + '<div style="flex:1;"><div style="font-size:13.5px;font-weight:800;color:#191F28;">' + esc(p.title) + '</div>'
+          + '<div style="font-size:12.5px;color:#4E5968;line-height:1.6;margin-top:3px;">' + esc(p.desc) + '</div></div></div>';
+      }).join('');
+      body += card(cardTitle('💊 치료비 부담이 큰 암, 고액암', '일반암 진단비 외에 추가로 대비해 두면 좋은 보장이에요.')
+        + hBar + hPoints
+        + '<div style="font-size:11px;color:#8B95A1;line-height:1.6;margin-top:12px;">' + esc(RARE_NOTE) + '</div>');
     }
 
     // 4) 적정·충분(과잉 포함) 항목 → 짧게
@@ -2702,8 +2722,7 @@ window.initRptExcelModule = function () {
     body += goodCard(goods, needs.length ? '이 부분은 잘 준비되어 있어요 ✅' : '항목별로 이렇게 대비되어 있어요');
 
     var sources = cfg.sources.slice();
-    if (isNeed(s.status)) sources.push(THYROID_SRC);
-    if (isNeed(h.status)) sources.push(RARE_SRC);
+    if (gState.gender === 'F' && isNeed(s.status)) sources.push(THYROID_SRC);
     return imgWrap(imgHeader(cfg.icon, name + '님 암 진단비', '일반암 · 유사암 · 고액암 현황을 한눈에 확인해요')
       + summaryCard('', items, 3) + body + footerSources(sources, '유사암·고액암의 분류와 지급 범위는 상품 약관에 따라 다릅니다.'));
   }
